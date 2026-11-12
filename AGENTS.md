@@ -20,6 +20,9 @@ Juego de estrategia 2D estilo Age of Empires que mezcla eras y reglas de la natu
 No alcanza con simular: abrir en navegador real. Playwright funciona offline (las fuentes no cargan, es normal). Ejemplo: abrir el HTML con `file://`, `page.click('#startBtn')`, esperar, `page.screenshot(...)` y mirar la imagen. Los ganchos `__e1/__e2/__e3` permiten forzar estados (dar mutaciones, cambiar de ecosistema, acelerar). Un bot de prueba (clics en Dividir, elegir mutación al azar, usar todas las habilidades) corrió sin errores a ×4.
 Balance medido con bots: Era 1 Fácil, 10 de 10 victorias con 2 rivales; Normal y Difícil, entre 4 y 6 de 10. Era 3 Fácil: gana el bot en cerca de 500 s algunas veces.
 
+## Arte pintado de la Era 1 (Runway)
+`art/runway/cells/*.png` (13 sprites: basal + 4 ramas x 3 niveles). Se cargan con rutas relativas `../art/runway/cells/`; `drawCell` usa `paintBody` (sección "Cuerpos celulares pintados" de era1-celula.html). Nivel = `cellTier(T)` según `T.mutCount`. Los cuerpos pintados reemplazan el blob y el corte vectorial (`drawCutaway`); `SPR_SVG` sigue vivo para iconos, Anatomía y fallback si el PNG no carga. Ver `art/runway/LEEME.md` para regenerar y `AUDITORIA.md` para el plan de mejora. Gancho nuevo en `__e1`: `fuse`, `mk`, `cellTier`.
+
 ## Reglas de estilo del arte
 Vector 100x100, contorno #2b2233 de 2 a 3 unidades, degradado radial claro arriba a la izquierda, brillo blanco translúcido, sin texto dentro del dibujo, fondo transparente. Cada mutación, variante e híbrido debe verse distinto. Cuando el agente pintor mejore un dibujo, reemplazar el SVG en `tools/art.py` (o el JSON embebido) y volver a generar.
 
