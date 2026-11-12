@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Evolución · Era 3: Tribus</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e8e4d6; --panel:rgba(251,248,238,.95); --ink:#2a2418; --ink2:#6a604a; --line:rgba(42,36,24,.2);
+  --accent:#b5651d; --accent-ink:#ffffff; --warn:#c9406f; --dark:0; --stroke:#2a2418;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#1e1a12;--panel:rgba(34,29,20,.95);--ink:#efe8d6;--ink2:#b5aa90;--line:rgba(239,232,214,.22);--accent:#e8a24a;--accent-ink:#2a1a06;--stroke:#0a0804;--dark:1;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#1e1a12;--panel:rgba(34,29,20,.95);--ink:#efe8d6;--ink2:#b5aa90;--line:rgba(239,232,214,.22);--accent:#e8a24a;--accent-ink:#2a1a06;--stroke:#0a0804;--dark:1;color-scheme:dark}
+*{box-sizing:border-box}
+html{height:100%;background:var(--bg);scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+h1,h2,h3{font-family:'Bricolage Grotesque','IBM Plex Sans',system-ui,sans-serif;margin:0;letter-spacing:-.01em}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#stage{height:100%;display:flex;flex-direction:column;gap:6px;padding:8px;position:relative}
+#hud{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:flex;align-items:baseline;gap:5px;padding:5px 9px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:12px;color:var(--ink2)}
+.chip b{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
+.chip.bad b{color:var(--warn)}
+#hint{font-size:13px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:7px 11px;color:var(--ink);line-height:1.4}
+#main{flex:1;min-height:0;display:flex;gap:6px}
+#cvWrap{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
+#legend{position:absolute;left:8px;bottom:6px;font-size:11px;color:#fff;background:rgba(0,0,0,.5);padding:3px 8px;border-radius:8px;pointer-events:none}
+#modeTip{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--warn);color:#fff;font-weight:600;font-size:13px;padding:8px 14px;border-radius:10px;display:none;pointer-events:none;z-index:3}
+#side{width:262px;display:flex;flex-direction:column;gap:6px;overflow:auto}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--ink2)}
+.box h3{font-size:13px;color:var(--ink);margin-bottom:5px}
+.role{display:flex;align-items:center;gap:6px;padding:3px 0}
+.role i{width:11px;height:11px;border-radius:50%;flex:none}
+.role span{flex:1;color:var(--ink)}
+.role b{min-width:18px;text-align:right;color:var(--ink)}
+.role button{width:28px;height:28px;border:1px solid var(--line);background:transparent;border-radius:8px;font-weight:700}
+.role small{display:block;color:var(--ink2);font-size:11px;font-weight:400}
+#log{display:flex;flex-direction:column;gap:3px;font-size:12px}
+#log div{color:var(--ink2)}#log div:first-child{color:var(--ink);font-weight:600}
+#goal summary{cursor:pointer;font-weight:600;color:var(--ink);list-style:none;display:flex;justify-content:space-between}
+#goal summary::-webkit-details-marker{display:none}
+.g{padding:2px 0}.g.ok{color:#2f8a3f;font-weight:600}
+#bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+#bar button{padding:7px 12px;min-height:54px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:14px;font-weight:600;min-width:112px}
+#bar button small{display:block;font-weight:400;color:var(--ink2);font-size:11px;line-height:1.25}
+#bar button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}#bar button.on small{color:inherit;opacity:.85}
+#bar button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}#bar button.go small{color:inherit}
+#bar button:disabled{opacity:.45;cursor:not-allowed}
+#bar button.sm{min-height:40px;min-width:70px;font-size:12.5px}
+#bar .brk{flex-basis:100%;height:0}
+#tray{flex-basis:100%;order:-1;display:none;gap:6px;flex-wrap:wrap;justify-content:center}#tray.show{display:flex}
+#toasts{position:absolute;left:50%;top:70px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,440px);z-index:6}
+.toast{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;animation:tin .25s ease-out,tout .4s ease-in 4.2s forwards}
+.toast.warn{border-color:var(--warn)}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes tout{to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.toast{animation:tout .4s ease-in 4.2s forwards}}
+.ov{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(4px);z-index:10;overflow:auto}
+.ov.show{display:flex}
+.card{width:min(720px,100%);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;max-height:100%;overflow:auto}
+.card h1{font-size:clamp(30px,8vw,44px);font-weight:800;line-height:1}
+.card h2{font-size:22px;font-weight:800;margin-bottom:6px}
+.card p{margin:8px 0;line-height:1.5;color:var(--ink2);font-size:14px}
+.bigbtn{width:100%;padding:13px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:16px;margin-top:10px}
+.ghost{width:100%;padding:10px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;margin-top:8px}
+.seg{display:flex;gap:6px;margin:6px 0;flex-wrap:wrap}
+.seg button{flex:1;min-width:110px;padding:9px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;font-size:13px}
+.seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:10px}
+.tc{text-align:left;padding:10px;border:1px solid var(--line);background:transparent;border-radius:12px;display:block;width:100%}
+.tc:hover:not(:disabled),.tc:focus-visible{border-color:var(--accent)}
+.tc:disabled{opacity:.5;cursor:not-allowed}
+.tc.done{border-color:#2f8a3f;background:color-mix(in srgb,#2f8a3f 12%,transparent)}
+.tc b{font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;display:block}
+.tc span{display:block;font-size:12.5px;color:var(--ink2);margin-top:2px}
+.tc em{display:block;font-style:normal;font-size:11.5px;margin-top:4px;color:var(--ink2)}
+#pauseTag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;display:none;pointer-events:none;z-index:4}
+@media (max-width:820px){#main{flex-direction:column}#side{width:100%;max-height:38vh;flex-direction:row;flex-wrap:wrap}#side .box{flex:1;min-width:200px}#bar button{min-width:86px;padding:6px 8px;font-size:13px}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="hud">
+    <div class="chip"><b id="vSeason">—</b><span id="vYear"></span></div>
+    <div class="chip"><b id="vPop">0</b><span id="vPopT">personas</span></div>
+    <div class="chip" id="cFood"><b id="vFood">0</b><span>raciones</span></div>
+    <div class="chip"><b id="vWood">0</b><span>madera</span></div>
+    <div class="chip"><b id="vStone">0</b><span>piedra</span></div>
+    <div class="chip"><b id="vKnow">0</b><span>Conocimiento</span></div>
+    <div class="chip" id="cCoh"><b id="vCoh">0/0</b><span>cohesión</span></div>
+  </div>
+  <div id="hint"></div>
+  <div id="main">
+    <div id="cvWrap"><canvas id="cv"></canvas><div id="modeTip"></div><div id="legend">Cada persona tiene un oficio (color) · barra amarilla: hambre · cuadrito: lo que lleva</div><div id="pauseTag">En pausa</div></div>
+    <div id="side">
+      <div class="box"><h3>Oficios de la tribu <small id="libres"></small></h3><div id="roles"></div><button class="ghost" id="bAuto" style="margin-top:6px;padding:6px">Asignar libres automáticamente: sí</button></div>
+      <div class="box"><h3>Persona seleccionada</h3><div id="selInfo">Tocá a alguien en el mapa.</div></div>
+      <div class="box"><h3>Qué está pasando</h3><div id="log"></div></div>
+      <details class="box" id="goal" open><summary><span>Camino a la ciudad</span><span id="goalN">0/5</span></summary><div id="goalRows"></div></details>
+    </div>
+  </div>
+  <div id="bar">
+    <div id="tray"></div>
+    <button id="bBuild">Construir<small>refugio, almacén, huerto…</small></button>
+    <button id="bTech" class="go">Tecnología<small id="bTechS">investigar con Conocimiento</small></button>
+    <button id="bDip">Diplomacia<small>tribu vecina</small></button>
+    <span class="brk"></span>
+    <button id="bPause" class="sm">Pausa</button>
+    <button id="bSpd" class="sm">×1</button>
+  </div>
+  <div id="toasts"></div>
+
+  <div id="menu" class="ov show"><div class="card">
+    <h1>Era 3: Tribus</h1>
+    <p>Una banda de cazadores-recolectores. Con oficios, fuego, herramientas y cultura, tu gente puede pasar de sobrevivir a fundar una ciudad. Todo se simula: hambre, trabajo, clima, depredadores, vecinos.</p>
+    <div class="seg" id="diffSeg"><button data-d="0" class="on">Fácil</button><button data-d="1">Normal</button></div>
+    <button class="bigbtn" id="startBtn">Empezar</button>
+    <p style="font-size:12.5px">Base científica (aprox.): las bandas de cazadores-recolectores suelen ser de 25 a 50 personas; el rendimiento de cada actividad se mide en calorías por hora (teoría del forrajeo óptimo); cazar en grupo rinde más (economías de escala); y los grupos estables tienen un límite de cohesión de unos 150 (Dunbar).</p>
+  </div></div>
+
+  <div id="techm" class="ov"><div class="card"><h2>Tecnología</h2><p id="techP"></p><div class="grid" id="techGrid"></div><button class="ghost" id="techClose">Cerrar</button></div></div>
+  <div id="dipm" class="ov"><div class="card"><h2>Diplomacia con el Clan del Este</h2><p id="dipP"></p><div class="grid" id="dipGrid"></div><button class="ghost" id="dipClose">Cerrar</button></div></div>
+  <div id="dlg" class="ov"><div class="card"><h2 id="dT"></h2><div id="dB"></div><div id="dBtns"></div></div></div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const hyp = Math.hypot, TAU = Math.PI * 2;
+
+/* ---------- Datos ---------- */
+const W = 960, H = 600;
+const LAKE = { x: 790, y: 470, rx: 150, ry: 95 };
+const FOR = [{ x: 140, y: 120, r: 110 }, { x: 300, y: 60, r: 70 }, { x: 70, y: 340, r: 80 }, { x: 560, y: 110, r: 70 }, { x: 520, y: 500, r: 60 }];
+const isWater = (x, y) => { const dx = (x - LAKE.x) / LAKE.rx, dy = (y - LAKE.y) / LAKE.ry; return dx * dx + dy * dy < 1; };
+const okLand = (x, y) => x > 8 && y > 8 && x < W - 8 && y < H - 8 && !isWater(x, y);
+const SEAS = [{ n: 'Primavera', g: 1.1, c: '#b4cf86' }, { n: 'Verano', g: 1.4, c: '#a3c26a' }, { n: 'Otoño', g: .8, c: '#cdb572' }, { n: 'Invierno', g: .12, c: '#e3edf2' }];
+const SLEN = 40, CHILD = 45, HD = 1.83;
+const ROLES = {
+  rec: { n: 'Recolectores', c: '#4aa83a', d: 'Juntan bayas y raíces. Rinden poco por viaje pero casi siempre.' },
+  caz: { n: 'Cazadores', c: '#d63a3a', d: 'Cazan con lanza o arco. Cazar en grupo rinde más, pero hay riesgo.' },
+  art: { n: 'Artesanos', c: '#e08a1b', d: 'Cortan madera y pican piedra para construir.' },
+  con: { n: 'Constructores', c: '#8c5a2b', d: 'Levantan los edificios.' },
+  cha: { n: 'Chamanes', c: '#7a4ad0', d: 'Guardan y enseñan la tradición: generan Conocimiento.' }
+};
+const RORDER = ['rec', 'caz', 'art', 'con', 'cha'];
+const TARGET = { rec: .4, caz: .2, art: .15, con: .15, cha: .1 };
+const TECH = {
+  fuego: { n: 'Fuego controlado', cost: 3, req: [], d: 'Cocinar da 30% más de energía aprovechable, abriga y espanta lobos del campamento.' },
+  piedra: { n: 'Piedra tallada', cost: 4, req: [], d: '+25% en recolección, madera y piedra. Habilita el Taller.' },
+  lanza: { n: 'Lanza', cost: 5, req: ['piedra'], d: 'Éxito de caza de 55% a 75%.' },
+  arco: { n: 'Arco', cost: 8, req: ['lanza'], d: 'Éxito de caza de 85% y menos heridos.' },
+  cesta: { n: 'Cestería', cost: 4, req: ['piedra'], d: 'Cada viaje de recolección carga 40% más.' },
+  ceram: { n: 'Cerámica', cost: 6, req: ['fuego', 'cesta'], d: 'La comida almacenada se echa a perder 60% más lento.' },
+  agri: { n: 'Agricultura', cost: 10, req: ['ceram'], d: 'Habilita el Huerto: comida constante y vida sedentaria.' },
+  domes: { n: 'Domesticación', cost: 10, req: ['lanza', 'agri'], d: 'Habilita el Corral: comida estable de animales domésticos.' },
+  marcas: { n: 'Marcas de cuenta', cost: 12, req: ['ceram'], d: 'Proto-escritura para llevar cuentas. Requisito de la ciudad.' }
+};
+const BLD = {
+  refugio: { n: 'Refugio', w: 6, s: 0, time: 10, d: 'Alberga a 4 personas del frío y la enfermedad.' },
+  almacen: { n: 'Almacén', w: 10, s: 2, time: 14, d: 'Guarda 30 raciones más y frena el deterioro.' },
+  taller: { n: 'Taller', w: 6, s: 6, time: 14, req: 'piedra', d: '+15% de productividad en todos los oficios.' },
+  huerto: { n: 'Huerto', w: 4, s: 0, time: 12, req: 'agri', d: 'Cultivo: comida constante si lo atiende un recolector.' },
+  corral: { n: 'Corral', w: 10, s: 0, time: 16, req: 'domes', d: 'Animales domésticos: comida estable.' },
+  totem: { n: 'Tótem', w: 8, s: 4, time: 18, d: 'Reúne a la tribu: sube el límite de cohesión y genera Tradición.' }
+};
+
+/* ---------- Estado ---------- */
+let G = null, started = false, spdI = 1, mode = null, selId = null, diffI = 0;
+const ptr = { x: 0, y: 0, in: false };
+let VW = 0, VH = 0, DPR = 1, SC = 1, OX = 0, OY = 0;
+const cv = $('cv'), ctx = cv.getContext('2d');
+let P = { dark: false, ink: '#2a2418', bg: '#e8e4d6' };
+function pal() { const cs = getComputedStyle(document.documentElement); P.dark = cs.getPropertyValue('--dark').trim() === '1'; P.ink = cs.getPropertyValue('--ink').trim() || P.ink; P.bg = cs.getPropertyValue('--bg').trim() || P.bg; }
+function toast(txt, warn) { const d = document.createElement('div'); d.className = 'toast' + (warn ? ' warn' : ''); d.textContent = txt; $('toasts').appendChild(d); setTimeout(() => d.remove(), 4800); while ($('toasts').children.length > 3) $('toasts').firstChild.remove(); }
+function logMsg(t) { G.log.unshift(t); if (G.log.length > 30) G.log.pop(); }
+const has = k => !!G.techs[k];
+function randLand(cx, cy, rad) { for (let i = 0; i < 80; i++) { const x = cx === undefined ? rnd(30, W - 30) : clamp(cx + rnd(-rad, rad), 12, W - 12), y = cy === undefined ? rnd(30, H - 30) : clamp(cy + rnd(-rad, rad), 12, H - 12); if (okLand(x, y)) return { x, y }; } return { x: 300, y: 330 }; }
+
+function mkPerson(x, y, age, role) { return { id: ++G.id, x, y, a: rnd(0, TAU), hunger: rnd(70, 100), hp: 30, mhp: 30, age, role: role || 'libre', st: 'idle', tgt: null, carry: null, cd: 0, tt: 0, tx: x, ty: y, wt: 0, dead: false, flash: 0, ph: rnd(0, 6), mv: 0 }; }
+function newGame() {
+  G = { t: 0, id: 0, season: 0, P: [], Gm: [], Wv: [], Rd: [], bushes: [], trees: [], rocks: [], B: [], sites: [], log: [], fx: [], food: 8, wood: 6, stone: 2, know: 0, trad: 0, techs: {}, relation: 10, allied: false, trades: 0, raidsOk: 0, raidT: diffI ? 110 : 190, pressure: 0, over: false, modal: false, paused: false, assignT: 0, goalT: 0, winters: 0, camp: { x: 300, y: 330 }, births: 0, deaths: 0, g: [], birthT: 20, fissT: 0, disT: 0, gmT: 0, wolfT: 0, auto: true, sheltered: new Set(), grass: [], lastSeason: 0, raidLog: 0 };
+  for (let i = 0; i < 260; i++) G.grass.push({ x: rnd(0, W), y: rnd(0, H), a: rnd(0, 1) });
+  for (let i = 0; i < 46; i++) { const q = randLand(); if (hyp(q.x - 300, q.y - 330) > 50) G.bushes.push({ x: q.x, y: q.y, v: rnd(.5, 1) }); }
+  for (let i = 0; i < 34; i++) { const f = FOR[Math.floor(Math.random() * FOR.length)]; const a = rnd(0, TAU), d = Math.sqrt(Math.random()) * f.r; const x = f.x + Math.cos(a) * d, y = f.y + Math.sin(a) * d; if (okLand(x, y)) G.trees.push({ x, y, w: 3 }); }
+  for (let i = 0; i < 12; i++) { const q = randLand(); if (hyp(q.x - 300, q.y - 330) > 80) G.rocks.push({ x: q.x, y: q.y, s: 6, seed: Math.random() * 9 }); }
+  G.B.push({ k: 'fogata', x: 300, y: 330, prog: 1, done: true });
+  const roles = ['rec', 'rec', 'rec', 'rec', 'caz', 'caz', 'art', 'con'];
+  roles.forEach(r => { const q = randLand(300, 330, 40); G.P.push(mkPerson(q.x, q.y, rnd(60, 160), r)); });
+  [['ciervo', 5], ['conejo', 9]].forEach(([k, n]) => { for (let i = 0; i < n; i++) spawnGame(k); });
+  for (let i = 0; i < 2; i++) { const f = FOR[Math.floor(Math.random() * 2)]; G.Wv.push({ x: f.x, y: f.y, hp: 30, st: 'wander', tx: f.x, ty: f.y, wt: 0, dead: false, cd: 0 }); }
+  mode = null; selId = null; setMode(null);
+  logMsg('Tu banda llegó al valle. Asigná oficios en el panel de la derecha.');
+}
+function spawnGame(kind) { const q = randLand(); G.Gm.push({ kind, x: q.x, y: q.y, hp: 1, kcal: kind === 'ciervo' ? 7 : 1.2, spd: kind === 'ciervo' ? 52 : 60, tx: q.x, ty: q.y, wt: 0, fleeT: 0, dead: false, a: 0 }); }
+
+/* ---------- Utilidades de simulación ---------- */
+function nearestOf(list, x, y, range, fn) { let best = null, bd = range; for (const o of list) { if (o.dead || (fn && !fn(o))) continue; const d = hyp(o.x - x, o.y - y); if (d < bd) { bd = d; best = o; } } return best; }
+function moveP(a, gx, gy, spd, dt) {
+  const dx = gx - a.x, dy = gy - a.y, d = hyp(dx, dy);
+  if (d > 3) { const mx = dx / d * spd * dt, my = dy / d * spd * dt; if (okLand(a.x + mx, a.y + my)) { a.x += mx; a.y += my; } else if (okLand(a.x + mx, a.y)) a.x += mx; else if (okLand(a.x, a.y + my)) a.y += my; a.a = Math.atan2(dy, dx); a.mv = 1; return false; }
+  a.mv = 0; return true;
+}
+const done = k => G.B.filter(b => b.k === k && b.done);
+const fireNear = (x, y) => has('fuego') && hyp(x - G.camp.x, y - G.camp.y) < 95;
+function foodCap() { return 20 + 30 * done('almacen').length; }
+function shelterCap() { return 4 * done('refugio').length; }
+function cohLimit() { return Math.min(60, 20 + (done('totem').length ? 25 : 0) + Math.floor(G.trad)); }
+const adults = () => G.P.filter(p => !p.dead && p.age >= CHILD);
+function prodMul() { return (1 + (has('piedra') ? .25 : 0)) * (done('taller').length ? 1.15 : 1) * (G.P.filter(p => !p.dead).length > cohLimit() ? .7 : 1); }
+function hurtP(p, d, why) { p.hp -= d; p.flash = .15; if (p.hp <= 0 && !p.dead) { p.dead = true; G.deaths++; logMsg((p.age < CHILD ? 'Murió un niño' : 'Murió un adulto') + ' (' + why + ').'); if (G.P.filter(q => !q.dead).length < 2 && !G.over) { /* lose chequeado en goals */ } } }
+
+/* ---------- Comportamiento de personas ---------- */
+function tickPerson(p, dt) {
+  const child = p.age < CHILD; p.age += dt; p.cd -= dt; p.flash -= dt; p.mhp = child ? 20 : 30;
+  p.hunger = Math.max(0, p.hunger - HD * dt * (child ? .7 : 1));
+  if (p.hunger <= 0) { hurtP(p, 1.1 * dt, 'hambre'); if (p.dead) return; } else if (p.hp < p.mhp && p.hunger > 50) p.hp = Math.min(p.mhp, p.hp + .35 * dt);
+  if (G.season === 3 && !G.sheltered.has(p.id) && !fireNear(p.x, p.y)) { hurtP(p, .15 * dt, 'frío'); if (p.dead) return; }
+  const wv = nearestOf(G.Wv, p.x, p.y, 70, w => !fireNear(w.x, w.y));
+  if (wv && !child) {
+    const hunters = G.P.filter(q => !q.dead && q.role === 'caz' && hyp(q.x - wv.x, q.y - wv.y) < 80).length;
+    if (hunters >= 2 || (p.role === 'caz' && has('lanza'))) { wv.hp -= 14 * dt * (has('lanza') ? 1.4 : 1); if (wv.hp <= 0) { wv.dead = true; logMsg('Los cazadores mataron a un lobo.'); } else if (hyp(wv.x - p.x, wv.y - p.y) < 20 && wv.cd <= 0) { wv.cd = 2; hurtP(p, 4, 'lobo'); } }
+    else { p.st = 'flee'; moveP(p, p.x + (p.x - wv.x), p.y + (p.y - wv.y), 62, dt); if (hyp(wv.x - p.x, wv.y - p.y) < 20 && wv.cd <= 0) { wv.cd = 2; hurtP(p, 5, 'lobo'); } return; }
+  }
+  const camp = G.camp;
+  if (p.hunger < 40 && G.food >= .5) {
+    p.st = 'eat'; const at = moveP(p, camp.x + Math.cos(p.id) * 34, camp.y + Math.sin(p.id) * 34, 52, dt);
+    if (at) { const cook = has('fuego') ? 1.3 : 1; G.food -= .5; p.hunger = Math.min(100, p.hunger + 55 * cook); }
+    return;
+  }
+  if (child || p.role === 'libre') { p.st = 'idle'; p.wt -= dt; if (p.wt <= 0) { p.wt = rnd(2, 5); const q = randLand(camp.x, camp.y, 70); p.tx = q.x; p.ty = q.y; } moveP(p, p.tx, p.ty, 26, dt); return; }
+  const sp = 48, mul = prodMul();
+  if (p.carry) {
+    p.st = 'carry'; const dep = nearestOf(G.B, p.x, p.y, 1e9, b => b.done && (b.k === 'fogata' || b.k === 'almacen')) || { x: camp.x, y: camp.y };
+    if (moveP(p, dep.x, dep.y + 18, sp, dt)) { const c = p.carry; p.carry = null; if (c.k === 'food') G.food += c.amt; else if (c.k === 'wood') G.wood += c.amt; else G.stone += c.amt; }
+    return;
+  }
+  if (p.role === 'rec') {
+    const hu = done('huerto').find(h => h.crew === undefined || true);
+    const farm = has('agri') ? nearestOf(G.B, p.x, p.y, 250, b => b.done && (b.k === 'huerto' || b.k === 'corral') && (b.crewN || 0) < 2) : null;
+    if (farm && G.bushes.every(b => b.v < .35 || hyp(b.x - p.x, b.y - p.y) > 200)) { p.st = 'farm'; if (moveP(p, farm.x + Math.cos(p.id) * 20, farm.y + Math.sin(p.id) * 20, sp, dt)) farm.crewT = G.t; return; }
+    const b = p.tgt && !p.tgt.dead && p.tgt.v >= .25 ? p.tgt : nearestOf(G.bushes, p.x, p.y, 420, q => q.v >= .3 && !q.taken);
+    p.tgt = b;
+    if (!b) { p.st = 'idle'; wanderP(p, dt); return; }
+    p.st = 'gather'; if (moveP(p, b.x, b.y, sp, dt)) { p.tt += dt; if (p.tt >= 2.5) { p.tt = 0; const amt = Math.min(1.2, b.v * 1.3) * mul * (has('cesta') ? 1.4 : 1); b.v = Math.max(0, b.v - .7); p.carry = { k: 'food', amt }; p.tgt = null; } }
+  } else if (p.role === 'caz') {
+    let t = p.tgt && !p.tgt.dead ? p.tgt : nearestOf(G.Gm, p.x, p.y, 520, q => !q.dead && !(G.winters === 0 && false)); p.tgt = t;
+    if (!t) { p.st = 'idle'; wanderP(p, dt); return; }
+    p.st = 'hunt'; moveP(p, t.x, t.y, 55, dt);
+    if (hyp(t.x - p.x, t.y - p.y) < 16 && p.cd <= 0) {
+      p.cd = 1.2; const mates = Math.min(3, G.P.filter(q => !q.dead && q.id !== p.id && q.role === 'caz' && hyp(q.x - p.x, q.y - p.y) < 120).length);
+      let ps = has('arco') ? .85 : has('lanza') ? .75 : .55; ps = Math.min(.95, ps * (1 + .12 * mates));
+      if (Math.random() < ps) { t.dead = true; G.pressure += 1; p.carry = { k: 'food', amt: t.kcal * mul }; p.tgt = null; for (let i = 0; i < 6; i++) G.fx.push({ x: t.x, y: t.y, vx: rnd(-30, 30), vy: rnd(-30, 30), l: .6, c: '#b33' }); }
+      else { t.fleeT = 3; if (t.kind === 'ciervo' && Math.random() < (has('arco') ? .03 : .1)) hurtP(p, 9, 'cacería'); }
+    }
+  } else if (p.role === 'art' || p.role === 'con') {
+    if (p.role === 'con' && G.sites.length) { const s = nearestOf(G.sites, p.x, p.y, 1e9); if (s) { p.st = 'build'; moveP(p, s.x + Math.cos(p.id) * 24, s.y + Math.sin(p.id) * 24, sp, dt); return; } }
+    const needStone = G.stone < 5 && G.rocks.some(r => r.s > .5);
+    const t = needStone ? nearestOf(G.rocks, p.x, p.y, 1e9, r => r.s > .5) : nearestOf(G.trees, p.x, p.y, 1e9, r => r.w > .5) || nearestOf(G.rocks, p.x, p.y, 1e9, r => r.s > .5);
+    if (!t) { p.st = 'idle'; wanderP(p, dt); return; }
+    const isRock = t.s !== undefined; p.st = isRock ? 'mine' : 'chop';
+    if (moveP(p, t.x, t.y, sp, dt)) { p.tt += dt; if (p.tt >= (isRock ? 4 : 3)) { p.tt = 0; if (isRock) { t.s -= 1; p.carry = { k: 'stone', amt: 1 * mul }; } else { t.w -= 1; p.carry = { k: 'wood', amt: 1 * mul }; } } }
+  } else if (p.role === 'cha') {
+    p.st = 'pray'; const tot = done('totem')[0]; moveP(p, (tot || camp).x + Math.cos(p.id * 1.7) * 36, (tot || camp).y + Math.sin(p.id * 1.7) * 36, 36, dt);
+  }
+}
+function wanderP(p, dt) { p.wt -= dt; if (p.wt <= 0) { p.wt = rnd(2, 5); const q = randLand(p.x, p.y, 90); p.tx = q.x; p.ty = q.y; } moveP(p, p.tx, p.ty, 30, dt); }
+
+/* ---------- Fauna, lobos y saqueadores ---------- */
+function tickGame(g, dt) {
+  g.wt -= dt; g.fleeT -= dt;
+  const pr = nearestOf(G.P, g.x, g.y, 90, q => !q.dead && q.age >= CHILD);
+  let spd = g.spd * .35, gx = g.tx, gy = g.ty;
+  if (pr || g.fleeT > 0) { const o = pr || { x: g.x, y: g.y }; gx = g.x + (g.x - o.x) * 2 + rnd(-30, 30); gy = g.y + (g.y - o.y) * 2 + rnd(-30, 30); spd = g.spd * 1.25; }
+  else if (g.wt <= 0) { g.wt = rnd(2, 6); const q = randLand(g.x, g.y, 80); g.tx = q.x; g.ty = q.y; }
+  moveP(g, gx, gy, spd, dt);
+}
+function tickWolf(w, dt) {
+  w.cd -= dt; w.wt -= dt;
+  const prey = nearestOf(G.P, w.x, w.y, 105, q => !q.dead && !fireNear(q.x, q.y) && hyp(q.x - G.camp.x, q.y - G.camp.y) > 90 && G.P.filter(o => !o.dead && hyp(o.x - q.x, o.y - q.y) < 60).length < 3);
+  if (prey && !fireNear(w.x, w.y)) { moveP(w, prey.x, prey.y, 58, dt); }
+  else { if (w.wt <= 0) { w.wt = rnd(3, 7); const q = randLand(w.x, w.y, 120); w.tx = q.x; w.ty = q.y; } moveP(w, w.tx, w.ty, 28, dt); }
+}
+function tickRaider(r, dt) {
+  r.cd -= dt;
+  if (r.fleeing) { moveP(r, W + 40, r.y, 60, dt); if (r.x > W - 10) r.dead = true; return; }
+  const dest = G.camp; moveP(r, dest.x + 20, dest.y, 52, dt);
+  const near = nearestOf(G.P, r.x, r.y, 22, q => !q.dead);
+  if (near && r.cd <= 0) { r.cd = 1; hurtP(near, 5, 'saqueo'); }
+  for (const q of G.P) if (!q.dead && q.role === 'caz' && hyp(q.x - r.x, q.y - r.y) < 34) r.hp -= 9 * dt * (has('lanza') ? 1.5 : 1);
+  if (r.hp <= 0) { r.dead = true; logMsg('Los cazadores derrotaron a un saqueador.'); return; }
+  if (hyp(r.x - dest.x, r.y - dest.y) < 30) { const loss = G.food * .2; G.food -= loss; r.fleeing = true; G.raidLog++; logMsg('Los saqueadores robaron ' + Math.round(loss) + ' raciones.'); }
+}
+function startRaid() {
+  const n = 3 + Math.floor(G.t / 150) + (diffI ? 1 : 0);
+  for (let i = 0; i < n; i++) G.Rd.push({ x: W - 20, y: rnd(60, 300), hp: 18, cd: 0, dead: false, fleeing: false });
+  G.raidLog = 0; toast('¡Saqueadores del Clan del Este se acercan! Tus cazadores tienen que defender el campamento.', true); logMsg('Un grupo de saqueadores se acerca al campamento.');
+}
+
+/* ---------- Actualización ---------- */
+function update(dt) {
+  G.t += dt; const prev = G.season; G.season = Math.floor(G.t / SLEN) % 4; const sea = SEAS[G.season];
+  if (prev === 3 && G.season === 0) { G.winters++; logMsg('Sobrevivieron al invierno (' + G.winters + ').'); }
+  for (const b of G.bushes) b.v = Math.min(1, b.v + .009 * sea.g * dt);
+  for (const t of G.trees) t.w = Math.min(3, t.w + .004 * dt);
+  for (const r of G.rocks) r.s = Math.min(6, r.s + .0015 * dt);
+  G.pressure = Math.max(0, G.pressure - .03 * dt);
+  G.gmT += dt; if (G.gmT > 14 + G.pressure * 3) { G.gmT = 0; const c = { ciervo: 0, conejo: 0 }; G.Gm.forEach(g => { if (!g.dead) c[g.kind]++; }); if (c.ciervo < 5) spawnGame('ciervo'); if (c.conejo < 9) spawnGame('conejo'); }
+  G.Gm = G.Gm.filter(g => !g.dead); for (const g of G.Gm) tickGame(g, dt);
+  G.wolfT += dt; if (G.wolfT > 90) { G.wolfT = 0; if (G.Wv.filter(w => !w.dead).length < 2) { const f = FOR[Math.floor(Math.random() * FOR.length)]; G.Wv.push({ x: f.x, y: f.y, hp: 30, wt: 0, tx: f.x, ty: f.y, dead: false, cd: 0 }); } }
+  G.Wv = G.Wv.filter(w => !w.dead); for (const w of G.Wv) tickWolf(w, dt);
+  G.Rd = G.Rd.filter(r => !r.dead); for (const r of G.Rd) tickRaider(r, dt);
+  G.sheltered = new Set(G.P.filter(p => !p.dead).sort((a, b) => b.age - a.age).slice(0, shelterCap()).map(p => p.id));
+  for (const p of G.P) if (!p.dead) tickPerson(p, dt);
+  G.P = G.P.filter(p => !p.dead);
+  // construcción
+  for (const s of G.sites.slice()) {
+    const bs = G.P.filter(p => p.role === 'con' && hyp(p.x - s.x, p.y - s.y) < 55 && p.age >= CHILD).length;
+    s.prog = Math.min(1, s.prog + bs * dt / BLD[s.k].time * prodMul());
+    if (s.prog >= 1) { s.done = true; G.sites.splice(G.sites.indexOf(s), 1); logMsg(BLD[s.k].n + ' terminado.'); toast(BLD[s.k].n + ' terminado.'); for (let i = 0; i < 10; i++) G.fx.push({ x: s.x, y: s.y, vx: rnd(-40, 40), vy: rnd(-40, 10), l: .7, c: '#ffe08a' }); }
+  }
+  // producción de huertos y corrales
+  for (const b of G.B) if (b.done && (b.k === 'huerto' || b.k === 'corral')) { const crew = G.P.filter(p => p.role === 'rec' && p.age >= CHILD && hyp(p.x - b.x, p.y - b.y) < 45).length; b.crewN = crew; if (crew > 0) G.food += (b.k === 'huerto' ? .09 : .07) * (1 + .5 * (crew - 1)) * dt * prodMul() * (G.season === 3 && b.k === 'huerto' ? .3 : 1); }
+  // conocimiento y tradición
+  const ad = adults(), cha = ad.filter(p => p.role === 'cha').length;
+  G.know += dt * (.004 * ad.length + .05 * cha) * (G.allied ? 1.25 : 1);
+  G.trad += dt * (.002 * ad.length + .03 * cha + (done('totem').length ? .05 : 0));
+  // deterioro de comida
+  const cap = foodCap(); if (G.food > cap) G.food -= (G.food - cap) * .015 * (has('ceram') ? .4 : 1) * dt * 8;
+  G.food = Math.max(0, G.food);
+  // nacimientos
+  G.birthT -= dt; const pop = G.P.length;
+  if (G.birthT <= 0) { G.birthT = rnd(22, 34); if (ad.length >= 2 && G.food > pop * 1.2 + 2 && pop < shelterCap() + 12) { const m = ad[Math.floor(Math.random() * ad.length)]; G.P.push(mkPerson(m.x + rnd(-8, 8), m.y + rnd(-8, 8), 0, 'libre')); G.births++; logMsg('Nació un niño en la tribu.'); } }
+  // asignación automática
+  G.assignT += dt; if (G.assignT > 4 && G.auto) { G.assignT = 0; const libres = ad.filter(p => p.role === 'libre'); if (libres.length) { const cnt = {}; RORDER.forEach(r => cnt[r] = ad.filter(p => p.role === r).length); const tot = ad.length || 1; let best = null, bd = -1; RORDER.forEach(r => { const d = TARGET[r] - cnt[r] / tot; if (d > bd) { bd = d; best = r; } }); libres[0].role = best; logMsg('Un joven ahora es ' + ROLES[best].n.toLowerCase().replace(/es$/, '') + '.'); } }
+  // cohesión (Dunbar), enfermedad
+  const lim = cohLimit(); G.fissT += dt;
+  if (pop > lim && G.fissT > 70) { G.fissT = 0; const go = shuffle(ad).slice(0, 3); go.forEach(p => p.dead = true); logMsg('La tribu es demasiado grande para mantenerse unida: un grupo se fue.'); toast('Fisión: un grupo se separó. Un tótem o más Tradición suben el límite de cohesión.', true); }
+  G.disT += dt; if (pop > shelterCap() + 7 && G.disT > 80) { G.disT = 0; shuffle(G.P).slice(0, 3).forEach(p => hurtP(p, 14, 'enfermedad')); logMsg('Una enfermedad se propagó por el hacinamiento.'); toast('Enfermedad: faltan refugios.', true); }
+  // diplomacia y saqueos
+  G.relation = clamp(G.relation + (G.allied ? .02 : -.01) * dt, -100, 100);
+  G.raidT -= dt; if (G.raidT <= 0) { G.raidT = rnd(110, 160) * (diffI ? .8 : 1.2); if (!G.allied && G.Rd.length === 0) startRaid(); else if (G.allied) logMsg('El Clan del Este, aliado, no atacó.'); }
+  if (G.Rd.length === 0 && G.raidLog === 0 && G.pendingRaid) { }
+  for (const f of G.fx) { f.l -= dt; f.x += f.vx * dt; f.y += f.vy * dt; } G.fx = G.fx.filter(f => f.l > 0);
+  if (done('fogata').length && Math.random() < dt * 3) G.fx.push({ x: G.camp.x + rnd(-5, 5), y: G.camp.y - 6, vx: rnd(-6, 6), vy: rnd(-30, -15), l: .8, c: '#ffb347' });
+  G.goalT += dt; if (G.goalT >= 1) { G.goalT = 0; goals(); }
+}
+function goals() {
+  const ad = adults().length, pop = G.P.length, D = diffI;
+  const techs = ['fuego', 'agri', 'ceram', 'marcas'].filter(has).length;
+  G.g = [{ t: 'Población: ' + pop + ' / ' + (D ? 24 : 18), ok: pop >= (D ? 24 : 18) }, { t: 'Tecnologías clave (Fuego, Cerámica, Agricultura, Marcas): ' + techs + ' / 4', ok: techs >= 4 }, { t: 'Edificios: ' + Math.min(3, done('refugio').length) + ' / 3 refugios, ' + (done('almacen').length ? '1' : '0') + ' / 1 almacén, ' + (done('totem').length ? '1' : '0') + ' / 1 tótem', ok: done('refugio').length >= 3 && done('almacen').length >= 1 && done('totem').length >= 1 }, { t: 'Huerto en marcha', ok: done('huerto').length >= 1 }, { t: 'Sobrevivir ' + (D ? 2 : 1) + ' invierno(s): ' + G.winters + ' / ' + (D ? 2 : 1), ok: G.winters >= (D ? 2 : 1) }];
+  if (!G.over && G.g.every(g => g.ok)) win();
+  if (!G.over && ad === 0) lose();
+}
+function win() {
+  G.over = true;
+  const path = G.raidsOk >= 2 ? ['Jefatura', 'Repeliste varios saqueos: una jefatura militar organiza la ciudad.', 'Ciudad militarista'] : G.trades >= 3 ? ['Mercado', 'Tu red de intercambio con otros clanes sostiene una ciudad comerciante.', 'Ciudad mercantil'] : ['Templo', 'La Tradición y el tótem reunieron a la tribu en torno a un centro ceremonial.', 'Ciudad teocrática'];
+  dialog('Fundaron la primera ciudad: camino ' + path[0], '<p>' + path[1] + '</p><p>Civilización resultante en la Era 4: <b>' + path[2] + '</b>. La Era 4 todavía no está en el prototipo.</p><p>Población: ' + G.P.length + ' · Nacimientos: ' + G.births + ' · Muertes: ' + G.deaths + ' · Tiempo: ' + Math.floor(G.t / 60) + ' min ' + Math.floor(G.t % 60) + ' s</p>', [{ t: 'Volver al inicio', fn: toMenu }]);
+}
+function lose() { G.over = true; dialog('La tribu desapareció', '<p>Sin adultos, la banda no pudo continuar. Probá asignar más recolectores al principio, refugiarte antes del invierno y defender el campamento.</p>', [{ t: 'Volver al inicio', fn: toMenu }]); }
+function toMenu() { $('menu').classList.add('show'); started = false; }
+function dialog(t, html, btns) { $('dT').textContent = t; $('dB').innerHTML = html; const bx = $('dBtns'); bx.innerHTML = ''; btns.forEach(b => { const e = document.createElement('button'); e.className = 'bigbtn'; e.textContent = b.t; e.onclick = () => { $('dlg').classList.remove('show'); b.fn && b.fn(); }; bx.appendChild(e); }); $('dlg').classList.add('show'); }
+
+/* ---------- Acciones ---------- */
+function setRole(role, delta) {
+  if (!started || G.over) return; const ad = adults();
+  if (delta > 0) { let p = ad.find(q => q.role === 'libre'); if (!p) { const cnt = {}; RORDER.forEach(r => cnt[r] = ad.filter(q => q.role === r).length); const from = RORDER.filter(r => r !== role && cnt[r] > 0).sort((a, b) => cnt[b] - cnt[a])[0]; if (!from) return; p = ad.find(q => q.role === from); } p.role = role; p.tgt = null; p.carry = p.carry; }
+  else { const p = ad.find(q => q.role === role); if (p) { p.role = 'libre'; p.tgt = null; } }
+}
+function placeBuilding(kind, w) {
+  const d = BLD[kind], x = clamp(w.x, 30, W - 30), y = clamp(w.y, 30, H - 30);
+  if (d.req && !has(d.req) && !(d.req === 'agri' && has('agri'))) { toast('Primero investigá la tecnología necesaria.'); setMode(null); return; }
+  if (!okLand(x, y)) { toast('Construí en tierra firme.'); return; }
+  if (G.wood < d.w || G.stone < d.s) { toast('Faltan materiales: ' + d.w + ' madera' + (d.s ? ' y ' + d.s + ' piedra' : '') + '.'); setMode(null); return; }
+  if (kind === 'totem' && done('totem').length + G.sites.filter(s => s.k === 'totem').length >= 1) { toast('Ya hay un tótem.'); setMode(null); return; }
+  if (!G.P.some(p => p.role === 'con' && p.age >= CHILD)) { toast('Asigná al menos un constructor.'); setMode(null); return; }
+  G.wood -= d.w; G.stone -= d.s; const s = { k: kind, x, y, prog: 0, done: false }; G.sites.push(s); G.B.push(s); setMode(null); logMsg('Empezaron a construir: ' + d.n.toLowerCase() + '.'); toast('Los constructores levantan el ' + d.n.toLowerCase() + '.');
+}
+function research(k) {
+  const t = TECH[k]; if (has(k)) return;
+  if (!t.req.every(has)) { toast('Falta una tecnología previa.'); return; }
+  if (G.know < t.cost) { toast('Falta Conocimiento: ' + t.cost + ' (tenés ' + Math.floor(G.know) + ').'); return; }
+  G.know -= t.cost; G.techs[k] = true; logMsg('Aprendieron: ' + t.n + '.'); toast('Nueva tecnología: ' + t.n); renderTech();
+}
+function dip(a) {
+  if (a === 'trade') { if (G.food < 4) { toast('Necesitás 4 raciones para comerciar.'); return; } G.food -= 4; const g = Math.random() < .5 ? ['madera', 6] : ['piedra', 3]; if (g[0] === 'madera') G.wood += 6; else G.stone += 3; G.relation += 5; G.trades++; logMsg('Intercambiaron 4 raciones por ' + g[1] + ' de ' + g[0] + '.'); toast('Intercambio: +' + g[1] + ' ' + g[0] + '.'); }
+  else if (a === 'gift') { if (G.food < 5) { toast('Necesitás 5 raciones.'); return; } G.food -= 5; G.relation += 18; logMsg('Enviaron un regalo al Clan del Este.'); toast('Relación +18.'); }
+  else if (a === 'ally') { if (G.relation < 50) { toast('La relación tiene que ser de 50 o más.'); return; } if (!G.allied) { G.allied = true; logMsg('¡Alianza con el Clan del Este! Dejan de atacar y comparten saberes.'); toast('Alianza sellada.'); } }
+  renderDip();
+}
+
+/* ---------- Dibujo ---------- */
+function drawPerson(x, p, tt) {
+  const child = p.age < CHILD, s = child ? .68 : 1, rc = p.role === 'libre' ? '#9a948a' : ROLES[p.role].c;
+  x.save(); x.translate(p.x, p.y); x.scale(s, s);
+  const sw = Math.sin(tt * 9 + p.ph) * (p.mv ? 1.6 : .3);
+  x.strokeStyle = '#3a2a1a'; x.lineWidth = 1.6; x.beginPath(); x.moveTo(-2, 5); x.lineTo(-2 + sw, 11); x.moveTo(2, 5); x.lineTo(2 - sw, 11); x.stroke();
+  x.fillStyle = p.flash > 0 ? '#fff' : rc; x.strokeStyle = 'rgba(0,0,0,.6)'; x.lineWidth = 1; x.beginPath(); x.ellipse(0, 0, 4.6, 6.2, 0, 0, TAU); x.fill(); x.stroke();
+  x.fillStyle = '#e0b48c'; x.beginPath(); x.arc(0, -8, 3.4, 0, TAU); x.fill(); x.stroke();
+  x.strokeStyle = '#3a2a1a'; x.lineWidth = 1.4;
+  if (p.role === 'caz' && !child) { x.beginPath(); x.moveTo(6, 8); x.lineTo(6, -12); x.stroke(); x.fillStyle = has('arco') ? '#444' : '#ddd'; x.beginPath(); x.moveTo(6, -15); x.lineTo(4, -10); x.lineTo(8, -10); x.fill(); if (has('arco')) { x.beginPath(); x.arc(-6, -2, 6, -1.2, 1.2); x.stroke(); } }
+  else if (p.role === 'rec' && !child) { x.fillStyle = '#9a6a3a'; x.beginPath(); x.arc(-6, 3, 3.4, 0, TAU); x.fill(); x.stroke(); }
+  else if (p.role === 'art' && !child) { x.beginPath(); x.moveTo(6, 6); x.lineTo(8, -6); x.stroke(); x.fillStyle = '#888'; x.fillRect(6, -9, 6, 4); }
+  else if (p.role === 'con' && !child) { x.beginPath(); x.moveTo(6, 6); x.lineTo(7, -5); x.stroke(); x.fillStyle = '#6b4a2a'; x.fillRect(4, -9, 7, 4); }
+  else if (p.role === 'cha' && !child) { x.beginPath(); x.moveTo(6, 8); x.lineTo(6, -13); x.stroke(); x.fillStyle = '#e8c21b'; x.beginPath(); x.arc(6, -14, 2.6, 0, TAU); x.fill(); x.fillStyle = 'rgba(122,74,208,.6)'; x.beginPath(); x.moveTo(-4, -3); x.lineTo(-8, 9); x.lineTo(4, 9); x.fill(); }
+  if (p.carry) { x.fillStyle = p.carry.k === 'food' ? '#d6413a' : p.carry.k === 'wood' ? '#8a5a30' : '#999'; x.fillRect(-3, -17, 6, 5); x.strokeRect(-3, -17, 6, 5); }
+  x.restore();
+  if (p.hunger < 35) { x.fillStyle = 'rgba(0,0,0,.45)'; x.fillRect(p.x - 8, p.y - 20, 16, 3); x.fillStyle = '#e6c23a'; x.fillRect(p.x - 8, p.y - 20, 16 * p.hunger / 100, 3); }
+  if (p.hp < p.mhp - 2) { x.fillStyle = 'rgba(0,0,0,.45)'; x.fillRect(p.x - 8, p.y - 24, 16, 3); x.fillStyle = '#3fbf6a'; x.fillRect(p.x - 8, p.y - 24, 16 * clamp(p.hp / p.mhp, 0, 1), 3); }
+  if (p.id === selId) { x.strokeStyle = '#fff'; x.lineWidth = 2; x.setLineDash([4, 3]); x.beginPath(); x.arc(p.x, p.y, 16, 0, TAU); x.stroke(); x.setLineDash([]); }
+}
+function drawBuilding(x, b, tt) {
+  x.save(); x.translate(b.x, b.y); x.globalAlpha = b.done ? 1 : .45 + .5 * b.prog; const k = b.k;
+  if (k === 'fogata') {
+    if (has('fuego')) { const g = x.createRadialGradient(0, 0, 6, 0, 0, 95); g.addColorStop(0, 'rgba(255,170,60,.25)'); g.addColorStop(1, 'rgba(255,170,60,0)'); x.fillStyle = g; x.beginPath(); x.arc(0, 0, 95, 0, TAU); x.fill(); x.strokeStyle = 'rgba(255,140,40,.35)'; x.setLineDash([4, 5]); x.lineWidth = 1.5; x.beginPath(); x.arc(0, 0, 95, 0, TAU); x.stroke(); x.setLineDash([]); }
+    x.fillStyle = '#7a736c'; for (let i = 0; i < 8; i++) { const a = i * TAU / 8; x.beginPath(); x.arc(Math.cos(a) * 14, Math.sin(a) * 14, 4.2, 0, TAU); x.fill(); }
+    x.strokeStyle = '#6b4a2a'; x.lineWidth = 3; x.beginPath(); x.moveTo(-8, 5); x.lineTo(8, -5); x.moveTo(-8, -5); x.lineTo(8, 5); x.stroke();
+    for (let i = 0; i < 3; i++) { const h = 13 + Math.sin(tt * 9 + i * 2) * 4; x.fillStyle = i === 1 ? '#ffd23a' : '#ff7b1b'; x.beginPath(); x.moveTo(-6 + i * 5, 2); x.quadraticCurveTo(-8 + i * 5, -h * .6, -6 + i * 5 + Math.sin(tt * 7 + i) * 2, -h); x.quadraticCurveTo(-3 + i * 5, -h * .5, -2 + i * 5, 2); x.fill(); }
+  } else if (k === 'refugio') { x.fillStyle = '#b58a5a'; x.strokeStyle = '#4a3320'; x.lineWidth = 2; x.beginPath(); x.arc(0, 6, 15, 0, TAU); x.fill(); x.stroke(); x.fillStyle = '#8a5a30'; x.beginPath(); x.moveTo(-20, 2); x.lineTo(0, -20); x.lineTo(20, 2); x.closePath(); x.fill(); x.stroke(); x.fillStyle = '#2a1a0e'; x.beginPath(); x.ellipse(0, 10, 4, 6, 0, 0, TAU); x.fill(); }
+  else if (k === 'almacen') { x.fillStyle = '#9a7a4a'; x.strokeStyle = '#3a2410'; x.lineWidth = 2; x.fillRect(-16, -8, 32, 20); x.strokeRect(-16, -8, 32, 20); x.fillStyle = '#6b4a2a'; x.fillRect(-18, -14, 36, 7); x.strokeRect(-18, -14, 36, 7); x.strokeStyle = '#3a2410'; for (const px of [-12, 12]) { x.beginPath(); x.moveTo(px, 12); x.lineTo(px, 18); x.stroke(); } }
+  else if (k === 'taller') { x.fillStyle = '#8c8c8c'; x.strokeStyle = '#333'; x.lineWidth = 2; x.fillRect(-16, -2, 32, 12); x.strokeRect(-16, -2, 32, 12); x.fillStyle = '#6a6a6a'; x.beginPath(); x.moveTo(-8, -2); x.lineTo(-4, -10); x.lineTo(6, -10); x.lineTo(10, -2); x.closePath(); x.fill(); x.stroke(); }
+  else if (k === 'huerto') { x.fillStyle = '#7a5a34'; x.strokeStyle = '#3a2a14'; x.lineWidth = 2; x.fillRect(-20, -14, 40, 28); x.strokeRect(-20, -14, 40, 28); x.strokeStyle = '#4faa44'; x.lineWidth = 3; for (let r = -2; r <= 2; r++) { x.beginPath(); x.moveTo(-16, r * 5); x.lineTo(16, r * 5); x.stroke(); } x.fillStyle = '#e0c040'; for (let r = -2; r <= 2; r++) for (let c = -2; c <= 2; c++) { x.beginPath(); x.arc(c * 7, r * 5, 1.4, 0, TAU); x.fill(); } }
+  else if (k === 'corral') { x.strokeStyle = '#8a6a3a'; x.lineWidth = 2.5; x.beginPath(); x.arc(0, 0, 26, 0, TAU); x.stroke(); x.lineWidth = 4; for (let i = 0; i < 14; i++) { const a = i * TAU / 14; x.beginPath(); x.moveTo(Math.cos(a) * 26, Math.sin(a) * 26); x.lineTo(Math.cos(a) * 26, Math.sin(a) * 26 - 6); x.stroke(); } x.fillStyle = '#b9a58a'; for (let i = 0; i < 3; i++) { x.beginPath(); x.ellipse(Math.cos(i * 2.2) * 10, Math.sin(i * 2.2) * 8, 5, 3.4, 0, 0, TAU); x.fill(); } }
+  else if (k === 'totem') { x.fillStyle = '#8a5a30'; x.strokeStyle = '#3a2410'; x.lineWidth = 2; x.fillRect(-7, -30, 14, 44); x.strokeRect(-7, -30, 14, 44); x.fillStyle = '#f4ecd0'; for (const s of [-1, 1]) { x.beginPath(); x.arc(s * 3, -20, 2.4, 0, TAU); x.fill(); } x.fillRect(-4, -12, 8, 3); x.strokeStyle = '#c9406f'; x.lineWidth = 3; x.beginPath(); x.moveTo(-16, -22); x.lineTo(16, -22); x.stroke(); x.fillStyle = '#e8c21b'; x.beginPath(); x.moveTo(0, -40); x.lineTo(5, -30); x.lineTo(-5, -30); x.fill(); }
+  x.globalAlpha = 1;
+  if (!b.done) { x.strokeStyle = '#e8c21b'; x.lineWidth = 4; x.beginPath(); x.arc(0, 0, 28, -Math.PI / 2, -Math.PI / 2 + TAU * b.prog); x.stroke(); }
+  x.restore();
+}
+function render() {
+  const tt = performance.now() / 1000;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, VW, VH); ctx.fillStyle = '#2c2a22'; ctx.fillRect(0, 0, VW, VH);
+  ctx.setTransform(DPR * SC, 0, 0, DPR * SC, OX * DPR, OY * DPR);
+  if (!G) { ctx.fillStyle = SEAS[0].c; ctx.fillRect(0, 0, W, H); return; }
+  const S = G, sea = SEAS[S.season];
+  ctx.fillStyle = sea.c; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(40,80,30,.22)'; ctx.lineWidth = 1; ctx.beginPath(); for (const g of S.grass) { ctx.moveTo(g.x, g.y); ctx.lineTo(g.x + 2, g.y - 5 - g.a * 3); } ctx.stroke();
+  for (const f of FOR) { const g = ctx.createRadialGradient(f.x, f.y, f.r * .2, f.x, f.y, f.r); g.addColorStop(0, S.season === 3 ? 'rgba(210,225,230,.8)' : 'rgba(40,100,50,.6)'); g.addColorStop(1, 'rgba(40,100,50,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.fill(); }
+  const lg = ctx.createRadialGradient(LAKE.x, LAKE.y, 10, LAKE.x, LAKE.y, LAKE.rx); lg.addColorStop(0, S.season === 3 ? '#9fc4dd' : '#4a98cc'); lg.addColorStop(1, S.season === 3 ? '#c4dbe8' : '#7cc0e4'); ctx.fillStyle = lg; ctx.beginPath(); ctx.ellipse(LAKE.x, LAKE.y, LAKE.rx, LAKE.ry, 0, 0, TAU); ctx.fill();
+  for (const r of S.rocks) { ctx.fillStyle = '#9a9288'; ctx.strokeStyle = '#4a443c'; ctx.lineWidth = 1.5; ctx.beginPath(); for (let i = 0; i < 7; i++) { const a = i * TAU / 7, k = 9 + 4 * Math.sin(a * 3 + r.seed); i ? ctx.lineTo(r.x + Math.cos(a) * k, r.y + Math.sin(a) * k * .8) : ctx.moveTo(r.x + Math.cos(a) * k, r.y + Math.sin(a) * k * .8); } ctx.closePath(); ctx.globalAlpha = .4 + .6 * clamp(r.s / 6, 0, 1); ctx.fill(); ctx.stroke(); ctx.globalAlpha = 1; }
+  for (const t of S.trees) { ctx.fillStyle = '#6b4a2a'; ctx.fillRect(t.x - 1.5, t.y, 3, 7); ctx.fillStyle = S.season === 3 ? '#dfe9e4' : '#2f7a3a'; ctx.globalAlpha = .4 + .6 * clamp(t.w / 3, 0, 1); ctx.beginPath(); ctx.arc(t.x, t.y - 2, 7, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }
+  for (const b of S.bushes) { ctx.fillStyle = 'rgba(50,130,50,' + (.35 + b.v * .65) + ')'; ctx.beginPath(); ctx.arc(b.x, b.y, 4 + b.v * 5, 0, TAU); ctx.fill(); if (b.v > .5) { ctx.fillStyle = '#d6413a'; for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(b.x + Math.cos(i * 2.1 + b.x) * 3, b.y + Math.sin(i * 2.1 + b.x) * 3, 1.6, 0, TAU); ctx.fill(); } } }
+  for (const b of S.B) drawBuilding(ctx, b, tt);
+  for (const g of S.Gm) { ctx.save(); ctx.translate(g.x, g.y); ctx.rotate(g.a); ctx.fillStyle = g.kind === 'ciervo' ? '#a0764a' : '#b9a58a'; ctx.strokeStyle = 'rgba(30,20,10,.8)'; ctx.lineWidth = 1; const r = g.kind === 'ciervo' ? 8 : 4.5; ctx.beginPath(); ctx.ellipse(0, 0, r * 1.2, r * .75, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(r * 1.2, 0, r * .5, 0, TAU); ctx.fill(); ctx.stroke(); if (g.kind === 'ciervo') { ctx.strokeStyle = '#e8e0c8'; ctx.beginPath(); ctx.moveTo(r * 1.3, -r * .3); ctx.lineTo(r * 1.6, -r * .9); ctx.moveTo(r * 1.3, r * .3); ctx.lineTo(r * 1.6, r * .9); ctx.stroke(); } ctx.restore(); }
+  for (const w of S.Wv) { ctx.save(); ctx.translate(w.x, w.y); ctx.rotate(w.a || 0); ctx.fillStyle = '#6b6b73'; ctx.strokeStyle = '#222'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(0, 0, 10, 6, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(10, 0, 4.4, 0, TAU); ctx.fill(); ctx.stroke(); ctx.restore(); }
+  for (const r of S.Rd) { ctx.fillStyle = '#6a2a2a'; ctx.strokeStyle = '#000'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(r.x, r.y, 5, 6.5, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#e0b48c'; ctx.beginPath(); ctx.arc(r.x, r.y - 8, 3.4, 0, TAU); ctx.fill(); ctx.strokeStyle = '#333'; ctx.beginPath(); ctx.moveTo(r.x + 6, r.y + 6); ctx.lineTo(r.x + 6, r.y - 12); ctx.stroke(); }
+  for (const p of S.P.slice().sort((a, b) => a.y - b.y)) drawPerson(ctx, p, tt);
+  for (const f of S.fx) { ctx.globalAlpha = clamp(f.l * 2.5, 0, 1); ctx.fillStyle = f.c; ctx.beginPath(); ctx.arc(f.x, f.y, 2.2, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
+  if (S.season === 3) { ctx.fillStyle = 'rgba(255,255,255,.8)'; for (let i = 0; i < 50; i++) { const x = (i * 97 + tt * 20) % W, y = (i * 53 + tt * 30 + Math.sin(i + tt) * 8) % H; ctx.fillRect(x, y, 2, 2); } }
+  if (mode && mode.indexOf('b:') === 0 && ptr.in) { const wx = (ptr.x - OX) / SC, wy = (ptr.y - OY) / SC; ctx.strokeStyle = '#e8c21b'; ctx.lineWidth = 3; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.arc(wx, wy, 26, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 3; ctx.strokeRect(0, 0, W, H);
+}
+
+/* ---------- Interfaz ---------- */
+function layout() { DPR = Math.min(window.devicePixelRatio || 1, 2); const r = cv.parentElement.getBoundingClientRect(); VW = r.width; VH = r.height; cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR); SC = Math.min(VW / W, VH / H); OX = (VW - W * SC) / 2; OY = (VH - H * SC) / 2; }
+const toW = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - OX) / SC, y: (e.clientY - r.top - OY) / SC }; };
+cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); ptr.x = e.clientX - r.left; ptr.y = e.clientY - r.top; ptr.in = true; });
+cv.addEventListener('pointerleave', () => { ptr.in = false; });
+cv.addEventListener('pointerdown', e => {
+  if (!started || !G || G.modal || G.over) return; const w = toW(e);
+  if (mode && mode.indexOf('b:') === 0) { placeBuilding(mode.slice(2), w); return; }
+  const p = nearestOf(G.P, w.x, w.y, 22, null); selId = p ? p.id : null;
+});
+function setMode(m) { mode = m; const t = $('modeTip'); t.style.display = m ? 'block' : 'none'; t.textContent = m ? 'Tocá el mapa donde querés construir: ' + BLD[m.slice(2)].n : ''; }
+const ready = () => G && started && !G.over && !G.modal;
+RORDER.forEach(r => {
+  const row = document.createElement('div'); row.className = 'role'; row.id = 'r_' + r;
+  row.innerHTML = '<i style="background:' + ROLES[r].c + '"></i><span>' + ROLES[r].n + '<small>' + ROLES[r].d + '</small></span><b>0</b><button aria-label="menos">−</button><button aria-label="más">+</button>';
+  row.children[3].onclick = () => setRole(r, -1); row.children[4].onclick = () => setRole(r, 1); $('roles').appendChild(row);
+});
+$('bAuto').onclick = () => { G.auto = !G.auto; $('bAuto').textContent = 'Asignar libres automáticamente: ' + (G.auto ? 'sí' : 'no'); };
+Object.keys(BLD).forEach(k => { const d = BLD[k], b = document.createElement('button'); b.innerHTML = '<b></b><small></small>'; b.firstChild.textContent = d.n + ' (' + d.w + ' madera' + (d.s ? ', ' + d.s + ' piedra' : '') + ')'; b.lastChild.textContent = d.d + (d.req ? ' Requiere ' + TECH[d.req].n + '.' : ''); b.id = 'bb_' + k; b.onclick = () => { if (!ready()) return; setMode(mode === 'b:' + k ? null : 'b:' + k); }; $('tray').appendChild(b); });
+$('bBuild').onclick = () => { if (!ready()) return; $('tray').classList.toggle('show'); $('bBuild').classList.toggle('on'); };
+function renderTech() {
+  $('techP').textContent = 'Conocimiento disponible: ' + Math.floor(G.know) + '. Lo generan los chamanes y la propia población.';
+  const g = $('techGrid'); g.innerHTML = '';
+  Object.keys(TECH).forEach(k => { const t = TECH[k], b = document.createElement('button'); b.className = 'tc' + (has(k) ? ' done' : ''); const okReq = t.req.every(has); b.disabled = has(k) || !okReq; b.innerHTML = '<b></b><span></span><em></em>'; b.children[0].textContent = (has(k) ? '✓ ' : '') + t.n; b.children[1].textContent = t.d; b.children[2].textContent = has(k) ? 'Aprendida' : 'Costo: ' + t.cost + ' Conocimiento' + (t.req.length ? ' · requiere: ' + t.req.map(r => TECH[r].n).join(', ') : ''); b.onclick = () => research(k); g.appendChild(b); });
+}
+function renderDip() {
+  $('dipP').textContent = 'Relación: ' + Math.round(G.relation) + ' (de -100 a 100). ' + (G.allied ? 'Son aliados: no atacan y comparten saberes.' : 'Si la relación es baja, mandan saqueadores.');
+  const g = $('dipGrid'); g.innerHTML = '';
+  [['trade', 'Comerciar', 'Das 4 raciones y recibís madera o piedra. Cuenta para el camino del Mercado.'], ['gift', 'Regalo', 'Das 5 raciones: sube mucho la relación.'], ['ally', 'Alianza', 'Requiere relación de 50: dejan de atacar y compartís saberes.']].forEach(([k, n, d]) => { const b = document.createElement('button'); b.className = 'tc'; b.innerHTML = '<b></b><span></span>'; b.children[0].textContent = n; b.children[1].textContent = d; b.onclick = () => dip(k); g.appendChild(b); });
+}
+$('bTech').onclick = () => { if (!ready()) return; G.modal = true; renderTech(); $('techm').classList.add('show'); };
+$('techClose').onclick = () => { $('techm').classList.remove('show'); G.modal = false; };
+$('bDip').onclick = () => { if (!ready()) return; G.modal = true; renderDip(); $('dipm').classList.add('show'); };
+$('dipClose').onclick = () => { $('dipm').classList.remove('show'); G.modal = false; };
+$('bPause').onclick = () => { if (started && !G.over && !G.modal) G.paused = !G.paused; };
+$('bSpd').onclick = () => { spdI = spdI === 1 ? 2 : spdI === 2 ? 4 : 1; $('bSpd').textContent = '×' + spdI; };
+document.querySelectorAll('#diffSeg button').forEach(b => b.onclick = () => { diffI = +b.dataset.d; document.querySelectorAll('#diffSeg button').forEach(x => x.classList.toggle('on', x === b)); });
+$('startBtn').onclick = () => { newGame(); started = true; $('menu').classList.remove('show'); spdI = 1; $('bSpd').textContent = '×1'; layout(); toast('Mirá el panel Oficios: cada persona trabaja según su oficio.'); };
+addEventListener('keydown', e => { if (!started || !G) return; if (e.key === ' ') { e.preventDefault(); $('bPause').onclick(); } });
+
+function hintText() {
+  if (!G || G.over) return '';
+  const ad = adults(), cnt = r => ad.filter(p => p.role === r).length;
+  if (mode) return 'Tocá el mapa donde querés construir (en tierra firme, cerca del fuego).';
+  if (G.food < 3 && cnt('rec') + cnt('caz') < ad.length) return '¡Poca comida! Sumá recolectores con el botón + del panel Oficios.';
+  if (!has('fuego') && G.know >= 3) return 'Ya tenés Conocimiento: tocá Tecnología y dominá el fuego (cocina, abriga y espanta lobos).';
+  if (G.Rd.length) return 'Saqueadores en el campamento: los cazadores pelean. También podés ganar su amistad en Diplomacia.';
+  if (G.season === 2 && done('refugio').length * 4 < G.P.length) return 'Se acerca el invierno: construí refugios (hacen falta 4 de madera por persona abrigada).';
+  if (G.wood < 6 && cnt('art') < 2) return 'Falta madera: asigná un artesano más.';
+  if (cnt('con') === 0) return 'Para construir necesitás al menos un constructor.';
+  const g = (G.g || []).find(x => !x.ok); return g ? 'Próxima meta: ' + g.t + '.' : '';
+}
+function hud() {
+  if (!G || !started) return; const ad = adults(), pop = G.P.length, lim = cohLimit();
+  $('vSeason').textContent = SEAS[G.season].n; $('vYear').textContent = 'año ' + (1 + Math.floor(G.t / (SLEN * 4)));
+  $('vPop').textContent = pop; $('vPopT').textContent = 'personas (' + (pop - ad.length) + ' niños)';
+  $('vFood').textContent = Math.floor(G.food) + '/' + foodCap(); $('cFood').classList.toggle('bad', G.food < 2);
+  $('vWood').textContent = Math.floor(G.wood); $('vStone').textContent = Math.floor(G.stone); $('vKnow').textContent = G.know.toFixed(1);
+  $('vCoh').textContent = pop + '/' + lim; $('cCoh').classList.toggle('bad', pop > lim);
+  RORDER.forEach(r => { $('r_' + r).children[2].textContent = ad.filter(p => p.role === r).length; });
+  const lib = ad.filter(p => p.role === 'libre').length; $('libres').textContent = lib ? '(' + lib + ' libres)' : '';
+  Object.keys(BLD).forEach(k => { const d = BLD[k]; $('bb_' + k).disabled = !!(d.req && !has(d.req)); });
+  const nt = Object.keys(TECH).filter(k => !has(k) && TECH[k].req.every(has) && G.know >= TECH[k].cost).length; $('bTechS').textContent = nt ? nt + ' lista' + (nt > 1 ? 's' : '') + ': ¡tocá!' : 'Conocimiento ' + G.know.toFixed(1);
+  const p = G.P.find(q => q.id === selId);
+  if (p) { const st = { idle: 'descansando', eat: 'comiendo', carry: 'llevando lo recolectado al campamento', gather: 'recolectando', hunt: 'cazando', build: 'construyendo', chop: 'cortando madera', mine: 'picando piedra', pray: 'enseñando y guardando la tradición', flee: 'huyendo de un lobo', farm: 'trabajando el huerto' }[p.st] || 'vagando'; $('selInfo').innerHTML = '<b>' + (p.age < CHILD ? 'Niño' : (p.role === 'libre' ? 'Adulto sin oficio' : ROLES[p.role].n.replace(/es$/, ''))) + '</b><br>Está ' + st + '.<br>Salud ' + Math.round(p.hp) + '/' + p.mhp + ' · Hambre ' + Math.round(p.hunger) + '%'; } else $('selInfo').textContent = 'Tocá a alguien en el mapa.';
+  $('log').innerHTML = G.log.slice(0, 6).map(t => '<div>' + t + '</div>').join('');
+  const gs = G.g || []; $('goalRows').innerHTML = gs.map(g => '<div class="g' + (g.ok ? ' ok' : '') + '">' + (g.ok ? '✓ ' : '') + g.t + '</div>').join(''); $('goalN').textContent = gs.filter(g => g.ok).length + '/5';
+  const h = hintText(); $('hint').textContent = h; $('hint').style.display = h ? 'block' : 'none';
+  $('bPause').classList.toggle('on', G.paused); $('pauseTag').style.display = G.paused && !G.modal && !G.over ? 'block' : 'none';
+}
+addEventListener('resize', layout);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', pal);
+let last = performance.now(), acc = 0, hudN = 0;
+function loop(now) {
+  const dt = Math.min(.1, (now - last) / 1000); last = now;
+  if (started && G && !G.paused && !G.modal && !G.over) { acc += dt * spdI; while (acc >= .05) { update(.05); acc -= .05; if (G.over) break; } }
+  if ((hudN++ & 7) === 0) { hud(); if ((hudN & 63) === 1) pal(); }
+  render(); requestAnimationFrame(loop);
+}
+pal(); layout(); requestAnimationFrame(loop);
+window.__e3 = { get G() { return G; }, newGame, update, setRole, placeBuilding, research, dip, goals, hud, render, adults, done, TECH, BLD, set diffI(v) { diffI = v; }, setStarted(v) { started = v; }, get has() { return has; } };
+})();
+</script>
+</body>
+</html>

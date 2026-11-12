@@ -1,0 +1,38 @@
+# Fondal Age Spore: guía para continuar el trabajo
+
+Repositorio: https://github.com/Fondal-Studios/Fondal-age-spore
+Idioma del juego y de la conversación: español rioplatense. Los nombres y la IP son originales (nada de marcas de terceros).
+
+## Qué es
+Juego de estrategia 2D estilo Age of Empires que mezcla eras y reglas de la naturaleza: célula, animales, tribus, civilizaciones (El arte de la guerra), era moderna y espacio. Debe sentirse como simulación interactiva con base científica y con muchos botones, ramas y progresión. Es un juego APARTE de "La Horda" (arena 16-bit de fantasía oscura del mismo equipo), con el mismo estilo; se busca reutilizar sus assets. Falta la auditoría de assets de La Horda (ruta, categoría, tamaño, frames, paleta, licencia, estado en Art Gate, reutilizar/repintar/nuevo), que debe hacer un agente que vea ese repo.
+
+## Estructura
+- `index.html`: portada. `eras/`: una era por archivo HTML autocontenido (canvas, sin dependencias salvo Google Fonts). `art/`: 48 dibujos SVG/PNG de orgánulos. `tools/`: generador de arte (`art.py`, `sheet.js`) y datos de rasgos de la Era 2.
+- Cada era es una IIFE con ganchos de prueba: `window.__e1` (Era 1), `window.__e2` (Era 2), `window.__e3` (Era 3). Se usan para pruebas automáticas; no quitarlos.
+
+## Estado por era
+**Era 1 (era1-celula.html)**: unicelular, colonia, pluricelular. Dividir, especializar (6 tipos), 7 estructuras, 42 mutaciones en 4 ramas (Depredador, Parásito, Fotosintético, Colonial) más generales, variantes A/B, 6 híbridos por fusión de ramas, ecología (praderas, corrientes, arrecifes), recurso Proteína y restos que se digieren (fagocitosis). 14 habilidades activas desbloqueadas por orgánulos (teclas 3 a 0). Cada mutación tiene su dibujo (`SPR_SVG` embebido; se regenera con `tools/art.py`). Panel Anatomía con corte de célula numerado. Zoom máximo 4: al acercarse se ven los orgánulos dentro de la célula.
+**Era 2 (era2-animales.html)**: simulación visible de agentes. 12 especies en 4 clases, 36 rasgos con variantes, nidos, estaciones, eventos, 5 ecosistemas (pradera, selva, desierto, tundra, océano) con botón Planeta para colonizar, pirámide trófica, fase 2 con fogata, refugios, corral y tótem. Los rasgos (TV) siguen dibujados con trazos simples: falta darles el mismo nivel que a la Era 1.
+**Era 3 (era3-tribus.html)**: oficios (recolector, cazador, artesano, constructor, chamán), 9 tecnologías, 6 edificios, hambre, frío, lobos, límite de cohesión (Dunbar), clan vecino con comercio, regalos, alianza y saqueos, fundación de la ciudad (Jefatura, Mercado o Templo). Sin pulir el arte.
+**Eras 4 a 6**: sin construir. Ideas: Lanchester y Sun Tzu en el combate, escalas de Kardashev, espacio inspirado en space opera con nombres originales.
+
+## Cómo probar (importante)
+No alcanza con simular: abrir en navegador real. Playwright funciona offline (las fuentes no cargan, es normal). Ejemplo: abrir el HTML con `file://`, `page.click('#startBtn')`, esperar, `page.screenshot(...)` y mirar la imagen. Los ganchos `__e1/__e2/__e3` permiten forzar estados (dar mutaciones, cambiar de ecosistema, acelerar). Un bot de prueba (clics en Dividir, elegir mutación al azar, usar todas las habilidades) corrió sin errores a ×4.
+Balance medido con bots: Era 1 Fácil, 10 de 10 victorias con 2 rivales; Normal y Difícil, entre 4 y 6 de 10. Era 3 Fácil: gana el bot en cerca de 500 s algunas veces.
+
+## Reglas de estilo del arte
+Vector 100x100, contorno #2b2233 de 2 a 3 unidades, degradado radial claro arriba a la izquierda, brillo blanco translúcido, sin texto dentro del dibujo, fondo transparente. Cada mutación, variante e híbrido debe verse distinto. Cuando el agente pintor mejore un dibujo, reemplazar el SVG en `tools/art.py` (o el JSON embebido) y volver a generar.
+
+## Documentos vinculados
+Códice de diseño (Claude Doc): https://claude.ai/artifact/NNpLeumePBsvZRQsqb71jh (18 secciones: leyes y reglas, ramificación, recursos, Eras 2 y 3, tabla de reutilización de La Horda, guía del agente pintor, bibliografía). Las versiones publicadas: Era 1 https://claude.ai/artifact/D1XWnvv3mp4RBMJcMPJNca, Era 2 https://claude.ai/artifact/F4sioitHQXwuChDwFz5azg, Era 3 https://claude.ai/artifact/5esTP939V4AagPPEv6WeZM.
+
+## Pendiente, en orden sugerido
+1. Habilidades activas en la Era 2 (rugido, camuflaje, excavar, alarma, migrar), como en la Era 1.
+2. Misiones con riesgo y recompensa en el mapa.
+3. Control directo de una unidad líder (WASD o toque) con ataque y esquiva.
+4. Órdenes tácticas: formaciones, emboscada, retirada, selección por arrastre.
+5. Eventos con decisión de dos opciones; rivales con personalidad visible; meta-progresión (Genoma, Instinto, Tradición, Doctrina, Patente, Legado estelar).
+6. Rasgos de la Era 2 y arte de la Era 3 con el mismo nivel visual que la Era 1; usar los dibujos nuevos dentro de los organismos pluricelulares.
+7. Traspasar rasgos de la Era 1 a la Era 2 (hoy solo viaja la clase por el hash de la URL) y de la Era 2 a la 3.
+8. Sonido y música; Eras 4 a 6; auditoría de assets de La Horda.
+Las cifras científicas (productividad por bioma, tamaños de banda, etc.) son aproximaciones de manual de fuentes secundarias: verificar en fuentes primarias antes de afirmarlas dentro del juego.
