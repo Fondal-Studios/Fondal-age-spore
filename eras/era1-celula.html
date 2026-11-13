@@ -94,6 +94,9 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
 .lbl{font-size:12px;color:var(--ink2);margin-top:10px;font-weight:600}
 .seg{display:flex;gap:6px;margin:6px 0 4px}
 .seg button{flex:1;padding:10px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600}
+.slotrow{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}.slotrow i{width:12px;height:12px;border-radius:50%;flex:none}.slotrow span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slotrow select,.slotrow input,.seedrow input{padding:7px 8px;border:1px solid var(--line);background:transparent;border-radius:8px;color:var(--ink);font:inherit;font-size:13px}.slotrow input{flex:1;min-width:0}
+.seedrow{display:flex;gap:6px;margin:6px 0}.seedrow input{flex:1;text-transform:uppercase;letter-spacing:.08em}.seedrow button,#contBtn{padding:8px 12px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;color:var(--ink)}
 .seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .go{width:100%;padding:13px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:16px;margin-top:10px}
 .ghost{width:100%;padding:11px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;margin-top:8px}
@@ -190,6 +193,7 @@ details.help ul{margin:8px 0 0;padding-left:18px;line-height:1.6}
     <button id="bBoost" class="sm">Impulso</button>
     <button id="bSp" class="sm">Anatomía</button>
     <button id="bPause" class="sm">Pausa</button>
+    <button id="bSave" class="sm">Guardar</button>
     <button id="bSpd" class="sm">×1</button>
   </div>
 
@@ -205,10 +209,12 @@ details.help ul{margin:8px 0 0;padding-left:18px;line-height:1.6}
       <div class="seg" id="diffSeg">
         <button data-d="0">Fácil</button><button data-d="1" class="on">Normal</button><button data-d="2">Difícil</button>
       </div>
-      <div class="lbl">Colonias rivales</div>
-      <div class="seg" id="rivSeg">
-        <button data-r="2">2</button><button data-r="3" class="on">3</button><button data-r="4">4</button><button data-r="5">5</button>
-      </div>
+      <div class="lbl">Sala · hasta 8 colonias</div>
+      <div id="lobby"></div>
+      <div class="seg"><button id="lbFill">Llenar con bots</button><button id="lbMin">Solo 1 rival</button></div>
+      <p style="font-size:12px;margin:2px 0 0">Las casillas «Humano» se habilitan con el modo online (ver <code>MULTIJUGADOR.md</code>). Mientras tanto, cada casilla vacía de humano la juega un bot.</p>
+      <div class="lbl">Semilla del mundo <span style="font-weight:400">(el mismo código genera el mismo mapa y los mismos rivales)</span></div>
+      <div class="seedrow"><input id="seedIn" maxlength="16" placeholder="al azar" autocomplete="off"><button id="seedNew">Nueva</button></div>
       <p id="legacyTxt"></p>
       <div class="cycle">
         <div><b>Depredador</b> vence a Fotosintético</div>
@@ -216,7 +222,9 @@ details.help ul{margin:8px 0 0;padding-left:18px;line-height:1.6}
         <div><b>Parásito</b> vence a Colonial</div>
         <div><b>Colonial</b> vence a Depredador</div>
       </div>
-      <button class="go" id="startBtn">Empezar partida</button>
+      <button class="go" id="contBtn" style="display:none">Continuar partida guardada</button>
+      <p id="saveInfo" style="display:none"></p>
+      <button class="go" id="startBtn">Empezar partida nueva</button>
       <p style="font-size:12.5px">¿Ya tenés un linaje? <a href="era2-animales.html" target="_blank" rel="noopener">Jugar la Era 2</a></p>
       <details class="help"><summary>Cómo funciona la evolución en el juego</summary>
         <ul>
@@ -278,9 +286,16 @@ details.help ul{margin:8px 0 0;padding-left:18px;line-height:1.6}
 "use strict";
 const W = 2600, H = 1700, TAU = Math.PI * 2;
 const $ = id => document.getElementById(id);
-const rnd = (a, b) => a + Math.random() * (b - a);
+/* Azar con semilla: toda la simulación usa R() (nunca Math.random) para que una misma semilla dé el mismo mundo,
+   se pueda guardar/cargar sin cambiar el futuro y, más adelante, correr en lockstep en varios clientes. */
+let _rs = 1;
+const seedRng = n => { _rs = (n >>> 0) || 1; };
+const R = () => { _rs = (_rs + 0x6D2B79F5) >>> 0; let t = _rs; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const hashStr = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const newSeedStr = () => Math.random().toString(36).slice(2, 8).toUpperCase();
+const rnd = (a, b) => a + R() * (b - a);
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
-const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
 const cv = $('cv'), ctx = cv.getContext('2d');
 const mm = $('mm'), mctx = mm.getContext('2d');
@@ -481,9 +496,11 @@ const DIFFS = [
   { n: 'Normal', hp: .95, dmg: .95, mutEvery: 75, wave: 1.15, fuse: 210, dv: 1.05, wave0: 90, domShare: .6, domT: 20, evoOrgs: 3, evoMut: 6, evoShare: .4, startBonus: 0 },
   { n: 'Difícil', hp: 1.15, dmg: 1.1, mutEvery: 50, wave: .75, fuse: 150, dv: .8, wave0: 70, domShare: .7, domT: 20, evoOrgs: 3, evoMut: 6, evoShare: .4, startBonus: 0 }
 ];
-const TEAM_COL = ['#12958f', '#c9406f', '#5b57c9', '#8c5a2b', '#3d8a3a', '#c47fd1'];
-const TEAM_NAME = ['Tu colonia', 'Colonia Rosa', 'Colonia Índigo', 'Colonia Sepia', 'Colonia Musgo', 'Colonia Orquídea'];
-const HOMES = [{ x: 420, y: 860 }, { x: 2150, y: 300 }, { x: 2150, y: 1400 }, { x: 1300, y: 230 }, { x: 1300, y: 1470 }, { x: 560, y: 260 }];
+/* Hasta 8 colonias. SLOT_* es la casilla de la sala (0 = quien juega); TEAM_* se rellena en newGame según las casillas activas. */
+const SLOT_COL = ['#12958f', '#c9406f', '#5b57c9', '#8c5a2b', '#3d8a3a', '#c47fd1', '#c7a21a', '#6b7a8f'];
+const SLOT_NAME = ['Tu colonia', 'Colonia Rosa', 'Colonia Índigo', 'Colonia Sepia', 'Colonia Musgo', 'Colonia Orquídea', 'Colonia Mostaza', 'Colonia Pizarra'];
+const HOMES = [{ x: 420, y: 860 }, { x: 2150, y: 300 }, { x: 2150, y: 1400 }, { x: 1300, y: 230 }, { x: 1300, y: 1470 }, { x: 560, y: 260 }, { x: 2300, y: 860 }, { x: 560, y: 1450 }];
+const TEAM_COL = SLOT_COL.slice(), TEAM_NAME = SLOT_NAME.slice();
 const TY = {
   basal: { n: 'Basal', gather: 1, dmg: 1, hp: 1, spd: 1, r: 9, d: 'Célula sin especializar.' },
   recol: { n: 'Recolectora', gather: 1.6, dmg: .6, hp: .9, spd: 1.05, r: 8.5, d: 'Recoge 60% más nutrientes. Ataca poco.' },
@@ -528,7 +545,9 @@ const ENV = {
 const defMods = () => ({ speed: 1, dmg: 1, hp: 1, regen: 0, lifesteal: 0, enTrickle: 0, nutTrickle: 0, divCost: 1, cap: 30, armor: 0, toxin: 0, stealth: 1, spore: 0, pack: 0, gather: 1, metab: 1, quorum: 0, crit: 0, frenzy: 0, killNut: 0, steal: 0, weaken: 0, flatArmor: 0, restRegen: 0, dnaMul: 1, cold: 1, envRes: 1, org: 0, detect: 1 });
 
 /* ---------- Estado ---------- */
-let S = null, started = false, diffIdx = 1, rivals = 3, P = { dark: false, stroke: '#12303b', ink: '#12303b', bg: '#dfece6' };
+let lobby = (() => { try { const o = JSON.parse(localStorage.getItem('evo_lobby') || 'null'); if (o && Array.isArray(o.bots) && o.bots.length === 7) return o; } catch (e) {} return { name: '', bots: [1, 1, 1, 0, 0, 0, 0], seed: '' }; })();
+let lastSaveT = 0;
+let S = null, started = false, diffIdx = 1, P = { dark: false, stroke: '#12303b', ink: '#12303b', bg: '#dfece6' };
 const cam = { x: 0, y: 0, z: 1 };
 let box = null, previewOn = false;
 const keys = {};
@@ -545,17 +564,21 @@ function saveLegacy(L) { try { localStorage.setItem('evo_legacy', JSON.stringify
 
 function pickWeighted(mix) {
   let tot = 0; for (const k in mix) tot += mix[k];
-  let r = Math.random() * tot;
+  let r = R() * tot;
   for (const k in mix) { r -= mix[k]; if (r <= 0) return k; }
   return 'recol';
 }
 
-function newGame(di, nRiv) {
+function newGame(di, nRiv, seedStr, slots) {
+  seedStr = seedStr || newSeedStr(); seedRng(hashStr(seedStr));
+  slots = slots || Array.from({ length: nRiv + 1 }, (_, i) => i); nRiv = slots.length - 1;
+  slots.forEach((sl, t) => { TEAM_COL[t] = SLOT_COL[sl]; TEAM_NAME[t] = t === 0 ? (lobby.name || SLOT_NAME[0]) : SLOT_NAME[sl]; });
+  for (const k in PTINT) delete PTINT[k];
   const D = DIFFS[di], L = loadLegacy();
   const bonus = Math.min(L.n || 0, 3);
-  const brs = shuffle(['pred', 'para', 'foto', 'colo', 'pred', 'para']);
+  const brs = shuffle(['pred', 'para', 'foto', 'colo', 'pred', 'para', 'foto']);
   S = {
-    t: 0, paused: false, spd: 1, diff: D, cells: [], byId: new Map(), nuts: [], drops: [], fx: [], texts: [],
+    seed: seedStr, slots, t: 0, paused: false, spd: 1, diff: D, cells: [], byId: new Map(), nuts: [], drops: [], fx: [], texts: [],
     vents: [{ x: 1300, y: 850, r: 80 }, { x: 900, y: 380, r: 70 }, { x: 1750, y: 1300, r: 70 }, { x: 900, y: 1350, r: 70 }, { x: 1800, y: 450, r: 70 }],
     plank: Array.from({ length: 110 }, () => ({ x: rnd(0, W), y: rnd(0, H), r: rnd(1, 3), s: rnd(4, 14), a: rnd(0, TAU) })),
     meteor: null, meteorT: 110, nutT: 0, idc: 1, modal: false, canEvolve: false, over: false, boostT: 0, kills: 0, aiClock: 0, slowT: 0,
@@ -565,7 +588,7 @@ function newGame(di, nRiv) {
   for (let t = 0; t < nT; t++) {
     const p = t ? PERS_ORDER[(t - 1) % 5] : null, pr = p ? PERS[p] : null;
     S.teams.push({
-      home: HOMES[t], nut: t === 0 ? 40 + 8 * bonus + D.startBonus * 30 : 40, en: t === 0 ? 10 : 0, dna: 0, nextDNA: 10, acc: 0, gathered: 0, prot: 0,
+      home: HOMES[slots[t]], nut: t === 0 ? 40 + 8 * bonus + D.startBonus * 30 : 40, en: t === 0 ? 10 : 0, dna: 0, nextDNA: 10, acc: 0, gathered: 0, prot: 0,
       mods: defMods(), branch: t === 0 ? null : brs[t - 1], owned: [], os: new Set(), mutCount: 0, pending: 0,
       ai: t === 0 ? null : {
         p, divT: 3, mutT: D.mutEvery * rnd(.7, 1), waveT: pr.wi * D.wave + D.wave0, waveInt: pr.wi * D.wave, waveSize: pr.ws, divRate: pr.dr * D.dv,
@@ -577,15 +600,15 @@ function newGame(di, nRiv) {
       T.ai.seq = MUT.filter(m => m.br === T.branch).sort((a, b) => (a.t || 0) - (b.t || 0)).concat(shuffle(MUT.filter(m => m.br === 'gen')));
     }
     const n = t === 0 ? 4 + Math.min(bonus, 2) + D.startBonus * 2 : 5;
-    for (let i = 0; i < n; i++) mk(t, HOMES[t].x + rnd(-40, 40), HOMES[t].y + rnd(-40, 40), t ? pickWeighted(pr.mix) : 'basal');
+    for (let i = 0; i < n; i++) mk(t, HOMES[slots[t]].x + rnd(-40, 40), HOMES[slots[t]].y + rnd(-40, 40), t ? pickWeighted(pr.mix) : 'basal');
   }
   const farHome = (x, y, d) => S.teams.every(t => Math.hypot(t.home.x - x, t.home.y - y) > d);
   for (let i = 0, g = 0; i < 4 && g < 200; g++) { const x = rnd(250, W - 250), y = rnd(250, H - 250); if (farHome(x, y, 380) && S.meadows.every(m => Math.hypot(m.x - x, m.y - y) > 350)) { S.meadows.push(mkMeadow(x, y, rnd(95, 130), -1)); i++; } }
-  for (let i = 0, g = 0; i < 3 && g < 100; g++) { const w = rnd(380, 520), h = rnd(110, 150), x = rnd(100, W - w - 100), y = rnd(100, H - h - 100); if (farHome(x + w / 2, y + h / 2, 300)) { const dir = Math.random() < .5 ? 1 : -1; S.currents.push({ x, y, w, h, dx: dir * rnd(40, 60), dy: rnd(-18, 18) }); i++; } }
-  for (let i = 0, g = 0; i < 8 && g < 200; g++) { const x = rnd(120, W - 120), y = rnd(120, H - 120), r = rnd(26, 44); if (farHome(x, y, 260) && S.meadows.every(m => Math.hypot(m.x - x, m.y - y) > m.r + r) && S.reefs.every(q => Math.hypot(q.x - x, q.y - y) > q.r + r + 40)) { S.reefs.push({ x, y, r, seed: Math.random() * 9 }); i++; } }
+  for (let i = 0, g = 0; i < 3 && g < 100; g++) { const w = rnd(380, 520), h = rnd(110, 150), x = rnd(100, W - w - 100), y = rnd(100, H - h - 100); if (farHome(x + w / 2, y + h / 2, 300)) { const dir = R() < .5 ? 1 : -1; S.currents.push({ x, y, w, h, dx: dir * rnd(40, 60), dy: rnd(-18, 18) }); i++; } }
+  for (let i = 0, g = 0; i < 8 && g < 200; g++) { const x = rnd(120, W - 120), y = rnd(120, H - 120), r = rnd(26, 44); if (farHome(x, y, 260) && S.meadows.every(m => Math.hypot(m.x - x, m.y - y) > m.r + r) && S.reefs.every(q => Math.hypot(q.x - x, q.y - y) > q.r + r + 40)) { S.reefs.push({ x, y, r, seed: R() * 9 }); i++; } }
   for (let i = 0; i < 150; i++) spawnNut();
   cam.z = Math.max(minZ(), window.innerWidth < 700 ? 1.1 : 1.5);
-  cam.x = HOMES[0].x - VW / cam.z / 2; cam.y = HOMES[0].y - VH / cam.z / 2; clampCam();
+  cam.x = HOMES[slots[0]].x - VW / cam.z / 2; cam.y = HOMES[slots[0]].y - VH / cam.z / 2; clampCam();
 }
 
 /* ---------- Células ---------- */
@@ -603,7 +626,7 @@ function calc(c) {
   c.mhp = c.st.mhp; c.r = c.st.r;
 }
 function mk(team, x, y, type, g) {
-  const c = { id: S.idc++, team, x, y, vx: 0, vy: 0, r: 9, hp: 0, mhp: 0, cd: Math.random() * .5, order: null, poison: 0, poisonT: 0, ph: Math.random() * TAU, face: Math.random() * TAU, mode: 'gather', waveT: 0, wx: x, wy: y, dead: false, type: type || 'basal', g: g ? { v: g.v, h: g.h, d: g.d } : { v: 1, h: 1, d: 1 }, food: rnd(70, 100), eaten: 0, kills: 0, frT: 0, org: null, mv: 0, st: null };
+  const c = { id: S.idc++, team, x, y, vx: 0, vy: 0, r: 9, hp: 0, mhp: 0, cd: R() * .5, order: null, poison: 0, poisonT: 0, ph: R() * TAU, face: R() * TAU, mode: 'gather', waveT: 0, wx: x, wy: y, dead: false, type: type || 'basal', g: g ? { v: g.v, h: g.h, d: g.d } : { v: 1, h: 1, d: 1 }, food: rnd(70, 100), eaten: 0, kills: 0, frT: 0, org: null, mv: 0, st: null };
   calc(c); c.hp = c.mhp;
   S.cells.push(c); S.byId.set(c.id, c); return c;
 }
@@ -612,25 +635,25 @@ function pickParent(team) {
   const list = S.cells.filter(c => c.team === team && !c.dead && !c.struct);
   if (!list.length) return null;
   let tot = 0; const w = list.map(c => { const f = 1 + c.eaten * .15 + c.kills * .6; tot += f; return f; });
-  let r = Math.random() * tot;
+  let r = R() * tot;
   for (let i = 0; i < list.length; i++) { r -= w[i]; if (r <= 0) return list[i]; }
   return list[0];
 }
 function birth(p) {
   let ty = p.org ? 'basal' : p.type;
-  if (p.team && Math.random() < .35) ty = pickWeighted(PERS[S.teams[p.team].ai.p].mix);
+  if (p.team && R() < .35) ty = pickWeighted(PERS[S.teams[p.team].ai.p].mix);
   const c = mk(p.team, p.x + rnd(-14, 14), p.y + rnd(-14, 14), ty, mutG(p.g));
   c.food = 60; return c;
 }
-function mkMeadow(x, y, r, own) { return { x, y, r, tr: r, own, leaves: Array.from({ length: 16 }, () => ({ a: rnd(0, TAU), d: Math.sqrt(Math.random()), s: rnd(.7, 1.3), ph: rnd(0, 6) })) }; }
+function mkMeadow(x, y, r, own) { return { x, y, r, tr: r, own, leaves: Array.from({ length: 16 }, () => ({ a: rnd(0, TAU), d: Math.sqrt(R()), s: rnd(.7, 1.3), ph: rnd(0, 6) })) }; }
 function spawnNut(x, y) {
   let px, py;
   if (x === undefined) {
-    if (S.meadows.length && Math.random() < .4) { const m = S.meadows[Math.floor(Math.random() * S.meadows.length)]; const a = rnd(0, TAU), d = Math.sqrt(Math.random()) * m.r * .9; px = m.x + Math.cos(a) * d; py = m.y + Math.sin(a) * d; }
-    else if (Math.random() < .5) { const v = S.vents[Math.floor(Math.random() * S.vents.length)]; const a = rnd(0, TAU), d = rnd(40, 280); px = v.x + Math.cos(a) * d; py = v.y + Math.sin(a) * d; }
+    if (S.meadows.length && R() < .4) { const m = S.meadows[Math.floor(R() * S.meadows.length)]; const a = rnd(0, TAU), d = Math.sqrt(R()) * m.r * .9; px = m.x + Math.cos(a) * d; py = m.y + Math.sin(a) * d; }
+    else if (R() < .5) { const v = S.vents[Math.floor(R() * S.vents.length)]; const a = rnd(0, TAU), d = rnd(40, 280); px = v.x + Math.cos(a) * d; py = v.y + Math.sin(a) * d; }
     else { px = rnd(30, W - 30); py = rnd(30, H - 30); }
   } else { px = x; py = y; }
-  S.nuts.push({ x: clamp(px, 20, W - 20), y: clamp(py, 20, H - 20), v: 2, p: Math.random() * TAU });
+  S.nuts.push({ x: clamp(px, 20, W - 20), y: clamp(py, 20, H - 20), v: 2, p: R() * TAU });
 }
 const count = team => { let n = 0; for (const c of S.cells) if (c.team === team && !c.dead && !c.struct) n++; return n; };
 const capOf = team => { let c = S.teams[team].mods.cap; for (const s of S.cells) if (s.struct && !s.dead && s.team === team && s.prog >= 1) { if (s.struct === 'nucleo2') c += 6; else if (s.struct === 'vacu') c += 8; } return c; };
@@ -684,14 +707,14 @@ function hurt(e, d, src) { if (e.dead || e.cyst > 0) return; e.hp -= d; if (e.hp
 function kill(e, src) {
   e.dead = true; S.rests.push({ x: e.x, y: e.y, v: e.org ? e.org.n * 1.5 : 2, t: 40 });
   burst(e.x, e.y, e.org ? 20 : 10, TEAM_COL[e.team]);
-  S.drops.push({ x: e.x, y: e.y, v: e.org ? 3 + e.org.n : 3, life: 28, p: Math.random() * TAU });
+  S.drops.push({ x: e.x, y: e.y, v: e.org ? 3 + e.org.n : 3, life: 28, p: R() * TAU });
   if (src) {
     src.kills++;
     if (src.team === 0) { S.kills++; S.teams[0].prot += 2 + (S.teams[0].os.has('digestion') || S.teams[0].os.has('absorcion') ? 2 : 0); }
     const m = S.teams[src.team].mods;
     if (m.frenzy) src.frT = 4;
     if (m.killNut) S.teams[src.team].nut += m.killNut;
-    if (m.spore && Math.random() < m.spore && count(src.team) < m.cap) { mk(src.team, e.x, e.y, 'basal', src.g); burst(e.x, e.y, 6, TEAM_COL[src.team]); }
+    if (m.spore && R() < m.spore && count(src.team) < m.cap) { mk(src.team, e.x, e.y, 'basal', src.g); burst(e.x, e.y, 6, TEAM_COL[src.team]); }
   }
 }
 function neighbors(c, r) { let n = 0; const r2 = r * r; for (const o of S.cells) if (o !== c && !o.dead && o.team === c.team) { const dx = o.x - c.x, dy = o.y - c.y; if (dx * dx + dy * dy < r2) n++; } return n; }
@@ -702,7 +725,7 @@ function attack(c, e) {
   let d = 6 * c.st.dmg;
   if (m.pack) d *= 1 + m.pack * Math.min(neighbors(c, 60), 5);
   if (m.quorum) d *= 1 + m.quorum * Math.min(neighbors(c, 60), 6);
-  if (m.crit && Math.random() < m.crit) { d *= 2; burst(e.x, e.y, 3, '#ffd23f'); }
+  if (m.crit && R() < m.crit) { d *= 2; burst(e.x, e.y, 3, '#ffd23f'); }
   d *= rps(c, e); if (e.shield > 0) d *= .5; if (c.team === 0 && S.atpT > 0) d *= 1.3;
   const em = S.teams[e.team].mods;
   if (c.poisonT > 0 && em.weaken) d *= 1 - em.weaken;
@@ -749,10 +772,10 @@ function applyMut(team, m) {
 }
 function offers() {
   const T = S.teams[0], base = offersBase();
-  if (T.branch && T.mutCount >= 2 && Math.random() < .4) {
+  if (T.branch && T.mutCount >= 2 && R() < .4) {
     const vr = T.vars || {}, c = T.owned.filter(id => VAR[id] && !vr[id]);
     if (c.length) {
-      const id = c[Math.floor(Math.random() * c.length)], b0 = MUT.find(m => m.id === id), v = VAR[id];
+      const id = c[Math.floor(R() * c.length)], b0 = MUT.find(m => m.id === id), v = VAR[id];
       const mkv = k => ({ id: id + ':' + k, br: b0.br, t: 0, variantOf: id, v: k, n: 'Variante ' + k + ': ' + v[k].n, d: v[k].d, fx: m => apM(m, v[k].fx) });
       return [mkv('A'), mkv('B'), base[0]];
     }
@@ -911,10 +934,10 @@ function updateStruct(c, dt) {
     case 'mito': T.en += 1.5 * dt; break;
     case 'ribo': if (T.nut > 10) { T.nut -= .4 * dt; T.prot += .4 * dt; } break;
     case 'vacu': for (const a of S.cells) { if (a.dead || a.team !== c.team || a.struct) continue; const dx = a.x - c.x, dy = a.y - c.y; if (dx * dx + dy * dy < 6400) a.food = Math.min(100, a.food + 4 * dt); } break;
-    case 'liso': { const e = nearestEnemy(c, 110); if (e) { hurt(e, 8 * dt, c); if (Math.random() < dt * 3) burst(e.x, e.y, 1, '#8a5cd0'); } break; }
+    case 'liso': { const e = nearestEnemy(c, 110); if (e) { hurt(e, 8 * dt, c); if (R() < dt * 3) burst(e.x, e.y, 1, '#8a5cd0'); } break; }
   }
   if (sd.prod) {
-    if (c.team !== 0 && !c.queue.length && count(c.team) < capOf(c.team)) { const ty = sd.prod[Math.floor(Math.random() * sd.prod.length)]; if (T.nut >= UCOST[ty] + 12) { T.nut -= UCOST[ty]; c.queue.push({ type: ty, t: 4 }); } }
+    if (c.team !== 0 && !c.queue.length && count(c.team) < capOf(c.team)) { const ty = sd.prod[Math.floor(R() * sd.prod.length)]; if (T.nut >= UCOST[ty] + 12) { T.nut -= UCOST[ty]; c.queue.push({ type: ty, t: 4 }); } }
     if (c.queue.length) { const q = c.queue[0]; q.t -= dt; if (q.t <= 0) { c.queue.shift(); const par = pickParent(c.team); const u = mk(c.team, c.x + rnd(-18, 18), c.y + rnd(-18, 18), q.type, par ? mutG(par.g) : null); u.food = 70; burst(c.x, c.y, 8, TEAM_COL[c.team]); } }
   }
 }
@@ -1002,7 +1025,7 @@ function pickTargetTeam(team) {
   const T = S.teams[team], A = T.ai, pr = PERS[A.p], alive = [];
   for (let t = 0; t < S.teams.length; t++) if (t !== team) { const n = bio(t); if (n > 0) alive.push({ t, n }); }
   if (!alive.length) return -1;
-  if (pr.tg === 'player') { const pl = alive.find(a => a.t === 0); if (pl && Math.random() < .65) return 0; }
+  if (pr.tg === 'player') { const pl = alive.find(a => a.t === 0); if (pl && R() < .65) return 0; }
   if (pr.tg === 'weak') { alive.sort((a, b) => a.n - b.n); return alive[0].t; }
   if (pr.tg === 'strong') { alive.sort((a, b) => b.n - a.n); return alive[0].t; }
   let best = alive[0].t, bd = 1e9;
@@ -1026,7 +1049,7 @@ function aiTick(team, dt) {
     A.bT = 55;
     const have = S.cells.filter(c => c.struct && c.team === team && !c.dead).length;
     if (have < 3) {
-      const opts = AIB[A.p], kind = opts[Math.floor(Math.random() * opts.length)], sd = ST[kind];
+      const opts = AIB[A.p], kind = opts[Math.floor(R() * opts.length)], sd = ST[kind];
       const need = Object.values(sd.need).reduce((a, b) => a + b, 0);
       const near = mine.filter(c => c.mode !== 'wave').sort((a, b) => Math.hypot(a.x - T.home.x, a.y - T.home.y) - Math.hypot(b.x - T.home.x, b.y - T.home.y)).slice(0, need);
       if (near.length === need && T.nut >= sd.nut) { T.nut -= sd.nut; let cx = 0, cy = 0; near.forEach(c => { cx += c.x; cy += c.y; c.dead = true; }); mkStruct(team, cx / need, cy / need, kind); }
@@ -1037,7 +1060,7 @@ function aiTick(team, dt) {
     A.fuseT = 40;
     const pool = mine.filter(c => !c.org && c.mode !== 'wave');
     if (pool.length >= 8) {
-      const seed = pool[Math.floor(Math.random() * pool.length)];
+      const seed = pool[Math.floor(R() * pool.length)];
       pool.sort((a, b) => Math.hypot(a.x - seed.x, a.y - seed.y) - Math.hypot(b.x - seed.x, b.y - seed.y));
       fuse(pool.slice(0, 6));
     }
@@ -1179,7 +1202,7 @@ function divide() {
   if (T.nut < cost) { toast('Faltan nutrientes: necesitás ' + cost + '.'); return; }
   if (T.en < 2) { toast('Falta energía: ponete cerca de una fuente magenta.'); return; }
   const sel = [...S.sel].map(id => S.byId.get(id)).filter(c => c && !c.struct);
-  const p = sel.length ? sel[Math.floor(Math.random() * sel.length)] : pickParent(0);
+  const p = sel.length ? sel[Math.floor(R() * sel.length)] : pickParent(0);
   if (!p) return;
   T.nut -= cost; T.en -= 2;
   birth(p); burst(p.x, p.y, 8, TEAM_COL[0]);
@@ -1405,15 +1428,16 @@ $('evoBtn').onclick = () => showEvolve();
 $('bSp').onclick = () => openSpecies();
 $('spClose').onclick = () => closeSpecies();
 document.querySelectorAll('#diffSeg button').forEach(b => b.onclick = () => {
-  diffIdx = +b.dataset.d; rivals = [2, 3, 3][diffIdx];
+  diffIdx = +b.dataset.d; const nb = [2, 3, 3][diffIdx]; lobby.bots = lobby.bots.map((_, i) => i < nb ? 1 : 0); renderLobby();
   document.querySelectorAll('#diffSeg button').forEach(x => x.classList.toggle('on', x === b));
-  document.querySelectorAll('#rivSeg button').forEach(x => x.classList.toggle('on', +x.dataset.r === rivals));
 });
-document.querySelectorAll('#rivSeg button').forEach(b => b.onclick = () => {
-  rivals = +b.dataset.r;
-  document.querySelectorAll('#rivSeg button').forEach(x => x.classList.toggle('on', x === b));
-});
-$('startBtn').onclick = () => { newGame(diffIdx, rivals); started = true; $('menu').classList.remove('show'); setSpd(1); S.paused = false; toast('Mové el mouse a los bordes de la ventana para desplazar la pantalla.'); if (window.innerWidth < 700) $('goal').open = false; };
+$('startBtn').onclick = () => {
+  const bots = lobby.bots.map((b, i) => b ? i + 1 : 0).filter(Boolean);
+  if (!bots.length) { toast('Dejá al menos una colonia rival: sin rivales la partida termina al instante.', true); return; }
+  newGame(diffIdx, bots.length, lobby.seed || newSeedStr(), [0, ...bots]);
+  started = true; $('menu').classList.remove('show'); setSpd(1); S.paused = false; lastSaveT = 0;
+  toast('Semilla del mundo: ' + S.seed + ' · mové el mouse a los bordes para desplazar la pantalla.'); if (window.innerWidth < 700) $('goal').open = false;
+};
 TYPE_KEYS.forEach(k => {
   const b = document.createElement('button');
   b.style.borderLeftColor = TCOL[k];
@@ -1442,7 +1466,7 @@ function summary() {
   return '<div class="stats"><div><b>' + mins + ':' + secs + '</b>Tiempo</div><div><b>' + Math.round((S.share || 0) * 100) + '%</b>Del total de vida</div><div><b>' + orgs + '</b>Organismos</div><div><b>' + S.kills + '</b>Rivales absorbidas</div><div><b>' + (T.branch ? BR[T.branch].n : 'Sin rama') + '</b>Rama</div><div><b>' + T.mutCount + '</b>Mutaciones</div></div>';
 }
 function toMenu() {
-  $('legacyTxt').textContent = legacyText();
+  $('legacyTxt').textContent = legacyText(); refreshContinue();
   $('menu').classList.add('show'); started = false; S.paused = true;
 }
 function showEvolve() {
@@ -1450,12 +1474,12 @@ function showEvolve() {
   S.paused = true;
   const T = S.teams[0], cl = T.branch ? CLASE[T.branch] : 'Terrestres';
   dialog('Conquista asegurada', summary() + '<p>Tu especie dominó el charco. Tu rama te lleva a la clase <b>' + cl + '</b> en la Era 2. Tu ADN se hereda: cada linaje completado te da más nutrientes iniciales (hasta 3 linajes).</p><p>La Era 2 ya es jugable: <a href="era2-animales.html#' + (E2H[T.branch] || 'ter') + '" target="_blank" rel="noopener">abrila con tu clase</a>. Tu legado queda guardado.</p>', [
-    { t: 'Evolucionar y guardar legado', primary: true, fn: () => { const L = loadLegacy(); L.n = (L.n || 0) + 1; L.last = T.branch; saveLegacy(L); S.over = true; toMenu(); } },
+    { t: 'Evolucionar y guardar legado', primary: true, fn: () => { const L = loadLegacy(); L.n = (L.n || 0) + 1; L.last = T.branch; saveLegacy(L); try { localStorage.removeItem(SAVE_KEY); } catch (e) {} S.over = true; toMenu(); } },
     { t: 'Seguir conquistando', fn: () => { S.paused = false; } }
   ]);
 }
 function endGame(kind) {
-  if (S.over) return; S.over = true;
+  if (S.over) return; S.over = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
   const win = kind === 'win';
   if (win) { const L = loadLegacy(); L.n = (L.n || 0) + 1; saveLegacy(L); }
   dialog(win ? 'Dominio total' : 'Tu colonia se extinguió', summary() + '<p>' + (win ? 'Las demás especies quedaron reducidas o desaparecieron. El charco es tuyo y tu linaje se guarda como legado.' : 'Otras colonias se quedaron con el charco. Probá otra rama, diferenciá más células recolectoras al principio o fusioná organismos antes.') + '</p>', [
@@ -1467,6 +1491,71 @@ function legacyText() {
   return n ? 'Legado: ' + (L.n) + ' linaje(s) completado(s). Empezás con +' + 8 * n + ' nutrientes y ' + Math.min(n, 2) + ' célula(s) extra.' : 'Todavía no tenés linajes. Completá una partida para heredar ADN en la próxima.';
 }
 $('legacyTxt').textContent = legacyText();
+
+/* ---------- Sala (hasta 8 colonias) ---------- */
+function saveLobby() { try { localStorage.setItem('evo_lobby', JSON.stringify(lobby)); } catch (e) {} }
+function renderLobby() {
+  const el = $('lobby'); el.innerHTML = '';
+  for (let i = 0; i < 8; i++) {
+    const row = document.createElement('div'); row.className = 'slotrow';
+    row.innerHTML = '<i style="background:' + SLOT_COL[i] + '"></i>';
+    if (i === 0) {
+      const inp = document.createElement('input'); inp.maxLength = 18; inp.placeholder = 'Tu colonia'; inp.value = lobby.name || ''; inp.oninput = () => { lobby.name = inp.value.trim(); saveLobby(); };
+      const tag = document.createElement('span'); tag.textContent = 'Vos'; tag.style.flex = 'none'; row.append(inp, tag);
+    } else {
+      const nm = document.createElement('span'); nm.textContent = SLOT_NAME[i];
+      const sel = document.createElement('select'); sel.innerHTML = '<option value="1">Bot</option><option value="0">Vacía</option><option value="h" disabled>Humano (online, próximamente)</option>';
+      sel.value = lobby.bots[i - 1] ? '1' : '0'; sel.onchange = () => { lobby.bots[i - 1] = +sel.value; saveLobby(); };
+      row.append(nm, sel);
+    }
+    el.appendChild(row);
+  }
+  $('seedIn').value = lobby.seed || '';
+  saveLobby();
+}
+$('lbFill').onclick = () => { lobby.bots = [1, 1, 1, 1, 1, 1, 1]; renderLobby(); };
+$('lbMin').onclick = () => { lobby.bots = [1, 0, 0, 0, 0, 0, 0]; renderLobby(); };
+$('seedIn').oninput = () => { lobby.seed = $('seedIn').value.trim().toUpperCase(); saveLobby(); };
+$('seedNew').onclick = () => { lobby.seed = newSeedStr(); renderLobby(); };
+
+/* ---------- Partida guardada ---------- */
+const SAVE_KEY = 'evo_save_v1', SAVE_VER = 1;
+function snapshot() {
+  return JSON.stringify({ v: SAVE_VER, at: Date.now(), di: diffIdx, rs: _rs, cam: { x: cam.x, y: cam.y, z: cam.z }, colors: TEAM_COL, names: TEAM_NAME, S },
+    (k, v) => v instanceof Set ? { __set: [...v] } : (k === 'byId' || k === 'diff') ? undefined : (k === 'seq' && Array.isArray(v)) ? v.map(m => m.id) : v);
+}
+function stateHash() { const t = snapshot(); let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16); }
+function saveGame(manual) {
+  if (!S || S.over) return false;
+  try { localStorage.setItem(SAVE_KEY, snapshot()); if (manual) toast('Partida guardada.'); return true; }
+  catch (e) { if (manual) toast('No se pudo guardar (almacenamiento lleno o bloqueado).', true); return false; }
+}
+function readSave() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const d = JSON.parse(t, (k, v) => v && v.__set ? new Set(v.__set) : v); return d && d.v === SAVE_VER && d.S ? d : null; } catch (e) { return null; } }
+function restoreGame(d) {
+  S = d.S; diffIdx = d.di; S.diff = DIFFS[d.di]; _rs = d.rs;
+  S.byId = new Map(S.cells.map(c => [c.id, c]));
+  S.teams.forEach(T => { if (T.ai) T.ai.seq = T.ai.seq.map(id => MUTID[id]).filter(Boolean); });
+  d.colors.forEach((c, i) => { TEAM_COL[i] = c; }); d.names.forEach((n, i) => { TEAM_NAME[i] = n; }); for (const k in PTINT) delete PTINT[k];
+  Object.assign(cam, d.cam); clampCam();
+  S.abBtns = []; $('abil').innerHTML = ''; abButtons();
+  S.modal = false; S.paused = true; started = true; simAcc = 0; lastSaveT = S.t;
+  $('menu').classList.remove('show'); setSpd(S.spd || 1);
+  if (S.teams[0].pending > 0) openMutation();
+  toast('Partida cargada. Tocá Pausa para seguir.');
+}
+function refreshContinue() {
+  const d = readSave(), b = $('contBtn'), i = $('saveInfo');
+  b.style.display = i.style.display = d ? '' : 'none';
+  if (d) {
+    const T = d.S.teams[0], m = Math.floor(d.S.t / 60), nC = d.S.cells.filter(c => c.team === 0 && !c.dead && !c.struct).length;
+    i.textContent = 'Guardada ' + new Date(d.at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) + ' · ' + m + ' min · ' + nC + ' unidades · ' + T.mutCount + ' mutaciones · semilla ' + d.S.seed;
+  }
+}
+$('contBtn').onclick = () => { const d = readSave(); if (d) restoreGame(d); };
+$('bSave').onclick = () => saveGame(true);
+document.addEventListener('visibilitychange', () => { if (document.hidden && started) saveGame(); });
+addEventListener('pagehide', () => { if (started) saveGame(); });
+renderLobby(); refreshContinue();
 
 /* ---------- Dibujo: rasgos de mutación ---------- */
 const AURA = {
@@ -1929,7 +2018,7 @@ function useAbility(k) {
     cells.forEach(c => { for (const e of S.cells) { if (e.dead || e.team === 0 || Math.hypot(e.x - c.x, e.y - c.y) > c.r + e.r + reach) continue; if (k === 'engulf') { hurt(e, 14 + 8 * lv, c); c.hp = Math.min(c.mhp, c.hp + 6 + 3 * lv); } else { hurt(e, 8 + 4 * lv, c); T.nut += 3; c.hp = Math.min(c.mhp, c.hp + 5); S.beams.push({ x1: e.x, y1: e.y, x2: c.x, y2: c.y, t: .35, c: '#c9a0ff' }); } hit++; S.rings.push({ x: e.x, y: e.y, r: 6, t: .4, c: k === 'engulf' ? '#ff6b6b' : '#c9a0ff' }); } });
     if (!hit) { toast('No hay enemigos al alcance: acercate y repetí.'); ok = false; }
   }
-  else if (k === 'toxin') { let cx = 0, cy = 0; cells.forEach(c => { cx += c.x; cy += c.y; }); S.clouds.push({ x: aim.x, y: aim.y, r: 70 + 10 * lv, t: 5, dps: 5 + 2 * lv, ph: Math.random() * 6 }); }
+  else if (k === 'toxin') { let cx = 0, cy = 0; cells.forEach(c => { cx += c.x; cy += c.y; }); S.clouds.push({ x: aim.x, y: aim.y, r: 70 + 10 * lv, t: 5, dps: 5 + 2 * lv, ph: R() * 6 }); }
   else if (k === 'shoot') {
     let cx = 0, cy = 0; cells.forEach(c => { cx += c.x; cy += c.y; }); cx /= cells.length; cy /= cells.length; const e = nearestEnemy({ x: cx, y: cy, team: 0 }, 280);
     if (!e) { toast('No hay enemigos cerca para el disparo.'); ok = false; } else { hurt(e, 24 + 10 * lv, cells[0]); S.beams.push({ x1: cx, y1: cy, x2: e.x, y2: e.y, t: .3, c: '#ff9a7a' }); S.rings.push({ x: e.x, y: e.y, r: 6, t: .4, c: '#ff9a7a' }); }
@@ -2049,11 +2138,15 @@ addEventListener('resize', resize);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', pal);
 
 let last = performance.now();
+const FIX = 1 / 60; let simAcc = 0; // paso fijo: la simulación avanza igual en cualquier PC (base del multijugador)
 function loop(now) {
-  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (started && S && !S.paused && !S.modal && !S.over) {
-    for (let i = 0; i < S.spd; i++) step(dt);
-  }
+    simAcc += dt; let nn = 0;
+    while (simAcc >= FIX && nn++ < 8) { for (let i = 0; i < S.spd; i++) step(FIX); simAcc -= FIX; }
+    if (nn > 8) simAcc = 0;
+    if (S.t - lastSaveT > 20) { lastSaveT = S.t; saveGame(); }
+  } else simAcc = 0;
   if (started && S) {
     const sp = 700 / cam.z * dt;
     let mv = false;
@@ -2076,7 +2169,7 @@ function loop(now) {
 }
 pal(); resize(); newGame(1, 3); S.paused = true;
 requestAnimationFrame(loop);
-window.__e1 = { get S() { return S; }, cam, applyMut, MUT, useAbility, AB, abLevel, newGame, openMutation, openSpecies, pickMut, offers, fuse, mk, cellTier, hud, setStarted(v) { started = v; } };
+window.__e1 = { get S() { return S; }, cam, applyMut, MUT, useAbility, AB, abLevel, newGame, openMutation, openSpecies, pickMut, offers, fuse, mk, cellTier, step, snapshot, stateHash, saveGame, readSave, restoreGame, seedRng, hashStr, hud, setStarted(v) { started = v; } };
 })();
 </script>
 </body>

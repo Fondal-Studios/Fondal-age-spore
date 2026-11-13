@@ -23,6 +23,9 @@ Balance medido con bots: Era 1 Fácil, 10 de 10 victorias con 2 rivales; Normal 
 ## Arte pintado de la Era 1 (Runway)
 `art/runway/cells/*.png` (13 sprites: basal + 4 ramas x 3 niveles). Se cargan con rutas relativas `../art/runway/cells/`; `drawCell` usa `paintBody` (sección "Cuerpos celulares pintados" de era1-celula.html). Nivel = `cellTier(T)` según `T.mutCount`. Los cuerpos pintados reemplazan el blob y el corte vectorial (`drawCutaway`); `SPR_SVG` sigue vivo para iconos, Anatomía y fallback si el PNG no carga. Ver `art/runway/LEEME.md` para regenerar y `AUDITORIA.md` para el plan de mejora. Gancho nuevo en `__e1`: `fuse`, `mk`, `cellTier`.
 
+## Guardado, semilla y multijugador (Era 1)
+Toda la simulación usa `R()` (mulberry32, `seedRng`) y paso fijo `FIX=1/60`; **no usar `Math.random` ni `Date`/`performance.now` dentro de la simulación** (solo en dibujo). Guardado: `snapshot()/saveGame()/readSave()/restoreGame()` (clave `evo_save_v1`; `ai.seq` se guarda como ids). Sala: `lobby`, `newGame(di, nRiv, seed, slots)`, `SLOT_*`/`TEAM_*`. Si agregás estado nuevo a `S`, tiene que ser JSON-serializable (sin funciones ni referencias a objetos: usar ids) y correr `tests/determinismo.js`. Plan de red, relay y lo que falta: `MULTIJUGADOR.md`. Auditoría y propuestas: `AUDITORIA.md`.
+
 ## Reglas de estilo del arte
 Vector 100x100, contorno #2b2233 de 2 a 3 unidades, degradado radial claro arriba a la izquierda, brillo blanco translúcido, sin texto dentro del dibujo, fondo transparente. Cada mutación, variante e híbrido debe verse distinto. Cuando el agente pintor mejore un dibujo, reemplazar el SVG en `tools/art.py` (o el JSON embebido) y volver a generar.
 

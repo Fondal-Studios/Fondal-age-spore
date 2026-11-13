@@ -1,0 +1,9 @@
+{
+  "name": "fondal-age-spore-relay",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Relay de salas para el modo online (lockstep) de Fondal Age Spore",
+  "type": "module",
+  "scripts": { "start": "node relay.js", "test": "node test.js" },
+  "dependencies": { "ws": "^8.18.0" }
+}

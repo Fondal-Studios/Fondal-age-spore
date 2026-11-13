@@ -13,6 +13,15 @@ Abrí `index.html` en el navegador (no hace falta servidor) o activá GitHub Pag
 - **Era 3 (tribus):** oficios, tecnologías, otra tribu y fundación de la ciudad.
 - Eras 4 a 6: por construir.
 
+## Novedades
+- **Partida guardada** (Era 1): autoguardado y botón Guardar; «Continuar» en el menú.
+- **Sala de hasta 8 colonias** (vos + bots) y **semilla del mundo** compartible.
+- **Relay online** en `server/` (aún sin conectar al juego): ver `MULTIJUGADOR.md`.
+- Auditoría completa y 10 propuestas: `AUDITORIA.md`.
+
+## Pruebas
+`NODE_PATH=$(npm root -g) node tests/determinismo.js` (misma semilla ⇒ mismo estado, guardar/cargar, 8 colonias) y `cd server && npm install && npm test`.
+
 ## Carpetas
 - `eras/`: cada era es un HTML autocontenido (canvas, sin dependencias; solo tipografías de Google Fonts).
 - `art/`: dibujos vectoriales de los orgánulos (SVG y PNG), hoja de contactos y `art/runway/` (cuerpos celulares pintados; la Era 1 los carga desde ahí, así que hay que servir la carpeta completa).

@@ -316,9 +316,9 @@ function dmg(b, amt, src) {
 function kill(b, src) {
   b.dead = true; G.C.push({ x: b.x, y: b.y, food: 30 + b.sp.r * 4, t: 30 });
   for (let i = 0; i < 8; i++) G.fx.push({ x: b.x, y: b.y, vx: rnd(-40, 40), vy: rnd(-40, 40), l: .6, c: '#b33' });
-  if (b.sp.team === 'player') logMsg('Murió un ' + b.sp.n.toLowerCase().replace(/s$/, '') + (src ? ' (atacado por ' + src.sp.n.toLowerCase() + ')' : ' (hambre o frío)') + '.');
+  if (b.sp.team === 'player') logMsg('Murió un ejemplar de ' + b.sp.n.toLowerCase() + (src ? ' (atacado por ' + src.sp.n.toLowerCase() + ')' : ' (hambre o frío)') + '.');
   if (src && src.sp.team === 'player') { G.kills++; G.inst += 1 * G.me.p.inst; logMsg('Tu manada cazó a ' + b.sp.n.toLowerCase() + '. +Instinto'); if (b.sp.boss) { G.inst += 10; logMsg('¡Derrotaron al oso gigante!'); toast('¡Derrotaron al oso gigante!'); } }
-  else if (src && b.sp.team === 'wild' && src.sp.team === 'wild' && Math.random() < .15) logMsg('Un ' + src.sp.n.toLowerCase().replace(/s$/, '') + ' salvaje cazó a un ' + b.sp.n.toLowerCase().replace(/s$/, '') + '.');
+  else if (src && b.sp.team === 'wild' && src.sp.team === 'wild' && Math.random() < .15) logMsg('Un ejemplar salvaje de ' + src.sp.n.toLowerCase() + ' cazó a uno de ' + b.sp.n.toLowerCase() + '.');
 }
 function hit(a, b) {
   const sp = a.sp, p = sp.p; let d = sp.atk * p.hunt * (.8 + Math.random() * .4) * (a.age < MAT ? .5 : 1);
@@ -808,7 +808,7 @@ function drawPyramid() {
   const mx = Math.max(prod, herb, carn, 1), lv = [[carn, '#c0392b', 'Carnívoros'], [herb, '#d9a520', 'Herbívoros'], [prod, '#4faa44', 'Productores (plantas y algas)']];
   lv.forEach(([v, c, n], i) => { const w = 30 + 190 * Math.sqrt(v / mx), y = 4 + i * 33; x.fillStyle = c; x.globalAlpha = .85; x.fillRect((230 - w) / 2, y, w, 28); x.globalAlpha = 1; x.fillStyle = '#111'; x.font = '600 10.5px "IBM Plex Sans",sans-serif'; x.textAlign = 'center'; x.fillText(n, 115, y + 18); });
   const p1 = prod > 0 ? Math.round(herb / prod * 100) : 0, p2 = herb > 0 ? Math.round(carn / herb * 100) : 0;
-  $('pyrTxt').textContent = 'Regla del 10%: cada nivel retiene cerca del 10% de la energía del anterior. Ahora los herbívoros equivalen a ' + p1 + '% de las plantas y los carnívoros a ' + p2 + '% de los herbívoros.';
+  $('pyrTxt').textContent = 'Regla del 10%: en la naturaleza cada nivel trófico retiene cerca del 10% de la energía del anterior. Biomasa actual en tu mapa (el stock, no la transferencia de energía): herbívoros = ' + p1 + '% de las plantas; carnívoros = ' + p2 + '% de los herbívoros.';
 }
 $('bCiv').onclick = () => { if (!ready()) return; $('civTray').classList.toggle('show'); $('bCiv').classList.toggle('on'); };
 Object.keys(BLD).forEach(k => {
