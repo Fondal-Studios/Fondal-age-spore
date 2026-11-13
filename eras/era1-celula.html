@@ -224,6 +224,10 @@ details.help ul{margin:8px 0 0;padding-left:18px;line-height:1.6}
         <div><b>Parásito</b> vence a Colonial</div>
         <div><b>Colonial</b> vence a Depredador</div>
       </div>
+      <div class="lbl">Online (beta) <span style="font-weight:400">· hasta 8 personas; los lugares libres los juegan bots. Hace falta el relay de <code>server/</code></span></div>
+      <div class="seedrow"><input id="relayUrl" placeholder="ws://servidor:8787" style="text-transform:none;letter-spacing:0"><input id="roomCode" placeholder="CÓDIGO" maxlength="4" style="max-width:96px"></div>
+      <div class="seg"><button id="netCreate">Crear sala</button><button id="netJoin">Unirme</button><button id="netLeave" style="display:none">Salir de la sala</button></div>
+      <div id="netLobby" style="display:none;font-size:13px"></div>
       <button class="go" id="contBtn" style="display:none">Continuar partida guardada</button>
       <p id="saveInfo" style="display:none"></p>
       <button class="go" id="startBtn">Empezar partida nueva</button>
@@ -450,7 +454,7 @@ function paintTinted(team, col) { // la célula basal toma el color de su equipo
   return PTINT[k] = lv;
 }
 function drawPaintSprite(x, id, team, col, size) {
-  const lv = id === 'basal' && team > 0 ? paintTinted(team, col) : PCELL[id]; if (!lv) return false;
+  const lv = id === 'basal' && col.toLowerCase() !== SLOT_COL[0] ? paintTinted(team, col) : PCELL[id]; if (!lv) return false;
   const px = size * cam.z * DPR, m = (() => { for (const c of lv) if (c.width >= px * .9) return c; return lv[lv.length - 1]; })();
   x.drawImage(m, -size / 2, -size / 2, size, size); return true;
 }
@@ -584,7 +588,7 @@ function newGame(di, nRiv, seedStr, slots, humans) {
   slots.forEach((sl, t) => { TEAM_COL[t] = SLOT_COL[sl]; TEAM_NAME[t] = hum.has(t) ? (t === ME ? (lobby.name || SLOT_NAME[0]) : SLOT_NAME[sl]) : SLOT_NAME[sl]; });
   for (const k in PTINT) delete PTINT[k];
   const D = DIFFS[di], L = loadLegacy();
-  const bonus = Math.min(L.n || 0, 3);
+  const bonus = NET.on ? 0 : Math.min(L.n || 0, 3); // online: nada local entra en la simulación
   const brs = shuffle(['pred', 'para', 'foto', 'colo', 'pred', 'para', 'foto']);
   S = {
     evt: { done: {}, last: 0, clock: 0 }, seed: seedStr, slots, t: 0, paused: false, spd: 1, diff: D, cells: [], byId: new Map(), nuts: [], drops: [], fx: [], texts: [],
@@ -618,12 +622,12 @@ function newGame(di, nRiv, seedStr, slots, humans) {
   for (let i = 0, g = 0; i < 8 && g < 200; g++) { const x = rnd(120, W - 120), y = rnd(120, H - 120), r = rnd(26, 44); if (farHome(x, y, 260) && S.meadows.every(m => Math.hypot(m.x - x, m.y - y) > m.r + r) && S.reefs.every(q => Math.hypot(q.x - x, q.y - y) > q.r + r + 40)) { S.reefs.push({ x, y, r, seed: R() * 9 }); i++; } }
   for (let i = 0; i < 150; i++) spawnNut();
   cam.z = Math.max(minZ(), window.innerWidth < 700 ? 1.1 : 1.5);
-  cam.x = HOMES[slots[0]].x - VW / cam.z / 2; cam.y = HOMES[slots[0]].y - VH / cam.z / 2; clampCam();
+  cam.x = HOMES[slots[ME]].x - VW / cam.z / 2; cam.y = HOMES[slots[ME]].y - VH / cam.z / 2; clampCam();
 }
 
 /* ---------- Células ---------- */
 function calc(c) {
-  const T = S.teams[c.team], m = T.mods, D = c.team ? S.diff : { hp: 1, dmg: 1 };
+  const T = S.teams[c.team], m = T.mods, D = T.ai ? S.diff : { hp: 1, dmg: 1 };
   if (c.struct) { const sd = ST[c.struct]; c.st = { mhp: sd.hp * m.hp * D.hp * (c.reef ? 1.4 : 1), dmg: 0, spd: 0, gather: 0, r: sd.r, armor: .1, heal: 0, vis: 1, drain: 0 }; c.hp = c.mhp ? c.hp * c.st.mhp / c.mhp : c.st.mhp; c.mhp = c.st.mhp; c.r = c.st.r; return; }
   if (c.org) {
     const o = c.org, om = 1 + m.org;
@@ -651,7 +655,7 @@ function pickParent(team) {
 }
 function birth(p) {
   let ty = p.org ? 'basal' : p.type;
-  if (p.team && R() < .35) ty = pickWeighted(PERS[S.teams[p.team].ai.p].mix);
+  if (S.teams[p.team].ai && R() < .35) ty = pickWeighted(PERS[S.teams[p.team].ai.p].mix);
   const c = mk(p.team, p.x + rnd(-14, 14), p.y + rnd(-14, 14), ty, mutG(p.g));
   c.food = 60; return c;
 }
@@ -674,7 +678,8 @@ function toast(txt, warn) {
   while ($('toasts').children.length > 3) $('toasts').firstChild.remove();
 }
 function ftext(x, y, s, c) { S.texts.push({ x, y, t: 1.2, s, c }); }
-function burst(x, y, n, c) { for (let i = 0; i < n; i++) { const a = rnd(0, TAU), v = rnd(20, 70); S.fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, l: rnd(.3, .7), c }); } }
+// partículas: azar COSMÉTICO (Math.random), nunca el de la simulación, para que cada pantalla pueda dibujar lo suyo sin desincronizarse
+function burst(x, y, n, c) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, v = 20 + Math.random() * 50; S.fx.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, l: .3 + Math.random() * .4, c }); } }
 
 /* ---------- Fusión pluricelular ---------- */
 function fuse(list) {
@@ -857,7 +862,12 @@ function applyMut(team, m) {
   if (tier1 > tier0 && tier1 >= 1) { if (team === ME) Snd.evolve(tier1); T.evoAt = S.t; if (team === ME) { toast('¡Evolución! Tus células alcanzan el nivel ' + tier1 + ' de la rama ' + (T.branch ? BR[T.branch].n : 'general') + ': ' + EVO_TXT[T.branch || 'gen'][tier1 - 1]); } }
   for (const c of S.cells) if (c.team === team && !c.dead) calc(c);
 }
+// las ofertas se derivan de la semilla, el equipo y su progreso: son puras (abrir el panel dos veces o en otra pantalla da lo mismo)
 function offers() {
+  const T = S.teams[ME], keep = _rs; _rs = hashStr(S.seed + ':' + ME + ':' + T.mutCount + ':' + T.pending + ':' + T.owned.length) || 1;
+  try { return offersInner(); } finally { _rs = keep; }
+}
+function offersInner() {
   const T = S.teams[ME], base = offersBase();
   if (T.branch && T.mutCount >= 2 && R() < .4) {
     const vr = T.vars || {}, c = T.owned.filter(id => VAR[id] && !vr[id]);
@@ -1050,7 +1060,8 @@ function checkEvents() {
     S.evt.at = S.evt.at || {}; S.evt.ai = S.evt.ai || {};
     if (!S.evt.ai[id]) { // los rivales deciden solos (deterministas, con el generador de la partida)
       S.evt.ai[id] = 1;
-      for (let t = 1; t < S.teams.length; t++) {
+      for (let t = 0; t < S.teams.length; t++) {
+        if (t === ME || !S.teams[t].ai) continue;
         const tt = S.teams[t], ch = R() < .55 ? 'A' : 'B';
         if (id === 'oxi') tt.oxi = ch === 'A' ? 'ant' : 'vent';
         else if (id === 'bola') { tt.snow = ch === 'A' ? 'cyst' : 'vent'; if (ch === 'A') S.cells.forEach(c => { if (c.team === t && !c.dead && !c.struct) { c.cyst = ENV.bola.dur; c.order = null; } }); }
@@ -1516,7 +1527,7 @@ function x_produce(cmd) {
 function produceUnit(ty) { if (ready()) dispatch('produce', { ty }); }
 const CMDS = { order: x_order, divide: x_divide, boost: x_boost, spec: x_spec, fuse: x_fuse, sow: x_sow, bfuse: x_bfuse, build: x_build, produce: x_produce, mut: x_mut, ab: x_ab };
 function selectAll() { if (!S) return; S.sel = new Set(S.cells.filter(c => c.team === ME && !c.struct).map(c => c.id)); }
-function togglePause() { if (!started || S.over || S.modal) return; S.paused = !S.paused; }
+function togglePause() { if (NET.on) { toast('Online: no se puede pausar.'); return; } if (!started || S.over || S.modal) return; S.paused = !S.paused; }
 
 /* ---------- Cámara ---------- */
 function minZ() { return Math.max(VW / W, VH / H, .3); }
@@ -1621,7 +1632,7 @@ mm.addEventListener('pointerdown', e => { mmDown = true; mm.setPointerCapture(e.
 mm.addEventListener('pointermove', e => { if (mmDown) mmJump(e); });
 mm.addEventListener('pointerup', () => mmDown = false);
 
-function setSpd(v) { S.spd = v; $('bSpd').firstChild.textContent = '×' + v; }
+function setSpd(v) { if (NET.on && v !== 1) return; S.spd = v; $('bSpd').firstChild.textContent = '×' + v; }
 $('bDiv').onclick = divide; $('bAll').onclick = selectAll; $('bBoost').onclick = boost; $('bPause').onclick = togglePause;
 $('bFuse').onclick = doFuse;
 $('bBuild').onclick = () => { $('tray2').classList.toggle('show'); $('bBuild').classList.toggle('on'); };
@@ -1674,6 +1685,7 @@ function saveLineage() {
   try { localStorage.setItem('evo_lineage', JSON.stringify({ v: 1, from: 1, branch: T.branch || null, tier: cellTier(T), mutCount: T.mutCount, owned: T.owned.slice(), seed: S.seed, at: Date.now() })); } catch (e) {}
 }
 function toMenu() {
+  if (NET.on) netLeave();
   $('legacyTxt').textContent = legacyText(); refreshContinue();
   $('menu').classList.add('show'); started = false; S.paused = true;
 }
@@ -1690,7 +1702,7 @@ function finish(winner) { if (S.over) return; S.winner = winner; endGame(winner 
 function endGame(kind) {
   if (S.over) return; S.over = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
   const win = kind === 'win';
-  if (win) { const L = loadLegacy(); L.n = (L.n || 0) + 1; saveLegacy(L); }
+  if (win && !NET.on) { const L = loadLegacy(); L.n = (L.n || 0) + 1; saveLegacy(L); }
   dialog(win ? 'Dominio total' : 'Tu colonia se extinguió', summary() + '<p>' + (win ? 'Las demás especies quedaron reducidas o desaparecieron. El charco es tuyo y tu linaje se guarda como legado.' : 'Otras colonias se quedaron con el charco. Probá otra rama, diferenciá más células recolectoras al principio o fusioná organismos antes.') + '</p>', [
     { t: 'Volver al inicio', primary: true, fn: toMenu }
   ]);
@@ -1735,7 +1747,7 @@ function snapshot() {
 }
 function stateHash() { const t = snapshot(); let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(16); }
 function saveGame(manual) {
-  if (!S || S.over) return false;
+  if (!S || S.over || NET.on) return false;
   try { localStorage.setItem(SAVE_KEY, snapshot()); if (manual) toast('Partida guardada.'); return true; }
   catch (e) { if (manual) toast('No se pudo guardar (almacenamiento lleno o bloqueado).', true); return false; }
 }
@@ -1768,6 +1780,81 @@ addEventListener('pointerdown', () => Snd.init(), { once: true }); addEventListe
 document.addEventListener('visibilitychange', () => { if (document.hidden && started) saveGame(); });
 addEventListener('pagehide', () => { if (started) saveGame(); });
 renderLobby(); refreshContinue();
+
+/* ---------- Online (lockstep sobre el relay de server/relay.js) ----------
+   El servidor no simula: reparte la sala, la semilla y las órdenes de cada turno en un orden único.
+   Cada cliente corre la MISMA simulación determinista y aplica las mismas órdenes en el mismo turno.
+   Cada ~5 s se compara un hash del estado: si difiere, se avisa «desincronizado». Detalles: MULTIJUGADOR.md. */
+function coreHash() {
+  const core = { rs: _rs, t: +S.t.toFixed(4), idc: S.idc, cells: S.cells, nuts: S.nuts, drops: S.drops, meadows: S.meadows, rests: S.rests, reefs: S.reefs,
+    teams: S.teams.map(T => ({ nut: T.nut, en: T.en, dna: T.dna, prot: T.prot, mutCount: T.mutCount, owned: T.owned, branch: T.branch, branch2: T.branch2, vars: T.vars, pending: T.pending, stage: T.stage, fusion: T.fusion, ai: !!T.ai })) };
+  const canon = v => Array.isArray(v) ? v.map(canon) : v && typeof v === 'object' ? Object.fromEntries(Object.keys(v).sort().map(k => [k, canon(v[k])])) : v;
+  return hashStr(JSON.stringify(canon(core))).toString(16);
+}
+function makeBot(t) { // una persona se fue: su colonia pasa a un bot, igual en todos los clientes
+  const T = S.teams[t], D = S.diff, p = PERS_ORDER[t % 5], pr = PERS[p];
+  if (!T.branch) T.branch = ['pred', 'para', 'foto', 'colo'][t % 4];
+  T.ai = { p, divT: 3, mutT: D.mutEvery * rnd(.7, 1), waveT: pr.wi * D.wave + 20, waveInt: pr.wi * D.wave, waveSize: pr.ws, divRate: pr.dr * D.dv, fuseT: D.fuse * rnd(.8, 1.2), target: null, tTeam: -1,
+    seq: MUT.filter(m => (m.br === T.branch || m.br === T.branch2) && !T.os.has(m.id)).sort((a, b) => (a.t || 0) - (b.t || 0)).concat(shuffle(MUT.filter(m => m.br === 'gen' && !T.os.has(m.id)))) };
+  T.pending = 0; S.cells.forEach(c => { if (c.team === t) c.order = null; });
+  if (t === ME) toast('Quedaste desconectado: un bot juega tu colonia.', true);
+}
+function netTurn(m) {
+  for (const o of m.cmds) { if (o.c && o.c.type === 'bot') { if (!S.teams[o.slot].ai) makeBot(o.slot); } else applyCmd(o.slot, o.c); }
+  for (let i = 0; i < NET.steps; i++) step(FIX);
+  NET.turns++;
+  if (NET.turns % 50 === 0 && NET.ws && NET.ws.readyState === 1) { NET.lastHash = coreHash(); (NET.hashes = NET.hashes || {})[NET.turns] = NET.lastHash; NET.ws.send(JSON.stringify({ t: 'hash', turn: NET.turns, h: NET.lastHash })); }
+}
+function netPump() { // se ejecutan los turnos recibidos (si falta alguno, la simulación espera: es lo que hace al lockstep sincronizado)
+  let k = 0, lim = NET.queue.length > 12 ? 10 : 3;
+  while (NET.queue.length && k++ < lim && !S.over) netTurn(NET.queue.shift());
+}
+function netMsg(m) {
+  if (m.t === 'lobby') { NET.lobby = m; if (m.you != null) NET.you = m.you; renderNetLobby(); }
+  else if (m.t === 'start') startOnline(m);
+  else if (m.t === 'turn') NET.queue.push(m);
+  else if (m.t === 'desync') { NET.desync = m; toast('¡Desincronizados! Las simulaciones difieren en el turno ' + m.turn + '.', true); console.warn('desync', m); }
+  else if (m.t === 'error') { NET.err = m.msg; toast('Online: ' + m.msg, true); }
+}
+function netConnect(url) {
+  return new Promise((res, rej) => {
+    if (NET.ws) { try { NET.ws.close(); } catch (e) {} }
+    let ws; try { ws = new WebSocket(url); } catch (e) { rej(e); return; }
+    NET.ws = ws; ws.onopen = () => res(); ws.onerror = () => rej(new Error('No se pudo conectar a ' + url));
+    ws.onmessage = e => { try { netMsg(JSON.parse(e.data)); } catch (er) { console.error(er); } };
+    ws.onclose = () => { if (NET.on && S && !S.over) toast('Se perdió la conexión con el servidor.', true); };
+    try { localStorage.setItem('evo_relay', url); } catch (e) {}
+  });
+}
+NET.send = cmd => { if (NET.ws && NET.ws.readyState === 1) NET.ws.send(JSON.stringify({ t: 'cmd', c: cmd })); };
+const netName = () => (lobby.name || 'Jugador');
+async function netCreate(url) { await netConnect(url); NET.ws.send(JSON.stringify({ t: 'create', name: netName() })); }
+async function netJoin(url, code) { await netConnect(url); NET.ws.send(JSON.stringify({ t: 'join', code, name: netName() })); }
+function netStart(bots) { NET.ws.send(JSON.stringify({ t: 'start', seed: lobby.seed || newSeedStr(), diff: diffIdx, bots })); }
+function netLeave() { if (NET.ws) { try { NET.ws.send(JSON.stringify({ t: 'leave' })); NET.ws.close(); } catch (e) {} } NET.on = false; NET.ws = null; NET.lobby = null; NET.queue = []; renderNetLobby(); }
+function startOnline(cfg) {
+  NET.cfg = cfg; NET.on = true; NET.queue = []; NET.turns = 0; NET.desync = null; NET.steps = Math.max(1, Math.round(cfg.turnMs / (1000 * FIX)));
+  ME = NET.you; diffIdx = cfg.diff;
+  newGame(cfg.diff, cfg.slots.length - 1, cfg.seed, cfg.slots.map(s => s.slot), cfg.slots.filter(s => s.kind === 'human').map(s => s.slot));
+  cfg.slots.forEach((sl, i) => { TEAM_NAME[i] = sl.name; });
+  started = true; $('menu').classList.remove('show'); S.paused = false; S.spd = 1; $('bSpd').firstChild.textContent = '×1';
+  const h = cfg.slots.filter(s => s.kind === 'human').length;
+  toast('Partida online: ' + h + ' persona(s) + ' + (cfg.slots.length - h) + ' bot(s) · semilla ' + cfg.seed);
+}
+function renderNetLobby() {
+  const el = $('netLobby'), L = NET.lobby; if (!el) return;
+  $('netLeave').style.display = L ? '' : 'none'; $('netCreate').style.display = $('netJoin').style.display = L ? 'none' : '';
+  if (!L) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const host = L.players.find(p => p.host), isHost = NET.you === (host ? host.slot : 0);
+  el.style.display = '';
+  el.innerHTML = '<p><b>Sala ' + L.code + '</b> · compartí el código. Personas: ' + L.players.map(p => p.name + (p.host ? ' (anfitrión)' : '')).join(', ') + '.</p>' +
+    (isHost ? '<div class="seedrow"><label style="font-size:13px;align-self:center">Bots: <select id="netBots">' + Array.from({ length: 9 - L.players.length }, (_, i) => '<option>' + i + '</option>').join('') + '</select></label><button id="netStart">Empezar online</button></div>' : '<p>Esperando que el anfitrión empiece…</p>');
+  if (isHost) { const sel = $('netBots'); sel.value = String(Math.min(8 - L.players.length, 3)); $('netStart').onclick = () => netStart(+sel.value); }
+}
+$('netCreate').onclick = () => netCreate($('relayUrl').value.trim()).catch(e => toast(e.message, true));
+$('netJoin').onclick = () => netJoin($('relayUrl').value.trim(), $('roomCode').value.trim().toUpperCase()).catch(e => toast(e.message, true));
+$('netLeave').onclick = netLeave;
+try { $('relayUrl').value = new URLSearchParams(location.search).get('relay') || localStorage.getItem('evo_relay') || 'ws://localhost:8787'; } catch (e) { $('relayUrl').value = 'ws://localhost:8787'; }
 
 /* ---------- Dibujo: rasgos de mutación ---------- */
 const AURA = {
@@ -2186,7 +2273,7 @@ function openSpecies() {
   const ml = $('spMuts'); ml.innerHTML = '';
   if (!T.owned.length) { ml.textContent = 'Sin mutaciones todavía.'; }
   T.owned.forEach(id => { const vm = id.indexOf(':') > 0 ? id.split(':') : null; const m = vm ? MUT.find(x => x.id === vm[0]) : (MUT.find(x => x.id === id) || FALLBACK); const s = document.createElement('span'); s.innerHTML = '<i class="tag" style="background:' + BR[m.br].c + '"></i>'; s.appendChild(document.createTextNode(vm ? 'Variante ' + vm[1] + ': ' + VAR[vm[0]][vm[1]].n : m.n)); ml.appendChild(s); });
-  $('spLegend').innerHTML = S.teams.map((t, i) => '<span><i class="tag" style="background:' + TEAM_COL[i] + '"></i>' + TEAM_NAME[i] + (i ? ' (' + PERS[t.ai.p].lbl + ')' : '') + '</span>').join('');
+  $('spLegend').innerHTML = S.teams.map((t, i) => '<span><i class="tag" style="background:' + TEAM_COL[i] + '"></i>' + TEAM_NAME[i] + (t.ai ? ' (' + PERS[t.ai.p].lbl + ')' : '') + '</span>').join('');
   buildPreview(); drawChart(); fillAnatomy();
   previewOn = true; $('sp').classList.add('show');
 }
@@ -2359,7 +2446,8 @@ let last = performance.now();
 const FIX = 1 / 60; let simAcc = 0; // paso fijo: la simulación avanza igual en cualquier PC (base del multijugador)
 function loop(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
-  if (started && S && !S.paused && !S.modal && !S.over) {
+  if (NET.on && started && S && !S.over) netPump();
+  else if (started && S && !S.paused && !S.modal && !S.over) {
     simAcc += dt; let nn = 0;
     while (simAcc >= FIX && nn++ < 8) { for (let i = 0; i < S.spd; i++) step(FIX); simAcc -= FIX; }
     if (nn > 8) simAcc = 0;
@@ -2387,7 +2475,7 @@ function loop(now) {
 }
 pal(); resize(); newGame(1, 3); S.paused = true;
 requestAnimationFrame(loop);
-window.__e1 = { get S() { return S; }, cam, applyMut, MUT, useAbility, AB, abLevel, newGame, openMutation, openSpecies, pickMut, offers, Snd, fuse, checkEvents, EVT, applyEvt, saveLineage, mk, cellTier, step, snapshot, stateHash, saveGame, readSave, restoreGame, seedRng, hashStr, hud, setStarted(v) { started = v; } };
+window.__e1 = { get S() { return S; }, cam, applyMut, MUT, useAbility, AB, abLevel, newGame, openMutation, openSpecies, pickMut, offers, Snd, coreHash, NET, netCreate, netJoin, netStart, netLeave, netPump, applyCmd, dispatch, fuse, checkEvents, EVT, applyEvt, saveLineage, mk, cellTier, step, snapshot, stateHash, saveGame, readSave, restoreGame, seedRng, hashStr, hud, setStarted(v) { started = v; } };
 })();
 </script>
 </body>

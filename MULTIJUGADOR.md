@@ -2,22 +2,32 @@
 
 Objetivo: entrar hasta 8 personas con su célula, diferenciarse y competir; las casillas sin persona las juega un bot.
 
-## Qué ya está hecho (verificado)
+## Estado: el online de la Era 1 funciona (beta)
+Verificado con `tests/online.js`: **relay real + 3 navegadores en la misma partida (3 personas + 3 bots)**, órdenes de cada persona (dividir, impulso, especializar, sembrar), **una desconexión** (la colonia pasa a un bot en todas las pantallas) y comparación del hash del estado cada 50 turnos: **10 puntos de comparación idénticos** y ningún aviso de desincronización.
+
 | Pieza | Dónde | Prueba |
 | --- | --- | --- |
-| **8 colonias** en el mapa (2 colores y 2 bases nuevas) | `era1-celula.html` (`SLOT_*`, `HOMES`) | `tests/determinismo.js` (8 colonias, 1200 ticks) |
-| **Sala** con casillas: vos + hasta 7 bots, nombre propio | menú de la Era 1 | captura + prueba manual |
-| **Semilla del mundo**: el mismo código da el mismo mapa y rivales | `seedRng`/`R()` (mulberry32); ya no queda `Math.random` en la simulación | misma semilla ⇒ mismo hash; otra ⇒ distinto |
-| **Paso fijo** de simulación (1/60 s) | `loop()` | idem |
-| **Estado serializable** + hash (`stateHash`) | `snapshot()` | guardar→cargar→seguir da el mismo hash que no interrumpir |
-| **Relay de salas** (crear/unirse con código, 8 plazas, turnos de 100 ms, orden único de comandos, anti-spam, bot de reemplazo, aviso de desincronización) | `server/relay.js` | `server/test.js` (13 comprobaciones con clientes reales) |
+| **8 colonias**, sala con casillas (vos + bots), semilla compartible | menú de la Era 1 | `tests/determinismo.js` |
+| **Azar con semilla** (`R()`; ni partículas ni ofertas de mutación consumen el azar de la simulación) y **paso fijo** 1/60 s | `era1-celula.html` | misma semilla ⇒ mismo estado |
+| **Capa de órdenes**: la interfaz solo emite `dispatch(tipo, datos)`; `applyCmd(equipo, orden)` las ejecuta con el mismo código para cualquier equipo (`ACT`, `CMD`, `ME`) | `era1-celula.html` | `tests/acciones.js`: el juego individual da el mismo hash que antes de la refactorización |
+| **Estado por equipo** (etapa, fusión, impulso, ATP, camuflaje, recargas, ADN, mutaciones) y humano vs IA por `T.ai` | `era1-celula.html` | idem |
+| **Cliente lockstep** (`netPump/netTurn`), sala online (crear/unirse con código), hash cada 50 turnos, reemplazo por bot | `era1-celula.html` | `tests/online.js` |
+| **Relay** de salas de hasta 8, turnos, anti-spam, aviso de desincronización | `server/relay.js` | `server/test.js` (13 comprobaciones) |
+| **Partida guardada** (solo individual) | `snapshot/saveGame/restoreGame` | guardar→cargar→seguir = mismo hash |
 
-## Qué falta (en orden)
-1. **Capa de comandos en el cliente.** Hoy las acciones (Dividir, Especializar, Construir, Fusionar, mutación, habilidades, órdenes) actúan directo sobre `S.teams[0]` (≈80 referencias a «el jugador = equipo 0»). Hay que convertirlas en `apply(slot, cmd)` con el equipo como parámetro y que la UI solo emita comandos (`{type:'divide', ids:[…]}`), con ids y no con objetos. Es el trabajo grande.
-2. **Elecciones de mutación por equipo con su propio generador** (hoy `offers()` consume el azar global cuando el jugador abre el panel, y eso depende del momento en que cada uno mira).
-3. **Cliente de red**: conectar al relay, esperar el turno `n` antes de simular 6 ticks (lockstep), enviar `hash` cada ~50 turnos y mostrar «desincronizado».
-4. **Reemplazo por bot** al recibir `{type:'bot'}` (la IA ya existe: se enciende `T.ai` para ese equipo en ese turno).
-5. **Riesgo conocido de determinismo entre navegadores**: `Math.sin/cos/atan2/hypot` no están garantizados idénticos en todos los motores. Probado solo en Chromium. Mitigación: tabla propia o un mismo motor para todos, o servidor autoritativo.
+## Cómo jugar online
+1. `cd server && npm install && npm start` en un host con Node (por defecto `ws://localhost:8787`; `PORT=…`).
+2. Abrí `eras/era1-celula.html?relay=ws://TU_SERVIDOR:8787` (o escribí la dirección en el menú) → **Crear sala** → pasá el código de 4 letras.
+3. Las demás personas ponen el código y **Unirme**. El anfitrión elige cuántos bots y toca **Empezar online**.
+
+## Límites conocidos (honestos)
+- **Solo probado en Chromium** (dos instancias). `Math.sin/cos/atan2/hypot` no están garantizados idénticos entre motores (Chrome, Firefox, Safari): entre navegadores distintos podría desincronizarse. El hash de estado lo detecta y avisa, pero no lo repara. Mitigación futura: tablas propias de trigonometría o servidor autoritativo.
+- **Sin reconexión**: si alguien se desconecta, su colonia pasa a un bot para siempre.
+- **Sin pausa ni velocidad ×2** en online; las decisiones evolutivas (endosimbiosis, Gran Oxidación…) están desactivadas online (hoy son un diálogo que pausa el juego); sin guardado ni legado.
+- **Lockstep**: todos esperan al más lento; con mala red la partida se «congela» hasta que llegan los turnos.
+- **Sin autenticación**: cualquiera con el código entra; el relay no valida que las órdenes sean legales más allá de que cada orden solo puede mover células del propio equipo.
+- **El relay no está desplegado**: GitHub Pages solo sirve archivos estáticos. Hace falta Fly.io, Render, un VPS, etc.
+- **Fin de partida online**: gana quien llega al dominio (porcentaje de vida total sostenido) o es el último vivo; los eliminados siguen mirando.
 
 ## Protocolo del relay (WebSocket, JSON)
 Cliente → servidor: `create{name}`, `join{code,name}`, `start{seed,diff,bots}` (solo anfitrión), `cmd{c}`, `hash{turn,h}`, `leave`.

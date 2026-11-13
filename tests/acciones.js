@@ -11,7 +11,7 @@ const { chromium } = require('playwright'); const fs = require('fs'); const path
   const hash = await p.evaluate(async () => {
     const E = __e1, $ = id => document.getElementById(id); const run = n => { for (let i = 0; i < n; i++) { if (E.S.modal) break; E.step(1 / 60); } };
     const click = id => $(id).click(); const pickAll = () => { let g = 0; while (E.S.teams[0].pending > 0 && g++ < 8) { if (!E.S.modal) E.openMutation(); const o = E.offers(); E.pickMut(o[0]); } E.S.modal = false; };
-    const T = () => E.S.teams[0];
+    const T = () => E.S.teams[0]; E.cam.x = 200; E.cam.y = 600; E.cam.z = 1.5; // la cámara decide a quién afectan las acciones «sin selección»: se fija
     for (let k = 0; k < 40; k++) {
       T().nut = Math.max(T().nut, 120); T().en = Math.max(T().en, 40);
       click('bDiv'); run(30);
