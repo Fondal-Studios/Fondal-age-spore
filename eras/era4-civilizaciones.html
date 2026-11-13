@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Evolución · Era 4: Civilizaciones</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e8e4d6; --panel:rgba(251,248,238,.95); --ink:#2a2418; --ink2:#6a604a; --line:rgba(42,36,24,.2);
+  --accent:#9a520f; --accent-ink:#ffffff; --warn:#c9406f; --ok:#2f8a3f; --dark:0; --stroke:#2a2418;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#1e1a12;--panel:rgba(34,29,20,.95);--ink:#efe8d6;--ink2:#b5aa90;--line:rgba(239,232,214,.22);--accent:#e8a24a;--accent-ink:#2a1a06;--ok:#6fcf80;--stroke:#0a0804;--dark:1;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#1e1a12;--panel:rgba(34,29,20,.95);--ink:#efe8d6;--ink2:#b5aa90;--line:rgba(239,232,214,.22);--accent:#e8a24a;--accent-ink:#2a1a06;--ok:#6fcf80;--stroke:#0a0804;--dark:1;color-scheme:dark}
+*{box-sizing:border-box}
+html{height:100%;background:var(--bg)}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+small{font-size:12px}
+h1,h2,h3{font-family:'Bricolage Grotesque','IBM Plex Sans',system-ui,sans-serif;margin:0;letter-spacing:-.01em}
+button,a.btn{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible,a.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#stage{height:100%;display:flex;flex-direction:column;gap:6px;padding:8px;position:relative}
+#hud{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:flex;align-items:baseline;gap:5px;padding:5px 9px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:12px;color:var(--ink2)}
+.chip b{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
+.chip.bad b{color:var(--warn)}
+#hint{font-size:13px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:7px 11px;color:var(--ink);line-height:1.4}
+#main{flex:1;min-height:0;display:flex;gap:6px}
+#cvWrap{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#legend{position:absolute;left:8px;bottom:6px;right:8px;font-size:12px;color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:8px;pointer-events:none}
+#pauseTag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;display:none;pointer-events:none}
+#side{width:290px;display:flex;flex-direction:column;gap:6px;overflow:auto}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--ink2);line-height:1.4}
+.box h3{font-size:13px;color:var(--ink);margin-bottom:5px}
+.box b{color:var(--ink)}
+.role{display:flex;align-items:center;gap:6px;padding:3px 0}
+.role i{width:11px;height:11px;border-radius:50%;flex:none}
+.role span{flex:1;color:var(--ink)}
+.role b{min-width:20px;text-align:right}
+.role button{width:44px;height:44px;border:1px solid var(--line);background:transparent;border-radius:8px;font-weight:700;font-size:16px}
+.role button:disabled{opacity:.4}
+#log{display:flex;flex-direction:column;gap:3px;font-size:12px}
+#log div{color:var(--ink2)}#log div:first-child{color:var(--ink);font-weight:600}
+#rep ul{margin:4px 0 0;padding-left:16px}#rep li{margin:2px 0}
+#rep .dec{color:var(--ink);font-weight:600}
+.riv{display:flex;align-items:center;gap:6px;padding:3px 0;border-top:1px solid var(--line)}
+.riv:first-of-type{border-top:0}
+.riv i{width:12px;height:12px;border-radius:3px;flex:none}
+.riv span{flex:1}
+.riv button{min-height:44px;min-width:64px;border:1px solid var(--line);background:transparent;border-radius:8px;font-size:12.5px;font-weight:600}
+.riv button:disabled{opacity:.4}
+#goal summary{cursor:pointer;font-weight:600;color:var(--ink);list-style:none;display:flex;justify-content:space-between;min-height:24px}
+#goal summary::-webkit-details-marker{display:none}
+.g{padding:2px 0}.g.ok{color:var(--ok);font-weight:600}
+#bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+#bar button,#bar a.btn{padding:7px 12px;min-height:54px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:14px;font-weight:600;min-width:104px;text-decoration:none;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink)}
+#bar button small{display:block;font-weight:400;color:var(--ink2);font-size:12px;line-height:1.25}
+#bar button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}#bar button.on small{color:inherit;opacity:.85}
+#bar button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}#bar button.go small{color:inherit}
+#bar button:disabled{opacity:.45;cursor:not-allowed}
+#bar .sm{min-height:44px !important;min-width:70px !important;font-size:12.5px !important}
+#bar .brk{flex-basis:100%;height:0}
+#tray{flex-basis:100%;order:-1;display:none;gap:6px;flex-wrap:wrap;justify-content:center}#tray.show{display:flex}
+#tray button{text-align:left;align-items:flex-start;min-width:150px}
+#tray button b{display:block;font-size:14px}
+#tray button:disabled{opacity:.45}
+#toasts{position:fixed;left:50%;top:70px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,440px);z-index:6}
+.toast{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;animation:tin .25s ease-out,tout .4s ease-in 4.2s forwards}
+.toast.warn{border-color:var(--warn)}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes tout{to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.toast{animation:tout .4s ease-in 4.2s forwards}}
+.ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(4px);z-index:10;overflow:auto}
+.ov.show{display:flex}
+.card{width:min(720px,100%);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;max-height:100%;overflow:auto}
+.card h1{font-size:clamp(30px,8vw,44px);font-weight:800;line-height:1}
+.card h2{font-size:22px;font-weight:800;margin-bottom:6px}
+.card p{margin:8px 0;line-height:1.5;color:var(--ink2);font-size:14px}
+.card p.sm{font-size:12.5px}
+.bigbtn{width:100%;min-height:48px;padding:13px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:16px;margin-top:10px}
+.ghost{width:100%;min-height:44px;padding:10px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;margin-top:8px;display:block;text-align:center;text-decoration:none;color:var(--ink);font-size:14px}
+.ghost small{display:block;font-weight:400;color:var(--ink2);font-size:12px;margin-top:2px}
+.seg{display:flex;gap:6px;margin:6px 0;flex-wrap:wrap}
+.seg button{flex:1;min-width:96px;min-height:44px;padding:9px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;font-size:13px}
+.seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:10px}
+.tc{min-height:44px;text-align:left;padding:10px;border:1px solid var(--line);background:transparent;border-radius:12px;display:block;width:100%}
+.tc:hover:not(:disabled),.tc:focus-visible{border-color:var(--accent)}
+.tc:disabled{opacity:.5;cursor:not-allowed}
+.tc.done{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.tc b{font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;display:block}
+.tc span{display:block;font-size:12.5px;color:var(--ink2);margin-top:2px}
+.tc em{display:block;font-style:normal;font-size:12px;margin-top:4px;color:var(--ink2)}
+@media (max-width:820px){
+  body{overflow-y:auto;overflow-x:hidden}
+  #stage{height:auto;min-height:100%;padding:8px 8px 0}
+  .chip{padding:4px 7px}
+  #main{flex:none;flex-direction:column}
+  #cvWrap{flex:none;height:56vh;height:56svh;min-height:340px}
+  #side{width:100%;overflow:visible;flex:none}
+  #bar{position:sticky;bottom:0;z-index:5;background:var(--bg);padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 8px -6px rgba(0,0,0,.25)}
+  #bar button,#bar a.btn{min-width:0;flex:1 1 22%;min-height:48px;padding:6px 6px;font-size:13px}
+  #bar .sm{flex:1 1 20%;min-width:0 !important}
+  #legend{display:none}
+  #bar button small{display:none}
+  #tray.show{display:grid;grid-template-columns:1fr 1fr;max-height:30vh;overflow:auto}#tray button{min-width:0;min-height:48px}.ds{display:none}
+  #toasts{top:auto;bottom:130px}
+}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="hud">
+    <div class="chip"><b id="vTime">0:00</b><span>tiempo</span></div>
+    <div class="chip" id="cPop"><b id="vPop">0</b><span>obreros</span></div>
+    <div class="chip" id="cFood"><b id="vFood">0</b><span id="vFoodR">comida</span></div>
+    <div class="chip"><b id="vWood">0</b><span>madera</span></div>
+    <div class="chip"><b id="vBronze">0</b><span>bronce</span></div>
+    <div class="chip" id="cMor"><b id="vMor">0</b><span>moral</span></div>
+    <div class="chip"><b id="vArmy">0</b><span>soldados</span></div>
+  </div>
+  <div id="hint"></div>
+  <div id="main">
+    <div id="cvWrap"><canvas id="cv" role="img" aria-label="Mapa de la región: tu ciudad, las ciudades rivales, los ejércitos, el bosque, las colinas y el río con sus vados."></canvas><div id="pauseTag">Pausa</div><div id="legend">Tocá un ejército propio para elegirlo y después un punto del mapa para ordenarle ir. Arrastrá para mover la vista.</div></div>
+    <div id="side">
+      <div class="box"><h3>Obreros <small id="libres"></small></h3><div id="roles"></div><button class="ghost" id="bAuto" style="margin-top:6px;padding:6px">Asignar nuevos automáticamente: sí</button></div>
+      <div class="box" id="selBox"><h3>Ejército elegido</h3><div id="selInfo">Tocá uno de tus ejércitos en el mapa.</div></div>
+      <div class="box" id="repBox"><h3>Por qué ganó</h3><div id="rep">Todavía no hubo ningún choque.</div></div>
+      <div class="box"><h3>Rivales</h3><div id="rivals"></div></div>
+      <div class="box"><h3>Qué está pasando</h3><div id="log" aria-live="polite"></div></div>
+      <details class="box" id="goal" open><summary><span>Camino a la conquista</span><span id="goalN">0/5</span></summary><div id="goalRows"></div></details>
+    </div>
+  </div>
+  <div id="bar">
+    <div id="tray"></div>
+    <button id="bRec">Reclutar<small>obreros y soldados</small></button>
+    <button id="bBld">Construir<small>granja, cuartel, murallas…</small></button>
+    <button id="bDoc" class="go">Doctrinas<small id="bDocS">mejoras de guerra</small></button>
+    <button id="bOrd">Órdenes<small id="bOrdS">ejército elegido</small></button>
+    <span class="brk"></span>
+    <button id="bSave" class="sm">Guardar</button>
+    <button id="bPause" class="sm">Pausa</button>
+    <button id="bSpd" class="sm">×1</button>
+    <a class="btn sm" id="bHome" href="../index.html">Portada</a>
+  </div>
+  <div id="toasts" aria-live="polite"></div>
+
+  <div id="menu" class="ov show"><div class="card" role="dialog" aria-modal="true" aria-labelledby="menuT">
+    <h1 id="menuT">Era 4: Civilizaciones</h1>
+    <p>Tu ciudad ya está fundada. Ahora hay vecinos con ejércitos, un río con pocos vados y un mapa donde el terreno decide quién gana. La guerra se simula con las leyes de Lanchester y se apoya en tres ideas del Arte de la guerra: elegir el terreno, conocer al enemigo y no pelear sin provisiones.</p>
+    <div class="seg" id="diffSeg" role="group" aria-label="Dificultad"><button data-d="0" class="on">Fácil · 1 rival</button><button data-d="1">Normal · 2 rivales</button><button data-d="2">Difícil · 3 rivales</button></div>
+    <div class="box" id="linBox" style="margin-top:8px"></div>
+    <button class="bigbtn" id="startBtn">Empezar</button>
+    <button class="ghost" id="contBtn" style="display:none"></button>
+    <a class="ghost" href="../index.html" id="menuHome">Volver a la portada</a>
+    <p class="sm"><b>Aviso honesto:</b> las Eras 5 y 6 todavía no existen. Si ganás, tu linaje queda anotado en este navegador, pero no hay a dónde seguir. Esto es un prototipo (bosquejo jugable). Las leyes de Lanchester son modelos simplificados de manual y las cifras del juego (rendimientos, tamaños, costos) son aproximaciones de diseño, no datos históricos verificados.</p>
+  </div></div>
+
+  <div id="docm" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="docT"><h2 id="docT">Doctrinas</h2><p id="docP"></p><div class="grid" id="docGrid"></div><button class="ghost" id="docClose">Cerrar</button></div></div>
+  <div id="dlg" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="dT"><h2 id="dT"></h2><div id="dB"></div><div id="dBtns"></div></div></div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+/* PRNG con semilla (mulberry32): TODA la simulación usa R(); Math.random/Date solo fuera de la simulación */
+let _rs = 1;
+const seedRng = n => { _rs = (n >>> 0) || 1; };
+const R = () => { _rs = (_rs + 0x6D2B79F5) >>> 0; let t = _rs; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const hashStr = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const newSeedStr = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
+const rnd = (a, b) => a + R() * (b - a);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const hyp = Math.hypot, TAU = Math.PI * 2;
+const FIX = .05;
+
+/* ---------- Datos ---------- */
+const COLS = 48, ROWS = 30, TS = 20, W = COLS * TS, H = ROWS * TS;
+const T_PLAIN = 0, T_FOR = 1, T_HILL = 2, T_RIVER = 3, T_FORD = 4;
+const TNAME = ['llanura', 'bosque', 'colina', 'río', 'vado'];
+const TCOST = [1, 2, 2.2, Infinity, 2.5];          // costo de ruta
+const TSPD = [1, .6, .65, 0, .7];                  // velocidad
+const TDEF = [1, 1.15, 1.25, 1, 1.2];              // ventaja del que defiende
+const K = ['lan', 'arq', 'jin'];
+const UN = {
+  lan: { n: 'Lanceros', s: 'lancero', atk: 1, dur: 1, cost: { food: 10, wood: 6 }, col: '#8a8a8a', d: 'Infantería con lanzas largas: frenan a la caballería.' },
+  arq: { n: 'Arqueros', s: 'arquero', atk: 1.1, dur: .7, cost: { food: 8, wood: 10 }, col: '#4aa83a', d: 'Tiran de lejos: castigan a la infantería. Frágiles ante jinetes.' },
+  jin: { n: 'Jinetes', s: 'jinete', atk: 1.5, dur: 1.5, cost: { food: 14, bronze: 8 }, col: '#e08a1b', d: 'Rápidos y fuertes: arrasan arqueros. Necesitan Cuartel. Mal en bosque, colina y vados.' }
+};
+// MU[atacante][objetivo]: piedra-papel-tijera (lanceros > jinetes > arqueros > lanceros)
+const MU = { lan: { lan: 1, arq: .65, jin: 1.6 }, arq: { lan: 1.6, arq: 1, jin: .65 }, jin: { lan: .65, arq: 1.6, jin: 1 } };
+const KILL = .045, SLIN = 20;                    // escala de tiempo de las leyes
+const BLD = {
+  granja: { n: 'Granja', cost: { wood: 30 }, d: '+20% comida por nivel.' },
+  aserr: { n: 'Aserradero', cost: { wood: 25 }, d: '+20% madera por nivel.' },
+  mina: { n: 'Mina de bronce', cost: { wood: 30 }, d: '+20% bronce por nivel.' },
+  cuartel: { n: 'Cuartel', cost: { wood: 40, bronze: 10 }, d: 'Recluta más rápido y habilita Jinetes (nivel 1).' },
+  muralla: { n: 'Muralla', cost: { wood: 30, bronze: 20 }, d: 'La guarnición pelea en frente angosto (ley lineal) y aguanta 12% más por nivel.' },
+  templo: { n: 'Templo', cost: { wood: 35, bronze: 20 }, d: '+8 de moral por nivel.' },
+  espias: { n: 'Casa de espías', cost: { wood: 25, bronze: 15 }, d: 'Habilita espías y dificulta que te espíen.' }
+};
+const BORD = ['granja', 'aserr', 'mina', 'cuartel', 'muralla', 'templo', 'espias'];
+const DOC = {
+  bronce: { n: 'Armas de bronce', cost: { bronze: 30, food: 20 }, d: '+12% de ataque a todo tu ejército.' },
+  coraza: { n: 'Corazas', cost: { bronze: 40, wood: 20 }, d: '+15% de resistencia.' },
+  logi: { n: 'Carros de intendencia', cost: { wood: 30, food: 30 }, d: 'Las provisiones duran 50% más: podés llegar más lejos (Sun Tzu: la logística gana guerras).' },
+  engano: { n: 'Arte del engaño', cost: { bronze: 25 }, d: 'La emboscada pega con ×1,7 en vez de ×1,5 y tus espías fallan menos.' }
+};
+const PERS = {
+  belicosa: { n: 'belicosa', d: 'Ataca temprano con ejércitos grandes.', thr: .8, spy: .1, amb: .05, bld: ['cuartel', 'muralla', 'mina', 'granja', 'templo', 'aserr', 'espias'] },
+  mercantil: { n: 'mercantil', d: 'Crece primero; ataca tarde y con ventaja.', thr: 1.3, spy: .2, amb: .1, bld: ['granja', 'aserr', 'mina', 'templo', 'cuartel', 'muralla', 'espias'] },
+  astuta: { n: 'astuta', d: 'Espía y tiende emboscadas en el bosque.', thr: 1, spy: .7, amb: .5, bld: ['espias', 'granja', 'cuartel', 'aserr', 'mina', 'muralla', 'templo'] }
+};
+const RIV = [{ name: 'Reino de Tolmar', pers: 'belicosa', col: '#c9406f' }, { name: 'Liga de Kerán', pers: 'mercantil', col: '#3a7fd6' }, { name: 'Dominio de Ushad', pers: 'astuta', col: '#7a4ad0' }];
+const SITES = [[5, 22], [42, 7], [42, 23], [8, 5]];
+const DIFFS = [
+  { n: 'Fácil', riv: 1, thr: 30, eco: .8, grace: 150, res: 1 },
+  { n: 'Normal', riv: 2, thr: 24, eco: 1, grace: 110, res: 1 },
+  { n: 'Difícil', riv: 3, thr: 18, eco: 1.15, grace: 80, res: 1.2 }
+];
+let DF = DIFFS[0], diffI = 0;
+const WK = { f: { n: 'Campesinos (comida)', c: '#4aa83a', r: .5 }, w: { n: 'Leñadores (madera)', c: '#8c5a2b', r: .4 }, b: { n: 'Mineros (bronce)', c: '#e08a1b', r: .25 } };
+const WTARGET = { f: .5, w: .3, b: .2 };
+const WK_KEYS = ['f', 'w', 'b'];
+
+/* ---------- Estado (todo JSON-serializable, referencias por id) ---------- */
+let G = null, started = false, selId = 0, lastSaveT = 0, spdI = 1, trayK = null, shownDlg = 0;
+const civ = id => G.civs[id];
+const armyById = id => G.armies.find(a => a.id === id) || null;
+const tot = n => n.lan + n.arq + n.jin;
+const garr = c => G.armies.find(a => a.team === c.id && a.home) || null;
+const alive = () => G.civs.filter(c => c.alive);
+const fmt = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+const tileOf = (x, y) => { const c = clamp(Math.floor(x / TS), 0, COLS - 1), r = clamp(Math.floor(y / TS), 0, ROWS - 1); return r * COLS + c; };
+const terrAt = (x, y) => +G.terr[tileOf(x, y)];
+const pass = i => { const t = +G.terr[i]; return t !== T_RIVER && !(t === T_FORD && G.flood > 0); };
+const nameOf = c => c.human ? 'Tu civilización' : c.name;
+function log(t, team) { if (team === undefined || team === 0) { G.log.unshift(t); if (G.log.length > 24) G.log.pop(); } }
+let toast = (t, warn) => { if (typeof document === 'undefined' || !$('toasts')) return; const d = document.createElement('div'); d.className = 'toast' + (warn ? ' warn' : ''); d.textContent = t; $('toasts').appendChild(d); setTimeout(() => d.remove(), 4700); };
+/* mensaje solo para el humano; la IA no lo ve */
+const tell = (team, t, warn) => { if (team === 0 && started) toast(t, warn); };
+
+/* ---------- Mapa ---------- */
+function genTerrain() {
+  const g = new Array(COLS * ROWS).fill(0);
+  const blob = (t, n, rmin, rmax) => { for (let k = 0; k < n; k++) { const cx = rnd(2, COLS - 2), cy = rnd(2, ROWS - 2), r = rnd(rmin, rmax); for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) { const d = hyp(x - cx, (y - cy) * 1.2); if (d < r * (.75 + .5 * ((x * 7 + y * 13) % 5) / 5)) g[y * COLS + x] = t; } } };
+  blob(T_FOR, 10, 2, 4.2); blob(T_HILL, 6, 2, 3.2);
+  let rx = 24 + rnd(-1.5, 1.5);
+  for (let y = 0; y < ROWS; y++) { rx = clamp(rx + rnd(-.9, .9), 21, 27); const xi = Math.floor(rx); g[y * COLS + xi] = T_RIVER; g[y * COLS + xi + 1] = T_RIVER; }
+  for (const fy of [4, 14, 24]) { const y = clamp(fy + Math.floor(rnd(-2, 3)), 1, ROWS - 2); for (let x = 0; x < COLS; x++) if (g[y * COLS + x] === T_RIVER) g[y * COLS + x] = T_FORD; }
+  const sites = SITES.map(([x, y]) => [clamp(x + Math.floor(rnd(-2, 3)), 3, COLS - 4), clamp(y + Math.floor(rnd(-2, 3)), 3, ROWS - 4)]);
+  for (const [sx, sy] of sites) for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (hyp(x - sx, y - sy) < 3.2 && g[y * COLS + x] !== T_RIVER && g[y * COLS + x] !== T_FORD) g[y * COLS + x] = 0;
+  return { terr: g.join(''), sites };
+}
+/* Dijkstra con montículo binario; desempate por índice (determinista) */
+function findPath(x0, y0, x1, y1) {
+  const s = tileOf(x0, y0); let g = tileOf(x1, y1);
+  if (!pass(g)) { let best = -1, bd = 1e9; const gc = g % COLS, gr = (g / COLS) | 0; for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) { const i = r * COLS + c; if (!pass(i)) continue; const d = hyp(c - gc, r - gr); if (d < bd) { bd = d; best = i; } } if (best < 0 || bd > 4) return null; g = best; }
+  const dist = new Float64Array(COLS * ROWS).fill(Infinity), prev = new Int32Array(COLS * ROWS).fill(-1), hp = [];
+  const push = (c, i) => { hp.push([c, i]); let k = hp.length - 1; while (k > 0) { const p = (k - 1) >> 1; if (hp[p][0] < hp[k][0] || (hp[p][0] === hp[k][0] && hp[p][1] <= hp[k][1])) break; [hp[p], hp[k]] = [hp[k], hp[p]]; k = p; } };
+  const pop = () => { const top = hp[0], last = hp.pop(); if (hp.length) { hp[0] = last; let k = 0; for (;;) { const l = 2 * k + 1, r = l + 1; let m = k; if (l < hp.length && (hp[l][0] < hp[m][0] || (hp[l][0] === hp[m][0] && hp[l][1] < hp[m][1]))) m = l; if (r < hp.length && (hp[r][0] < hp[m][0] || (hp[r][0] === hp[m][0] && hp[r][1] < hp[m][1]))) m = r; if (m === k) break; [hp[m], hp[k]] = [hp[k], hp[m]]; k = m; } } return top; };
+  dist[s] = 0; push(0, s);
+  while (hp.length) {
+    const [d, i] = pop(); if (d > dist[i]) continue; if (i === g) break;
+    const c = i % COLS, r = (i / COLS) | 0;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!dx && !dy) continue; const nc = c + dx, nr = r + dy; if (nc < 0 || nr < 0 || nc >= COLS || nr >= ROWS) continue;
+      const j = nr * COLS + nc; if (!pass(j)) continue; if (dx && dy && (!pass(r * COLS + nc) || !pass(nr * COLS + c))) continue;
+      const nd = d + TCOST[+G.terr[j]] * (dx && dy ? 1.414 : 1); if (nd < dist[j]) { dist[j] = nd; prev[j] = i; push(nd, j); }
+    }
+  }
+  if (dist[g] === Infinity) return null;
+  const path = []; for (let i = g; i !== s && i >= 0; i = prev[i]) path.push([(i % COLS) * TS + TS / 2, ((i / COLS) | 0) * TS + TS / 2]);
+  path.reverse(); if (path.length && pass(tileOf(x1, y1))) path[path.length - 1] = [x1, y1]; return path;
+}
+function nearestTerr(t, x, y, maxR) { let best = null, bd = maxR || 1e9; for (let i = 0; i < COLS * ROWS; i++) if (+G.terr[i] === t) { const px = (i % COLS) * TS + TS / 2, py = ((i / COLS) | 0) * TS + TS / 2, d = hyp(px - x, py - y); if (d < bd) { bd = d; best = [px, py]; } } return best; }
+
+/* ---------- Linaje (viene de las Eras 1 a 3) ---------- */
+const BRN = { pred: 'Depredador', para: 'Parásito', foto: 'Fotosintético', colo: 'Colonial' };
+function readLineage() {
+  try {
+    const d = JSON.parse(localStorage.getItem('evo_lineage')); if (!d || d.v !== 1 || ![1, 2, 3].includes(d.from)) return null;
+    const br = ['pred', 'para', 'foto', 'colo'].includes(d.branch) ? d.branch : null;
+    return { from: d.from, branch: br, tier: clamp(Math.round(+d.tier) || 0, 0, 3), mutCount: Math.max(0, Math.round(+d.mutCount) || 0), species: String(d.species || '').slice(0, 40), seed: String(d.seed || '').slice(0, 30), city: String(d.city || '').slice(0, 30), pop: Math.max(0, Math.round(+d.pop) || 0) };
+  } catch (e) { return null; }
+}
+/* Bono chico y siempre explicado. Sin linaje, la partida es idéntica pero sin bono. */
+function linBonus(l) {
+  const b = { food: 0, wood: 0, bronze: 0, lan: 0, morale: 0, wk: 0, cityType: 'jefatura', why: [] };
+  if (!l) return b;
+  b.food += 20; b.wood += 20; b.why.push('+20 comida y +20 madera por venir de la Era ' + l.from);
+  if (l.city === 'Ciudad militarista') { b.lan += 3; b.cityType = 'jefatura'; b.why.push('Jefatura: +3 lanceros iniciales'); }
+  else if (l.city === 'Ciudad mercantil') { b.food += 30; b.wood += 30; b.cityType = 'mercado'; b.why.push('Mercado: +30 comida y +30 madera'); }
+  else if (l.city === 'Ciudad teocrática') { b.morale += 10; b.cityType = 'templo'; b.why.push('Templo: +10 de moral base'); }
+  if (l.pop >= 30) { b.wk += 2; b.why.push('Población de 30 o más en la Era 3: +2 obreros'); }
+  return b;
+}
+const linLine = l => l ? 'Linaje de la Era ' + l.from + (l.species ? ' · ' + l.species : '') + (l.branch ? ' · rama ' + BRN[l.branch] : '') + (l.city ? ' · ' + l.city : '') : '';
+function renderLin() {
+  const l = readLineage(), b = linBonus(l);
+  $('linBox').innerHTML = l ? '<b>' + linLine(l) + '</b><br>Bono chico: ' + b.why.join('; ') + '.' : '<b>Sin linaje.</b> Jugás igual, sin bono. Si venís de las Eras 1 a 3, tu linaje te da una ventaja chica al empezar.';
+}
+
+/* ---------- Nueva partida ---------- */
+function mkArmy(team, x, y, n, o) { const a = { id: G.nid++, team, x, y, n: { lan: n.lan || 0, arq: n.arq || 0, jin: n.jin || 0 }, morale: civ(team).morale, prov: 0, path: [], goal: null, stance: 'idle', home: false, bt: 0, chase: 0, ret: false, amb: 0, rp: 0, n0: 0, keep: false }; Object.assign(a, o || {}); G.armies.push(a); return a; }
+function newGame(seed) {
+  seed = String(seed || newSeedStr()); seedRng(hashStr(seed)); DF = DIFFS[diffI];
+  const T = genTerrain(), lin = readLineage(), bon = linBonus(lin);
+  G = { seed, t: 0, tick: 0, over: false, win: false, paused: false, terr: T.terr, flood: 0, nid: 1, civs: [], armies: [], battles: [], rep: [], log: [], ops: [], evT: 70, dlg: null, gd: [false, false, false, false, false], gdT: 0, stats: { wins: 0, spy: 0, amb: 0, caps: 0, losses: 0 }, lin: lin ? Object.assign({}, lin) : null, bonus: bon.why.slice(), cityType: bon.cityType, auto: true, modal: false };
+  const ids = [{ name: 'Tu civilización', pers: 'jugador', col: '#e08a1b' }].concat(RIV.slice(0, DF.riv));
+  ids.forEach((d, i) => {
+    const [sx, sy] = T.sites[i], x = sx * TS + TS / 2, y = sy * TS + TS / 2, hu = i === 0;
+    const c = { id: i, name: d.name, pers: d.pers, col: d.col, x, y, alive: true, human: hu, food: Math.round(120 * (hu ? 1 : DF.res)) + (hu ? bon.food : 0), wood: Math.round(90 * (hu ? 1 : DF.res)) + (hu ? bon.wood : 0), bronze: 25 + (hu ? bon.bronze : 0), morale: 60 + (hu ? bon.morale : 0), glory: 0, wk: { f: 4, w: 3, b: 1 }, free: 0, bld: { granja: 0, aserr: 0, mina: 0, cuartel: 0, muralla: 0, templo: 0, espias: 0 }, tech: [], tf: { f: 1, w: 1, b: 1 }, rcd: 0, aiT: 8 + i * 1.3, exp: 0, starve: 0, intel: {}, kills: 0 };
+    if (hu) c.wk.f += bon.wk;
+    for (let r = 0; r < ROWS; r++) for (let q = 0; q < COLS; q++) { const d2 = hyp(q * TS + TS / 2 - x, r * TS + TS / 2 - y); if (d2 < 130) { const t = +T.terr[r * COLS + q]; if (t === 0) c.tf.f += .018; else if (t === 1) c.tf.w += .02; else if (t === 2) c.tf.b += .03; } }
+    c.tf.f = clamp(c.tf.f, .7, 1.5); c.tf.w = clamp(c.tf.w, .7, 1.5); c.tf.b = clamp(c.tf.b, .7, 1.6);
+    G.civs.push(c);
+    mkArmy(i, x, y, { lan: 6 + (hu ? bon.lan : 0), arq: 2 }, { home: true });
+  });
+  started = false; spdI = 1; selId = 0; trayK = null; shownDlg = 0; lastSaveT = 0;
+  log('Fundaste tu ciudad (' + ({ jefatura: 'Jefatura', mercado: 'Mercado', templo: 'Templo' })[G.cityType] + '). Hay ' + DF.riv + ' rival' + (DF.riv > 1 ? 'es' : '') + ' más allá del río.');
+  bgDirty = true; centerCam();
+  return G;
+}
+
+/* ---------- Economía ---------- */
+const wkTotal = c => c.wk.f + c.wk.w + c.wk.b + c.free;
+const popCap = c => 10 + 2 * (c.bld.granja + c.bld.aserr + c.bld.mina) + (c.human && G.cityType === 'jefatura' && G.lin ? 2 : 0);
+const hasT = (c, k) => c.tech.includes(k);
+const units = c => G.armies.filter(a => a.team === c.id).reduce((s, a) => s + tot(a.n), 0);
+function rates(c) {
+  const mm = .7 + .3 * c.morale / 100, dm = c.human ? 1 : DF.eco;
+  const f = c.wk.f * WK.f.r * c.tf.f * (1 + .2 * c.bld.granja) * mm * dm, w = c.wk.w * WK.w.r * c.tf.w * (1 + .2 * c.bld.aserr) * mm * dm, b = c.wk.b * WK.b.r * c.tf.b * (1 + .2 * c.bld.mina) * mm * dm;
+  let up = wkTotal(c) * .08; for (const a of G.armies) if (a.team === c.id && hyp(a.x - c.x, a.y - c.y) < 110) up += tot(a.n) * .02;
+  return { f, w, b, up };
+}
+function econ(dt) {
+  for (const c of G.civs) {
+    if (!c.alive) continue; const r = rates(c);
+    c.food = Math.min(600, c.food + (r.f - r.up) * dt); c.wood = Math.min(600, c.wood + r.w * dt); c.bronze = Math.min(400, c.bronze + r.b * dt);
+    if (c.rcd > 0) c.rcd = Math.max(0, c.rcd - dt);
+    if (c.food <= 0) {
+      c.food = 0; c.starve += dt;
+      if (c.starve > 8) { c.starve = 0; const g = garr(c); const k = g && K.find(q => g.n[q] > 0); if (k) { g.n[k]--; log('Hambre en ' + nameOf(c) + ': desertó un ' + UN[k].s + '.', c.id); } else if (c.wk.f + c.wk.w + c.wk.b > 4) { const kk = WK_KEYS.find(q => c.wk[q] > 0); c.wk[kk]--; } }
+    } else c.starve = 0;
+    c.glory = Math.max(0, c.glory - .4 * dt);
+    const tgt = 55 + 8 * c.bld.templo + c.glory + (c.human && G.cityType === 'templo' ? 10 : 0) - (c.food <= 0 ? 30 : 0);
+    c.morale = clamp(c.morale + clamp(tgt - c.morale, -2 * dt, 2 * dt), 0, 100);
+  }
+}
+function addWorker(c) {
+  if (wkTotal(c) >= popCap(c)) return 'Tu ciudad no tiene lugar para más obreros (hay que construir granjas, aserraderos o minas).';
+  if (c.food < 20) return 'Falta comida: un obrero cuesta 20.';
+  c.food -= 20;
+  if (G.auto || !c.human) { let best = 'f', br = 1e9; for (const k of WK_KEYS) { const r = c.wk[k] / WTARGET[k]; if (r < br) { br = r; best = k; } } c.wk[best]++; } else c.free++;
+  return null;
+}
+function setWorker(team, k, d) {
+  const c = civ(team);
+  if (d > 0) { if (c.free < 1) return 'No hay obreros libres: reclutá uno.'; c.free--; c.wk[k]++; }
+  else { if (c.wk[k] < 1) return null; c.wk[k]--; c.free++; }
+  return null;
+}
+const canPay = (c, cost) => Object.keys(cost).every(k => c[k] >= cost[k]);
+const pay = (c, cost) => { for (const k in cost) c[k] -= cost[k]; };
+const costStr = cost => Object.keys(cost).map(k => cost[k] + ' ' + ({ food: 'comida', wood: 'madera', bronze: 'bronce' })[k]).join(', ');
+const bldCost = (c, k) => { const m = c.bld[k] + 1, o = {}; for (const r in BLD[k].cost) o[r] = BLD[k].cost[r] * m; return o; };
+function build(team, k) {
+  const c = civ(team); if (c.bld[k] >= 3) return 'Ya está al máximo (nivel 3).'; const cost = bldCost(c, k);
+  if (!canPay(c, cost)) return 'Faltan recursos: ' + costStr(cost) + '.'; pay(c, cost); c.bld[k]++;
+  log(nameOf(c) + ' mejoró ' + BLD[k].n + ' (nivel ' + c.bld[k] + ').', team); return null;
+}
+function recruit(team, k) {
+  const c = civ(team); if (!c.alive) return 'Tu ciudad cayó.'; if (k === 'obrero') return addWorker(c);
+  const u = UN[k]; if (k === 'jin' && c.bld.cuartel < 1) return 'Los jinetes necesitan un Cuartel.';
+  if (c.rcd > 0) return 'El cuartel está ocupado un instante.'; if (!canPay(c, u.cost)) return 'Faltan recursos: ' + costStr(u.cost) + '.';
+  const g = garr(c); if (!g) return 'No hay guarnición.'; pay(c, u.cost); g.n[k]++; c.rcd = 1.6 / (1 + .5 * c.bld.cuartel); return null;
+}
+function research(team, k) {
+  const c = civ(team), d = DOC[k]; if (hasT(c, k)) return 'Ya la tenés.'; if (!canPay(c, d.cost)) return 'Faltan recursos: ' + costStr(d.cost) + '.';
+  pay(c, d.cost); c.tech.push(k); log(nameOf(c) + ' domina: ' + d.n + '.', team); return null;
+}
+function spy(team, tgt) {
+  const c = civ(team), t = civ(tgt); if (!t || !t.alive || tgt === team) return 'Ese rival no existe.'; if (c.bld.espias < 1) return 'Construí una Casa de espías.';
+  if (c.bronze < 12) return 'Un espía cuesta 12 de bronce.'; if (G.ops.some(o => o.team === team && o.tgt === tgt)) return 'Ya hay un espía en camino a ese rival.';
+  c.bronze -= 12; G.ops.push({ team, tgt, t1: G.t + 10 }); return null;
+}
+
+/* ---------- Ejércitos y órdenes ---------- */
+const armySpeed = a => { const n = tot(a.n) || 1; return 24 * (.85 + .4 * a.n.jin / n); };
+function splitArmy(a, frac) {
+  const c = civ(a.team), take = {}; let s = 0;
+  for (const k of K) { take[k] = Math.floor(a.n[k] * frac); s += take[k]; }
+  if (s < 1) { const k = K.find(q => a.n[q] > 0); if (!k || tot(a.n) < 2) return null; take[k] = 1; s = 1; }
+  if (s >= tot(a.n) && a.home) return null;
+  for (const k of K) a.n[k] -= take[k];
+  const b = mkArmy(a.team, a.x, a.y, take, { morale: a.morale, n0: s, keep: true });
+  const need = s * 6 * (hasT(c, 'logi') ? 1.5 : 1), got = Math.min(need, c.food); c.food -= got; b.prov = got; return b;
+}
+function orderMove(a, x, y, opt) {
+  if (a.bt) return 'Está en combate.'; if (a.home) return 'La guarnición no sale sola: usá «Formar ejército» para sacar parte de ella.';
+  const p = findPath(a.x, a.y, x, y); if (!p) return 'No hay camino hasta ahí (¿el río creció y cerró los vados?).';
+  a.keep = false; a.path = p; a.goal = [x, y]; a.stance = 'move'; a.ret = !!(opt && opt.ret); a.chase = (opt && opt.chase) || 0; return null;
+}
+function retreat(a) { const c = civ(a.team); if (a.home) return 'La guarnición ya está en casa.'; const e = orderMove(a, c.x, c.y, { ret: true }); if (!e) a.stance = 'retreat'; return e; }
+function setAmbush(a) {
+  if (a.home) return 'La guarnición no puede emboscar.'; if (a.bt) return 'Está en combate.';
+  a.path = []; a.stance = 'ambush'; a.amb = G.t; const t = terrAt(a.x, a.y);
+  return t === T_FOR || t === T_HILL ? null : 'Atención: en ' + TNAME[t] + ' no hay dónde esconderse. La emboscada solo sorprende desde bosque o colina.';
+}
+function formArmy(team, frac) { const c = civ(team), g = garr(c); if (!g) return null; if (g.bt) return null; const a = splitArmy(g, frac); if (a) { a.x = c.x + 12; a.y = c.y + 10; } return a; }
+function reveals(viewer, target) { const c = civ(viewer); return !!c && (c.intel[target] || 0) > G.t; }
+const concealed = a => a.stance === 'ambush' && !a.bt && (terrAt(a.x, a.y) === T_FOR || terrAt(a.x, a.y) === T_HILL);
+function mergeInto(dst, a) {
+  const t1 = tot(dst.n), t2 = tot(a.n); dst.morale = (dst.morale * t1 + a.morale * t2) / Math.max(1, t1 + t2);
+  for (const k of K) dst.n[k] += a.n[k]; dst.prov += a.prov; dst.n0 += a.n0; a.n = { lan: 0, arq: 0, jin: 0 }; a.dead = true;
+}
+function moveArmies(dt) {
+  for (const a of G.armies) {
+    if (a.bt || a.dead) continue; const c = civ(a.team);
+    if (a.chase) { const e = armyById(a.chase); if (!e || e.dead || !civ(e.team).alive) a.chase = 0; else if (G.tick % 20 === a.id % 20) { const p = findPath(a.x, a.y, e.x, e.y); if (p) { a.path = p; a.goal = [e.x, e.y]; } } }
+    if (a.path.length) {
+      const w = a.path[0], dx = w[0] - a.x, dy = w[1] - a.y, d = hyp(dx, dy), st = armySpeed(a) * (a.ret ? 1.1 : 1) * Math.max(.3, TSPD[terrAt(a.x, a.y)] || 1) * dt;
+      let nx = a.x, ny = a.y; if (d <= st) { nx = w[0]; ny = w[1]; } else { nx += dx / d * st; ny += dy / d * st; }
+      if (!pass(tileOf(nx, ny))) { if (G.tick % 20 === a.id % 20 && a.goal) { const p = findPath(a.x, a.y, a.goal[0], a.goal[1]); a.path = p || []; if (!p) a.stance = 'idle'; } continue; }
+      a.x = nx; a.y = ny; if (d <= st) a.path.shift();
+      if (!a.path.length && !a.chase && a.stance !== 'ambush') a.stance = 'idle';
+    } else if (a.stance === 'move' || a.stance === 'retreat') a.stance = 'idle';
+    if (!a.home && !a.bt && (a.stance === 'retreat' || (a.stance === 'idle' && !a.keep)) && hyp(a.x - c.x, a.y - c.y) < 22) { const g = garr(c); if (g && !g.bt) { c.food = Math.min(600, c.food + a.prov * .6); a.prov = 0; mergeInto(g, a); if (a.id === selId) selId = g.id; } }
+  }
+  for (const a of G.armies) if (!a.dead && !a.home && !a.bt && a.stance === 'idle') for (const b of G.armies) if (b !== a && !b.dead && !b.home && !b.bt && b.id < a.id && b.team === a.team && b.stance === 'idle' && !a.keep && !b.keep && hyp(a.x - b.x, a.y - b.y) < 10) { mergeInto(b, a); if (a.id === selId) selId = b.id; break; }
+  G.armies = G.armies.filter(a => !a.dead && (a.home || tot(a.n) >= .5 || a.bt));
+  if (selId && !armyById(selId)) selId = 0;
+}
+
+/* ---------- Combate: leyes de Lanchester ---------- */
+function mkSide(a, isDef, amb) { return { team: a.team, n: Object.assign({}, a.n), morale: a.morale, provOk: a.home || a.prov > 0 || hyp(a.x - civ(a.team).x, a.y - civ(a.team).y) < 110, isDef, amb, tech: civ(a.team).tech.slice() }; }
+/* tasa de bajas por soldado de S contra T (por segundo). Cada factor se puede neutralizar para contar el "qué pasaría si". */
+function coef(S, T, ctx, o) {
+  o = o || {}; const nS = tot(S.n), nT = tot(T.n); let a0 = 0, m = 0, pw = 0, dur = 0;
+  for (const k of K) for (const j of K) { const w = S.n[k] / nS * T.n[j] / nT; a0 += w * UN[k].atk; m += w * MU[k][j]; pw += w * UN[k].atk * (o.noMatch ? 1 : MU[k][j]); }
+  for (const j of K) dur += T.n[j] / nT * UN[j].dur;
+  const narrowF = ctx.narrow && !o.noTerr ? 1 - .35 * S.n.jin / nS : 1;
+  const terr = T.isDef && !o.noTerr ? TDEF[ctx.terr] * (1 + .12 * ctx.walls) : 1;
+  const mor = o.noMorale ? 1 : .6 + .4 * S.morale / 100, sup = o.noMorale ? 1 : (S.provOk ? 1 : .7);
+  const tech = 1 + (S.tech.includes('bronce') ? .12 : 0), arm = 1 + (T.tech.includes('coraza') ? .15 : 0);
+  const amb = S.amb && !o.noAmb ? (S.tech.includes('engano') ? 1.7 : 1.5) : 1;
+  const alpha = KILL * pw * narrowF * mor * sup * tech * amb / (dur * arm * terr);
+  return { alpha, base: m, atk: a0, pw, narrowF, terr, mor, sup, tech, arm, amb, dur };
+}
+/* resultado analítico (forma cerrada) */
+function lanch(A, B, al, be, narrow) {
+  if (narrow) { const x = al * A - be * B; return x > 0 ? { w: 'A', surv: A - be / al * B, inv: x } : x < 0 ? { w: 'B', surv: B - al / be * A, inv: x } : { w: 'T', surv: 0, inv: 0 }; }
+  const x = al * A * A - be * B * B; return x > 0 ? { w: 'A', surv: Math.sqrt(A * A - be / al * B * B), inv: x } : x < 0 ? { w: 'B', surv: Math.sqrt(B * B - al / be * A * A), inv: x } : { w: 'T', surv: 0, inv: 0 };
+}
+function startBattle(a, b, ambusher) {
+  if (a.bt || b.bt) return;
+  let def;
+  if (ambusher) def = ambusher === a ? a : b;
+  else { const sa = a.home || !a.path.length, sb = b.home || !b.path.length; if (sa && !sb) def = a; else if (sb && !sa) def = b; else { const ta = TDEF[terrAt(a.x, a.y)], tb = TDEF[terrAt(b.x, b.y)]; def = ta >= tb && (ta > tb || a.id < b.id) ? a : b; } }
+  const att = def === a ? b : a, ca = civ(def.team);
+  const terr = terrAt(def.x, def.y), walls = def.home ? ca.bld.muralla : 0, narrow = terr === T_FOR || terr === T_HILL || terr === T_FORD || walls > 0;
+  const rev = ambusher ? reveals(att.team, ambusher.team) : false, amb = ambusher && !rev ? ambusher : null;
+  const ctx = { terr, walls, narrow }, SD = mkSide(def, true, !!amb), SA = mkSide(att, false, false);
+  if (amb) att.morale = Math.max(0, att.morale - 20);
+  SA.morale = att.morale;
+  const cD = coef(SD, SA, ctx), cA = coef(SA, SD, ctx), A = tot(SA.n), B = tot(SD.n);
+  const pr = lanch(A, B, cA.alpha, cD.alpha, narrow);
+  const b0 = { id: G.nid++, a: att.id, d: def.id, ta: att.team, td: def.team, x: def.x, y: def.y, t: 0, A, B, A0: A, B0: B, ca: SA.n, cd: SD.n, al: cA.alpha, be: cD.alpha, narrow, terr, walls, amb: !!amb, rev, cA, cD, SA, SD, pr, st: G.t };
+  att.bt = b0.id; def.bt = b0.id; att.path = []; att.stance = 'idle'; G.battles.push(b0);
+  if (att.team === 0 || def.team === 0) { log('Choque en ' + TNAME[terr] + (walls ? ' (murallas)' : '') + ' entre ' + nameOf(civ(att.team)) + ' y ' + nameOf(civ(def.team)) + '.'); if (amb) log('¡Emboscada de ' + nameOf(civ(def.team)) + '!'); }
+  if (att.team === 0 || def.team === 0) tell(0, amb ? (def.team === 0 ? '¡Tu emboscada sorprende al enemigo!' : '¡Cayeron en una emboscada!') : 'Comienza un choque. Mirá «Por qué ganó».', amb && def.team !== 0);
+}
+function engage() {
+  const A = G.armies;
+  for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) {
+    const a = A[i], b = A[j]; if (a.team === b.team || a.bt || b.bt || tot(a.n) < .5 || tot(b.n) < .5) continue;
+    const d = hyp(a.x - b.x, a.y - b.y);
+    if (d < 55) { const amb = concealed(a) && !concealed(b) ? a : concealed(b) && !concealed(a) ? b : null; if (amb && d < 55) { const en = amb === a ? b : a; if (!reveals(en.team, amb.team)) { startBattle(a, b, amb); continue; } } }
+    if (d < 22) startBattle(a, b, null);
+  }
+}
+function battlesStep(dt) {
+  for (const b of G.battles) {
+    b.t += dt; const ar = armyById(b.a), de = armyById(b.d); if (!ar || !de) { b.done = true; continue; }
+    let dA, dB; if (b.narrow) { dA = -b.be * b.A * b.B / SLIN; dB = -b.al * b.A * b.B / SLIN; } else { dA = -b.be * b.B; dB = -b.al * b.A; }
+    b.A = Math.max(0, b.A + dA * dt); b.B = Math.max(0, b.B + dB * dt);
+    b.x = (ar.x + de.x) / 2; b.y = (ar.y + de.y) / 2;
+    if (b.A < .5 || b.B < .5 || b.t > 70) endBattle(b, ar, de);
+  }
+  G.battles = G.battles.filter(b => !b.done);
+}
+function applySurv(a, frac) { for (const k of K) a.n[k] = Math.round(a.n[k] * frac); }
+function endBattle(b, ar, de) {
+  b.done = true; ar.bt = 0; de.bt = 0;
+  const sa = b.A / b.A0, sd = b.B / b.B0; const winSide = b.A >= .5 && b.B < .5 ? 'A' : b.B >= .5 && b.A < .5 ? 'B' : 'T';
+  const ca = civ(ar.team), cd = civ(de.team), nA0 = tot(ar.n), nD0 = tot(de.n);
+  const bef = { A: Object.assign({}, ar.n), D: Object.assign({}, de.n) };
+  if (winSide === 'T') { applySurv(ar, sa); applySurv(de, sd); ar.morale = Math.max(0, ar.morale - 8); de.morale = Math.max(0, de.morale - 8); }
+  else { const w = winSide === 'A' ? ar : de, l = winSide === 'A' ? de : ar, ws = winSide === 'A' ? sa : sd; applySurv(w, ws); l.n = { lan: 0, arq: 0, jin: 0 }; w.morale = Math.min(100, w.morale + 12); civ(w.team).glory = Math.min(20, civ(w.team).glory + 6); civ(l.team).glory = Math.max(0, civ(l.team).glory - 3); }
+  const winner = winSide === 'A' ? ar : winSide === 'B' ? de : null, loser = winSide === 'A' ? de : winSide === 'B' ? ar : null;
+  if (winner) { civ(winner.team).kills++; if (winner.team === 0) { G.stats.wins++; if (b.amb && winner === de) G.stats.amb++; } if (loser.team === 0) G.stats.losses++; }
+  // retirada de quien quedó (empate) y limpieza de armadas vacías (la guarnición se queda)
+  for (const x of [ar, de]) if (tot(x.n) < .5 && !x.home) x.dead = true;
+  if (winSide === 'T') for (const x of [ar, de]) if (!x.home && !x.dead) retreat(x);
+  G.armies = G.armies.filter(x => !x.dead);
+  if (selId && !armyById(selId)) selId = 0;
+  buildReport(b, winSide, ca, cd, bef);
+}
+const compStr = n => K.filter(k => n[k] > .5).map(k => Math.round(n[k]) + ' ' + UN[k].n.toLowerCase()).join(', ') || 'nadie';
+function buildReport(b, winSide, ca, cd, bef) {
+  const law = b.narrow ? 'lineal' : 'cuadrática', why = b.narrow ? (b.walls ? 'murallas: solo pelea el frente' : 'frente angosto en ' + TNAME[b.terr] + ': solo pelea la primera línea') : 'llanura abierta: todos pueden pelear a la vez, la fuerza crece con el cuadrado de los efectivos';
+  const nm = (c, ar) => (ar ? 'Atacante ' : 'Defensor ') + nameOf(c);
+  const L = []; const f2 = x => x.toFixed(2).replace('.', ',');
+  L.push('Terreno: ' + TNAME[b.terr] + (b.walls ? ' con muralla ' + b.walls : '') + '. Ley ' + law + ' (' + why + ').');
+  L.push(nm(ca, 1) + ': ' + compStr(bef.A) + ' (moral ' + Math.round(b.SA.morale) + (b.SA.provOk ? '' : ', sin provisiones') + ').');
+  L.push(nm(cd, 0) + ': ' + compStr(bef.D) + ' (moral ' + Math.round(b.SD.morale) + (b.SD.provOk ? '' : ', sin provisiones') + (b.amb ? ', emboscada ×' + f2(b.cD.amb) : '') + ').');
+  L.push('Piedra-papel-tijera: ventaja de clases del atacante ×' + f2(b.cA.base) + ' y del defensor ×' + f2(b.cD.base) + '. Defensa del terreno ×' + f2(b.cA.terr) + '.');
+  L.push('Poder (bajas por soldado y segundo): atacante ' + f2(b.al) + ', defensor ' + f2(b.be) + '. ' + (b.narrow ? 'Lineal: gana quien tenga mayor poder×efectivos.' : 'Cuadrática: gana quien tenga mayor poder×efectivos².'));
+  const pw = b.pr.w === 'A' ? 'atacante' : b.pr.w === 'B' ? 'defensor' : 'empate';
+  const rw = winSide === 'A' ? 'atacante' : winSide === 'B' ? 'defensor' : 'empate';
+  L.push('Predicción de la fórmula: ' + pw + (b.pr.w !== 'T' ? ' con ' + Math.round(b.pr.surv) + ' sobrevivientes' : '') + '. Simulado: ' + rw + (winSide !== 'T' ? ' con ' + Math.round(winSide === 'A' ? b.A : b.B) + ' sobrevivientes' : '') + ' en ' + Math.round(b.t) + ' s.');
+  // factor decisivo: qué factor, si se neutraliza, cambia el resultado
+  const tests = [['la ventaja de terreno y murallas', { noTerr: 1 }], ['la ventaja de clases (piedra-papel-tijera)', { noMatch: 1 }], ['la moral y las provisiones', { noMorale: 1 }], ['la emboscada', { noAmb: 1 }]];
+  let dec = null; const n0 = b.narrow;
+  for (const [t, o] of tests) {
+    if (o.noAmb && !b.amb) continue; const ctx = { terr: b.terr, walls: b.walls, narrow: o.noTerr ? false : n0 };
+    const ca2 = coef(b.SA, b.SD, ctx, o), cd2 = coef(b.SD, b.SA, ctx, o), r = lanch(b.A0, b.B0, ca2.alpha, cd2.alpha, ctx.narrow);
+    if (r.w !== b.pr.w) { dec = t; break; }
+  }
+  const wtxt = winSide === 'T' ? 'Nadie venció: ambos quedaron muy golpeados y se retiran.' : (winSide === 'A' ? 'Ganó el atacante' : 'Ganó el defensor') + ' (' + nameOf(winSide === 'A' ? ca : cd) + ').';
+  L.push(dec ? 'Factor decisivo: ' + dec + '. Sin eso, el resultado se daba vuelta.' : 'Ningún factor solo cambia el resultado: ganó por superioridad de números y calidad en conjunto.');
+  G.rep.unshift({ t: Math.round(G.t), title: wtxt, lines: L, mine: ca.human || cd.human });
+  if (G.rep.length > 6) G.rep.pop();
+  if (ca.human || cd.human) tell(0, wtxt, winSide === 'T' ? false : (winSide === 'A' ? !ca.human : !cd.human));
+  if (ca.human || cd.human) log(wtxt);
+}
+/* provisiones y moral de ejércitos */
+function supply(dt) {
+  for (const a of G.armies) {
+    if (a.dead) continue; const c = civ(a.team), home = hyp(a.x - c.x, a.y - c.y) < 110;
+    if (a.home || home) { if (!a.bt) a.morale += clamp(c.morale - a.morale, -3 * dt, 3 * dt); continue; }
+    const used = tot(a.n) * .06 * dt / (hasT(c, 'logi') ? 1.5 : 1); a.prov = Math.max(0, a.prov - used);
+    if (a.prov <= 0) { a.morale = Math.max(0, a.morale - 3 * dt); if (!a.warned && a.team === 0) { a.warned = 1; tell(0, 'Un ejército se quedó sin provisiones: pierde moral y pelea peor. Volvé a casa.', true); } }
+    else { a.warned = 0; if (!a.bt) a.morale += clamp(c.morale - a.morale, -.3 * dt, 1.5 * dt); }
+    if (a.morale < 18 && !a.bt && !a.home && a.stance !== 'retreat') { retreat(a); log('Un ejército de ' + nameOf(c) + ' rompe filas y huye.', a.team); }
+  }
+}
+function capture() {
+  for (const t of G.civs) {
+    if (!t.alive) continue; const g = garr(t); if (g && tot(g.n) >= .5) continue; if (g && g.bt) continue;
+    const inv = G.armies.find(a => a.team !== t.id && !a.bt && tot(a.n) >= .5 && hyp(a.x - t.x, a.y - t.y) < 26);
+    if (!inv) continue; const w = civ(inv.team); t.alive = false;
+    w.food = Math.min(600, w.food + t.food / 2); w.wood = Math.min(600, w.wood + t.wood / 2); w.bronze = Math.min(400, w.bronze + t.bronze / 2); w.glory = Math.min(20, w.glory + 15); w.morale = Math.min(100, w.morale + 10);
+    G.armies.forEach(a => { if (a.team === t.id) a.dead = true; }); G.armies = G.armies.filter(a => !a.dead);
+    if (w.human) { G.stats.caps++; log('Tomaste la ciudad de ' + t.name + '.'); tell(0, 'Cayó la ciudad de ' + t.name + '.'); }
+    else log(w.name + ' tomó la ciudad de ' + nameOf(t) + '.', w.id);
+    if (t.human) { lose(); return; }
+  }
+}
+/* ---------- Espías ---------- */
+function ops() {
+  for (const o of G.ops) {
+    if (o.t1 > G.t) continue; o.done = true; const c = civ(o.team), t = civ(o.tgt); if (!t || !t.alive) continue;
+    const ch = clamp(.55 + .1 * c.bld.espias + (hasT(c, 'engano') ? .15 : 0) - .1 * t.bld.espias, .2, .95);
+    if (R() < ch) { c.intel[o.tgt] = G.t + 50; if (o.team === 0) { G.stats.spy++; tell(0, 'Tu espía volvió: ves los ejércitos de ' + t.name + ' durante 50 s.'); log('Espía con éxito en ' + t.name + '.'); } }
+    else { c.morale = Math.max(0, c.morale - 3); if (o.team === 0) tell(0, 'Atraparon a tu espía en ' + t.name + '.', true); }
+  }
+  G.ops = G.ops.filter(o => !o.done);
+}
+/* ---------- Eventos ---------- */
+const EVS = {
+  merc: { n: 'Mercaderes de bronce', d: 'Una caravana ofrece bronce a cambio de comida.', o: [{ t: 'Comprar: 30 comida por 25 bronce', ok: c => c.food >= 30, fx: c => { c.food -= 30; c.bronze += 25; } }, { t: 'Rechazar', fx: () => { } }] },
+  desert: { n: 'Desertores del enemigo', d: 'Soldados rivales piden asilo. Tus veteranos desconfían.', o: [{ t: 'Acogerlos: +3 lanceros, −8 de moral', fx: c => { const g = garr(c); if (g) g.n.lan += 3; c.morale = Math.max(0, c.morale - 8); } }, { t: 'Expulsarlos', fx: () => { } }] },
+  rumor: { n: 'Rumores de traición', d: 'Se dice que un rival prepara algo. Conocer al enemigo vale más que adivinar.', o: [{ t: 'Investigar: 15 de bronce, ves a todos los rivales 40 s', ok: c => c.bronze >= 15, fx: c => { c.bronze -= 15; G.civs.forEach(t => { if (t.id !== c.id && t.alive) c.intel[t.id] = G.t + 40; }); } }, { t: 'Ignorarlos', fx: () => { } }] }
+};
+function rollEvent() {
+  const r = R(), tgt = alive()[Math.floor(R() * alive().length)];
+  if (r < .22) { G.flood = 30; log('Crecida del río: los vados se cierran 30 s.'); tell(0, 'Crecida: los vados están cerrados por 30 s.', true); }
+  else if (r < .36) { tgt.food = Math.min(600, tgt.food + 40); log('Cosecha abundante en ' + nameOf(tgt) + '.', tgt.id); }
+  else if (r < .5) { tgt.food = Math.max(0, tgt.food * .7); log('Plaga en los graneros de ' + nameOf(tgt) + ' (−30% comida).', tgt.id); }
+  else { const k = ['merc', 'desert', 'rumor'][Math.floor(R() * 3)], ev = EVS[k], o = Math.floor(R() * 2);
+    if (tgt.human) { G.dlg = { id: k, team: 0 }; G.paused = true; } else if ((ev.o[o].ok || (() => true))(tgt)) ev.o[o].fx(tgt); }
+}
+function resolveDlg(i) {
+  if (!G.dlg) return; const c = civ(G.dlg.team), o = EVS[G.dlg.id].o[i]; if (!o || (o.ok && !o.ok(c))) return; o.fx(c); log('Decisión: ' + o.t + '.'); G.dlg = null; G.paused = false; shownDlg = 0; closeDlg();
+}
+/* ---------- IA ---------- */
+function strengthOf(c) { return G.armies.filter(a => a.team === c.id).reduce((s, a) => s + tot(a.n), 0); }
+function aiThink(c) {
+  const P = PERS[c.pers]; c.aiT = G.t + 1.5 / (DF.eco >= 1 ? 1 : .9);
+  if (wkTotal(c) < popCap(c) && c.food > 45) addWorker(c);
+  for (const k of P.bld) { if (c.bld[k] >= 3) continue; if (k === 'espias' && G.t < 60) continue; if (k === 'muralla' && G.t < 100) continue; const cost = bldCost(c, k); if (c.wood > cost.wood + 20 && canPay(c, cost) && (c.bld[k] < 1 || G.t > 120 + 50 * c.bld[k])) { build(c.id, k); break; } }
+  for (const k of ['bronce', 'logi', 'coraza', 'engano']) if (!hasT(c, k) && G.t > 150 && canPay(c, DOC[k].cost) && c.bronze > DOC[k].cost.bronze + 10) { research(c.id, k); break; }
+  // composición: contrarrestar a la clase más numerosa del enemigo
+  const en = { lan: 0, arq: 0, jin: 0 }; for (const a of G.armies) if (a.team !== c.id && civ(a.team).alive) for (const k of K) en[k] += a.n[k];
+  const top = K.reduce((m, k) => en[k] > en[m] ? k : m, 'lan'), counter = { lan: 'arq', arq: 'jin', jin: 'lan' }[top]; // arq > lan, jin > arq, lan > jin
+  for (let i = 0; i < 2; i++) { let k = R() < .7 ? counter : K[Math.floor(R() * 3)]; if (recruit(c.id, k) && recruit(c.id, 'lan')) break; }
+  const g = garr(c), thr = DF.thr * P.thr;
+  if (P.spy > 0 && c.bld.espias > 0 && c.bronze > 20 && R() < P.spy * .3) { const t = G.civs.find(x => x.id !== c.id && x.alive && x.human) || G.civs.find(x => x.id !== c.id && x.alive); if (t) spy(c.id, t.id); }
+  let ex = c.exp ? armyById(c.exp) : null; if (!ex) c.exp = 0;
+  if (ex) {
+    if (ex.bt) return; const n = tot(ex.n);
+    if (ex.stance === 'ambush') { if (G.t - ex.amb > 40) { const t = pickTarget(c); if (t) orderMove(ex, t.x, t.y, { chase: 0 }); } return; }
+    if (ex.stance === 'retreat') return; if (ex.morale < 28 || n < ex.n0 * .35 || (ex.prov <= 0 && ex.n0 > 0)) { retreat(ex); return; }
+    if (!ex.path.length && ex.stance === 'idle') { const t = pickTarget(c); if (t) orderMove(ex, t.x, t.y); }
+  } else if (g && !g.bt && G.t > DF.grace && tot(g.n) >= thr) {
+    const t = pickTarget(c); if (!t) return; const a = splitArmy(g, .7); if (!a) return; a.x = c.x + 12; a.y = c.y + 10; c.exp = a.id;
+    if (R() < P.amb) { const f = nearestTerr(T_FOR, c.x + (t.x - c.x) * .3, c.y + (t.y - c.y) * .3, 260); if (f) { orderMove(a, f[0], f[1]); a.ambGo = 1; return; } }
+    orderMove(a, t.x, t.y);
+  }
+  if (ex && ex.ambGo && !ex.path.length && ex.stance === 'idle') { ex.ambGo = 0; setAmbush(ex); }
+}
+function pickTarget(c) { const t = G.civs.filter(x => x.alive && x.id !== c.id); if (!t.length) return null; return t.reduce((m, x) => { const sx = strengthOf(x) * (c.pers === 'belicosa' ? 1 : 1.4) + hyp(x.x - c.x, x.y - c.y) / 18, sm = strengthOf(m) * (c.pers === 'belicosa' ? 1 : 1.4) + hyp(m.x - c.x, m.y - c.y) / 18; return sx < sm ? x : m; }); }
+
+/* ---------- Metas, victoria y derrota ---------- */
+function goals() {
+  const c = civ(0), s = G.stats;
+  G.gd = [wkTotal(c) >= 10, c.bld.cuartel >= 1, s.wins >= 1, s.spy >= 1 || s.amb >= 1, s.caps >= 1].map((v, i) => v || G.gd[i]);
+}
+const GT = ['Tener 10 obreros', 'Construir un Cuartel', 'Ganar un choque', 'Espiar a un rival o ganar con una emboscada', 'Tomar una ciudad rival'];
+function endCommon() { $('docm').classList.remove('show'); G.paused = false; clearSave(); }
+function writeLineage() {
+  try {
+    const l = G.lin || {}, g = garr(civ(0)), u = g ? tot(g.n) : 0, ct = ({ jefatura: 'Ciudad militarista', mercado: 'Ciudad mercantil', templo: 'Ciudad teocrática' })[G.cityType] || '';
+    localStorage.setItem('evo_lineage', JSON.stringify({ v: 1, from: 4, branch: l.branch || null, tier: l.tier || 0, mutCount: l.mutCount || 0, owned: [], seed: G.seed, species: l.species || '', city: ct, pop: wkTotal(civ(0)), civs: G.civs.length - 1, soldiers: u, techs: civ(0).tech.slice(), at: Date.now() }));
+  } catch (e) { }
+}
+function win() {
+  G.over = true; G.win = true; endCommon(); writeLineage();
+  dialog('Conquista: tu civilización domina la región', '<p>Tomaste las ciudades de todos los rivales en ' + fmt(G.t) + '. Ganaste ' + G.stats.wins + ' choques.</p><p><b>Las Eras 5 y 6 todavía no existen.</b> Tu linaje (Era 4) quedó anotado en este navegador, pero no hay una era siguiente para recibirlo. Lo que sigue en el diseño (ver docs/ERA4.md) es la era moderna y el espacio.</p>', [['Jugar de nuevo', () => { closeDlg(); showMenu(); }, 1], ['Volver a la portada', toIndex]]);
+}
+function lose() {
+  G.over = true; endCommon(); dialog('Tu ciudad cayó', '<p>Un ejército enemigo tomó tu capital. Conocer al enemigo, elegir el terreno y cuidar las provisiones habría ayudado: mirá «Por qué ganó» para ver qué decidió cada choque.</p>', [['Jugar de nuevo', () => { closeDlg(); showMenu(); }, 1], ['Volver a la portada', toIndex]]);
+}
+const toIndex = () => { location.href = '../index.html'; };
+function winCheck() { if (G.over) return; if (!civ(0).alive) { lose(); return; } if (G.civs.every(c => c.human || !c.alive)) win(); }
+
+/* ---------- Paso de simulación ---------- */
+function update(dt) {
+  if (!G || G.over) return; G.t += dt; G.tick++;
+  if (G.flood > 0) G.flood = Math.max(0, G.flood - dt);
+  econ(dt);
+  for (const c of G.civs) if (c.alive && !c.human && G.t >= c.aiT) aiThink(c);
+  if (G.t >= G.evT) { G.evT = G.t + rnd(45, 75); rollEvent(); }
+  ops(); moveArmies(dt); engage(); battlesStep(dt); supply(dt); capture();
+  G.gdT += dt; if (G.gdT >= 1) { G.gdT = 0; goals(); }
+  winCheck();
+}
+
+/* ---------- Guardado ---------- */
+const SAVE_KEY = 'evo_save4_v1';
+const snapshotObj = () => { const g = Object.assign({}, G); g.paused = false; g.modal = false; return { v: 1, diffI, rs: _rs, G: g }; };
+const snapshot = () => JSON.stringify(snapshotObj());
+const stateHash = () => hashStr(snapshot()).toString(16);
+const summary = () => 'Civilización de ' + wkTotal(civ(0)) + ' obreros y ' + units(civ(0)) + ' soldados · ' + fmt(G.t) + ' · ' + G.civs.filter(c => !c.human && c.alive).length + ' rival' + (G.civs.filter(c => !c.human && c.alive).length === 1 ? '' : 'es') + ' en pie';
+function saveGame(manual) {
+  if (!G || !started || G.over) return false;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(Object.assign({ v: 1, at: Date.now(), summary: summary() }, snapshotObj()))); lastSaveT = G.t; if (manual) toast('Partida guardada.'); return true; }
+  catch (e) { if (manual) toast('No se pudo guardar (el navegador lo bloquea).', true); return false; }
+}
+function readSave() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY)); return d && d.v === 1 && d.G && d.G.civs && d.G.armies ? d : null; } catch (e) { return null; } }
+function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { } refreshCont(); }
+function restoreGame(d) {
+  diffI = d.diffI | 0; DF = DIFFS[diffI]; _rs = d.rs >>> 0; G = JSON.parse(JSON.stringify(d.G)); G.paused = false;
+  started = true; spdI = 1; $('bSpd').textContent = '×1'; selId = 0; trayK = null; shownDlg = 0; lastSaveT = G.t; bgDirty = true;
+  ['menu', 'docm', 'dlg'].forEach(i => $(i).classList.remove('show')); if (G.dlg) G.paused = true; centerCam(); setTray(null);
+}
+function refreshCont() {
+  const d = readSave(), b = $('contBtn'); if (!b) return;
+  b.style.display = d ? 'block' : 'none'; if (d) { b.innerHTML = '<b>Continuar partida guardada</b><small></small>'; b.lastChild.textContent = new Date(d.at).toLocaleString('es-AR') + ' · ' + d.summary; }
+}
+
+/* ---------- Interfaz ---------- */
+function dialog(title, html, btns) {
+  $('dT').textContent = title; $('dB').innerHTML = html; const w = $('dBtns'); w.innerHTML = '';
+  btns.forEach(([t, f, primary, dis]) => { const b = document.createElement('button'); b.className = primary ? 'bigbtn' : 'ghost'; b.textContent = t; b.disabled = !!dis; b.addEventListener('click', f); w.appendChild(b); });
+  $('dlg').classList.add('show'); const f = w.querySelector('button:not(:disabled)'); if (f) f.focus();
+}
+function closeDlg() { $('dlg').classList.remove('show'); }
+function showMenu() { renderLin(); refreshCont(); $('menu').classList.add('show'); started = false; }
+function startNew() { newGame(newSeedStr()); started = true; $('menu').classList.remove('show'); setTray(null); toast('Tocá tu ciudad para elegir la guarnición, formá un ejército y tocá un punto del mapa para moverlo. Arrastrá el mapa para mirar.'); }
+const trayHtml = () => {
+  const c = civ(0); if (trayK === 'rec') {
+    return '<button data-a="rec" data-k="obrero"><b>Obrero</b><small>20 comida · ' + wkTotal(c) + '/' + popCap(c) + '</small></button>' + K.map(k => '<button data-a="rec" data-k="' + k + '"><b>' + UN[k].s[0].toUpperCase() + UN[k].s.slice(1) + '</b><small>' + costStr(UN[k].cost) + '</small></button>').join('');
+  }
+  if (trayK === 'bld') return BORD.map(k => '<button data-a="bld" data-k="' + k + '"' + (c.bld[k] >= 3 ? ' disabled' : '') + '><b>' + BLD[k].n + ' ' + c.bld[k] + '/3</b><small>' + (c.bld[k] >= 3 ? 'máximo' : costStr(bldCost(c, k))) + '<span class="ds"> · ' + BLD[k].d + '</span></small></button>').join('');
+  if (trayK === 'ord') {
+    const a = armyById(selId); if (!a || a.team !== 0) return '<button disabled><b>Sin ejército elegido</b><small>Tocá uno en el mapa</small></button>';
+    return a.home ? '<button data-a="form" data-k="0.75"><b>Formar ejército</b><small>sale ¾ de la guarnición</small></button><button data-a="form" data-k="0.5"><b>Formar ejército ½</b><small>sale la mitad</small></button>'
+      : '<button data-a="amb"><b>Emboscada</b><small>quedarse escondido (bosque o colina)</small></button><button data-a="ret"><b>Retirar</b><small>volver a la ciudad</small></button><button data-a="split"><b>Dividir ½</b><small>separar la mitad</small></button>';
+  }
+  return '';
+};
+let trayLast = '';
+function setTray(k) { trayK = trayK === k ? null : k; if (!k) trayK = null; $('tray').classList.toggle('show', !!trayK); ['bRec', 'bBld', 'bOrd'].forEach(i => $(i).classList.remove('on')); if (trayK) $({ rec: 'bRec', bld: 'bBld', ord: 'bOrd' }[trayK]).classList.add('on'); trayLast = ''; refreshTray(); }
+function refreshTray() { const h = trayHtml(), c = civ(0); if (h !== trayLast) { $('tray').innerHTML = h; trayLast = h; } if (!trayK) return; const bs = $('tray').querySelectorAll('button[data-a]'); bs.forEach(b => { const k = b.dataset.k; if (b.dataset.a === 'rec') b.disabled = k === 'obrero' ? (c.food < 20 || wkTotal(c) >= popCap(c)) : (!canPay(c, UN[k].cost) || (k === 'jin' && c.bld.cuartel < 1)); if (b.dataset.a === 'bld') b.disabled = c.bld[k] >= 3 || !canPay(c, bldCost(c, k)); }); }
+function doTray(e) {
+  const b = e.target.closest('button[data-a]'); if (!b || b.disabled || !G) return; const a = b.dataset.a, k = b.dataset.k; let err = null;
+  if (a === 'rec') err = recruit(0, k); else if (a === 'bld') err = build(0, k);
+  else { const ar = armyById(selId); if (!ar) return; if (a === 'form') { const n = formArmy(0, +k); if (!n) err = 'No se pudo formar: muy pocos soldados o la guarnición está peleando.'; else selId = n.id; } else if (a === 'amb') err = setAmbush(ar); else if (a === 'ret') err = retreat(ar); else if (a === 'split') { const n = splitArmy(ar, .5); if (!n) err = 'No se puede dividir.'; else { n.stance = 'idle'; selId = n.id; } } }
+  if (err) toast(err, true); trayLast = ''; hud();
+}
+function docModal() {
+  const c = civ(0); $('docP').textContent = 'Cada doctrina se compra una vez. Podés pagarlas con comida, madera o bronce.';
+  $('docGrid').innerHTML = ''; Object.keys(DOC).forEach(k => { const d = DOC[k], b = document.createElement('button'); const h = hasT(c, k); b.className = 'tc' + (h ? ' done' : ''); b.disabled = h || !canPay(c, d.cost); b.innerHTML = '<b></b><span></span><em></em>'; b.children[0].textContent = d.n; b.children[1].textContent = d.d; b.children[2].textContent = h ? 'Dominada' : 'Cuesta ' + costStr(d.cost); b.addEventListener('click', () => { const e = research(0, k); if (e) toast(e, true); docModal(); hud(); }); $('docGrid').appendChild(b); });
+  G.modal = true; $('docm').classList.add('show'); const f = $('docGrid').querySelector('button:not(:disabled)') || $('docClose'); f.focus();
+}
+function hintText() {
+  const c = civ(0), g = garr(c); if (!c.alive) return '';
+  if (c.free > 0) return 'Tenés obreros libres: sumalos a un trabajo con los botones + de la lista.';
+  if (c.food < 15) return 'Poca comida: poné más campesinos. Sin comida los soldados desertan.';
+  if (!G.gd[1] && c.wood >= 40 && c.bronze >= 10) return 'Ya podés construir un Cuartel: hace más rápido el reclutamiento y habilita jinetes.';
+  if (G.flood > 0) return 'Crecida: los vados están cerrados. Nadie cruza el río por ' + Math.ceil(G.flood) + ' s.';
+  const near = G.armies.find(a => a.team !== 0 && hyp(a.x - c.x, a.y - c.y) < 190 && visible(a)); if (near) return 'Se acerca un ejército enemigo. Tu guarnición pelea con la ventaja de estar en casa (más aún con murallas).';
+  if (!G.gd[3] && c.bld.espias < 1 && G.t > 40) return 'Sun Tzu: «conocé al enemigo». Una Casa de espías te deja ver sus ejércitos.';
+  if (!G.gd[2]) return 'Elegí el terreno: en bosque y colina el que defiende rinde más y los jinetes rinden menos. En llanura gana quien tiene más soldados (ley cuadrática).';
+  const x = G.gd.findIndex(v => !v); return x >= 0 ? 'Próxima meta: ' + GT[x] + '.' : '';
+}
+function visible(a) {
+  if (a.team === 0 || reveals(0, a.team)) return true; if (concealed(a) && !a.bt) return false;
+  const c = civ(0); if (hyp(a.x - c.x, a.y - c.y) < 150) return true; return G.armies.some(m => m.team === 0 && hyp(a.x - m.x, a.y - m.y) < 115);
+}
+function hud() {
+  if (!G || !started) return; const c = civ(0), r = rates(c), pop = wkTotal(c);
+  $('vTime').textContent = fmt(G.t); $('vPop').textContent = pop + '/' + popCap(c); $('cPop').classList.toggle('bad', c.free > 0);
+  const net = r.f - r.up; $('vFood').textContent = Math.floor(c.food); $('vFoodR').textContent = 'comida (' + (net >= 0 ? '+' : '') + net.toFixed(1).replace('.', ',') + '/s)'; $('cFood').classList.toggle('bad', c.food < 15 || net < -.5);
+  $('vWood').textContent = Math.floor(c.wood); $('vBronze').textContent = Math.floor(c.bronze); $('vMor').textContent = Math.round(c.morale); $('cMor').classList.toggle('bad', c.morale < 35); $('vArmy').textContent = units(c);
+  cv.setAttribute('aria-label', 'Mapa de la región: ' + units(c) + ' soldados tuyos, ' + (n => n + (n === 1 ? ' ciudad rival en pie, ' : ' ciudades rivales en pie, '))(G.civs.filter(x => !x.human && x.alive).length) + G.battles.length + ' choques en curso. Tocá un ejército para elegirlo.');
+  $('libres').textContent = c.free ? '(' + c.free + ' libres)' : '';
+  $('roles').innerHTML = WK_KEYS.map(k => '<div class="role"><i style="background:' + WK[k].c + '"></i><span>' + WK[k].n + '</span><button data-w="' + k + '" data-d="-1" aria-label="Quitar un obrero de ' + WK[k].n + '">−</button><b>' + c.wk[k] + '</b><button data-w="' + k + '" data-d="1" aria-label="Sumar un obrero a ' + WK[k].n + '"' + (c.free < 1 ? ' disabled' : '') + '>+</button></div>').join('') + '<small>Producción por obrero y segundo: comida 0,5 · madera 0,4 · bronce 0,25 (por terreno cercano y edificios).</small>';
+  $('bAuto').textContent = 'Asignar nuevos automáticamente: ' + (G.auto ? 'sí' : 'no');
+  const a = armyById(selId);
+  if (a && a.team === 0) { const sup = a.home ? 'en la ciudad' : (a.prov > 0 ? 'provisiones para ' + Math.round(a.prov / Math.max(.01, tot(a.n) * .06 * (hasT(c, 'logi') ? 1 / 1.5 : 1))) + ' s' : 'SIN provisiones'); $('selInfo').innerHTML = '<b>' + (a.home ? 'Guarnición' : 'Ejército') + '</b> · ' + compStr(a.n) + '<br>Moral ' + Math.round(a.morale) + ' · ' + sup + '<br>Terreno: ' + TNAME[terrAt(a.x, a.y)] + (a.bt ? ' · en combate' : a.stance === 'ambush' ? ' · en emboscada' + (concealed(a) ? ' (oculto)' : ' (a la vista)') : a.stance === 'retreat' ? ' · retirándose' : a.path.length ? ' · en marcha' : ''); }
+  else $('selInfo').textContent = 'Tocá uno de tus ejércitos en el mapa (la guarnición está en tu ciudad).';
+  const ongoing = G.battles.map(b => '<div class="dec">En curso: ' + Math.round(b.A) + ' contra ' + Math.round(b.B) + ' (ley ' + (b.narrow ? 'lineal' : 'cuadrática') + ' en ' + TNAME[b.terr] + ')</div>').join('');
+  const rp = G.rep.find(x => x.mine) || G.rep[0]; $('rep').innerHTML = ongoing + (rp ? '<div class="dec">' + rp.title + ' (' + fmt(rp.t) + ')</div><ul>' + rp.lines.map(l => '<li>' + l + '</li>').join('') + '</ul>' : (ongoing ? '' : 'Todavía no hubo ningún choque. Cuando haya uno, acá vas a ver qué ley se usó, qué pesó cada factor y qué lo decidió.'));
+  $('rivals').innerHTML = G.civs.filter(x => !x.human).map(x => { const known = reveals(0, x.id), n = strengthOf(x); return '<div class="riv"><i style="background:' + x.col + '"></i><span><b>' + x.name + '</b> · ' + PERS[x.pers].n + '<br>' + (!x.alive ? 'ciudad caída' : known ? '≈ ' + n + ' soldados, moral ' + Math.round(x.morale) : 'fuerza desconocida') + '</span>' + (x.alive ? '<button data-sp="' + x.id + '"' + (c.bld.espias < 1 || c.bronze < 12 ? ' disabled' : '') + ' aria-label="Espiar a ' + x.name + '">Espiar</button>' : '') + '</div>'; }).join('');
+  $('log').innerHTML = G.log.slice(0, 6).map(t => '<div>' + t + '</div>').join('');
+  $('goalRows').innerHTML = GT.map((t, i) => '<div class="g' + (G.gd[i] ? ' ok' : '') + '">' + (G.gd[i] ? '✓ ' : '') + t + '</div>').join(''); $('goalN').textContent = G.gd.filter(Boolean).length + '/5';
+  const h = hintText(); $('hint').textContent = h; $('hint').style.display = h ? 'block' : 'none';
+  $('bPause').classList.toggle('on', G.paused); $('pauseTag').style.display = G.paused && !G.modal && !G.dlg && !G.over ? 'block' : 'none';
+  const nd = Object.keys(DOC).filter(k => !hasT(c, k) && canPay(c, DOC[k].cost)).length; $('bDocS').textContent = nd ? nd + ' lista' + (nd > 1 ? 's' : '') + ': ¡tocá!' : 'mejoras de guerra';
+  $('bSave').disabled = G.over;
+  if (trayK) refreshTray();
+  if (G.dlg && shownDlg !== 1) { shownDlg = 1; const ev = EVS[G.dlg.id], cc = civ(G.dlg.team); dialog(ev.n, '<p>' + ev.d + '</p>', ev.o.map((o, i) => [o.t, () => resolveDlg(i), i === 0, o.ok && !o.ok(cc)])); }
+}
+
+/* ---------- Dibujo ---------- */
+const cv = $('cv'), ctx = cv.getContext('2d');
+let fogC = null, fogX = null, fogI = null, cw = 0, ch = 0, dpr = 1, cam = { ox: 0, oy: 0, s: 1 }, bg = null, bgDirty = true, PAL = {};
+function pal() { const d = getComputedStyle(document.documentElement).getPropertyValue('--dark').trim() === '1'; PAL = d ? { p: '#4d5a36', f: '#2f4a2a', h: '#6d5c3c', r: '#2b5d78', fo: '#4a7a8a', ink: '#efe8d6', st: '#0a0804' } : { p: '#c3cf90', f: '#78a35c', h: '#b79f6c', r: '#6fa8c9', fo: '#aacbd6', ink: '#2a2418', st: '#2a2418' }; bgDirty = true; }
+function layout() { const w = $('cvWrap'); dpr = Math.min(2, window.devicePixelRatio || 1); cw = w.clientWidth; ch = w.clientHeight; cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr); clampCam(); }
+function clampCam() { cam.s = Math.max(cw / W, ch / H, .1); cam.ox = clamp(cam.ox, Math.min(0, cw - W * cam.s), 0); cam.oy = clamp(cam.oy, Math.min(0, ch - H * cam.s), 0); }
+function centerCam() { if (!G) return; clampCam(); const c = civ(0); cam.ox = cw / 2 - c.x * cam.s; cam.oy = ch / 2 - c.y * cam.s; clampCam(); }
+const nz = i => ((Math.imul(i + 1, 2654435761) >>> 0) % 1000) / 1000;
+function buildBg() {
+  bg = document.createElement('canvas'); bg.width = W; bg.height = H; const g = bg.getContext('2d');
+  for (let i = 0; i < COLS * ROWS; i++) {
+    const t = +G.terr[i], x = (i % COLS) * TS, y = ((i / COLS) | 0) * TS, n = nz(i);
+    g.fillStyle = [PAL.p, PAL.f, PAL.h, PAL.r, PAL.fo][t]; g.fillRect(x, y, TS, TS);
+    g.fillStyle = 'rgba(0,0,0,' + (.02 + n * .06) + ')'; g.fillRect(x, y, TS, TS);
+    g.strokeStyle = PAL.st; g.fillStyle = PAL.st; g.lineWidth = 1.2; g.globalAlpha = .45;
+    if (t === T_FOR) { for (let k = 0; k < 2; k++) { const px = x + 5 + k * 9 + n * 3, py = y + 6 + k * 7; g.beginPath(); g.arc(px, py, 4.5, 0, TAU); g.stroke(); } }
+    else if (t === T_HILL) { g.beginPath(); g.arc(x + 10, y + 16, 8, Math.PI, 0); g.stroke(); }
+    else if (t === T_RIVER) { g.beginPath(); g.moveTo(x + 2, y + 6 + n * 8); g.quadraticCurveTo(x + 8, y + 2 + n * 8, x + 14, y + 6 + n * 8); g.stroke(); }
+    else if (t === T_FORD) { for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(x + 4 + k * 6, y + 10 + (k & 1) * 3, 2.2, 0, TAU); g.fill(); } }
+    g.globalAlpha = 1;
+  }
+  bgDirty = false;
+}
+function sx(x) { return x * cam.s + cam.ox; } function sy(y) { return y * cam.s + cam.oy; }
+function drawCity(c, g) {
+  const x = sx(c.x), y = sy(c.y), s = cam.s, dead = !c.alive; g.save(); g.globalAlpha = dead ? .45 : 1;
+  if (c.bld.muralla > 0) { g.strokeStyle = PAL.st; g.lineWidth = 2 + c.bld.muralla; g.beginPath(); g.arc(x, y, 24 * s, 0, TAU); g.stroke(); }
+  g.fillStyle = c.col; g.strokeStyle = PAL.st; g.lineWidth = 2; g.beginPath(); g.rect(x - 13 * s, y - 9 * s, 26 * s, 18 * s); g.fill(); g.stroke();
+  g.fillStyle = PAL.ink === '#efe8d6' ? '#2a2418' : '#fff8e0'; g.beginPath(); g.rect(x - 5 * s, y - 15 * s, 10 * s, 12 * s); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(x, y - 15 * s); g.lineTo(x, y - 26 * s); g.lineTo(x + 9 * s, y - 22 * s); g.lineTo(x, y - 19 * s); g.fillStyle = c.col; g.fill(); g.stroke();
+  if (dead) { g.strokeStyle = '#c9406f'; g.lineWidth = 3; g.beginPath(); g.moveTo(x - 14 * s, y - 10 * s); g.lineTo(x + 14 * s, y + 10 * s); g.moveTo(x + 14 * s, y - 10 * s); g.lineTo(x - 14 * s, y + 10 * s); g.stroke(); }
+  g.globalAlpha = 1; g.font = '600 12px IBM Plex Sans,system-ui,sans-serif'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,.7)'; g.lineWidth = 3; g.strokeText(nameOf(c), x, y + 26 * s + 8); g.fillText(nameOf(c), x, y + 26 * s + 8); g.restore();
+}
+function drawArmy(a, g, sel) {
+  const c = civ(a.team), x = sx(a.x), y = sy(a.y), n = tot(a.n), r = (7 + Math.min(10, Math.sqrt(n) * 1.5)) * Math.max(.8, cam.s * .9); if (n < .5 && !a.home) return;
+  g.save(); g.globalAlpha = concealed(a) ? .55 : 1; if (a.home) { g.translate(0, 0); }
+  const ox = a.home ? 20 * cam.s : 0, oy = a.home ? 14 * cam.s : 0, px = x + ox, py = y + oy;
+  let ang = -Math.PI / 2; for (const k of K) { const f = n ? a.n[k] / n : 0; if (f <= 0) continue; g.fillStyle = UN[k].col; g.beginPath(); g.moveTo(px, py); g.arc(px, py, r, ang, ang + f * TAU); g.closePath(); g.fill(); ang += f * TAU; }
+  g.strokeStyle = c.col; g.lineWidth = 3.5; g.beginPath(); g.arc(px, py, r, 0, TAU); g.stroke(); g.strokeStyle = PAL.st; g.lineWidth = 1; g.beginPath(); g.arc(px, py, r + 2, 0, TAU); g.stroke();
+  if (a.stance === 'ambush') { g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.moveTo(px - 5, py + 3); g.lineTo(px, py - 4); g.lineTo(px + 5, py + 3); g.stroke(); }
+  if (sel) { g.setLineDash([5, 4]); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(px, py, r + 6, 0, TAU); g.stroke(); g.setLineDash([]); }
+  g.font = '700 12px IBM Plex Sans,system-ui,sans-serif'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,.75)'; g.lineWidth = 3; g.strokeText(Math.round(n), px, py - r - 4); g.fillText(Math.round(n), px, py - r - 4);
+  g.restore();
+}
+function render() {
+  if (!G) { return; } if (bgDirty || !bg) buildBg(); const g = ctx; g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = PAL.p || '#ccc'; g.fillRect(0, 0, cw, ch);
+  g.imageSmoothingEnabled = true; g.drawImage(bg, cam.ox, cam.oy, W * cam.s, H * cam.s);
+  if (G.flood > 0) { g.fillStyle = 'rgba(60,120,200,.35)'; for (let i = 0; i < COLS * ROWS; i++) if (+G.terr[i] === T_FORD) g.fillRect(sx((i % COLS) * TS), sy(((i / COLS) | 0) * TS), TS * cam.s, TS * cam.s); }
+  for (const c of G.civs) drawCity(c, g);
+  const sa = armyById(selId); if (sa && sa.path.length) { g.setLineDash([4, 4]); g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2; g.beginPath(); g.moveTo(sx(sa.x), sy(sa.y)); for (const p of sa.path) g.lineTo(sx(p[0]), sy(p[1])); g.stroke(); g.setLineDash([]); }
+  for (const a of G.armies) if (visible(a)) drawArmy(a, g, a.id === selId);
+  for (const b of G.battles) { const x = sx(b.x), y = sy(b.y), t = performance.now() / 250; g.save(); g.strokeStyle = '#c9406f'; g.lineWidth = 3; for (let k = 0; k < 2; k++) { const an = t + k * Math.PI / 2 + .6; g.beginPath(); g.moveTo(x - Math.cos(an) * 14, y - Math.sin(an) * 14); g.lineTo(x + Math.cos(an) * 14, y + Math.sin(an) * 14); g.stroke(); } g.font = '700 12px IBM Plex Sans,sans-serif'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,.75)'; g.lineWidth = 3; const tx = Math.round(b.A) + ' vs ' + Math.round(b.B); g.strokeText(tx, x, y + 28); g.fillText(tx, x, y + 28); g.restore(); }
+  // niebla: solo cubre lo que no ves (mapa de 1 px por casilla, escalado con suavizado)
+  if (!fogC) { fogC = document.createElement('canvas'); fogC.width = COLS; fogC.height = ROWS; fogX = fogC.getContext('2d'); fogI = fogX.createImageData(COLS, ROWS); }
+  const vis = [[civ(0).x, civ(0).y, 160]]; for (const a of G.armies) if (a.team === 0) vis.push([a.x, a.y, 120]);
+  for (const c of G.civs) if (c.id && reveals(0, c.id)) vis.push([c.x, c.y, 200]);
+  for (let i = 0; i < COLS * ROWS; i++) { const px = (i % COLS) * TS + TS / 2, py = ((i / COLS) | 0) * TS + TS / 2; let v = false; for (const q of vis) if (hyp(px - q[0], py - q[1]) < q[2]) { v = true; break; } const o = i * 4; fogI.data[o] = 10; fogI.data[o + 1] = 8; fogI.data[o + 2] = 4; fogI.data[o + 3] = v ? 0 : 95; }
+  fogX.putImageData(fogI, 0, 0); g.imageSmoothingEnabled = true; g.drawImage(fogC, cam.ox, cam.oy, W * cam.s, H * cam.s);
+}
+
+/* ---------- Entrada ---------- */
+let pd = null;
+cv.addEventListener('pointerdown', e => { pd = { x: e.clientX, y: e.clientY, ox: cam.ox, oy: cam.oy, moved: false, id: e.pointerId }; try { cv.setPointerCapture(e.pointerId); } catch (_) { } });
+cv.addEventListener('pointermove', e => { if (!pd) return; const dx = e.clientX - pd.x, dy = e.clientY - pd.y; if (!pd.moved && hyp(dx, dy) > 8) pd.moved = true; if (pd.moved) { cam.ox = pd.ox + dx; cam.oy = pd.oy + dy; clampCam(); } });
+cv.addEventListener('pointerup', e => { if (!pd) return; const was = pd; pd = null; if (!was.moved) { const r = cv.getBoundingClientRect(); clickMap((e.clientX - r.left - cam.ox) / cam.s, (e.clientY - r.top - cam.oy) / cam.s); } });
+cv.addEventListener('pointercancel', () => { pd = null; });
+function pickArmy(x, y, team) { let best = null, bd = 24 / Math.max(.8, cam.s); for (const a of G.armies) { if (team !== undefined && a.team !== team) continue; if (team === undefined && !visible(a)) continue; const ox = a.home ? 20 : 0, oy = a.home ? 14 : 0, d = hyp(a.x + ox - x, a.y + oy - y); if (d < bd && tot(a.n) >= .5) { bd = d; best = a; } } return best; }
+function clickMap(x, y) {
+  if (!G || !started || G.over || G.dlg) return; const mine = pickArmy(x, y, 0);
+  if (mine) { selId = mine.id; if (trayK !== 'ord') setTray('ord'); else trayLast = ''; hud(); return; }
+  const sel = armyById(selId); if (!sel || sel.team !== 0) { const c = civ(0); if (hyp(x - c.x, y - c.y) < 30) { const g = garr(c); if (g) { selId = g.id; if (trayK !== 'ord') setTray('ord'); hud(); } } return; }
+  const en = pickArmy(x, y); let err = null;
+  if (en && en.team !== 0) err = orderMove(sel, en.x, en.y, { chase: en.id }); else err = orderMove(sel, x, y);
+  if (err) toast(err, true); else if (sel.stance === 'ambush') sel.stance = 'move';
+}
+addEventListener('keydown', e => {
+  if (!G || !started) return; if (e.key === ' ' && !e.target.closest('button')) { e.preventDefault(); $('bPause').click(); }
+  const st = 40; if (e.key === 'ArrowLeft') cam.ox += st; else if (e.key === 'ArrowRight') cam.ox -= st; else if (e.key === 'ArrowUp') cam.oy += st; else if (e.key === 'ArrowDown') cam.oy -= st; clampCam();
+  if (e.key === 'Escape') { $('docm').classList.remove('show'); G.modal = false; }
+});
+$('roles').addEventListener('click', e => { const b = e.target.closest('button[data-w]'); if (!b || !G) return; const err = setWorker(0, b.dataset.w, +b.dataset.d); if (err) toast(err, true); hud(); });
+$('rivals').addEventListener('click', e => { const b = e.target.closest('button[data-sp]'); if (!b) return; const err = spy(0, +b.dataset.sp); if (err) toast(err, true); else toast('Un espía parte hacia el rival: tarda unos 10 s.'); hud(); });
+$('tray').addEventListener('click', doTray);
+$('bAuto').addEventListener('click', () => { if (!G) return; G.auto = !G.auto; hud(); });
+$('bRec').addEventListener('click', () => setTray('rec')); $('bBld').addEventListener('click', () => setTray('bld')); $('bOrd').addEventListener('click', () => { setTray('ord'); });
+$('bDoc').addEventListener('click', () => { if (G && started) docModal(); });
+$('docClose').addEventListener('click', () => { $('docm').classList.remove('show'); if (G) G.modal = false; });
+$('bSave').addEventListener('click', () => saveGame(true));
+$('bPause').addEventListener('click', () => { if (G && started) { G.paused = !G.paused; hud(); } });
+$('bSpd').addEventListener('click', () => { spdI = spdI === 1 ? 2 : spdI === 2 ? 4 : 1; $('bSpd').textContent = '×' + spdI; });
+$('diffSeg').addEventListener('click', e => { const b = e.target.closest('button[data-d]'); if (!b) return; diffI = +b.dataset.d; [...$('diffSeg').children].forEach(x => x.classList.toggle('on', x === b)); });
+$('startBtn').addEventListener('click', startNew);
+$('contBtn').addEventListener('click', () => { const d = readSave(); if (d) restoreGame(d); });
+addEventListener('resize', () => { layout(); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', pal);
+let last = performance.now(), acc = 0, hudN = 0;
+function loop(now) {
+  const dt = Math.min(.1, (now - last) / 1000); last = now;
+  if (started && G && !G.paused && !G.modal && !G.over) { acc += dt * spdI; let k = 0; while (acc >= FIX && k++ < 40) { update(FIX); acc -= FIX; if (G.over) break; } if (!G.over && G.t - lastSaveT >= 20) saveGame(false); }
+  if ((hudN++ & 7) === 0) { hud(); if ((hudN & 63) === 1) pal(); }
+  render(); requestAnimationFrame(loop);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(false); });
+addEventListener('pagehide', () => saveGame(false));
+// partida de fondo para que el mapa se vea detrás del menú
+diffI = 0; newGame('portada'); started = false;
+refreshCont(); renderLin(); pal(); layout(); centerCam(); requestAnimationFrame(loop);
+window.__e4 = { get G() { return G; }, get cam() { return cam; }, step(dt) { const n = Math.max(1, Math.round((dt || FIX) / FIX)); for (let i = 0; i < n && G && !G.over; i++) update(FIX); }, setStarted(v) { started = !!v; }, setDiff(i) { diffI = i; DF = DIFFS[i]; }, seedRng, hashStr, snapshot, stateHash, saveGame, readSave, restoreGame, clearSave, readLineage, linBonus, newGame, update, recruit, build, research, spy, setWorker, formArmy, splitArmy, orderMove, setAmbush, retreat, resolveDlg, findPath, lanch, coef, mkArmy, nearestTerr, terrAt, compStr, garr, armyById, tot, units, wkTotal, popCap, rates, hud, render, win, lose, select(id) { selId = id; }, UN, MU, BLD, DOC, EVS, DIFFS };
+})();
+</script>
+</body>
+</html>

@@ -23,6 +23,7 @@ a.plain{display:inline;margin:0;padding:0;background:none;font-weight:400;text-d
 <a class="era" href="eras/era1-celula.html">Era 1: Célula<small>orgánulos, mutaciones, habilidades, decisiones evolutivas y online para hasta 8</small><span class="cont" id="c1"></span></a>
 <a class="era" href="eras/era2-animales.html">Era 2: Animales<small>ecosistemas del planeta, rasgos, nidos y habilidades</small><span class="cont" id="c2"></span></a>
 <a class="era" href="eras/era3-tribus.html">Era 3: Tribus<small>oficios, tecnología y la primera ciudad</small><span class="cont" id="c3"></span></a>
+<a class="era" href="eras/era4-civilizaciones.html">Era 4: Civilizaciones <small>(bosquejo jugable)</small><small>guerra con leyes de Lanchester, terreno, espías y moral</small><span class="cont" id="c4"></span></a>
 <footer>Las partidas se guardan en este navegador. Online: ver <a class="plain" href="MULTIJUGADOR.md">MULTIJUGADOR.md</a>.</footer>
 <script>
 (function () {
@@ -33,13 +34,13 @@ a.plain{display:inline;margin:0;padding:0;background:none;font-weight:400;text-d
     if (!d || !d.at) return; var el = document.getElementById(id);
     el.style.display = 'block'; el.innerHTML = '<b>Partida guardada</b> · ' + when(d.at) + (d.summary || fallback ? ' · ' + (d.summary || fallback) : '') + ' — tocá para continuar';
   }
-  var s1 = read('evo_save_v1'), s2 = read('evo_save2_v1'), s3 = read('evo_save3_v1');
+  var s4 = read('evo_save4_v1'), s1 = read('evo_save_v1'), s2 = read('evo_save2_v1'), s3 = read('evo_save3_v1');
   var fb1 = '';
   if (s1 && s1.S) { var T = s1.S.teams && s1.S.teams[0]; fb1 = Math.floor((s1.S.t || 0) / 60) + ' min' + (T ? ' · ' + T.mutCount + ' mutaciones' : ''); }
-  show('c1', s1, fb1); show('c2', s2); show('c3', s3);
+  show('c1', s1, fb1); show('c2', s2); show('c3', s3); show('c4', s4);
   var L = read('evo_lineage');
   if (L && L.v === 1) {
-    var from = L.from === 1 ? 'la Era 1' : L.from === 2 ? 'la Era 2' : 'la Era 3';
+    var from = 'la Era ' + (L.from || 1);
     document.getElementById('lin').style.display = 'block';
     document.getElementById('linTxt').textContent = 'Viene de ' + from + ': rama ' + (NAMES[L.branch] || 'general') + ', nivel ' + (L.tier || 0) + ', ' + (L.mutCount || 0) + ' mutaciones' + (L.species ? ' · ' + L.species : '') + '. Se hereda en las eras siguientes.';
   }
