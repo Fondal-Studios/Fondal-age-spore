@@ -1210,7 +1210,7 @@ const autosave = () => { if (started && G && !G.over) saveGame(true); };
 document.addEventListener('visibilitychange', () => { if (document.hidden) autosave(); });
 addEventListener('pagehide', autosave);
 pal(); buildMenu(); layout(); requestAnimationFrame(loop);
-window.__e2 = { win, lose, useAbility, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2 };
+window.__e2 = { win, lose, useAbility, placeMig, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2 };
 })();
 </script>
 </body>
