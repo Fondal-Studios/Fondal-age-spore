@@ -163,7 +163,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
     <div class="lbl">1. Elegí la clase</div><div class="seg" id="clsSeg"></div>
     <div class="lbl">2. Elegí cómo vive</div><div class="seg" id="specSeg"></div>
     <div class="lbl">3. Dificultad</div>
-    <div class="seg" id="diffSeg"><button data-d="0" class="on">Fácil<small>pocos depredadores</small></button><button data-d="1">Normal<small>más peligro y rivales</small></button></div>
+    <div class="seg" id="diffSeg"><button data-d="0" class="on">Fácil<small>pocos depredadores</small></button><button data-d="1">Normal<small>más peligro y rivales</small></button><button data-d="2">Difícil<small>hambre, lobos y rivales sin tregua</small></button></div>
     <div class="box" id="linBox" style="display:none;margin-top:10px"><h3>Tu linaje</h3><div id="linTxt"></div></div>
     <button class="bigbtn" id="startBtn">Empezar</button>
     <button class="ghost" id="contBtn" style="display:none"><b>Continuar partida guardada</b><small id="contInfo"></small></button>
@@ -264,9 +264,9 @@ const RCOL = ['#c9406f', '#c47fd1'];
 /* Dificultades (medidas con bots, ver tests/era2-balance.md). pop: población pedida; riv: cantidad de especies rivales; wolf: multiplicador de lobos y peces grandes al inicio;
    grow: crecimiento de plantas; hd: hambre de tus animales; dmg: daño que reciben tus animales; rv: segundos entre rasgos nuevos de los rivales (multiplicador); tr: Tradición generada. */
 const DIFFS = [
-  { n: 'Fácil', pop: 20, riv: 1, wolf: 1, grow: 1.35, hd: 1, dmg: 1, rv: 1, tr: 1 },
-  { n: 'Normal', pop: 28, riv: 2, wolf: 2, grow: 1, hd: 1, dmg: 1, rv: 1, tr: 1 },
-  { n: 'Difícil', pop: 28, riv: 2, wolf: 2, grow: 1, hd: 1, dmg: 1, rv: 1, tr: 1 }
+  { n: 'Fácil', pop: 20, riv: 1, wolf: 1, grow: 1.35, hd: .9, dmg: .8, rv: 1.5, tr: 1 },
+  { n: 'Normal', pop: 36, riv: 2, wolf: 3, grow: .8, hd: 2.6, dmg: 1.2, rv: .55, tr: 1 },
+  { n: 'Difícil', pop: 38, riv: 2, wolf: 4, grow: .7, hd: 3, dmg: 1.5, rv: .5, tr: 1 }
 ];
 const DF = () => DIFFS[diffI] || DIFFS[1];
 
@@ -383,7 +383,7 @@ const civNear = a => G.B.some(b => b.done && b.k !== 'totem' && hyp(b.x - a.x, b
 function spdOf(a) { const sp = a.sp, p = sp.p; let s = sp.spd * (1 + (p.d - 1) * .35) * (a.age < MAT ? .75 : 1); if (G.season === 3) s *= .88; return s; }
 function dmg(b, amt, src) {
   const sp = b.sp; if (sp.team === 'player' && G.digT > 0) return;
-  let red = clamp((sp.def || 0) + sp.p.def + (sp.team === 'player' && nestNear(b.x, b.y) ? .15 : 0) + (sp.team === 'player' && G.alT > 0 ? .2 : 0), 0, .8);
+  let red = clamp((sp.def || 0) + sp.p.def + (sp.team === 'player' && nestNear(b.x, b.y) ? .15 : 0) + (sp.team === 'player' && G.alT > 0 ? .25 : 0), 0, .8);
   amt *= (1 - red) * sp.p.m * (sp.team === 'player' ? DF().dmg : 1); b.hp -= amt; b.flash = .14;
   if (b.hp <= 0 && !b.dead) kill(b, src);
 }
@@ -644,11 +644,11 @@ function dialog(t, html, btns) { $('dT').textContent = t; $('dB').innerHTML = ht
 /* ---------- Habilidades activas (teclas 1 a 5) ---------- */
 const ABK = ['rug', 'cam', 'exc', 'ala', 'mig'];
 const ABD = {
-  rug: { n: 'Rugido', cd: 25, cost: { en: 6 }, d: 'Aturde 3 s y empuja a los enemigos que estén cerca de tus animales.' },
+  rug: { n: 'Rugido', cd: 25, cost: { en: 4 }, d: 'Aturde 3 s y empuja a los enemigos que estén cerca de tus animales.' },
   cam: { n: 'Camuflaje', cd: 40, cost: { inst: 2 }, d: 'Durante 12 s los depredadores y rivales no ven a tus animales.' },
-  exc: { n: 'Excavar', cd: 35, cost: { en: 5 }, d: 'Se refugian bajo tierra 6 s: nada los daña y recuperan vida.' },
-  ala: { n: 'Alarma', cd: 30, cost: { inst: 1 }, d: 'Llama a los aliados: se reúnen y resisten 20% más de daño durante 6 s.' },
-  mig: { n: 'Migrar', cd: 30, cost: { en: 8 }, d: 'Tocá el mapa: el grupo corre hacia ahí a toda marcha durante 8 s.' }
+  exc: { n: 'Excavar', cd: 35, cost: { en: 3 }, d: 'Se refugian bajo tierra 6 s: nada los daña y recuperan vida.' },
+  ala: { n: 'Alarma', cd: 30, cost: { inst: 1 }, d: 'Llama a los aliados: se reúnen unos segundos y resisten 25% más de daño durante 6 s.' },
+  mig: { n: 'Migrar', cd: 30, cost: { en: 4 }, d: 'Tocá el mapa: el grupo corre hacia ahí a toda marcha durante 5 s.' }
 };
 const costTxt = c => c.inst ? c.inst + ' Instinto' : 'energía −' + c.en;
 const mineAn = () => G.A.filter(a => a.sp === G.me && !a.dead);
@@ -676,15 +676,15 @@ function useAbility(id) {
   else if (id === 'exc') { pay(ab, mine); G.digT = 6; ringsOn(mine, 60, '150,100,50'); logMsg('Tus animales se refugian bajo tierra y se curan.'); toast('Excavar: 6 s bajo tierra, sin daño y con curación.'); }
   else if (id === 'ala') {
     const sel = mine.find(a => a.id === selId), c = sel || G.N.find(n => n.done) || herdCenter(G.me) || mine[0]; pay(ab, mine);
-    G.rally = { x: c.x, y: c.y, t: 6 }; G.alT = 6; ring(c.x, c.y, 210, '230,70,70', 1); ringsOn(mine, 40, '230,70,70'); logMsg('¡Alarma! Tus aliados se reúnen y resisten más.'); toast('¡Alarma! Tus animales se reúnen y resisten más daño (6 s).');
+    G.rally = { x: c.x, y: c.y, t: 3 }; G.alT = 6; ring(c.x, c.y, 210, '230,70,70', 1); ringsOn(mine, 40, '230,70,70'); logMsg('¡Alarma! Tus aliados se reúnen y resisten más.'); toast('¡Alarma! Tus animales se reúnen y resisten más daño (6 s).');
   }
   G.ab[id] = ab.cd;
 }
 function placeMig(w) {
   const ab = ABD.mig, mine = mineAn(), pr = payProblem(ab, mine); setMode(null);
   if (pr) { toast(pr, true); return; }
-  pay(ab, mine); G.mig = { x: clamp(w.x, 15, W - 15), y: clamp(w.y, 15, H - 15) }; G.migT = 8; G.ab.mig = ab.cd; ring(G.mig.x, G.mig.y, 60, '63,143,209', 1);
-  logMsg('Migración: tu manada corre hacia el punto marcado.'); toast('Migrar: tu manada corre hacia ahí a toda marcha (8 s).');
+  pay(ab, mine); G.mig = { x: clamp(w.x, 15, W - 15), y: clamp(w.y, 15, H - 15) }; G.migT = 5; G.ab.mig = ab.cd; ring(G.mig.x, G.mig.y, 60, '63,143,209', 1);
+  logMsg('Migración: tu manada corre hacia el punto marcado.'); toast('Migrar: tu manada corre hacia ahí a toda marcha (5 s).');
 }
 const abBtn = {};
 ABK.forEach((id, i) => {

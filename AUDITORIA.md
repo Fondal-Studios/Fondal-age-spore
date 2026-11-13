@@ -67,3 +67,10 @@ Cuerpos celulares pintados con Runway (3 niveles × 4 ramas) con movimiento; **p
 - Lobos de la Era 3: primera causa de muerte (10-15 por partida), sin tocar.
 - Los rasgos de la Era 2 siguen con trazos simples; el arte de la Era 3 también.
 - Online solo en la Era 1; Eras 2 y 3 siguen siendo de una persona.
+
+
+---
+## Tercera tanda (2026-11-13)
+- **Rasgos pintados (6): hecho en la Era 1.** 10 apéndices y orgánulos pintados con Runway (flagelo, cilios, seudópodo, tricocisto, haustorio, rizoide, mitocondria, cloroplasto, ojo, vacuola), acoplados al cuerpo y animados. Quedan ~17 créditos de Runway.
+- **Balance Era 2 (5): hecho con bots** (`tests/era2-balance.md`, N=48 por celda): bot razonable Fácil 100 %, Normal 50 % [36-64], Difícil 19 % [10-32]. Ahora hay tres dificultades. **Abierto:** los insectos casi nunca ganan (3/12 en Normal, 0/12 en Difícil), el bot pasivo se extingue 81-83 % en Normal/Difícil, y Alarma y Migrar parecen restar al bot. Todo depende del bot; nada se probó con personas.
+- **Era 4 (bosquejo jugable):** `eras/era4-civilizaciones.html` y `docs/ERA4.md` (Lanchester, terreno, Sun Tzu mínimo). Equilibrio sin medir; el resto de `ERA4.md` es solo diseño.

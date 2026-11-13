@@ -51,7 +51,8 @@ window.runBot2 = function (o) {
     const foes = [], seen = new Set(); const sample = mine.length > 14 ? mine.filter((_, i) => i % Math.ceil(mine.length / 14) === 0) : mine;
     for (const m of sample) for (const b of G.A) { if (b.dead || b.sp.team === 'player' || seen.has(b.id) || (b.sp.team === 'wild' && b.sp.diet === 'herb')) continue; if (Math.hypot(b.x - m.x, b.y - m.y) < 130) { seen.add(b.id); foes.push(b); } }
     const avgHp = mine.reduce((s, a) => s + a.hp / a.mhp, 0) / mine.length, avgHu = mine.reduce((s, a) => s + a.hunger, 0) / mine.length;
-    const can = id => abOn.has(id) && !(G.ab[id] > 0);
+    const nearPl = c => { let v = 0; for (const p of G.plants) if (p.v > .5 && Math.hypot(p.x - c.x, p.y - c.y) < 100 && (G.me.hab === 'water' ? p.w : !p.w)) v++; return v; };
+    const ENERGY = { rug: 1, exc: 1, mig: 1 }; const can = id => abOn.has(id) && !(G.ab[id] > 0) && !(ENERGY[id] && avgHu < 40); // v2: no gasta energía si la manada ya tiene hambre
     if (foes.length) {
       const boss = foes.some(f => f.sp.boss), pow = foes.reduce((s, f) => s + (f.sp.boss ? 8 : 1) * (f.sp.atk || 1) / 6, 0);
       if (can('rug') && (foes.length >= 2 || boss || avgHp < .7)) E.useAbility('rug');
@@ -59,7 +60,7 @@ window.runBot2 = function (o) {
       if (can('exc') && avgHp < .5) E.useAbility('exc');
       if (can('cam') && (avgHp < .65 || boss) && !(G.digT > 0)) E.useAbility('cam');
     }
-    if (can('mig') && avgHu < 38 && !G.migT) {
+    if (can('mig') && avgHu < 62 && !G.migT && nearPl(h) < 3) {
       // ir hacia donde hay más plantas útiles lejos de la manada
       let bx = null, bv = 0; for (let k = 0; k < 6; k++) { const c = G.plants[Math.floor(BR() * G.plants.length)]; if (!c || (G.me.hab === 'water' ? !c.w : c.w)) continue; let v = 0; for (const p of G.plants) if (p.v > .5 && Math.hypot(p.x - c.x, p.y - c.y) < 90) v++; if (v > bv && Math.hypot(c.x - h.x, c.y - h.y) > 60) { bv = v; bx = c; } }
       if (bx) E.placeMig(bx);
