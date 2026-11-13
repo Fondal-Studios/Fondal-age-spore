@@ -45,3 +45,25 @@ Cuerpos celulares pintados con Runway (3 niveles × 4 ramas) con movimiento; **p
 10. **Higiene técnica**: PRNG con semilla en Eras 2 y 3, separar simulación de dibujo, partir cada era en módulos y correr `tests/determinismo.js` y `server/test.js` en GitHub Actions para que ningún cambio rompa el online ni el guardado.
 
 *Cifras científicas del juego: siguen siendo aproximaciones de manual; verificar en fuentes primarias antes de afirmarlas dentro del juego.*
+
+
+---
+## Estado de las 10 propuestas (2026-11-13, segunda tanda)
+| # | Propuesta | Estado |
+| --- | --- | --- |
+| 1 | Online / capa de órdenes | **Hecho en la Era 1 (beta).** Relay real + 3 navegadores, bots, desconexión → bot, 10 hashes idénticos. Límites en `MULTIJUGADOR.md` (solo Chromium, sin reconexión). |
+| 2 | Portada, guardado y linaje comunes | **Hecho.** Guardado en las 3 eras (`evo_save_v1`, `evo_save2_v1`, `evo_save3_v1`), «Continuar» en cada menú y en la portada, linaje 1→2→3 verificado en navegador. |
+| 3 | Móvil y accesibilidad Eras 2 y 3 | **Hecho y medido** a 390×800: mapa 56 % de la pantalla (antes 119 y 209 px), botones ≥ 44 px, texto ≥ 12 px, contraste ≥ 4,5:1, `aria-label`/`role="dialog"`. Emulación táctil; no probado en teléfonos reales. |
+| 4 | Rendimiento Era 2 | **Hecho:** con ~540 animales, de 6–7 fps a 47–54 fps (Chromium sin GPU); el comportamiento no cambia (mismo hash antes/después en 4 biomas). Con más de 160 animales se dibuja con sprites precalculados (sin aleteo). |
+| 5 | Equilibrio | **Era 3 medida** con 32 corridas de bot por dificultad: Fácil 94 % victorias, Normal 50 %, Difícil 19 % (detalle en `tests/era3-balance.md`; depende del bot, no se probó con personas y Normal es sensible). **Era 2 no se equilibró** (solo se midió con bots pasivos). |
+| 6 | Rasgos pintados con Runway | **Pendiente** (quedan ~99 créditos). |
+| 7 | Endosimbiosis y presiones de selección | **Hecho en la Era 1** (5 decisiones de dos opciones). Fechas y cifras de los textos: verificar en fuentes primarias. Desactivado online. |
+| 8 | Habilidades activas Era 2 | **Hecho** (rugido, camuflaje, excavar, alarma, migrar; teclas 1–5). Sin medir su balance. |
+| 9 | Sonido adaptativo | **Hecho en la Era 1** (capas por nivel, modo por rama). Medido por renderizado offline; **nadie lo escuchó todavía**. |
+| 10 | Higiene técnica | **Parcial:** PRNG con semilla en las 3 eras, pruebas de determinismo/guardado/online y workflow de GitHub Actions (sin ejecutar en GitHub). Falta separar simulación y dibujo y partir en módulos. |
+
+### Pendientes honestos
+- La Era 3 mide partidas «estancadas» (vivas a los 40 min sin ganar): el juego no las termina solo.
+- Lobos de la Era 3: primera causa de muerte (10-15 por partida), sin tocar.
+- Los rasgos de la Era 2 siguen con trazos simples; el arte de la Era 3 también.
+- Online solo en la Era 1; Eras 2 y 3 siguen siendo de una persona.

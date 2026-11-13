@@ -11,6 +11,7 @@ const path = require('path');
   await p.evaluate(([c, s, d]) => { const E = window.__e2; E.cls = c; E.specKey = s; E.diffI = d; }, [CLS, SPEC, DIFF]);
   await p.click('#startBtn'); await p.waitForTimeout(200);
   await p.evaluate(() => { window.__e2.G.paused = true; }); // el bucle real queda quieto: el bot avanza con step()
+  const click = async sel => { if (await p.isVisible('#dlg') && sel !== '#dBtns button') await p.click('#dBtns button'); await p.click(sel); };
   const used = { evo: 0, nest: 0, lay: 0, travel: 0, build: 0, save: 0, cont: 0 };
   const total = MIN * 60 / 5; const log = []; let games = 1; const combos = [['ter', 'ter_cazador'], ['ave', 'ave_rapaz'], ['acu', 'acu_anfibio'], ['ins', 'ins_colmena'], ['ter', 'ter_gigante']];
   for (let i = 0; i < total; i++) {
@@ -29,12 +30,12 @@ const path = require('path');
     if (i % 12 === 0) log.push(JSON.stringify(st));
     if (await p.isVisible('#dlg')) await p.click('#dBtns button'); // despertar de la especie, etc.
     await p.evaluate(() => { window.__e2.G.paused = false; });
-    if (st.pend > 0) { await p.click('#bEvo'); const o = await p.$$('#offers .offer'); if (o.length) { await o[Math.floor(Math.random() * o.length)].click(); used.evo++; } }
+    if (st.pend > 0) { await click('#bEvo'); const o = await p.$$('#offers .offer'); if (o.length) { await o[Math.floor(Math.random() * o.length)].click(); used.evo++; } }
     if (st.nests < 2 && st.t > 20) { await p.evaluate(() => window.__e2.placeNest({ x: 150 + Math.random() * 100, y: 300 + Math.random() * 60 })); used.nest++; }
-    await p.click('#bLay'); used.lay++;
+    await click('#bLay'); used.lay++;
     if (st.foes > 3 || st.hasBoss) { await p.keyboard.press('1'); await p.keyboard.press('4'); }
     if (i % 4 === 0) { const k = 1 + Math.floor(Math.random() * 5); if (k === 5) { await p.keyboard.press('5'); await p.mouse.click(500 + Math.random() * 300, 200 + Math.random() * 200); } else await p.keyboard.press(String(k)); }
-    if (st.hasBoss) await p.click('#bGat');
+    if (st.hasBoss) await click('#bGat');
     if (st.pop >= 8 && st.phase === 1 && i % 20 === 5) {
       const r = await p.evaluate(() => { const E = window.__e2; const k = Object.keys(E.BIOMES).find(q => q !== E.G.biomeKey && !E.colonized()[q] && (q !== 'oceano' || ['water', 'amph', 'fly'].includes(E.G.me.hab))); if (!k) return 0; E.openPlanet(); E.travel(k); return 1; });
       used.travel += r;
@@ -46,7 +47,7 @@ const path = require('path');
       });
       used.build++;
     }
-    if (i % 20 === 10) { await p.click('#bSave'); used.save++; }
+    if (i % 20 === 10) { await click('#bSave'); used.save++; }
     await p.evaluate(() => { window.__e2.G.paused = true; });
   }
   // guardado/continuar: recargar y continuar
