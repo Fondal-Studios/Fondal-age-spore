@@ -18,3 +18,6 @@ Nivel = mutaciones del equipo: 1-3 → 1, 4-7 → 2, 8 o más → 3.
 3. `python3 tools/runway_process.py` → recorta el fondo y escribe `art/runway/cells/`. Necesita `pillow`, `numpy` y `scipy`.
 
 Notas: `colo1` tuvo que reformularse porque el moderador de Runway rechazó "células pegadas". `para3` y `foto3` pueden traer manchas pequeñas; `runway_process.py` descarta las motas sueltas.
+
+## Rasgos pintados (`traits/`)
+10 apéndices y orgánulos sueltos que se acoplan al cuerpo y se animan en el juego (`TRP`/`TRDRAW` en `era1-celula.html`): flagelo, cilios, seudópodo (mandíbula), tricocisto (zarpazo), haustorio (ventosas), rizoide (quietud), mitocondria, cloroplasto, ojo (detección) y vacuola. Se piden a Runway con `tools/cells_spec.py` (`TRAITS`) y `tools/runway_gen.py tr_flagelo …`; `runway_process.py` conserva la proporción. Cada sprite tiene su punto de unión y dirección en `TRP` (salieron con orientaciones distintas). Si una imagen falla se usa el dibujo vectorial anterior.

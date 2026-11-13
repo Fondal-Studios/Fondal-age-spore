@@ -9,6 +9,8 @@ H = {'Content-Type': 'application/json', 'X-Runway-Version': '2024-11-06', 'Auth
 STYLE = ("hand-painted 2D game sprite of a single microscopic cell seen from above, centered, rich painterly gouache texture, "
          "bold dark plum outline, soft glowing translucent membrane, glossy highlight top-left, visible organelles inside, "
          "isolated on a flat plain white background, no text, no shadow, no scene")
+STYLE_TR = ("hand-painted 2D game sprite, rich painterly gouache texture, bold dark plum outline, soft glossy highlight, "
+            "isolated and centered on a flat plain white background, no cell body, no text, no shadow, no scene")
 from cells_spec import CELLS
 def call(path, body=None):
     req = urllib.request.Request(API + path, data=json.dumps(body).encode() if body is not None else None, headers=H)
@@ -16,7 +18,8 @@ def call(path, body=None):
 def gen(cid):
     s = CELLS[cid]
     ref = 'data:image/png;base64,' + base64.b64encode(open(os.path.join(ROOT, 'art/png', s['ref'] + '.png'), 'rb').read()).decode()
-    body = {'model': 'gen4_image_turbo', 'ratio': '1024:1024', 'promptText': 'In the style of @ref: ' + s['prompt'] + '. ' + STYLE,
+    style = STYLE_TR if cid.startswith('tr_') else STYLE
+    body = {'model': 'gen4_image_turbo', 'ratio': '1024:1024', 'promptText': 'In the style of @ref: ' + s['prompt'] + '. ' + style,
             'referenceImages': [{'uri': ref, 'tag': 'ref'}]}
     t = call('/text_to_image', body)['id']
     while True:

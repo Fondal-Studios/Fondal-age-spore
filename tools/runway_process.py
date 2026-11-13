@@ -5,6 +5,7 @@ from PIL import Image, ImageFilter
 from scipy import ndimage as ndi
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW, OUT = os.path.join(ROOT, 'art/runway/raw'), os.path.join(ROOT, 'art/runway/cells')
+TR_OUT = os.path.join(ROOT, 'art/runway/traits')
 os.makedirs(OUT, exist_ok=True)
 HOLES = {'colo2.png': 1500}   # solo estos sprites tienen huecos de fondo entre células
 def process(fn):
@@ -26,7 +27,11 @@ def process(fn):
     a = Image.fromarray((alpha * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.4))
     rgba = Image.fromarray(im.astype(np.uint8)).convert('RGBA'); rgba.putalpha(a)
     bb = rgba.getchannel('A').point(lambda v: 255 if v > 40 else 0).getbbox()
-    rgba = rgba.crop(bb); s = max(rgba.size); sq = Image.new('RGBA', (s, s), (0, 0, 0, 0))
+    rgba = rgba.crop(bb)
+    if fn.startswith('tr_'):   # apéndices: se conserva la proporción (no cuadrado) para poder anclarlos al cuerpo
+        k = 256 / max(rgba.size); os.makedirs(TR_OUT, exist_ok=True)
+        rgba.resize((max(1, round(rgba.width * k)), max(1, round(rgba.height * k))), Image.LANCZOS).save(os.path.join(TR_OUT, fn), optimize=True); return
+    s = max(rgba.size); sq = Image.new('RGBA', (s, s), (0, 0, 0, 0))
     sq.paste(rgba, ((s - rgba.width) // 2, (s - rgba.height) // 2))
     pad = int(s * .04); big = Image.new('RGBA', (s + 2 * pad, s + 2 * pad), (0, 0, 0, 0)); big.paste(sq, (pad, pad))
     big.resize((256, 256), Image.LANCZOS).save(os.path.join(OUT, fn), optimize=True)
