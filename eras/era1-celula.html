@@ -214,7 +214,7 @@ details.help ul{margin:8px 0 0;padding-left:18px;line-height:1.6}
       <div class="lbl">Sala · hasta 8 colonias</div>
       <div id="lobby"></div>
       <div class="seg"><button id="lbFill">Llenar con bots</button><button id="lbMin">Solo 1 rival</button></div>
-      <p style="font-size:12px;margin:2px 0 0">Las casillas «Humano» se habilitan con el modo online (ver <code>MULTIJUGADOR.md</code>). Mientras tanto, cada casilla vacía de humano la juega un bot.</p>
+      <p style="font-size:12px;margin:2px 0 0">Esta sala es para jugar solo contra bots. Para jugar con otras personas (hasta 8) usá <b>Online</b>, más abajo: ahí los lugares libres también los completan bots.</p>
       <div class="lbl">Semilla del mundo <span style="font-weight:400">(el mismo código genera el mismo mapa y los mismos rivales)</span></div>
       <div class="seedrow"><input id="seedIn" maxlength="16" placeholder="al azar" autocomplete="off"><button id="seedNew">Nueva</button></div>
       <p id="legacyTxt"></p>
@@ -1725,7 +1725,7 @@ function renderLobby() {
       const tag = document.createElement('span'); tag.textContent = 'Vos'; tag.style.flex = 'none'; row.append(inp, tag);
     } else {
       const nm = document.createElement('span'); nm.textContent = SLOT_NAME[i];
-      const sel = document.createElement('select'); sel.innerHTML = '<option value="1">Bot</option><option value="0">Vacía</option><option value="h" disabled>Humano (online, próximamente)</option>';
+      const sel = document.createElement('select'); sel.innerHTML = '<option value="1">Bot</option><option value="0">Vacía</option>';
       sel.value = lobby.bots[i - 1] ? '1' : '0'; sel.onchange = () => { lobby.bots[i - 1] = +sel.value; saveLobby(); };
       row.append(nm, sel);
     }
