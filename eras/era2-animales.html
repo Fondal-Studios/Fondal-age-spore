@@ -261,6 +261,14 @@ const WILD = {
   oso: { n: 'Oso gigante', g: 'ter', diet: 'carn', r: 16, spd: 52, hp: 260, atk: 15, def: .1, repro: 9999, vis: 240, col: '#4a3a2f', hab: 'land', cap: 1, boss: 1 }
 };
 const RCOL = ['#c9406f', '#c47fd1'];
+/* Dificultades (medidas con bots, ver tests/era2-balance.md). pop: población pedida; riv: cantidad de especies rivales; wolf: multiplicador de lobos y peces grandes al inicio;
+   grow: crecimiento de plantas; hd: hambre de tus animales; dmg: daño que reciben tus animales; rv: segundos entre rasgos nuevos de los rivales (multiplicador); tr: Tradición generada. */
+const DIFFS = [
+  { n: 'Fácil', pop: 20, riv: 1, wolf: 1, grow: 1.35, hd: 1, dmg: 1, rv: 1, tr: 1 },
+  { n: 'Normal', pop: 28, riv: 2, wolf: 2, grow: 1, hd: 1, dmg: 1, rv: 1, tr: 1 },
+  { n: 'Difícil', pop: 28, riv: 2, wolf: 2, grow: 1, hd: 1, dmg: 1, rv: 1, tr: 1 }
+];
+const DF = () => DIFFS[diffI] || DIFFS[1];
 
 /* ---------- Estado ---------- */
 let lastSaveT = 0;
@@ -308,7 +316,7 @@ function newGame(bk, carry, seedStr) {
   if (!carry && G.lin) G.inst += 2 * G.lin.tier;
   if (carry) { G.inst = carry.inst; G.nextInst = carry.nextInst; G.pending = carry.pending; G.evos = carry.evos; G.kills = carry.kills; G.trad = carry.trad; G.phase = carry.phase; }
   const rk = shuffle(Object.keys(SP2).filter(k => SP2[k].cls !== SP2[specKey].cls));
-  G.riv = []; for (let i = 0; i < (D ? 2 : 1); i++) G.riv.push(mkSp(rk[i], SP2[rk[i]], 'rival', RCOL[i]));
+  G.riv = []; for (let i = 0; i < DF().riv; i++) G.riv.push(mkSp(rk[i], SP2[rk[i]], 'rival', RCOL[i]));
   for (let i = 0; i < B.plants; i++) { const p = { x: rnd(20, W - 20), y: rnd(20, H - 20) }; if (!isWater(p.x, p.y)) G.plants.push({ x: p.x, y: p.y, v: rnd(.5, 1), w: false, s: rnd(.8, 1.2) }); }
   for (let i = 0; i < B.alg; i++) { const a = rnd(0, TAU), r = Math.sqrt(R()); const x = LAKE.x + Math.cos(a) * LAKE.rx * .9 * r, y = LAKE.y + Math.sin(a) * LAKE.ry * .9 * r; G.plants.push({ x, y, v: rnd(.5, 1), w: true, s: 1 }); }
   for (let i = 0; i < 260; i++) G.grass.push({ x: rnd(0, W), y: rnd(0, H), a: rnd(0, 1) });
@@ -316,7 +324,7 @@ function newGame(bk, carry, seedStr) {
   G.deco = []; for (let i = 0; i < 130; i++) { const q = { x: rnd(10, W - 10), y: rnd(10, H - 10), k: Math.floor(R() * 4), h: R() }; if (!isWater(q.x, q.y)) G.deco.push(q); }
   const start = me.hab === 'water' ? { x: LAKE.x, y: LAKE.y, r: 90 } : { x: 170, y: 330, r: 80 };
   for (let i = 0; i < (carry ? carry.colonists : 6); i++) { const q = randPos(me, start.x, start.y, start.r); spawn(me, q.x, q.y, false); }
-  const init = Object.assign({}, B.init); if (D) { init.lobo = (init.lobo || 0) * 2; init.lucio = (init.lucio || 0) * 2; }
+  const init = Object.assign({}, B.init); { const wm = DF().wolf; init.lobo = Math.round((init.lobo || 0) * wm); init.lucio = Math.round((init.lucio || 0) * wm); }
   for (const k in init) for (let i = 0; i < init[k]; i++) { const q = randPos(G.sp[k]); spawn(G.sp[k], q.x, q.y, false); }
   G.riv.forEach(r => { const c = randPos(r, 700, 150, 120); for (let i = 0; i < 5; i++) { const q = randPos(r, c.x, c.y, 70); spawn(r, q.x, q.y, false); } r.evT = rnd(40, 60); });
   stance = 'forage'; mode = null; selId = null; setStanceUI();
@@ -376,7 +384,7 @@ function spdOf(a) { const sp = a.sp, p = sp.p; let s = sp.spd * (1 + (p.d - 1) *
 function dmg(b, amt, src) {
   const sp = b.sp; if (sp.team === 'player' && G.digT > 0) return;
   let red = clamp((sp.def || 0) + sp.p.def + (sp.team === 'player' && nestNear(b.x, b.y) ? .15 : 0) + (sp.team === 'player' && G.alT > 0 ? .2 : 0), 0, .8);
-  amt *= (1 - red) * sp.p.m; b.hp -= amt; b.flash = .14;
+  amt *= (1 - red) * sp.p.m * (sp.team === 'player' ? DF().dmg : 1); b.hp -= amt; b.flash = .14;
   if (b.hp <= 0 && !b.dead) kill(b, src);
 }
 function kill(b, src) {
@@ -407,7 +415,7 @@ function think(a, dt) {
   const juv = a.age < MAT; a.rr = sp.r * (juv ? .55 + .45 * a.age / MAT : 1); a.mhp = sp.hp * (juv ? .6 + .4 * a.age / MAT : 1);
   if (a.life <= 0) { a.dead = true; if (sp.boss) logMsg('El oso gigante se fue de la zona.'); return; }
   if (a.stun > 0) { a.stun -= dt; a.mv = 0; a.st = 'stun'; return; }
-  let hr = (.85 + .1 * Math.sqrt(sp.r)) * p.cF * (juv ? .7 : 1); if (G.season === 3) hr *= 1.15; if (G.ev && G.ev.k === 'sequia') hr *= Math.min(1.4, p.drought); hr *= 1 + (G.biome.heat - 1) * Math.min(1, p.drought);
+  let hr = (.85 + .1 * Math.sqrt(sp.r)) * p.cF * (juv ? .7 : 1); if (G.season === 3) hr *= 1.15; if (isP) hr *= DF().hd; if (G.ev && G.ev.k === 'sequia') hr *= Math.min(1.4, p.drought); hr *= 1 + (G.biome.heat - 1) * Math.min(1, p.drought);
   a.hunger = Math.max(0, a.hunger - hr * dt);
   if (a.hunger <= 0) { dmg(a, 2.2 * dt, null); if (a.dead) return; } else if (a.hunger > 50 && a.hp < a.mhp) a.hp = Math.min(a.mhp, a.hp + .5 * dt);
   if (isP && G.digT > 0) { a.hp = Math.min(a.mhp, a.hp + a.mhp * .12 * dt); a.st = 'dig'; a.mv = 0; return; }
@@ -520,7 +528,7 @@ function update(dt) {
   G.camT = Math.max(0, G.camT - dt); G.digT = Math.max(0, G.digT - dt); G.alT = Math.max(0, G.alT - dt); G.migT = Math.max(0, G.migT - dt); if (G.migT <= 0) G.mig = null;
   for (const r of G.rings) r.t -= dt; if (G.rings.length) G.rings = G.rings.filter(r => r.t > 0);
   if (!G.bossDone && G.biome.boss && G.t > 140) { G.bossDone = true; const o = G.sp.oso; const q = randPos(o, 30, 300, 20); spawn(o, q.x, q.y, false); toast('¡Llegó un oso gigante! Reuní a tu manada o evitalo.', true); logMsg('Un oso gigante entró al valle.'); }
-  const grow = SEAS[G.season].g * (G.ev && G.ev.k === 'sequia' ? 0 : 1) * (diffI ? 1 : 1.35) * G.biome.grow;
+  const grow = SEAS[G.season].g * (G.ev && G.ev.k === 'sequia' ? 0 : 1) * DF().grow * G.biome.grow;
   for (const pl of G.plants) if (pl.v < 1) pl.v = Math.min(1, pl.v + .008 * grow * dt + .0004 * dt);
   for (const f of G.F) f.t -= dt; G.F = G.F.filter(f => f.t > 0);
   for (const c of G.C) { c.t -= dt; if (c.t <= 0) c.dead = true; } G.C = G.C.filter(c => !c.dead);
@@ -537,7 +545,7 @@ function update(dt) {
   if (G.bB) { const n = G.bB; n.prog = Math.min(1, n.prog + Math.min(n.work, 6 * dt) * .05); n.work = 0; if (n.prog >= 1) { n.done = true; G.bB = null; onBuilt(n); } }
   G.immT += dt; civUpdate(dt);
   if (G.immT > 7) { G.immT = 0; for (const k in WILD) { const sp = G.sp[k]; if (sp.boss) continue; if (count(sp) < sp.min && (G.biome.init[k] || 0) > 0 && (sp.diet !== 'carn' || G.t > 50)) { const q = randPos(sp); spawn(sp, q.x, q.y, false); } } for (const r of G.riv) if (count(r) + eggCount(r) < 3) { const q = randPos(r); spawn(r, q.x, q.y, false); } }
-  for (const r of G.riv) { r.evT -= dt; if (r.evT <= 0) { r.evT = rnd(45, 65); const pool = TRAITS.filter(t => !r.traits.includes(t.id)); if (pool.length) { r.traits.push(shuffle(pool)[0].id); recalc(r); } } }
+  for (const r of G.riv) { r.evT -= dt; if (r.evT <= 0) { r.evT = rnd(45, 65) * DF().rv; const pool = TRAITS.filter(t => !r.traits.includes(t.id)); if (pool.length) { r.traits.push(shuffle(pool)[0].id); recalc(r); } } }
   for (const f of G.fx) { f.l -= dt; f.x += f.vx * dt; f.y += f.vy * dt; } G.fx = G.fx.filter(f => f.l > 0);
   G.inst += dt * (.04 + .004 * stats().pop) * G.me.p.inst; while (G.inst >= G.nextInst) { G.inst -= G.nextInst; G.nextInst += 5; G.pending++; }
   G.goalT += dt; if (G.goalT >= 1) { G.goalT = 0; goals(); }
@@ -577,7 +585,7 @@ function onBuilt(b) {
   for (let i = 0; i < 10; i++) G.fx.push({ x: b.x, y: b.y, vx: rnd(-40, 40), vy: rnd(-40, 10), l: .7, c: '#ffe08a' });
 }
 function civUpdate(dt) {
-  G.trad += dt * (.02 + .003 * stats().pop);
+  G.trad += dt * (.02 + .003 * stats().pop) * DF().tr;
   for (const b of G.B) {
     if (!b.done) continue;
     if (b.k === 'fogata') { let n = 0; for (const a of G.A) if (a.sp.team === 'player' && !a.sp.domestic && hyp(a.x - b.x, a.y - b.y) < 85) n++; if (n >= 2) G.trad += .15 * dt; if (R() < dt * 3) G.fx.push({ x: b.x + rnd(-6, 6), y: b.y - 8, vx: rnd(-6, 6), vy: rnd(-30, -15), l: .8, c: '#ffb347' }); }
@@ -617,7 +625,7 @@ function goals() {
   const s = stats(), D = diffI;
   G.colT = s.pop >= 10 ? (G.colT || 0) + 1 : 0;
   if (G.colT >= 45 && !colonized[G.biomeKey]) { colonized[G.biomeKey] = true; toast('Colonizaste este ecosistema: ' + G.biome.n + '.'); logMsg('Colonizaste: ' + G.biome.n.toLowerCase() + '.'); }
-  G.g = [{ t: 'Población: ' + s.pop + ' / ' + (D ? 28 : 20) + ' animales', ok: s.pop >= (D ? 28 : 20) }, { t: 'Evolucionar: ' + G.evos + ' / 4 veces', ok: G.evos >= 4 }, { t: 'Nidos terminados: ' + s.nests + ' / 2', ok: s.nests >= 2 }, { t: 'Colonizar 2 ecosistemas: ' + Object.keys(colonized).length + ' / 2', ok: Object.keys(colonized).length >= 2 }];
+  G.g = [{ t: 'Población: ' + s.pop + ' / ' + DF().pop + ' animales', ok: s.pop >= DF().pop }, { t: 'Evolucionar: ' + G.evos + ' / 4 veces', ok: G.evos >= 4 }, { t: 'Nidos terminados: ' + s.nests + ' / 2', ok: s.nests >= 2 }, { t: 'Colonizar 2 ecosistemas: ' + Object.keys(colonized).length + ' / 2', ok: Object.keys(colonized).length >= 2 }];
   if (G.phase === 2) G.g = civGoalsList();
   if (!G.over && G.g.every(g => g.ok)) { if (G.phase === 1) awaken(); else win(); }
   if (!G.over && s.pop === 0 && !G.E.some(e => e.sp === G.me)) lose();
@@ -1210,7 +1218,7 @@ const autosave = () => { if (started && G && !G.over) saveGame(true); };
 document.addEventListener('visibilitychange', () => { if (document.hidden) autosave(); });
 addEventListener('pagehide', autosave);
 pal(); buildMenu(); layout(); requestAnimationFrame(loop);
-window.__e2 = { win, lose, useAbility, placeMig, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2 };
+window.__e2 = { DIFFS, win, lose, useAbility, placeMig, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2 };
 })();
 </script>
 </body>

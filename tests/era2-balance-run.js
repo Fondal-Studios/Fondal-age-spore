@@ -2,7 +2,7 @@
 // Uso: NODE_PATH=$(npm root -g) node tests/era2-balance-run.js <dificultades 0,1,2> <bot razonable|pasivo> <N> <maxT=2400> <etiqueta> [habilidades=rug,cam,exc,ala,mig|ninguna] [htmlAlternativo] [shard=i/n]
 // Cada corrida usa semilla 'S<dif>x<i>' y una de las 12 especies (i % 12). Escribe /tmp-scratch JSON en ./tests/.balance-out/ (ignorado) y un resumen por consola.
 const { chromium } = require('playwright'); const fs = require('fs'), path = require('path');
-const [,, diffs, bot, n, maxT, label, abArg, htmlArg, shard] = process.argv;
+const [,, diffs, bot, n, maxT, label, abArg, htmlArg, shard, ovArg] = process.argv; // ovArg: JSON {"0":{"hd":1.1},...} para pisar DIFFS sin tocar el archivo
 const SPECS = ['ter_cazador', 'ter_gigante', 'ter_ingeniero', 'ins_colmena', 'ins_enjambre', 'ins_parasito', 'acu_abisal', 'acu_arrecife', 'acu_anfibio', 'ave_rapaz', 'ave_carronera', 'ave_migratoria'];
 (async () => {
   const html = path.resolve(htmlArg || path.join(__dirname, '../eras/era2-animales.html'));
@@ -14,6 +14,7 @@ const SPECS = ['ter_cazador', 'ter_gigante', 'ter_ingeniero', 'ins_colmena', 'in
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1280, height: 800 } });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/font|ERR_|Failed to load/i.test(m.text())) errs.push(m.text()); });
   await p.goto('file://' + tf); await p.addScriptTag({ content: fs.readFileSync(path.join(__dirname, 'era2-balance-bot.js'), 'utf8') });
+  if (ovArg) await p.evaluate(o => { const D = window.__e2.DIFFS; for (const k in o) Object.assign(D[k], o[k]); }, JSON.parse(ovArg));
   const ab = abArg === 'ninguna' ? [] : abArg ? abArg.split(',') : undefined;
   const [si, sn] = (shard || '0/1').split('/').map(Number);
   const out = [];
