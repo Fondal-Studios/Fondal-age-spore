@@ -94,6 +94,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
 .lbl{font-size:12px;color:var(--ink2);margin-top:10px;font-weight:600}
 .seg{display:flex;gap:6px;margin:6px 0 4px}
 .seg button{flex:1;padding:10px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600}
+.evopts{margin-top:8px;font-size:13px}.evopts p{margin:4px 0}
 .slotrow{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}.slotrow i{width:12px;height:12px;border-radius:50%;flex:none}.slotrow span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .slotrow select,.slotrow input,.seedrow input{padding:7px 8px;border:1px solid var(--line);background:transparent;border-radius:8px;color:var(--ink);font:inherit;font-size:13px}.slotrow input{flex:1;min-width:0}
 .seedrow{display:flex;gap:6px;margin:6px 0}.seedrow input{flex:1;text-transform:uppercase;letter-spacing:.08em}.seedrow button,#contBtn{padding:8px 12px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;color:var(--ink)}
@@ -194,6 +195,7 @@ details.help ul{margin:8px 0 0;padding-left:18px;line-height:1.6}
     <button id="bSp" class="sm">Anatomía</button>
     <button id="bPause" class="sm">Pausa</button>
     <button id="bSave" class="sm">Guardar</button>
+    <button id="bSnd" class="sm">Sonido</button>
     <button id="bSpd" class="sm">×1</button>
   </div>
 
@@ -540,6 +542,8 @@ const ENV = {
   sequia: { n: 'Sequía', dur: 40, msg: 'Sequía: casi no aparecen nutrientes. Sobreviven las eficientes y las que producen su propia comida.' },
   glaciacion: { n: 'Glaciación', dur: 35, msg: 'Glaciación: el frío daña y enlentece. Resisten las membranas gruesas y los tejidos.' },
   explosion: { n: 'Floración', dur: 30, msg: 'Floración de nutrientes: abundancia. La población se dispara y después vendrá la competencia.' },
+  oxidacion: { n: 'Gran Oxidación', dur: 45, msg: '' },
+  bola: { n: 'Tierra Bola de Nieve', dur: 40, msg: '' },
   radiacion: { n: 'Radiación', dur: 8, msg: 'Radiación: los genes de todas las células mutan al azar. Algunas salen mejores y otras peores.' }
 };
 const defMods = () => ({ speed: 1, dmg: 1, hp: 1, regen: 0, lifesteal: 0, enTrickle: 0, nutTrickle: 0, divCost: 1, cap: 30, armor: 0, toxin: 0, stealth: 1, spore: 0, pack: 0, gather: 1, metab: 1, quorum: 0, crit: 0, frenzy: 0, killNut: 0, steal: 0, weaken: 0, flatArmor: 0, restRegen: 0, dnaMul: 1, cold: 1, envRes: 1, org: 0, detect: 1 });
@@ -578,7 +582,7 @@ function newGame(di, nRiv, seedStr, slots) {
   const bonus = Math.min(L.n || 0, 3);
   const brs = shuffle(['pred', 'para', 'foto', 'colo', 'pred', 'para', 'foto']);
   S = {
-    seed: seedStr, slots, t: 0, paused: false, spd: 1, diff: D, cells: [], byId: new Map(), nuts: [], drops: [], fx: [], texts: [],
+    evt: { done: {}, last: 0, clock: 0 }, seed: seedStr, slots, t: 0, paused: false, spd: 1, diff: D, cells: [], byId: new Map(), nuts: [], drops: [], fx: [], texts: [],
     vents: [{ x: 1300, y: 850, r: 80 }, { x: 900, y: 380, r: 70 }, { x: 1750, y: 1300, r: 70 }, { x: 900, y: 1350, r: 70 }, { x: 1800, y: 450, r: 70 }],
     plank: Array.from({ length: 110 }, () => ({ x: rnd(0, W), y: rnd(0, H), r: rnd(1, 3), s: rnd(4, 14), a: rnd(0, TAU) })),
     meteor: null, meteorT: 110, nutT: 0, idc: 1, modal: false, canEvolve: false, over: false, boostT: 0, kills: 0, aiClock: 0, slowT: 0,
@@ -703,8 +707,9 @@ function rps(a, b) {
   const adv = as.some(x => bs.includes(BR[x].beats)), dis = bs.some(x => as.includes(BR[x].beats));
   if (adv && !dis) return 1.3; if (dis && !adv) return .77; return 1;
 }
-function hurt(e, d, src) { if (e.dead || e.cyst > 0) return; e.hp -= d; if (e.hp <= 0) kill(e, src); }
+function hurt(e, d, src) { if (e.dead || e.cyst > 0) return; if (d > .3 && (e.team === 0 || (src && src.team === 0))) Snd.hit(); e.hp -= d; if (e.hp <= 0) kill(e, src); }
 function kill(e, src) {
+  if (e.team === 0 || (src && src.team === 0)) Snd.sfx('die');
   e.dead = true; S.rests.push({ x: e.x, y: e.y, v: e.org ? e.org.n * 1.5 : 2, t: 40 });
   burst(e.x, e.y, e.org ? 20 : 10, TEAM_COL[e.team]);
   S.drops.push({ x: e.x, y: e.y, v: e.org ? 3 + e.org.n : 3, life: 28, p: R() * TAU });
@@ -754,6 +759,81 @@ function nearestNut(c, range) {
   return best;
 }
 
+
+/* ---------- Sonido adaptativo (WebAudio procedural, sin archivos) ----------
+   La música gana capas con el nivel evolutivo (cellTier): 0 océano + zumbido; 1 + colchón armónico; 2 + arpegio y pulso;
+   3 + melodía y brillo. Cada rama tiene su escala: Depredador frigio (tenso), Parásito disminuida (inquietante),
+   Fotosintético pentatónica mayor (luminosa), Colonial lidia (abierta). La tensión de combate abre el pulso grave.
+   El audio NUNCA toca la simulación (no usa R() ni modifica S). */
+const Snd = (() => {
+  const MODES = { gen: { root: 110, sc: [0, 2, 3, 5, 7, 8, 10], bpm: 72 }, pred: { root: 110, sc: [0, 1, 3, 5, 7, 8, 10], bpm: 86 }, para: { root: 98, sc: [0, 2, 3, 5, 6, 8, 9, 11], bpm: 66 }, foto: { root: 131, sc: [0, 2, 4, 7, 9], bpm: 62 }, colo: { root: 147, sc: [0, 2, 4, 6, 7, 9, 11], bpm: 76 } };
+  const PROG = [0, 3, 4, 2];
+  let ctx = null, master = null, L = {}, mode = MODES.gen, brKey = 'gen', tier = 0, tens = 0, muted = false, duck = false, nextT = 0, step = 0, timer = null, lastHit = 0, noiseBuf = null;
+  try { muted = localStorage.getItem('evo_snd') === '0'; } catch (e) {}
+  const midi = (semi, oct) => mode.root * Math.pow(2, semi / 12 + (oct || 0));
+  const note = (semis, i) => mode.sc[((i % mode.sc.length) + mode.sc.length) % mode.sc.length] + 12 * Math.floor(i / mode.sc.length);
+  function gainNode(v, dest) { const g = ctx.createGain(); g.gain.value = v; g.connect(dest || master); return g; }
+  function target(g, v, tc) { g.gain.setTargetAtTime(v, ctx.currentTime, tc || 1.2); }
+  function noise() {
+    if (noiseBuf) return noiseBuf; const n = ctx.sampleRate * 2, b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0); let last = 0;
+    for (let i = 0; i < n; i++) { last = (last + .02 * (Math.sin(i * 12.9898) * 43758.5453 % 1)) / 1.02; d[i] = last * 3.2; } return noiseBuf = b;
+  }
+  function attach(c) {
+    ctx = c; nextT = 0; step = 0; noiseBuf = null; master = c.createGain(); master.gain.value = muted ? 0 : .5; master.connect(c.destination);
+    const sea = c.createBufferSource(); sea.buffer = noise(); sea.loop = true; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420;
+    L.sea = gainNode(.5); sea.connect(lp); lp.connect(L.sea); sea.start();
+    const lfo = c.createOscillator(); lfo.frequency.value = .07; const lg = c.createGain(); lg.gain.value = 160; lfo.connect(lg); lg.connect(lp.frequency); lfo.start();
+    const dr = c.createOscillator(); dr.type = 'sine'; dr.frequency.value = mode.root / 2; L.drone = gainNode(.22); dr.connect(L.drone); dr.start(); L.droneO = dr;
+    L.pad = gainNode(0); const pf = c.createBiquadFilter(); pf.type = 'lowpass'; pf.frequency.value = 900; pf.connect(L.pad); L.padO = [0, 2, 4].map((k, i) => { const o = c.createOscillator(); o.type = 'triangle'; o.frequency.value = midi(note(0, k)); o.detune.value = (i - 1) * 7; o.connect(pf); o.start(); return o; });
+    L.arp = gainNode(0); L.lead = gainNode(0); L.kick = gainNode(1);
+    const dl = c.createDelay(1); dl.delayTime.value = .37; const fb = c.createGain(); fb.gain.value = .38; dl.connect(fb); fb.connect(dl); L.fx = gainNode(.6); dl.connect(L.fx); L.delay = dl;
+    return api;
+  }
+  function pluck(t, f, vol, dur, type, dest) {
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type || 'triangle'; o.frequency.value = f;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0008, t + dur); o.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + .05);
+  }
+  function kick(t, v) {
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(42, t + .22);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + .3); o.connect(g); g.connect(L.kick); o.start(t); o.stop(t + .35);
+  }
+  function schedule(until) { // llena la agenda de notas hasta el instante 'until' (tiempo del contexto)
+    const dt = 60 / mode.bpm / 2;
+    while (nextT < until) {
+      const t = Math.max(nextT, ctx.currentTime + .02), chord = PROG[Math.floor(step / 16) % PROG.length];
+      if (step % 16 === 0) L.padO.forEach((o, i) => o.frequency.setTargetAtTime(midi(note(0, chord + i * 2)), t, .6));
+      if (step % 2 === 0 && (tens > .18 || (tier >= 2 && brKey === 'pred'))) kick(t, Math.min(.9, .25 + tens * .8 + (brKey === 'pred' ? .2 : 0)));
+      if (tier >= 2 && Math.random() < .6) { const i = chord + Math.floor(Math.random() * 5) * (Math.random() < .5 ? 1 : 2); pluck(t, midi(note(0, i), 1), .22, .55, 'triangle', L.arp); pluck(t, midi(note(0, i), 1), .12, .55, 'triangle', L.delay); }
+      if (tier >= 3 && step % 8 === 0) { const i = chord + [4, 6, 7, 9][Math.floor(Math.random() * 4)]; pluck(t, midi(note(0, i), 1), .35, 2.2, 'sawtooth', L.lead); pluck(t, midi(note(0, i), 2), .12, 1.6, 'sine', L.lead); }
+      nextT += dt; step++;
+    }
+  }
+  function apply() {
+    if (!ctx) return;
+    target(L.pad, tier >= 1 ? .18 : 0); target(L.arp, tier >= 2 ? .3 : 0); target(L.lead, tier >= 3 ? .22 : 0); target(L.kick, tens > .1 || (tier >= 2 && brKey === 'pred') ? .7 : 0, .3);
+    target(L.sea, .5 - tier * .06); target(L.drone, .22 + tier * .02);
+    master.gain.setTargetAtTime(muted ? 0 : duck ? .12 : .5, ctx.currentTime, .4);
+  }
+  const api = {
+    attach, schedule, kick, get ctx() { return ctx; }, get _L() { return L; },
+    init() { if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; } const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; try { attach(new AC()); nextT = ctx.currentTime + .1; timer = setInterval(() => { tens = Math.max(0, tens - .03); schedule(ctx.currentTime + .6); apply(); }, 250); } catch (e) { ctx = null; } },
+    setState(t, br, paused) { const b = MODES[br] ? br : 'gen'; if (b !== brKey) { brKey = b; mode = MODES[b]; if (ctx) L.droneO.frequency.setTargetAtTime(mode.root / 2, ctx.currentTime, 1.5); } tier = t; duck = !!paused; apply(); },
+    evolve(t) { if (!ctx) return; const now = ctx.currentTime; for (let i = 0; i < 4 + t; i++) pluck(now + i * .09, midi(note(0, i * 2), 1 + (i > 4 ? 1 : 0)), .3, 1.2, 'triangle', L.fx); pluck(now, mode.root, .5, 2.5, 'sawtooth', L.fx); },
+    sfx(k) {
+      if (!ctx || muted) return; const now = ctx.currentTime;
+      if (k === 'pop') { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(260, now); o.frequency.exponentialRampToValueAtTime(720, now + .09); g.gain.setValueAtTime(.25, now); g.gain.exponentialRampToValueAtTime(.001, now + .14); o.connect(g); g.connect(master); o.start(now); o.stop(now + .16); }
+      else if (k === 'mut') { for (let i = 0; i < 3; i++) pluck(now + i * .07, midi(note(0, 4 + i * 2), 2), .25, .5, 'sine', L.fx); }
+      else if (k === 'die') { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.setValueAtTime(300, now); o.frequency.exponentialRampToValueAtTime(70, now + .3); g.gain.setValueAtTime(.2, now); g.gain.exponentialRampToValueAtTime(.001, now + .32); o.connect(g); g.connect(master); o.start(now); o.stop(now + .35); }
+      else if (k === 'gong') { pluck(now, mode.root * 1, .5, 3.2, 'sine', L.fx); pluck(now, mode.root * 1.5, .3, 3, 'sine', L.fx); }
+      else if (k === 'rumble') { kick(now, .8); kick(now + .25, .6); }
+    },
+    hit() { const n = performance.now(); tens = Math.min(1, tens + .08); if (!ctx || muted || n - lastHit < 110) return; lastHit = n; kick(ctx.currentTime, .35); },
+    toggle() { muted = !muted; try { localStorage.setItem('evo_snd', muted ? '0' : '1'); } catch (e) {} apply(); this.init(); return !muted; },
+    get muted() { return muted; }, get layers() { return { tier, branch: brKey, tens }; }
+  };
+  return api;
+})();
+
 /* ---------- Mutaciones ---------- */
 const EVO_TXT = {
   pred: ['fagocitosis y primer pseudópodo.', 'varios pseudópodos, vacuolas digestivas y flagelo.', 'citoesqueleto de actina, tricocistos y metabolismo a pleno.'],
@@ -767,7 +847,8 @@ function applyMut(team, m) {
   const tier0 = cellTier(T);
   m.fx(T.mods); T.owned.push(m.id); T.os.add(m.id); T.mutCount++;
   const tier1 = cellTier(T);
-  if (tier1 > tier0 && tier1 >= 1) { T.evoAt = performance.now() / 1000; if (team === 0) { toast('¡Evolución! Tus células alcanzan el nivel ' + tier1 + ' de la rama ' + (T.branch ? BR[T.branch].n : 'general') + ': ' + EVO_TXT[T.branch || 'gen'][tier1 - 1]); } }
+  if (team === 0) Snd.sfx('mut');
+  if (tier1 > tier0 && tier1 >= 1) { if (team === 0) Snd.evolve(tier1); T.evoAt = performance.now() / 1000; if (team === 0) { toast('¡Evolución! Tus células alcanzan el nivel ' + tier1 + ' de la rama ' + (T.branch ? BR[T.branch].n : 'general') + ': ' + EVO_TXT[T.branch || 'gen'][tier1 - 1]); } }
   for (const c of S.cells) if (c.team === team && !c.dead) calc(c);
 }
 function offers() {
@@ -897,8 +978,90 @@ function addDNA(n) {
   if (T.pending > 0 && !S.modal) openMutation();
 }
 
+
+/* ---------- Decisiones evolutivas (eventos con dos opciones, con base en la historia real de la vida) ---------- */
+const nearVent = (c, k) => S.vents.some(v => { const dx = v.x - c.x, dy = v.y - c.y; return dx * dx + dy * dy < (v.r * k) * (v.r * k); });
+const oxiSafe = (c, T) => T.os.has('mitocondrias') || T.branch === 'foto' || T.branch2 === 'foto' || T.oxi === 'ant' || (T.oxi === 'vent' && nearVent(c, 1.4));
+const giveMut = (team, id) => { const m = MUTID[id], T = S.teams[team]; if (m && !T.os.has(id)) { applyMut(team, m); return true; } return false; };
+const EVT = {
+  endo1: {
+    t: 'Endosimbiosis: una bacteria aeróbica',
+    when: (T) => S.t >= 150 && T.mutCount >= 2,
+    d: 'Una bacteria que respira oxígeno fue engullida y no se digirió: sigue viva dentro de tu célula y produce ATP de sobra. Es la hipótesis endosimbiótica (Lynn Margulis, 1967): así habrían surgido las mitocondrias hace ~2000 millones de años.',
+    A: { t: 'Aceptarla: mitocondria', d: 'Mitocondrias permanentes: más energía y menos hambre, +8% de vida. Pero tus células dependen de ella: −5% de velocidad.', fn: team => { const T = S.teams[team]; if (!giveMut(team, 'mitocondrias')) T.mods.enTrickle += .05; T.mods.hp *= 1.08; T.mods.speed *= .95; } },
+    B: { t: 'Digerirla', d: 'Te comés a la bacteria ahora: +45 nutrientes y +4 de proteína, y seguís independiente.', fn: team => { const T = S.teams[team]; T.nut += 45; T.prot += 4; } }
+  },
+  endo2: {
+    t: 'Endosimbiosis: una cianobacteria',
+    when: (T) => S.evt.done.endo1 === 'A' && S.t - (S.evt.at.endo1 || 0) >= 120 && T.mutCount >= 5,
+    d: 'Una cianobacteria fotosintética quedó atrapada en tu célula. Es la endosimbiosis primaria que dio origen a los cloroplastos de algas y plantas (hace ~1500 millones de años): ya tenías mitocondrias, ahora podés sumar luz.',
+    A: { t: 'Aceptarla: cloroplasto', d: 'Cloroplastos permanentes: energía y nutrientes con la luz. Pero tus células pasan a necesitar luz: −5% de daño.', fn: team => { const T = S.teams[team]; if (!giveMut(team, 'cloroplasto')) { T.mods.enTrickle += .04; T.mods.nutTrickle += .04; } T.mods.nutTrickle += .03; T.mods.dmg *= .95; } },
+    B: { t: 'Digerirla', d: 'Te la comés: +60 nutrientes. Seguís dependiendo de comer, sin atarte a la luz.', fn: team => { S.teams[team].nut += 60; } }
+  },
+  oxi: {
+    t: 'La Gran Oxidación',
+    when: () => S.t >= 330 && !S.env,
+    d: 'Hace ~2400 millones de años las cianobacterias llenaron la atmósfera de oxígeno: un veneno para casi toda la vida anaerobia. Durante 45 segundos el oxígeno daña a las células que no lo toleran. Ya lo toleran las que tienen mitocondrias o son fotosintéticas.',
+    A: { t: 'Defensas antioxidantes', d: 'Pagás 30 nutrientes (o todo lo que tengas) y tus células resisten el oxígeno; +5% de vida permanente.', fn: team => { const T = S.teams[team]; T.nut = Math.max(0, T.nut - 30); T.oxi = 'ant'; T.mods.hp *= 1.05; startEvtEnv('oxidacion'); } },
+    B: { t: 'Refugio en las chimeneas', d: 'Sin gasto: solo no se dañan las células que estén junto a una chimenea hidrotermal (zonas anóxicas).', fn: team => { S.teams[team].oxi = 'vent'; startEvtEnv('oxidacion'); } }
+  },
+  bola: {
+    t: 'Tierra Bola de Nieve',
+    when: () => S.t >= 600 && S.evt.done.oxi && !S.env,
+    d: 'Hace ~700 millones de años los glaciares cubrieron casi todo el planeta. Durante 40 segundos el frío daña mucho y enlentece. Después del deshielo, los nutrientes vuelven en abundancia.',
+    A: { t: 'Quistes de resistencia', d: 'Todas tus células se enquistan y son invulnerables, pero no se mueven ni comen mientras dura.', fn: team => { const T = S.teams[team]; T.snow = 'cyst'; S.cells.forEach(c => { if (c.team === team && !c.dead && !c.struct) { c.cyst = ENV.bola.dur; c.order = null; } }); startEvtEnv('bola'); } },
+    B: { t: 'Refugio geotérmico', d: 'Sin quistes: solo se libran del frío las células junto a una chimenea; las demás sufren.', fn: team => { S.teams[team].snow = 'vent'; startEvtEnv('bola'); } }
+  },
+  cambrico: {
+    t: 'Explosión de diversidad',
+    when: (T) => S.t >= 840 && T.mutCount >= 8 && !S.env,
+    d: 'Hace ~540 millones de años la vida se diversificó en pocos millones de años (explosión del Cámbrico). Tu linaje se abre a nuevas formas: tenés que elegir cómo aprovecharlo.',
+    A: { t: 'Especializarse', d: 'Una mutación gratis ahora mismo.', fn: team => { const T = S.teams[team]; if (team === 0) { T.pending++; if (!S.modal) setTimeout(() => { if (S && !S.modal && S.teams[0].pending > 0) openMutation(); }, 50); } else T.pending++; } },
+    B: { t: 'Generalizar', d: 'Más gente y más barata: +6 de límite de unidades y 15% menos de costo de dividir.', fn: team => { const T = S.teams[team]; T.mods.cap += 6; T.mods.divCost *= .85; } }
+  }
+};
+const EVT_ORDER = ['endo1', 'endo2', 'oxi', 'bola', 'cambrico'];
+function startEvtEnv(kind) {
+  Snd.sfx('rumble');
+  S.env = { kind, t: ENV[kind].dur };
+  const msgs = { oxidacion: 'Gran Oxidación: el oxígeno daña a quien no lo tolera.', bola: 'Tierra Bola de Nieve: el frío extremo daña y enlentece a todo.' };
+  toast(msgs[kind], true);
+}
+function endEnv(kind) {
+  if (kind === 'oxidacion') { S.teams.forEach(T => { if (T.os.has('mitocondrias') || T.oxi === 'ant') { T.mods.enTrickle += .02; } T.oxi = null; }); toast('Pasó la Gran Oxidación: quienes toleraron el oxígeno ganan energía (respiración aeróbica: mucho más ATP por glucosa).'); }
+  if (kind === 'bola') { S.teams.forEach(T => { T.snow = null; }); for (let i = 0; i < 70; i++) spawnNut(); S.cells.forEach(c => { if (c.cyst > 0) c.cyst = 0; }); toast('Deshielo: los nutrientes vuelven en abundancia.'); }
+}
+function applyEvt(id, team, choice) {
+  const e = EVT[id]; e[choice].fn(team);
+  if (team === 0) { S.evt.done[id] = choice; S.evt.at = S.evt.at || {}; S.evt.at[id] = S.t; S.evt.last = S.t; }
+}
+function checkEvents() {
+  if (S.over || S.modal || S.t - S.evt.last < 50) return;
+  const T = S.teams[0];
+  for (const id of EVT_ORDER) {
+    if (S.evt.done[id]) continue;
+    const e = EVT[id]; if (!e.when(T)) continue;
+    S.evt.at = S.evt.at || {}; S.evt.ai = S.evt.ai || {};
+    if (!S.evt.ai[id]) { // los rivales deciden solos (deterministas, con el generador de la partida)
+      S.evt.ai[id] = 1;
+      for (let t = 1; t < S.teams.length; t++) {
+        const tt = S.teams[t], ch = R() < .55 ? 'A' : 'B';
+        if (id === 'oxi') tt.oxi = ch === 'A' ? 'ant' : 'vent';
+        else if (id === 'bola') { tt.snow = ch === 'A' ? 'cyst' : 'vent'; if (ch === 'A') S.cells.forEach(c => { if (c.team === t && !c.dead && !c.struct) { c.cyst = ENV.bola.dur; c.order = null; } }); }
+        else if (id === 'endo2' && tt.branch !== 'foto' && ch === 'B') e.B.fn(t);
+        else if (e.when(tt)) e[ch].fn(t);
+      }
+    }
+    S.modal = true; Snd.sfx('gong');
+    dialog(e.t, '<p>' + e.d + '</p><div class="evopts"><p><b>' + e.A.t + ':</b> ' + e.A.d + '</p><p><b>' + e.B.t + ':</b> ' + e.B.d + '</p></div>',
+      ['A', 'B'].map((k, i) => ({ t: e[k].t, primary: i === 0, fn: () => { S.modal = false; applyEvt(id, 0, k); } })));
+    break;
+  }
+}
+
 /* ---------- Ambiente ---------- */
 function startEnv() {
+  Snd.sfx('rumble');
   const k = shuffle(['sequia', 'glaciacion', 'explosion', 'radiacion'])[0], E = ENV[k];
   S.env = { kind: k, t: E.dur };
   toast(E.msg, true);
@@ -952,6 +1115,8 @@ function updateCell(c, dt) {
   if (c.food <= 0) { c.food = 0; hurt(c, 2 * dt * (c.org ? 1 + big * .3 : 1), null); if (c.dead) return; }
   if (c.poisonT > 0) { c.poisonT -= dt; hurt(c, c.poison * dt, null); if (c.dead) return; }
   if (S.env && S.env.kind === 'glaciacion') { hurt(c, 1.5 * m.cold * (c.org ? .6 : 1) * dt, null); if (c.dead) return; }
+  if (S.env && S.env.kind === 'bola' && !(T.snow === 'vent' && nearVent(c, 1.3))) { hurt(c, 2.6 * m.cold * (c.org ? .6 : 1) * dt, null); if (c.dead) return; }
+  if (S.env && S.env.kind === 'oxidacion' && !oxiSafe(c, T)) { hurt(c, 1.2 * (c.org ? .6 : 1) * dt, null); if (c.dead) return; }
   if (m.regen && c.hp < c.mhp) c.hp = Math.min(c.mhp, c.hp + m.regen * dt);
   if (c.org && T.prot > 1 && c.hp < c.mhp) { c.hp = Math.min(c.mhp, c.hp + 2 * dt); T.prot -= .25 * dt; }
   ingest(c, T);
@@ -990,6 +1155,7 @@ function updateCell(c, dt) {
 
   let sp = 55 * st.spd * (c.team === 0 && S.boostT > 0 ? 1.6 : 1) * (c.frT > 0 ? 1.3 : 1) * (c.dash > 0 ? 2.6 : 1) * (c.team === 0 && S.atpT > 0 ? 1.45 : 1);
   if (S.env && S.env.kind === 'glaciacion') sp *= 1 - .35 * m.envRes;
+  if (S.env && S.env.kind === 'bola') sp *= .55;
   let tx = 0, ty = 0;
   if (tgt) {
     const dx = tgt.x - c.x, dy = tgt.y - c.y, d = Math.hypot(dx, dy) || 1;
@@ -1093,8 +1259,9 @@ function step(dt) {
   for (const cl of S.clouds) { cl.t -= dt; for (const e of S.cells) if (!e.dead && e.team !== 0 && Math.hypot(e.x - cl.x, e.y - cl.y) < cl.r) { e.poison = Math.max(e.poison, cl.dps); e.poisonT = Math.max(e.poisonT, 1.2); } }
   S.clouds = S.clouds.filter(q => q.t > 0); for (const q of S.rings) q.t -= dt; S.rings = S.rings.filter(q => q.t > 0); for (const q of S.beams) q.t -= dt; S.beams = S.beams.filter(q => q.t > 0);
 
-  if (S.env) { S.env.t -= dt; if (S.env.t <= 0) { S.env = null; S.envT = rnd(55, 85); } }
+  if (S.env) { S.env.t -= dt; if (S.env.t <= 0) { endEnv(S.env.kind); S.env = null; S.envT = rnd(55, 85); } }
   else { S.envT -= dt; if (S.envT <= 0) startEnv(); }
+  S.evt.clock += dt; if (S.evt.clock >= 1) { S.evt.clock = 0; checkEvents(); }
 
   S.meteorT -= dt;
   if (!S.meteor && S.meteorT <= 0) { S.meteor = { x: rnd(300, W - 300), y: rnd(250, H - 250), t: 4, r: 180 }; toast('Meteorito en camino. Alejate del círculo rojo.', true); }
@@ -1197,6 +1364,7 @@ function issue(wx, wy) {
 function ready() { return S && started && !S.over && !S.modal; }
 function divide() {
   if (!ready()) return;
+  Snd.sfx('pop');
   const T = S.teams[0], cost = Math.ceil(18 * T.mods.divCost);
   if (count(0) >= capOf(0)) { toast('Llegaste al máximo de unidades (' + capOf(0) + '). Fusionar células o construir estructuras libera lugar.'); return; }
   if (T.nut < cost) { toast('Faltan nutrientes: necesitás ' + cost + '.'); return; }
@@ -1465,6 +1633,10 @@ function summary() {
   const orgs = S.cells.filter(c => c.team === 0 && c.org).length;
   return '<div class="stats"><div><b>' + mins + ':' + secs + '</b>Tiempo</div><div><b>' + Math.round((S.share || 0) * 100) + '%</b>Del total de vida</div><div><b>' + orgs + '</b>Organismos</div><div><b>' + S.kills + '</b>Rivales absorbidas</div><div><b>' + (T.branch ? BR[T.branch].n : 'Sin rama') + '</b>Rama</div><div><b>' + T.mutCount + '</b>Mutaciones</div></div>';
 }
+function saveLineage() {
+  const T = S.teams[0];
+  try { localStorage.setItem('evo_lineage', JSON.stringify({ v: 1, from: 1, branch: T.branch || null, tier: cellTier(T), mutCount: T.mutCount, owned: T.owned.slice(), seed: S.seed, at: Date.now() })); } catch (e) {}
+}
 function toMenu() {
   $('legacyTxt').textContent = legacyText(); refreshContinue();
   $('menu').classList.add('show'); started = false; S.paused = true;
@@ -1474,7 +1646,7 @@ function showEvolve() {
   S.paused = true;
   const T = S.teams[0], cl = T.branch ? CLASE[T.branch] : 'Terrestres';
   dialog('Conquista asegurada', summary() + '<p>Tu especie dominó el charco. Tu rama te lleva a la clase <b>' + cl + '</b> en la Era 2. Tu ADN se hereda: cada linaje completado te da más nutrientes iniciales (hasta 3 linajes).</p><p>La Era 2 ya es jugable: <a href="era2-animales.html#' + (E2H[T.branch] || 'ter') + '" target="_blank" rel="noopener">abrila con tu clase</a>. Tu legado queda guardado.</p>', [
-    { t: 'Evolucionar y guardar legado', primary: true, fn: () => { const L = loadLegacy(); L.n = (L.n || 0) + 1; L.last = T.branch; saveLegacy(L); try { localStorage.removeItem(SAVE_KEY); } catch (e) {} S.over = true; toMenu(); } },
+    { t: 'Evolucionar y guardar legado', primary: true, fn: () => { const L = loadLegacy(); L.n = (L.n || 0) + 1; L.last = T.branch; saveLegacy(L); saveLineage(); try { localStorage.removeItem(SAVE_KEY); } catch (e) {} S.over = true; toMenu(); } },
     { t: 'Seguir conquistando', fn: () => { S.paused = false; } }
   ]);
 }
@@ -1532,7 +1704,7 @@ function saveGame(manual) {
 }
 function readSave() { try { const t = localStorage.getItem(SAVE_KEY); if (!t) return null; const d = JSON.parse(t, (k, v) => v && v.__set ? new Set(v.__set) : v); return d && d.v === SAVE_VER && d.S ? d : null; } catch (e) { return null; } }
 function restoreGame(d) {
-  S = d.S; diffIdx = d.di; S.diff = DIFFS[d.di]; _rs = d.rs;
+  S = d.S; S.evt = S.evt || { done: {}, last: 0, clock: 0 }; diffIdx = d.di; S.diff = DIFFS[d.di]; _rs = d.rs;
   S.byId = new Map(S.cells.map(c => [c.id, c]));
   S.teams.forEach(T => { if (T.ai) T.ai.seq = T.ai.seq.map(id => MUTID[id]).filter(Boolean); });
   d.colors.forEach((c, i) => { TEAM_COL[i] = c; }); d.names.forEach((n, i) => { TEAM_NAME[i] = n; }); for (const k in PTINT) delete PTINT[k];
@@ -1553,6 +1725,9 @@ function refreshContinue() {
 }
 $('contBtn').onclick = () => { const d = readSave(); if (d) restoreGame(d); };
 $('bSave').onclick = () => saveGame(true);
+const sndLbl = () => { $('bSnd').textContent = Snd.muted ? 'Sonido: no' : 'Sonido: sí'; };
+$('bSnd').onclick = () => { Snd.toggle(); sndLbl(); }; sndLbl();
+addEventListener('pointerdown', () => Snd.init(), { once: true }); addEventListener('keydown', e => { Snd.init(); if (e.key === 'm' || e.key === 'M') { Snd.toggle(); sndLbl(); } });
 document.addEventListener('visibilitychange', () => { if (document.hidden && started) saveGame(); });
 addEventListener('pagehide', () => { if (started) saveGame(); });
 renderLobby(); refreshContinue();
@@ -1819,7 +1994,7 @@ function render() {
   for (let k = 0; k < 26; k++) { const bx = (k * 211.3) % W, by = H - ((tt * (8 + (k % 5) * 3) + k * 97) % (H + 40)), br = 2 + (k % 4); if (!vis(bx, by)) continue; ctx.strokeStyle = 'rgba(200,245,255,.35)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(bx + Math.sin(tt + k) * 6, by, br, 0, TAU); ctx.stroke(); ctx.fillStyle = 'rgba(220,250,255,.15)'; ctx.fill(); }
   if (S.env) {
     const k = S.env.kind;
-    ctx.fillStyle = k === 'glaciacion' ? 'rgba(120,190,255,.14)' : k === 'sequia' ? 'rgba(210,150,60,.13)' : k === 'explosion' ? 'rgba(90,200,90,.10)' : 'rgba(200,80,220,.10)';
+    ctx.fillStyle = k === 'glaciacion' ? 'rgba(120,190,255,.14)' : k === 'sequia' ? 'rgba(210,150,60,.13)' : k === 'explosion' ? 'rgba(90,200,90,.10)' : k === 'oxidacion' ? 'rgba(235,110,70,.13)' : k === 'bola' ? 'rgba(210,235,255,.20)' : 'rgba(200,80,220,.10)';
     ctx.fillRect(0, 0, W, H);
   }
   ctx.strokeStyle = 'rgba(170,240,255,.45)'; ctx.lineWidth = 3; ctx.strokeRect(0, 0, W, H);
@@ -2085,6 +2260,7 @@ function layout() {
 }
 function hud() {
   if (!S || !started) return;
+  Snd.setState(cellTier(S.teams[0]), S.teams[0].branch, S.paused || S.modal);
   const T = S.teams[0], n = count(0), cost = Math.ceil(18 * T.mods.divCost);
   $('vNut').textContent = Math.floor(T.nut); $('vEn').textContent = Math.floor(T.en); $('vProt').textContent = Math.floor(T.prot);
   $('vDna').textContent = Math.floor(T.dna); $('vDnaT').textContent = '/ ' + T.nextDNA + ' ADN';
@@ -2169,7 +2345,7 @@ function loop(now) {
 }
 pal(); resize(); newGame(1, 3); S.paused = true;
 requestAnimationFrame(loop);
-window.__e1 = { get S() { return S; }, cam, applyMut, MUT, useAbility, AB, abLevel, newGame, openMutation, openSpecies, pickMut, offers, fuse, mk, cellTier, step, snapshot, stateHash, saveGame, readSave, restoreGame, seedRng, hashStr, hud, setStarted(v) { started = v; } };
+window.__e1 = { get S() { return S; }, cam, applyMut, MUT, useAbility, AB, abLevel, newGame, openMutation, openSpecies, pickMut, offers, Snd, fuse, checkEvents, EVT, applyEvt, saveLineage, mk, cellTier, step, snapshot, stateHash, saveGame, readSave, restoreGame, seedRng, hashStr, hud, setStarted(v) { started = v; } };
 })();
 </script>
 </body>
