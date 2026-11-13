@@ -459,7 +459,7 @@ function paintReady() { return !!PCELL.basal; }
 function paintBody(x, c, r, T, tt, col, a) {
   const tier = c.org ? Math.max(2, cellTier(T)) : cellTier(T), br = T.branch, pid = paintId(br, tier);
   const mv = clamp((c.mv || 0) / 110, 0, .09), br0 = Math.sin(tt * 2.3 + c.ph) * .035;
-  let pop = 0, evoU = 1; if (T.evoAt) { evoU = (tt - T.evoAt) / 1.5; if (evoU >= 0 && evoU < 1) pop = Math.sin(evoU * Math.PI) * .28; }
+  let pop = 0, evoU = 1; if (T.evoAt != null) { evoU = (S.t - T.evoAt) / 1.5; if (evoU >= 0 && evoU < 1) pop = Math.sin(evoU * Math.PI) * .28; }
   const size = (2 * r / (PBODY[pid] || .9)) * (1 + .05 * tier) * (1 + pop);
   // anillo de equipo (se lee a distancia aunque el cuerpo sea del color de la rama)
   x.strokeStyle = col; x.globalAlpha = .8; x.lineWidth = 1.8; x.beginPath(); x.arc(0, 0, r * 1.06, 0, TAU); x.stroke(); x.globalAlpha = 1;
@@ -553,6 +553,10 @@ let lobby = (() => { try { const o = JSON.parse(localStorage.getItem('evo_lobby'
 let lastSaveT = 0;
 let S = null, started = false, diffIdx = 1, P = { dark: false, stroke: '#12303b', ink: '#12303b', bg: '#dfece6' };
 const cam = { x: 0, y: 0, z: 1 };
+/* ME = mi equipo en esta pantalla; ACT = equipo que está actuando (solo difiere de ME mientras se aplica la orden de otra persona); CMD = orden en curso. */
+let ME = 0, ACT = 0, CMD = null;
+const NET = { on: false, send() {} };
+const tell = (t, w) => { if (ACT === ME) toast(t, w); };
 let box = null, previewOn = false;
 const keys = {};
 
@@ -573,10 +577,11 @@ function pickWeighted(mix) {
   return 'recol';
 }
 
-function newGame(di, nRiv, seedStr, slots) {
+function newGame(di, nRiv, seedStr, slots, humans) {
+  humans = humans || [0]; const hum = new Set(humans); ME = humans.includes(ME) ? ME : humans[0]; ACT = ME; CMD = null;
   seedStr = seedStr || newSeedStr(); seedRng(hashStr(seedStr));
   slots = slots || Array.from({ length: nRiv + 1 }, (_, i) => i); nRiv = slots.length - 1;
-  slots.forEach((sl, t) => { TEAM_COL[t] = SLOT_COL[sl]; TEAM_NAME[t] = t === 0 ? (lobby.name || SLOT_NAME[0]) : SLOT_NAME[sl]; });
+  slots.forEach((sl, t) => { TEAM_COL[t] = SLOT_COL[sl]; TEAM_NAME[t] = hum.has(t) ? (t === ME ? (lobby.name || SLOT_NAME[0]) : SLOT_NAME[sl]) : SLOT_NAME[sl]; });
   for (const k in PTINT) delete PTINT[k];
   const D = DIFFS[di], L = loadLegacy();
   const bonus = Math.min(L.n || 0, 3);
@@ -585,26 +590,27 @@ function newGame(di, nRiv, seedStr, slots) {
     evt: { done: {}, last: 0, clock: 0 }, seed: seedStr, slots, t: 0, paused: false, spd: 1, diff: D, cells: [], byId: new Map(), nuts: [], drops: [], fx: [], texts: [],
     vents: [{ x: 1300, y: 850, r: 80 }, { x: 900, y: 380, r: 70 }, { x: 1750, y: 1300, r: 70 }, { x: 900, y: 1350, r: 70 }, { x: 1800, y: 450, r: 70 }],
     plank: Array.from({ length: 110 }, () => ({ x: rnd(0, W), y: rnd(0, H), r: rnd(1, 3), s: rnd(4, 14), a: rnd(0, TAU) })),
-    meteor: null, meteorT: 110, nutT: 0, idc: 1, modal: false, canEvolve: false, over: false, boostT: 0, kills: 0, aiClock: 0, slowT: 0,
-    sel: new Set(), teams: [], abCd: {}, atpT: 0, camoT: 0, clouds: [], rings: [], beams: [], abBtns: [], abUsed: false, rests: [], meadows: [], currents: [], reefs: [], fusion: false, stage: 0, structs: 0, env: null, envT: 70, hist: [], histT: 0, domT: 0, share: 0, bio: []
+    meteor: null, meteorT: 110, nutT: 0, idc: 1, modal: false, canEvolve: false, over: false, kills: 0, aiClock: 0, slowT: 0,
+    sel: new Set(), teams: [], clouds: [], rings: [], beams: [], abBtns: [], abUsed: false, rests: [], meadows: [], currents: [], reefs: [], structs: 0, env: null, envT: 70, hist: [], histT: 0, domT: 0, share: 0, bio: []
   };
   const nT = 1 + nRiv; $('abil').innerHTML = '';
   for (let t = 0; t < nT; t++) {
-    const p = t ? PERS_ORDER[(t - 1) % 5] : null, pr = p ? PERS[p] : null;
+    const p = hum.has(t) ? null : PERS_ORDER[(t - 1) % 5], pr = p ? PERS[p] : null;
     S.teams.push({
-      home: HOMES[slots[t]], nut: t === 0 ? 40 + 8 * bonus + D.startBonus * 30 : 40, en: t === 0 ? 10 : 0, dna: 0, nextDNA: 10, acc: 0, gathered: 0, prot: 0,
-      mods: defMods(), branch: t === 0 ? null : brs[t - 1], owned: [], os: new Set(), mutCount: 0, pending: 0,
-      ai: t === 0 ? null : {
+      home: HOMES[slots[t]], nut: hum.has(t) ? 40 + 8 * bonus + D.startBonus * 30 : 40, en: hum.has(t) ? 10 : 0, dna: 0, nextDNA: 10, acc: 0, gathered: 0, prot: 0,
+      mods: defMods(), branch: hum.has(t) ? null : brs[t - 1], owned: [], os: new Set(), mutCount: 0, pending: 0,
+      stage: 0, fusion: false, structs: 0, orgs: 0, share: 0, domT: 0, kills: 0, boostT: 0, atpT: 0, camoT: 0, abCd: {},
+      ai: hum.has(t) ? null : {
         p, divT: 3, mutT: D.mutEvery * rnd(.7, 1), waveT: pr.wi * D.wave + D.wave0, waveInt: pr.wi * D.wave, waveSize: pr.ws, divRate: pr.dr * D.dv,
         fuseT: D.fuse * rnd(.8, 1.2), target: null, tTeam: -1, seq: []
       }
     });
-    if (t) {
+    if (!hum.has(t)) {
       const T = S.teams[t];
       T.ai.seq = MUT.filter(m => m.br === T.branch).sort((a, b) => (a.t || 0) - (b.t || 0)).concat(shuffle(MUT.filter(m => m.br === 'gen')));
     }
-    const n = t === 0 ? 4 + Math.min(bonus, 2) + D.startBonus * 2 : 5;
-    for (let i = 0; i < n; i++) mk(t, HOMES[slots[t]].x + rnd(-40, 40), HOMES[slots[t]].y + rnd(-40, 40), t ? pickWeighted(pr.mix) : 'basal');
+    const n = hum.has(t) ? 4 + Math.min(bonus, 2) + D.startBonus * 2 : 5;
+    for (let i = 0; i < n; i++) mk(t, HOMES[slots[t]].x + rnd(-40, 40), HOMES[slots[t]].y + rnd(-40, 40), hum.has(t) ? 'basal' : pickWeighted(pr.mix));
   }
   const farHome = (x, y, d) => S.teams.every(t => Math.hypot(t.home.x - x, t.home.y - y) > d);
   for (let i = 0, g = 0; i < 4 && g < 200; g++) { const x = rnd(250, W - 250), y = rnd(250, H - 250); if (farHome(x, y, 380) && S.meadows.every(m => Math.hypot(m.x - x, m.y - y) > 350)) { S.meadows.push(mkMeadow(x, y, rnd(95, 130), -1)); i++; } }
@@ -707,15 +713,15 @@ function rps(a, b) {
   const adv = as.some(x => bs.includes(BR[x].beats)), dis = bs.some(x => as.includes(BR[x].beats));
   if (adv && !dis) return 1.3; if (dis && !adv) return .77; return 1;
 }
-function hurt(e, d, src) { if (e.dead || e.cyst > 0) return; if (d > .3 && (e.team === 0 || (src && src.team === 0))) Snd.hit(); e.hp -= d; if (e.hp <= 0) kill(e, src); }
+function hurt(e, d, src) { if (e.dead || e.cyst > 0) return; if (d > .3 && (e.team === ME || (src && src.team === ME))) Snd.hit(); e.hp -= d; if (e.hp <= 0) kill(e, src); }
 function kill(e, src) {
-  if (e.team === 0 || (src && src.team === 0)) Snd.sfx('die');
+  if (e.team === ME || (src && src.team === ME)) Snd.sfx('die');
   e.dead = true; S.rests.push({ x: e.x, y: e.y, v: e.org ? e.org.n * 1.5 : 2, t: 40 });
   burst(e.x, e.y, e.org ? 20 : 10, TEAM_COL[e.team]);
   S.drops.push({ x: e.x, y: e.y, v: e.org ? 3 + e.org.n : 3, life: 28, p: R() * TAU });
   if (src) {
     src.kills++;
-    if (src.team === 0) { S.kills++; S.teams[0].prot += 2 + (S.teams[0].os.has('digestion') || S.teams[0].os.has('absorcion') ? 2 : 0); }
+    { const Ts = S.teams[src.team]; if (!Ts.ai) { Ts.kills++; Ts.prot += 2 + (Ts.os.has('digestion') || Ts.os.has('absorcion') ? 2 : 0); } }
     const m = S.teams[src.team].mods;
     if (m.frenzy) src.frT = 4;
     if (m.killNut) S.teams[src.team].nut += m.killNut;
@@ -731,7 +737,7 @@ function attack(c, e) {
   if (m.pack) d *= 1 + m.pack * Math.min(neighbors(c, 60), 5);
   if (m.quorum) d *= 1 + m.quorum * Math.min(neighbors(c, 60), 6);
   if (m.crit && R() < m.crit) { d *= 2; burst(e.x, e.y, 3, '#ffd23f'); }
-  d *= rps(c, e); if (e.shield > 0) d *= .5; if (c.team === 0 && S.atpT > 0) d *= 1.3;
+  d *= rps(c, e); if (e.shield > 0) d *= .5; if (S.teams[c.team].atpT > 0) d *= 1.3;
   const em = S.teams[e.team].mods;
   if (c.poisonT > 0 && em.weaken) d *= 1 - em.weaken;
   let arm = e.st.armor + em.flatArmor;
@@ -748,7 +754,7 @@ function nearestEnemy(c, range) {
   for (const e of S.cells) {
     if (e.dead || e.team === c.team) continue;
     const dx = e.x - c.x, dy = e.y - c.y, d = Math.hypot(dx, dy);
-    const cover = (S.reefs.some(rf => Math.hypot(e.x - rf.x, e.y - rf.y) < rf.r + 28) ? .7 : 1) * (e.team === 0 && S.camoT > 0 ? .35 : 1);
+    const cover = (S.reefs.some(rf => Math.hypot(e.x - rf.x, e.y - rf.y) < rf.r + 28) ? .7 : 1) * (S.teams[e.team].camoT > 0 ? .35 : 1);
     if (d < range * S.teams[e.team].mods.stealth * cover && d < bd) { bd = d; best = e; }
   }
   return best;
@@ -847,24 +853,23 @@ function applyMut(team, m) {
   const tier0 = cellTier(T);
   m.fx(T.mods); T.owned.push(m.id); T.os.add(m.id); T.mutCount++;
   const tier1 = cellTier(T);
-  if (team === 0) Snd.sfx('mut');
-  if (tier1 > tier0 && tier1 >= 1) { if (team === 0) Snd.evolve(tier1); T.evoAt = performance.now() / 1000; if (team === 0) { toast('¡Evolución! Tus células alcanzan el nivel ' + tier1 + ' de la rama ' + (T.branch ? BR[T.branch].n : 'general') + ': ' + EVO_TXT[T.branch || 'gen'][tier1 - 1]); } }
+  if (team === ME) Snd.sfx('mut');
+  if (tier1 > tier0 && tier1 >= 1) { if (team === ME) Snd.evolve(tier1); T.evoAt = S.t; if (team === ME) { toast('¡Evolución! Tus células alcanzan el nivel ' + tier1 + ' de la rama ' + (T.branch ? BR[T.branch].n : 'general') + ': ' + EVO_TXT[T.branch || 'gen'][tier1 - 1]); } }
   for (const c of S.cells) if (c.team === team && !c.dead) calc(c);
 }
 function offers() {
-  const T = S.teams[0], base = offersBase();
+  const T = S.teams[ME], base = offersBase();
   if (T.branch && T.mutCount >= 2 && R() < .4) {
     const vr = T.vars || {}, c = T.owned.filter(id => VAR[id] && !vr[id]);
     if (c.length) {
       const id = c[Math.floor(R() * c.length)], b0 = MUT.find(m => m.id === id), v = VAR[id];
-      const mkv = k => ({ id: id + ':' + k, br: b0.br, t: 0, variantOf: id, v: k, n: 'Variante ' + k + ': ' + v[k].n, d: v[k].d, fx: m => apM(m, v[k].fx) });
-      return [mkv('A'), mkv('B'), base[0]];
+      return [mkVariant(id, 'A'), mkVariant(id, 'B'), base[0]];
     }
   }
   return base;
 }
 function offersBase() {
-  const T = S.teams[0], own = T.os;
+  const T = S.teams[ME], own = T.os;
   if (!T.branch) {
     return shuffle(['pred', 'para', 'foto', 'colo']).slice(0, 3).map(b => shuffle(MUT.filter(m => m.br === b && m.t === 1))[0]);
   }
@@ -905,7 +910,7 @@ const ORG = {
 const SPRCB = {};
 function sprB(id) { if (SPRCB[id]) return SPRCB[id]; const src = SPRC[id]; if (!src) return null; const c = document.createElement('canvas'); c.width = c.height = 128; const q = c.getContext('2d'); try { q.filter = 'hue-rotate(80deg) saturate(1.25)'; } catch (e) { } q.translate(128, 0); q.scale(-1, 1); q.drawImage(src, 0, 0); SPRCB[id] = c; return c; }
 function sprOf(id, v) { return v === 'B' ? (sprB(id) || SPRC[id]) : SPRC[id]; }
-function ORGX(x, s, tt, m, vv) { const v = vv || (S && S.teams && S.teams[0].vars && m ? S.teams[0].vars[m.id] : null); const im = m && sprOf(m.id, v); if (im) { const sz = 40 * s * (v === 'A' ? 1.12 : 1); x.drawImage(im, -sz / 2, -sz / 2, sz, sz); } else if (m && ORG[m.org]) ORG[m.org](x, s, tt, m); }
+function ORGX(x, s, tt, m, vv) { const v = vv || (S && S.teams && S.teams[ME].vars && m ? S.teams[ME].vars[m.id] : null); const im = m && sprOf(m.id, v); if (im) { const sz = 40 * s * (v === 'A' ? 1.12 : 1); x.drawImage(im, -sz / 2, -sz / 2, sz, sz); } else if (m && ORG[m.org]) ORG[m.org](x, s, tt, m); }
 function drawOrganIcon(cn, m, vv) {
   if (!cn || !m || !m.org) return; const x = cn.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cn.width, cn.height);
   x.fillStyle = 'rgba(120,170,160,.12)'; x.fillRect(0, 0, cn.width, cn.height);
@@ -915,17 +920,17 @@ function drawOrganIcon(cn, m, vv) {
 const IN_SLOTS = [[.50, -.40], [.52, .40], [-.52, .50], [-.62, -.28], [.08, .62], [.12, -.66], [.78, .02], [-.80, .12], [.32, .12], [-.30, .30], [-.12, -.50], [.62, .68], [-.55, -.62], [.30, -.20], [.2, .4], [-.2, -.2]];
 const OUT_ANG = [0, Math.PI, -Math.PI / 2, Math.PI / 2, -Math.PI / 4, Math.PI / 4, 3 * Math.PI / 4, -3 * Math.PI / 4, Math.PI / 8, -Math.PI / 8, 7 * Math.PI / 8, -7 * Math.PI / 8];
 function anatList() {
-  const T = S.teams[0], owned = T.owned.map(id => MUT.find(q => q.id === id)).filter(m => m && m.org);
+  const T = S.teams[ME], owned = T.owned.map(id => MUT.find(q => q.id === id)).filter(m => m && m.org);
   return owned;
 }
 function drawAnatomy(tt) {
-  const cn = $('anat'); if (!cn || !S) return; const x = cn.getContext('2d'), T = S.teams[0];
+  const cn = $('anat'); if (!cn || !S) return; const x = cn.getContext('2d'), T = S.teams[ME];
   x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cn.width, cn.height);
   const cx = 280, cy = 170, rx = 175, ry = 118, owned = anatList();
   const outs = owned.filter(m => OUTK.has(m.org)), ins = owned.filter(m => !OUTK.has(m.org)), badges = [];
   x.fillStyle = 'rgba(120,170,160,.16)'; x.fillRect(0, 0, cn.width, cn.height);
   outs.forEach((m, i) => { const a = OUT_ANG[i % OUT_ANG.length], px = cx + Math.cos(a) * rx, py = cy + Math.sin(a) * ry; x.save(); x.translate(px, py); x.rotate(a); ORGX(x, 1.15, tt, m); x.restore(); badges.push([m, px + Math.cos(a) * 26, py + Math.sin(a) * 22]); });
-  x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, TAU); x.fillStyle = shade(TEAM_COL[0], 1.25) + '66'; x.fill(); x.strokeStyle = P.stroke; x.lineWidth = 4; x.stroke();
+  x.beginPath(); x.ellipse(cx, cy, rx, ry, 0, 0, TAU); x.fillStyle = shade(TEAM_COL[ME], 1.25) + '66'; x.fill(); x.strokeStyle = P.stroke; x.lineWidth = 4; x.stroke();
   x.strokeStyle = 'rgba(255,255,255,.35)'; x.lineWidth = 1.2; x.beginPath(); x.ellipse(cx, cy, rx - 6, ry - 6, 0, 0, TAU); x.stroke();
   x.save(); x.translate(cx - 20, cy - 5); ORGX(x, 2.9, tt, { id: 'nucleo', org: 'nucl' }); x.fillStyle = T.branch ? BR[T.branch].c : '#ffffff'; x.beginPath(); x.arc(0, 0, 10, 0, TAU); x.fill(); x.fillStyle = 'rgba(0,0,0,.35)'; x.beginPath(); x.arc(4, 3, 4, 0, TAU); x.fill(); x.restore();
   
@@ -936,15 +941,15 @@ function drawAnatomy(tt) {
 function fillAnatomy() {
   const owned = anatList();
   $('anatList').innerHTML = owned.length ? owned.map((m, i) => '<div class="arow"><b>' + (i + 1) + '.</b><span><b>' + m.n + '</b> — ' + m.d + '</span></div>').join('') : '<div class="arow"><span>Todavía solo tiene núcleo, membrana y citoplasma. Cada mutación que elijas agrega un orgánulo que se ve acá.</span></div>';
-  const comp = {}; let orgs = 0; for (const c of S.cells) if (c.team === 0 && c.org) { orgs++; for (const k in c.org.comp) comp[k] = (comp[k] || 0) + c.org.comp[k]; }
+  const comp = {}; let orgs = 0; for (const c of S.cells) if (c.team === ME && c.org) { orgs++; for (const k in c.org.comp) comp[k] = (comp[k] || 0) + c.org.comp[k]; }
   const TIS = { basal: ['Células germinales', 'Conservan la capacidad de dividirse; las demás células del organismo son somáticas (soma), como en Volvox.'], recol: ['Tejido absortivo', 'Absorbe y procesa el alimento, como el epitelio intestinal.'], guerr: ['Tejido muscular', 'Contrae y ataca (actina y miosina).'], explo: ['Tejido locomotor y sensorial', 'Cilios y receptores para moverse y percibir.'], acora: ['Tejido epitelial protector', 'Barrera exterior que protege al organismo.'], simb: ['Tejido simbionte', 'Alberga simbiontes que aportan energía y reparación.'] };
   let h = ''; Object.keys(comp).forEach(k => { h += '<div class="arow"><b>' + comp[k] + '</b><span><b>' + TIS[k][0] + '</b> — ' + TIS[k][1] + '</span></div>'; });
-  const built = {}; S.cells.forEach(c => { if (c.team === 0 && c.struct && c.prog >= 1) built[c.struct] = (built[c.struct] || 0) + 1; });
+  const built = {}; S.cells.forEach(c => { if (c.team === ME && c.struct && c.prog >= 1) built[c.struct] = (built[c.struct] || 0) + 1; });
   Object.keys(built).forEach(k => { h += '<div class="arow"><b>' + built[k] + '</b><span><b>' + ST[k].n + '</b> — ' + ST[k].d + '</span></div>'; });
   $('tissueList').innerHTML = h || '<div class="arow"><span>Fusioná células en organismos y construí estructuras: acá vas a ver los tejidos y órganos que forman.</span></div>';
 }
 function openMutation() {
-  const T = S.teams[0];
+  const T = S.teams[ME];
   S.modal = true;
   const list = offers();
   $('mutT').textContent = list[0] && list[0].variantOf ? 'Bifurcación evolutiva' : (T.branch ? 'Nueva mutación' : 'Tu primera mutación');
@@ -962,20 +967,21 @@ function openMutation() {
   });
   $('mut').classList.add('show');
 }
-function pickMut(m) {
-  const T = S.teams[0];
-  if (!T.branch && m.br !== 'gen') { T.branch = m.br; toast('Rama elegida: ' + BR[m.br].n); }
-  applyMut(0, m);
+function mkVariant(id, k) { const b0 = MUT.find(m => m.id === id), v = VAR[id]; return { id: id + ':' + k, br: b0.br, t: 0, variantOf: id, v: k, n: 'Variante ' + k + ': ' + v[k].n, d: v[k].d, fx: m => apM(m, v[k].fx) }; }
+function mutById(id) { if (id === FALLBACK.id) return FALLBACK; const i = id.indexOf(':'); if (i > 0) { const base = id.slice(0, i), k = id.slice(i + 1); return VAR[base] && VAR[base][k] ? mkVariant(base, k) : null; } return MUTID[id] || null; }
+function x_mut(cmd) {
+  const T = S.teams[ACT]; if (T.pending < 1) return; const m = mutById(cmd.id); if (!m) return;
+  if (!T.branch && m.br !== 'gen') { T.branch = m.br; tell('Rama elegida: ' + BR[m.br].n); }
+  applyMut(ACT, m);
   if (m.variantOf) { T.vars = T.vars || {}; T.vars[m.variantOf] = m.v; }
   T.pending--;
-  $('mut').classList.remove('show');
-  S.modal = false;
-  if (T.pending > 0) openMutation();
+  if (ACT === ME) { $('mut').classList.remove('show'); S.modal = false; if (T.pending > 0) openMutation(); }
 }
-function addDNA(n) {
-  const T = S.teams[0]; T.dna += n;
+function pickMut(m) { if (NET.on) $('offers').querySelectorAll('button').forEach(b => { b.disabled = true; }); dispatch('mut', { id: m.id }); }
+function addDNA(team, n) {
+  const T = S.teams[team]; T.dna += n;
   while (T.dna >= T.nextDNA) { T.dna -= T.nextDNA; T.nextDNA += 6; T.pending++; }
-  if (T.pending > 0 && !S.modal) openMutation();
+  if (team === ME && T.pending > 0 && !S.modal) openMutation();
 }
 
 
@@ -1016,7 +1022,7 @@ const EVT = {
     t: 'Explosión de diversidad',
     when: (T) => S.t >= 840 && T.mutCount >= 8 && !S.env,
     d: 'Hace ~540 millones de años la vida se diversificó en pocos millones de años (explosión del Cámbrico). Tu linaje se abre a nuevas formas: tenés que elegir cómo aprovecharlo.',
-    A: { t: 'Especializarse', d: 'Una mutación gratis ahora mismo.', fn: team => { const T = S.teams[team]; if (team === 0) { T.pending++; if (!S.modal) setTimeout(() => { if (S && !S.modal && S.teams[0].pending > 0) openMutation(); }, 50); } else T.pending++; } },
+    A: { t: 'Especializarse', d: 'Una mutación gratis ahora mismo.', fn: team => { const T = S.teams[team]; if (team === ME) { T.pending++; if (!S.modal) setTimeout(() => { if (S && !S.modal && S.teams[ME].pending > 0) openMutation(); }, 50); } else T.pending++; } },
     B: { t: 'Generalizar', d: 'Más gente y más barata: +6 de límite de unidades y 15% menos de costo de dividir.', fn: team => { const T = S.teams[team]; T.mods.cap += 6; T.mods.divCost *= .85; } }
   }
 };
@@ -1033,11 +1039,11 @@ function endEnv(kind) {
 }
 function applyEvt(id, team, choice) {
   const e = EVT[id]; e[choice].fn(team);
-  if (team === 0) { S.evt.done[id] = choice; S.evt.at = S.evt.at || {}; S.evt.at[id] = S.t; S.evt.last = S.t; }
+  if (team === ME) { S.evt.done[id] = choice; S.evt.at = S.evt.at || {}; S.evt.at[id] = S.t; S.evt.last = S.t; }
 }
 function checkEvents() {
-  if (S.over || S.modal || S.t - S.evt.last < 50) return;
-  const T = S.teams[0];
+  if (NET.on || S.over || S.modal || S.t - S.evt.last < 50) return;
+  const T = S.teams[ME];
   for (const id of EVT_ORDER) {
     if (S.evt.done[id]) continue;
     const e = EVT[id]; if (!e.when(T)) continue;
@@ -1084,14 +1090,14 @@ function ingest(c, T) {
     if (Math.hypot(q.x - c.x, q.y - c.y) < c.r + 7) {
       S.rests.splice(i, 1); const mul = (T.branch === 'pred' || T.branch2 === 'pred' ? 1.4 : 1) * (T.os.has('digestion') ? 1.3 : 1);
       T.nut += q.v * .6 * mul; T.prot += q.v * .3 * mul; T.gathered += q.v * .6; c.food = Math.min(100, c.food + 12 * mul);
-      if (c.team === 0) ftext(c.x, c.y - 12, 'fagocitosis', '#c0392b'); burst(c.x, c.y, 4, '#c0392b');
+      if (c.team === ME) ftext(c.x, c.y - 12, 'fagocitosis', '#c0392b'); burst(c.x, c.y, 4, '#c0392b');
     }
   }
 }
 function nearestRest(c, range) { let best = null, bd = range; for (const q of S.rests) { const d = Math.hypot(q.x - c.x, q.y - c.y); if (d < bd) { bd = d; best = q; } } return best; }
 function updateStruct(c, dt) {
   const T = S.teams[c.team], sd = ST[c.struct];
-  if (c.prog < 1) { c.prog = Math.min(1, c.prog + dt / sd.time); if (c.prog >= 1) { c.hp = c.mhp; if (c.team === 0) toast(sd.n + ' terminada.'); } return; }
+  if (c.prog < 1) { c.prog = Math.min(1, c.prog + dt / sd.time); if (c.prog >= 1) { c.hp = c.mhp; if (c.team === ME) toast(sd.n + ' terminada.'); } return; }
   switch (c.struct) {
     case 'cloro': { const g = .8 * dt; T.nut += g; T.gathered += g; break; }
     case 'mito': T.en += 1.5 * dt; break;
@@ -1100,7 +1106,7 @@ function updateStruct(c, dt) {
     case 'liso': { const e = nearestEnemy(c, 110); if (e) { hurt(e, 8 * dt, c); if (R() < dt * 3) burst(e.x, e.y, 1, '#8a5cd0'); } break; }
   }
   if (sd.prod) {
-    if (c.team !== 0 && !c.queue.length && count(c.team) < capOf(c.team)) { const ty = sd.prod[Math.floor(R() * sd.prod.length)]; if (T.nut >= UCOST[ty] + 12) { T.nut -= UCOST[ty]; c.queue.push({ type: ty, t: 4 }); } }
+    if (S.teams[c.team].ai && !c.queue.length && count(c.team) < capOf(c.team)) { const ty = sd.prod[Math.floor(R() * sd.prod.length)]; if (T.nut >= UCOST[ty] + 12) { T.nut -= UCOST[ty]; c.queue.push({ type: ty, t: 4 }); } }
     if (c.queue.length) { const q = c.queue[0]; q.t -= dt; if (q.t <= 0) { c.queue.shift(); const par = pickParent(c.team); const u = mk(c.team, c.x + rnd(-18, 18), c.y + rnd(-18, 18), q.type, par ? mutG(par.g) : null); u.food = 70; burst(c.x, c.y, 8, TEAM_COL[c.team]); } }
   }
 }
@@ -1130,7 +1136,7 @@ function updateCell(c, dt) {
   let tgt = null, des = null;
   const hungry = c.food < 35;
   const dv = st.vis * m.detect;
-  if (c.team === 0) {
+  if (!T.ai) {
     if (c.order) {
       if (c.order.type === 'attack') { const e = S.byId.get(c.order.id); if (!e || e.dead) c.order = null; else tgt = e; }
       else if (Math.hypot(c.order.x - c.x, c.order.y - c.y) < 6) c.order = null;
@@ -1153,7 +1159,7 @@ function updateCell(c, dt) {
     else { if (Math.hypot(c.wx - c.x, c.wy - c.y) < 10) { c.wx = clamp(T.home.x + rnd(-450, 450), 40, W - 40); c.wy = clamp(T.home.y + rnd(-450, 450), 40, H - 40); } des = { x: c.wx, y: c.wy }; }
   }
 
-  let sp = 55 * st.spd * (c.team === 0 && S.boostT > 0 ? 1.6 : 1) * (c.frT > 0 ? 1.3 : 1) * (c.dash > 0 ? 2.6 : 1) * (c.team === 0 && S.atpT > 0 ? 1.45 : 1);
+  let sp = 55 * st.spd * (S.teams[c.team].boostT > 0 ? 1.6 : 1) * (c.frT > 0 ? 1.3 : 1) * (c.dash > 0 ? 2.6 : 1) * (S.teams[c.team].atpT > 0 ? 1.45 : 1);
   if (S.env && S.env.kind === 'glaciacion') sp *= 1 - .35 * m.envRes;
   if (S.env && S.env.kind === 'bola') sp *= .55;
   let tx = 0, ty = 0;
@@ -1177,7 +1183,7 @@ function updateCell(c, dt) {
       S.nuts[i] = S.nuts[S.nuts.length - 1]; S.nuts.pop();
       const g = n.v * st.gather; T.nut += g; T.gathered += g; T.acc += g; c.eaten++;
       c.food = Math.min(100, c.food + 30 * Math.min(st.gather, 3));
-      while (T.acc >= 8) { T.acc -= 8; if (c.team === 0) { addDNA(m.dnaMul); ftext(c.x, c.y - 12, '+ADN', '#3f56d9'); } }
+      while (T.acc >= 8) { T.acc -= 8; if (!T.ai) { addDNA(c.team, m.dnaMul); ftext(c.x, c.y - 12, '+ADN', '#3f56d9'); } }
     }
   }
 }
@@ -1191,7 +1197,7 @@ function pickTargetTeam(team) {
   const T = S.teams[team], A = T.ai, pr = PERS[A.p], alive = [];
   for (let t = 0; t < S.teams.length; t++) if (t !== team) { const n = bio(t); if (n > 0) alive.push({ t, n }); }
   if (!alive.length) return -1;
-  if (pr.tg === 'player') { const pl = alive.find(a => a.t === 0); if (pl && R() < .65) return 0; }
+  if (pr.tg === 'player') { const pl = alive.find(a => !S.teams[a.t].ai); if (pl && R() < .65) return pl.t; }
   if (pr.tg === 'weak') { alive.sort((a, b) => a.n - b.n); return alive[0].t; }
   if (pr.tg === 'strong') { alive.sort((a, b) => b.n - a.n); return alive[0].t; }
   let best = alive[0].t, bd = 1e9;
@@ -1243,7 +1249,7 @@ function aiTick(team, dt) {
         A.target = { x: c.x, y: c.y };
         const go = shuffle(mine).slice(0, Math.ceil(mine.length * .75));
         go.forEach(u => { u.mode = 'wave'; u.waveT = 50; });
-        if (tt === 0) toast(TEAM_NAME[team] + ' (' + PERS[A.p].lbl + ') ataca con ' + go.length + ' unidades', true);
+        if (tt === ME) toast(TEAM_NAME[team] + ' (' + PERS[A.p].lbl + ') ataca con ' + go.length + ' unidades', true);
       }
     }
   }
@@ -1254,9 +1260,8 @@ function step(dt) {
   const slow = S.env && S.env.kind === 'sequia', fast = S.env && S.env.kind === 'explosion';
   S.nutT -= dt;
   while (S.nutT <= 0) { if (S.nuts.length < 260) spawnNut(); S.nutT += slow ? .6 : fast ? .06 : .17; }
-  if (S.boostT > 0) S.boostT -= dt; if (S.atpT > 0) S.atpT -= dt; if (S.camoT > 0) S.camoT -= dt;
-  for (const k in S.abCd) if (S.abCd[k] > 0) S.abCd[k] -= dt;
-  for (const cl of S.clouds) { cl.t -= dt; for (const e of S.cells) if (!e.dead && e.team !== 0 && Math.hypot(e.x - cl.x, e.y - cl.y) < cl.r) { e.poison = Math.max(e.poison, cl.dps); e.poisonT = Math.max(e.poisonT, 1.2); } }
+  for (const T of S.teams) { if (T.boostT > 0) T.boostT -= dt; if (T.atpT > 0) T.atpT -= dt; if (T.camoT > 0) T.camoT -= dt; for (const k in T.abCd) if (T.abCd[k] > 0) T.abCd[k] -= dt; }
+  for (const cl of S.clouds) { cl.t -= dt; for (const e of S.cells) if (!e.dead && e.team !== cl.team && Math.hypot(e.x - cl.x, e.y - cl.y) < cl.r) { e.poison = Math.max(e.poison, cl.dps); e.poisonT = Math.max(e.poisonT, 1.2); } }
   S.clouds = S.clouds.filter(q => q.t > 0); for (const q of S.rings) q.t -= dt; S.rings = S.rings.filter(q => q.t > 0); for (const q of S.beams) q.t -= dt; S.beams = S.beams.filter(q => q.t > 0);
 
   if (S.env) { S.env.t -= dt; if (S.env.t <= 0) { endEnv(S.env.kind); S.env = null; S.envT = rnd(55, 85); } }
@@ -1277,7 +1282,7 @@ function step(dt) {
   }
 
   S.aiClock += dt;
-  if (S.aiClock > .5) { for (let t = 1; t < S.teams.length; t++) aiTick(t, S.aiClock); S.aiClock = 0; }
+  if (S.aiClock > .5) { for (let t = 0; t < S.teams.length; t++) if (S.teams[t].ai) aiTick(t, S.aiClock); S.aiClock = 0; }
 
   for (const c of S.cells) if (!c.dead) updateCell(c, dt);
 
@@ -1307,7 +1312,7 @@ function step(dt) {
     let got = null;
     for (const c of S.cells) if (!c.dead && Math.hypot(c.x - d.x, c.y - d.y) < c.r + 7) { got = c; break; }
     if (got) {
-      if (got.team === 0) { ftext(d.x, d.y, '+' + d.v + ' ADN', '#3f56d9'); addDNA(d.v * S.teams[0].mods.dnaMul); }
+      if (!S.teams[got.team].ai) { ftext(d.x, d.y, '+' + d.v + ' ADN', '#3f56d9'); addDNA(got.team, d.v * S.teams[got.team].mods.dnaMul); }
       S.drops.splice(i, 1);
     } else if (d.life <= 0) S.drops.splice(i, 1);
   }
@@ -1325,22 +1330,40 @@ function step(dt) {
   if (S.slowT >= .5) {
     const dts = S.slowT; S.slowT = 0;
     for (let t = 0; t < S.teams.length; t++) if (count(t) === 0) for (const c of S.cells) if (c.struct && c.team === t) c.dead = true;
-    const T = S.teams[0], n0 = count(0);
     S.bio = S.teams.map((_, t) => bio(t));
     const tot = S.bio.reduce((a, b) => a + b, 0) || 1;
-    S.share = S.bio[0] / tot;
-    S.orgs = S.cells.filter(c => c.team === 0 && c.org).length;
-    if (S.stage < 1 && T.mutCount >= 1 && n0 >= 8 && T.gathered >= 60) { S.stage = 1; toast('Diferenciación celular: podés anclar células especializadas para formar estructuras. Tocá Estructuras.'); }
-    S.structs = S.cells.filter(c => c.team === 0 && c.struct && c.prog >= 1).length;
-    if (!S.fusion && S.stage >= 1 && T.mutCount >= 3 && n0 >= 12 && S.structs >= 2) { S.fusion = true; S.stage = 2; toast('Pluricelularidad desbloqueada: seleccioná 4 o más células y tocá Fusionar.'); }
-    if (S.fusion && !S.canEvolve && S.orgs >= S.diff.evoOrgs && T.mutCount >= S.diff.evoMut && S.share >= S.diff.evoShare) { S.canEvolve = true; toast('Conquista asegurada: podés pasar a la Era 2.'); }
-    if (S.share >= S.diff.domShare && S.bio[0] >= 12 && S.t > 150) { S.domT += dts; if (S.domT >= S.diff.domT) endGame('win'); } else S.domT = 0;
-    if (n0 === 0) endGame('lose');
-    else { let alive = 0; for (let t = 1; t < S.teams.length; t++) if (count(t) > 0) alive++; if (!alive) endGame('win'); }
+    S.teams.forEach((T, t) => {
+      T.share = S.bio[t] / tot;
+      if (T.ai) return;
+      const n0 = count(t), me = t === ME;
+      T.orgs = S.cells.filter(c => c.team === t && c.org).length;
+      if (T.stage < 1 && T.mutCount >= 1 && n0 >= 8 && T.gathered >= 60) { T.stage = 1; if (me) toast('Diferenciación celular: podés anclar células especializadas para formar estructuras. Tocá Estructuras.'); }
+      T.structs = S.cells.filter(c => c.team === t && c.struct && c.prog >= 1).length;
+      if (!T.fusion && T.stage >= 1 && T.mutCount >= 3 && n0 >= 12 && T.structs >= 2) { T.fusion = true; T.stage = 2; if (me) toast('Pluricelularidad desbloqueada: seleccioná 4 o más células y tocá Fusionar.'); }
+      if (me && T.fusion && !S.canEvolve && T.orgs >= S.diff.evoOrgs && T.mutCount >= S.diff.evoMut && T.share >= S.diff.evoShare && !NET.on) { S.canEvolve = true; toast('Conquista asegurada: podés pasar a la Era 2.'); }
+      if (T.share >= S.diff.domShare && S.bio[t] >= 12 && S.t > 150) { T.domT += dts; if (T.domT >= S.diff.domT) finish(t); } else T.domT = 0;
+    });
+    const alive = S.teams.map((_, t) => t).filter(t => count(t) > 0);
+    if (count(ME) === 0 && !S.meOut) { S.meOut = true; if (NET.on) { toast('Tu colonia se extinguió. Podés seguir mirando la partida.', true); } else endGame('lose'); }
+    else if (alive.length <= 1 && !S.over) finish(alive.length ? alive[0] : -1);
   }
 }
 
 /* ---------- Órdenes ---------- */
+/* ---------- Órdenes de juego ----------
+   La interfaz NO modifica el estado: emite órdenes con dispatch(); applyCmd() las ejecuta con el MISMO código para cualquier equipo.
+   Solo online: las órdenes viajan por el relay y se aplican en el mismo turno en todos los clientes (lockstep).
+   Dentro de una orden, ACT es el equipo que actúa y CMD trae sus datos (ids de células, centro de cámara, destino…). */
+const myCells = (ids, f) => ids.map(id => S.byId.get(id)).filter(c => c && !c.dead && c.team === ACT && (!f || f(c)));
+function dispatch(type, extra) {
+  const cmd = Object.assign({ type, ids: [...S.sel], cc: camCenter() }, extra || {});
+  if (NET.on) NET.send(cmd); else applyCmd(ME, cmd);
+}
+function applyCmd(slot, cmd) {
+  if (!S || S.over) return; const T = S.teams[slot]; if (!T || T.ai) return;
+  const pa = ACT; ACT = slot; CMD = cmd;
+  try { const f = CMDS[cmd.type]; if (f) f(cmd); } finally { ACT = pa; CMD = null; }
+}
 function cellAt(wx, wy, f, pad) {
   let best = null, bd = 1e9;
   for (const c of S.cells) {
@@ -1350,136 +1373,149 @@ function cellAt(wx, wy, f, pad) {
   }
   return best;
 }
-function issue(wx, wy) {
-  const ids = [...S.sel].map(id => S.byId.get(id)).filter(c => c && !c.struct);
+function x_order(cmd) {
+  const ids = myCells(cmd.ids, c => !c.struct);
   if (!ids.length) return;
-  const e = cellAt(wx, wy, c => c.team !== 0, 10);
-  if (e) { ids.forEach(c => c.order = { type: 'attack', id: e.id }); burst(e.x, e.y, 6, '#ffffff'); return; }
+  const e = cmd.eid ? S.byId.get(cmd.eid) : null;
+  if (e && !e.dead && e.team !== ACT) { ids.forEach(c => c.order = { type: 'attack', id: e.id }); burst(e.x, e.y, 6, '#ffffff'); return; }
+  const wx = cmd.x, wy = cmd.y;
   ids.forEach((c, i) => {
     const a = i * 2.4, r = Math.sqrt(i) * 11;
     c.order = { type: 'move', x: clamp(wx + Math.cos(a) * r, 10, W - 10), y: clamp(wy + Math.sin(a) * r, 10, H - 10) };
   });
-  burst(wx, wy, 6, TEAM_COL[0]);
+  burst(wx, wy, 6, TEAM_COL[ACT]);
+}
+function issue(wx, wy) {
+  if (![...S.sel].some(id => { const c = S.byId.get(id); return c && !c.struct; })) return;
+  const e = cellAt(wx, wy, c => c.team !== ME, 10);
+  dispatch('order', { x: wx, y: wy, eid: e ? e.id : 0 });
 }
 function ready() { return S && started && !S.over && !S.modal; }
-function divide() {
-  if (!ready()) return;
-  Snd.sfx('pop');
-  const T = S.teams[0], cost = Math.ceil(18 * T.mods.divCost);
-  if (count(0) >= capOf(0)) { toast('Llegaste al máximo de unidades (' + capOf(0) + '). Fusionar células o construir estructuras libera lugar.'); return; }
-  if (T.nut < cost) { toast('Faltan nutrientes: necesitás ' + cost + '.'); return; }
-  if (T.en < 2) { toast('Falta energía: ponete cerca de una fuente magenta.'); return; }
-  const sel = [...S.sel].map(id => S.byId.get(id)).filter(c => c && !c.struct);
-  const p = sel.length ? sel[Math.floor(R() * sel.length)] : pickParent(0);
+function x_divide() {
+  if (ACT === ME) Snd.sfx('pop');
+  const T = S.teams[ACT], cost = Math.ceil(18 * T.mods.divCost);
+  if (count(ACT) >= capOf(ACT)) { tell('Llegaste al máximo de unidades (' + capOf(ACT) + '). Fusionar células o construir estructuras libera lugar.'); return; }
+  if (T.nut < cost) { tell('Faltan nutrientes: necesitás ' + cost + '.'); return; }
+  if (T.en < 2) { tell('Falta energía: ponete cerca de una fuente magenta.'); return; }
+  const sel = myCells(CMD.ids, c => !c.struct);
+  const p = sel.length ? sel[Math.floor(R() * sel.length)] : pickParent(ACT);
   if (!p) return;
   T.nut -= cost; T.en -= 2;
-  birth(p); burst(p.x, p.y, 8, TEAM_COL[0]);
+  birth(p); burst(p.x, p.y, 8, TEAM_COL[ACT]);
 }
-function boost() {
-  if (!ready()) return;
-  const T = S.teams[0];
-  if (S.boostT > 0) return;
-  if (T.en < 15) { toast('Falta energía para el impulso.'); return; }
-  T.en -= 15; S.boostT = 6; toast('Impulso: +60% de velocidad por 6 segundos.');
+function divide() { if (ready()) dispatch('divide'); }
+function x_boost() {
+  const T = S.teams[ACT];
+  if (T.boostT > 0) return;
+  if (T.en < 15) { tell('Falta energía para el impulso.'); return; }
+  T.en -= 15; T.boostT = 6; tell('Impulso: +60% de velocidad por 6 segundos.');
 }
-function differentiate(type) {
-  if (!ready()) return;
-  const T = S.teams[0];
-  let list = [...S.sel].map(id => S.byId.get(id)).filter(c => c && !c.org && !c.struct && c.type !== type);
+function boost() { if (ready()) dispatch('boost'); }
+function x_spec(cmd) {
+  const T = S.teams[ACT], type = cmd.ty;
+  if (!TY[type]) return;
+  let list = myCells(cmd.ids, c => !c.org && !c.struct && c.type !== type);
   if (!list.length) {
-    const cc = camCenter();
-    list = S.cells.filter(c => c.team === 0 && !c.dead && !c.org && !c.struct && c.type === 'basal').sort((a, b) => Math.hypot(a.x - cc.x, a.y - cc.y) - Math.hypot(b.x - cc.x, b.y - cc.y)).slice(0, 3);
-    if (list.length) toast('Sin selección: se especializan las 3 células basales más cercanas al centro de la pantalla.');
+    const cc = cmd.cc;
+    list = S.cells.filter(c => c.team === ACT && !c.dead && !c.org && !c.struct && c.type === 'basal').sort((a, b) => Math.hypot(a.x - cc.x, a.y - cc.y) - Math.hypot(b.x - cc.x, b.y - cc.y)).slice(0, 3);
+    if (list.length) tell('Sin selección: se especializan las 3 células basales más cercanas al centro de la pantalla.');
   }
-  if (!list.length) { toast('No hay células basales para especializar.'); return; }
+  if (!list.length) { tell('No hay células basales para especializar.'); return; }
   let n = 0;
   for (const c of list) { if (T.nut < 10) break; T.nut -= 10; c.type = type; calc(c); burst(c.x, c.y, 6, TCOL[type]); n++; }
-  if (!n) toast('Faltan nutrientes: cada diferenciación cuesta 10.');
-  else toast(n + ' célula(s) ahora son ' + TY[type].n.toLowerCase() + 's.');
+  if (!n) tell('Faltan nutrientes: cada diferenciación cuesta 10.');
+  else tell(n + ' célula(s) ahora son ' + TY[type].n.toLowerCase() + 's.');
 }
-function doFuse() {
-  if (!ready() || !S.fusion) return;
-  const T = S.teams[0];
-  let list = [...S.sel].map(id => S.byId.get(id)).filter(c => c && !c.org && !c.struct);
+function differentiate(type) { if (ready()) dispatch('spec', { ty: type }); }
+function x_fuse(cmd) {
+  const T = S.teams[ACT]; if (!T.fusion) return;
+  let list = myCells(cmd.ids, c => !c.org && !c.struct);
   if (list.length < 4) {
-    const cc = camCenter();
-    list = S.cells.filter(c => c.team === 0 && !c.dead && !c.org && !c.struct).sort((a, b) => Math.hypot(a.x - cc.x, a.y - cc.y) - Math.hypot(b.x - cc.x, b.y - cc.y)).slice(0, 8);
-    if (list.length >= 4) toast('Sin selección: se fusionan las ' + list.length + ' células más cercanas al centro de la pantalla.');
+    const cc = cmd.cc;
+    list = S.cells.filter(c => c.team === ACT && !c.dead && !c.org && !c.struct).sort((a, b) => Math.hypot(a.x - cc.x, a.y - cc.y) - Math.hypot(b.x - cc.x, b.y - cc.y)).slice(0, 8);
+    if (list.length >= 4) tell('Sin selección: se fusionan las ' + list.length + ' células más cercanas al centro de la pantalla.');
   }
   const groups = fuseGroups(list, 12);
-  if (!groups.length) { toast('Seleccioná al menos 4 células sin fusionar.'); return; }
+  if (!groups.length) { tell('Seleccioná al menos 4 células sin fusionar.'); return; }
   let made = 0;
-  for (const g of groups) { if (T.en < 10) break; T.en -= 10; const o = fuse(g); S.sel.add(o.id); made++; }
-  if (!made) toast('Falta energía: cada organismo cuesta 10.');
-  else toast(made + ' organismo(s) pluricelular(es). Los tipos de célula que fusionaste definen sus fortalezas.');
+  for (const g of groups) { if (T.en < 10) break; T.en -= 10; const o = fuse(g); if (ACT === ME) S.sel.add(o.id); made++; }
+  if (!made) tell('Falta energía: cada organismo cuesta 10.');
+  else tell(made + ' organismo(s) pluricelular(es). Los tipos de célula que fusionaste definen sus fortalezas.');
 }
-function sowCost() { const T = S.teams[0]; return (T.branch === 'foto' || T.branch2 === 'foto') ? 18 : 30; }
-function sow() {
-  if (!ready() || !S.teams[0].branch) { if (ready()) toast('Elegí tu primera mutación para poder sembrar.'); return; }
-  const T = S.teams[0], cost = sowCost();
-  if (S.meadows.filter(m => m.own === 0).length >= 4) { toast('Máximo 4 parches sembrados.'); return; }
-  if (T.nut < cost || T.en < 5) { toast('Sembrar cuesta ' + cost + ' nutrientes y 5 de energía.'); return; }
-  const sel = [...S.sel].map(id => S.byId.get(id)).filter(c => c && !c.struct);
-  let x, y; if (sel.length) { x = sel.reduce((a, c) => a + c.x, 0) / sel.length; y = sel.reduce((a, c) => a + c.y, 0) / sel.length; } else { const cc = camCenter(); x = cc.x; y = cc.y; }
+function doFuse() { if (ready() && S.teams[ME].fusion) dispatch('fuse'); }
+function sowCost(team) { const T = S.teams[team == null ? ACT : team]; return (T.branch === 'foto' || T.branch2 === 'foto') ? 18 : 30; }
+function x_sow(cmd) {
+  const T = S.teams[ACT]; if (!T.branch) { tell('Elegí tu primera mutación para poder sembrar.'); return; }
+  const cost = sowCost();
+  if (S.meadows.filter(m => m.own === ACT).length >= 4) { tell('Máximo 4 parches sembrados.'); return; }
+  if (T.nut < cost || T.en < 5) { tell('Sembrar cuesta ' + cost + ' nutrientes y 5 de energía.'); return; }
+  const sel = myCells(cmd.ids, c => !c.struct);
+  let x, y; if (sel.length) { x = sel.reduce((a, c) => a + c.x, 0) / sel.length; y = sel.reduce((a, c) => a + c.y, 0) / sel.length; } else { x = cmd.cc.x; y = cmd.cc.y; }
   T.nut -= cost; T.en -= 5;
-  const m = mkMeadow(clamp(x, 60, W - 60), clamp(y, 60, H - 60), 30, 0); m.tr = 100; S.meadows.push(m);
-  burst(m.x, m.y, 14, '#5cc04a'); toast('Sembraste un parche vegetal: crece y da nutrientes. Las células fotosintéticas ganan energía y curación ahí.');
+  const m = mkMeadow(clamp(x, 60, W - 60), clamp(y, 60, H - 60), 30, ACT); m.tr = 100; S.meadows.push(m);
+  burst(m.x, m.y, 14, '#5cc04a'); tell('Sembraste un parche vegetal: crece y da nutrientes. Las células fotosintéticas ganan energía y curación ahí.');
 }
-const canFuseBranches = () => { const T = S.teams[0]; return !!(T.branch && !T.branch2 && T.mutCount >= 4 && S.stage >= 1); };
+function sow() { if (!ready()) return; if (!S.teams[ME].branch) { toast('Elegí tu primera mutación para poder sembrar.'); return; } dispatch('sow'); }
+const canFuseBranches = (team) => { const T = S.teams[team == null ? ME : team]; return !!(T.branch && !T.branch2 && T.mutCount >= 4 && T.stage >= 1); };
 function openBranchFusion() {
   if (!ready() || !canFuseBranches()) return;
-  const T = S.teams[0]; S.paused = true;
+  const T = S.teams[ME]; S.paused = true;
   const opts = ['pred', 'para', 'foto', 'colo'].filter(b => b !== T.branch);
   dialog('Fusionar ramas', '<p>Combiná tu rama (' + BR[T.branch].n + ') con otra. Ganás una mutación híbrida con aspecto propio, y desde ahora aparecen mutaciones de las dos ramas. Cuesta 40 nutrientes y 10 de energía.</p>',
-    opts.map(b => { const h = HYBR[hyKey(T.branch, b)]; return { t: BR[b].n + ': ' + h.n + ' (' + h.d + ')', fn: () => doBranchFusion(b) }; }).concat([{ t: 'Cancelar', fn: () => { S.paused = false; } }]));
+    opts.map(b => { const h = HYBR[hyKey(T.branch, b)]; return { t: BR[b].n + ': ' + h.n + ' (' + h.d + ')', fn: () => { dispatch('bfuse', { b }); S.paused = false; } }; }).concat([{ t: 'Cancelar', fn: () => { S.paused = false; } }]));
 }
-function doBranchFusion(b) {
-  const T = S.teams[0];
-  if (T.nut < 40 || T.en < 10) { toast('Faltan recursos: 40 nutrientes y 10 de energía.'); S.paused = false; return; }
+function x_bfuse(cmd) {
+  const T = S.teams[ACT], b = cmd.b;
+  if (!canFuseBranches(ACT) || !['pred', 'para', 'foto', 'colo'].includes(b) || b === T.branch) return;
+  if (T.nut < 40 || T.en < 10) { tell('Faltan recursos: 40 nutrientes y 10 de energía.'); return; }
   T.nut -= 40; T.en -= 10; T.branch2 = b;
   const h = HYBR[hyKey(T.branch, b)], m = MUT.find(x => x.id === h.id);
-  applyMut(0, m);
-  for (const c of S.cells) if (c.team === 0 && !c.struct) { burst(c.x, c.y, 8, BR[T.branch].c); burst(c.x, c.y, 8, BR[b].c); }
-  toast('Ramas fusionadas: ' + BR[T.branch].n + ' + ' + BR[b].n + ' = ' + h.n + '.'); S.paused = false;
+  applyMut(ACT, m);
+  for (const c of S.cells) if (c.team === ACT && !c.struct) { burst(c.x, c.y, 8, BR[T.branch].c); burst(c.x, c.y, 8, BR[b].c); }
+  tell('Ramas fusionadas: ' + BR[T.branch].n + ' + ' + BR[b].n + ' = ' + h.n + '.');
 }
 function reqTxt(sd) { return Object.keys(sd.need).map(k => sd.need[k] + ' ' + TY[k].n.toLowerCase() + (sd.need[k] > 1 ? 's' : '')).join(' + '); }
-function buildStruct(kind) {
-  if (!ready() || S.stage < 1) return;
-  const sd = ST[kind], T = S.teams[0], cc = camCenter();
-  const units = S.cells.filter(c => c.team === 0 && !c.dead && !c.org && !c.struct);
-  const key = c => (S.sel.has(c.id) ? -1e6 : 0) + Math.hypot(c.x - cc.x, c.y - cc.y);
+function x_build(cmd) {
+  const T = S.teams[ACT]; if (T.stage < 1) return;
+  const sd = ST[cmd.kind]; if (!sd) return;
+  const cc = cmd.cc, selSet = new Set(cmd.ids);
+  const units = S.cells.filter(c => c.team === ACT && !c.dead && !c.org && !c.struct);
+  const key = c => (selSet.has(c.id) ? -1e6 : 0) + Math.hypot(c.x - cc.x, c.y - cc.y);
   const used = [], conv = [];
   for (const ty in sd.need) {
     const want = sd.need[ty];
     let take = units.filter(c => c.type === ty && !used.includes(c)).sort((a, b) => key(a) - key(b)).slice(0, want);
     if (take.length < want) {
       const rest = units.filter(c => !used.includes(c) && !take.includes(c) && c.type === 'basal').sort((a, b) => key(a) - key(b)).slice(0, want - take.length);
-      if (take.length + rest.length < want) { toast('Necesitás ' + reqTxt(sd) + ' (o células basales para convertir).'); return; }
+      if (take.length + rest.length < want) { tell('Necesitás ' + reqTxt(sd) + ' (o células basales para convertir).'); return; }
       rest.forEach(c => conv.push({ c, ty })); take = take.concat(rest);
     }
     used.push(...take);
   }
   const cost = sd.nut + 10 * conv.length;
-  if (T.nut < cost) { toast('Faltan nutrientes: ' + cost + (conv.length ? ' (incluye ' + conv.length + ' especializaciones)' : '') + '.'); return; }
+  if (T.nut < cost) { tell('Faltan nutrientes: ' + cost + (conv.length ? ' (incluye ' + conv.length + ' especializaciones)' : '') + '.'); return; }
   T.nut -= cost; conv.forEach(o => { o.c.type = o.ty; });
   let cx = 0, cy = 0;
-  used.forEach(c => { cx += c.x; cy += c.y; c.dead = true; S.sel.delete(c.id); });
-  const s2 = mkStruct(0, cx / used.length, cy / used.length, kind); S.sel = new Set([s2.id]);
-  toast(sd.n + ' en construcción.');
+  used.forEach(c => { cx += c.x; cy += c.y; c.dead = true; if (ACT === ME) S.sel.delete(c.id); });
+  const s2 = mkStruct(ACT, cx / used.length, cy / used.length, cmd.kind); if (ACT === ME) S.sel = new Set([s2.id]);
+  tell(sd.n + ' en construcción.');
 }
-function produceUnit(ty) {
-  if (!ready()) return;
-  const s2 = [...S.sel].map(id => S.byId.get(id)).find(c => c && c.struct && c.prog >= 1 && ST[c.struct].prod && ST[c.struct].prod.includes(ty));
-  if (!s2) { toast('Seleccioná una estructura de producción terminada.'); return; }
-  const T = S.teams[0], prot = (ty === 'guerr' || ty === 'acora') ? Math.ceil(UCOST[ty] * .15) : 0, cost = Math.ceil(UCOST[ty] * T.mods.divCost * (prot ? .65 : 1));
-  if (T.prot < prot) { toast('Faltan proteínas (' + prot + '): construí un Retículo rugoso con ribosomas o absorbé presas.'); return; }
-  if (s2.queue.length >= 5) { toast('La cola está llena.'); return; }
-  if (count(0) + s2.queue.length >= capOf(0)) { toast('Llegaste al máximo de unidades.'); return; }
-  if (T.nut < cost) { toast('Faltan nutrientes: ' + cost + '.'); return; }
-  if (T.en < 2) { toast('Falta energía.'); return; }
+function buildStruct(kind) { if (ready() && S.teams[ME].stage >= 1) dispatch('build', { kind }); }
+function x_produce(cmd) {
+  const ty = cmd.ty; if (!UCOST[ty]) return;
+  const s2 = myCells(cmd.ids).find(c => c.struct && c.prog >= 1 && ST[c.struct].prod && ST[c.struct].prod.includes(ty));
+  if (!s2) { tell('Seleccioná una estructura de producción terminada.'); return; }
+  const T = S.teams[ACT], prot = (ty === 'guerr' || ty === 'acora') ? Math.ceil(UCOST[ty] * .15) : 0, cost = Math.ceil(UCOST[ty] * T.mods.divCost * (prot ? .65 : 1));
+  if (T.prot < prot) { tell('Faltan proteínas (' + prot + '): construí un Retículo rugoso con ribosomas o absorbé presas.'); return; }
+  if (s2.queue.length >= 5) { tell('La cola está llena.'); return; }
+  if (count(ACT) + s2.queue.length >= capOf(ACT)) { tell('Llegaste al máximo de unidades.'); return; }
+  if (T.nut < cost) { tell('Faltan nutrientes: ' + cost + '.'); return; }
+  if (T.en < 2) { tell('Falta energía.'); return; }
   T.nut -= cost; T.en -= 2; T.prot -= prot; s2.queue.push({ type: ty, t: 4 });
 }
-function selectAll() { if (!S) return; S.sel = new Set(S.cells.filter(c => c.team === 0 && !c.struct).map(c => c.id)); }
+function produceUnit(ty) { if (ready()) dispatch('produce', { ty }); }
+const CMDS = { order: x_order, divide: x_divide, boost: x_boost, spec: x_spec, fuse: x_fuse, sow: x_sow, bfuse: x_bfuse, build: x_build, produce: x_produce, mut: x_mut, ab: x_ab };
+function selectAll() { if (!S) return; S.sel = new Set(S.cells.filter(c => c.team === ME && !c.struct).map(c => c.id)); }
 function togglePause() { if (!started || S.over || S.modal) return; S.paused = !S.paused; }
 
 /* ---------- Cámara ---------- */
@@ -1534,17 +1570,17 @@ function endPtr(e) {
     if (box && e.button === 0) {
       const b = box; box = null;
       if (Math.abs(b.x1 - b.x0) < 6 && Math.abs(b.y1 - b.y0) < 6) {
-        const w = toWorld(p.x, p.y), c = cellAt(w.x, w.y, c => c.team === 0, 6);
+        const w = toWorld(p.x, p.y), c = cellAt(w.x, w.y, c => c.team === ME, 6);
         if (c) { if (b.add) { S.sel.has(c.id) ? S.sel.delete(c.id) : S.sel.add(c.id); } else S.sel = new Set([c.id]); }
         else if (!b.add) S.sel.clear();
       } else {
         const a = toWorld(Math.min(b.x0, b.x1), Math.min(b.y0, b.y1)), z = toWorld(Math.max(b.x0, b.x1), Math.max(b.y0, b.y1));
         if (!b.add) S.sel.clear();
-        for (const c of S.cells) if (c.team === 0 && c.x >= a.x && c.x <= z.x && c.y >= a.y && c.y <= z.y && !c.struct) S.sel.add(c.id);
+        for (const c of S.cells) if (c.team === ME && c.x >= a.x && c.x <= z.x && c.y >= a.y && c.y <= z.y && !c.struct) S.sel.add(c.id);
       }
     }
   } else if (!q.moved && !multi && ptrs.size === 1) {
-    const w = toWorld(p.x, p.y), own = cellAt(w.x, w.y, c => c.team === 0, 12);
+    const w = toWorld(p.x, p.y), own = cellAt(w.x, w.y, c => c.team === ME, 12);
     if (own) { S.sel.has(own.id) ? S.sel.delete(own.id) : S.sel.add(own.id); }
     else if (S.sel.size) issue(w.x, w.y);
   }
@@ -1629,12 +1665,12 @@ function dialog(title, html, btns) {
   $('dlg').classList.add('show');
 }
 function summary() {
-  const T = S.teams[0], mins = Math.floor(S.t / 60), secs = String(Math.floor(S.t % 60)).padStart(2, '0');
-  const orgs = S.cells.filter(c => c.team === 0 && c.org).length;
-  return '<div class="stats"><div><b>' + mins + ':' + secs + '</b>Tiempo</div><div><b>' + Math.round((S.share || 0) * 100) + '%</b>Del total de vida</div><div><b>' + orgs + '</b>Organismos</div><div><b>' + S.kills + '</b>Rivales absorbidas</div><div><b>' + (T.branch ? BR[T.branch].n : 'Sin rama') + '</b>Rama</div><div><b>' + T.mutCount + '</b>Mutaciones</div></div>';
+  const T = S.teams[ME], mins = Math.floor(S.t / 60), secs = String(Math.floor(S.t % 60)).padStart(2, '0');
+  const orgs = S.cells.filter(c => c.team === ME && c.org).length;
+  return '<div class="stats"><div><b>' + mins + ':' + secs + '</b>Tiempo</div><div><b>' + Math.round((S.teams[ME].share || 0) * 100) + '%</b>Del total de vida</div><div><b>' + orgs + '</b>Organismos</div><div><b>' + S.teams[ME].kills + '</b>Rivales absorbidas</div><div><b>' + (T.branch ? BR[T.branch].n : 'Sin rama') + '</b>Rama</div><div><b>' + T.mutCount + '</b>Mutaciones</div></div>';
 }
 function saveLineage() {
-  const T = S.teams[0];
+  const T = S.teams[ME];
   try { localStorage.setItem('evo_lineage', JSON.stringify({ v: 1, from: 1, branch: T.branch || null, tier: cellTier(T), mutCount: T.mutCount, owned: T.owned.slice(), seed: S.seed, at: Date.now() })); } catch (e) {}
 }
 function toMenu() {
@@ -1644,12 +1680,13 @@ function toMenu() {
 function showEvolve() {
   if (!S.canEvolve || S.over) return;
   S.paused = true;
-  const T = S.teams[0], cl = T.branch ? CLASE[T.branch] : 'Terrestres';
+  const T = S.teams[ME], cl = T.branch ? CLASE[T.branch] : 'Terrestres';
   dialog('Conquista asegurada', summary() + '<p>Tu especie dominó el charco. Tu rama te lleva a la clase <b>' + cl + '</b> en la Era 2. Tu ADN se hereda: cada linaje completado te da más nutrientes iniciales (hasta 3 linajes).</p><p>La Era 2 ya es jugable: <a href="era2-animales.html#' + (E2H[T.branch] || 'ter') + '" target="_blank" rel="noopener">abrila con tu clase</a>. Tu legado queda guardado.</p>', [
     { t: 'Evolucionar y guardar legado', primary: true, fn: () => { const L = loadLegacy(); L.n = (L.n || 0) + 1; L.last = T.branch; saveLegacy(L); saveLineage(); try { localStorage.removeItem(SAVE_KEY); } catch (e) {} S.over = true; toMenu(); } },
     { t: 'Seguir conquistando', fn: () => { S.paused = false; } }
   ]);
 }
+function finish(winner) { if (S.over) return; S.winner = winner; endGame(winner === ME ? 'win' : 'lose'); }
 function endGame(kind) {
   if (S.over) return; S.over = true; try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
   const win = kind === 'win';
@@ -1712,14 +1749,14 @@ function restoreGame(d) {
   S.abBtns = []; $('abil').innerHTML = ''; abButtons();
   S.modal = false; S.paused = true; started = true; simAcc = 0; lastSaveT = S.t;
   $('menu').classList.remove('show'); setSpd(S.spd || 1);
-  if (S.teams[0].pending > 0) openMutation();
+  if (S.teams[ME].pending > 0) openMutation();
   toast('Partida cargada. Tocá Pausa para seguir.');
 }
 function refreshContinue() {
   const d = readSave(), b = $('contBtn'), i = $('saveInfo');
   b.style.display = i.style.display = d ? '' : 'none';
   if (d) {
-    const T = d.S.teams[0], m = Math.floor(d.S.t / 60), nC = d.S.cells.filter(c => c.team === 0 && !c.dead && !c.struct).length;
+    const T = d.S.teams[ME], m = Math.floor(d.S.t / 60), nC = d.S.cells.filter(c => c.team === ME && !c.dead && !c.struct).length;
     i.textContent = 'Guardada ' + new Date(d.at).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) + ' · ' + m + ' min · ' + nC + ' unidades · ' + T.mutCount + ' mutaciones · semilla ' + d.S.seed;
   }
 }
@@ -1848,7 +1885,7 @@ function drawStruct(c, tt, x) {
   x.globalAlpha = 1;
   if (pr < 1) { x.strokeStyle = P.ink; x.lineWidth = 2.5; x.beginPath(); x.arc(0, 0, r + 9, -Math.PI / 2, -Math.PI / 2 + TAU * pr); x.stroke(); }
   else if (c.queue && c.queue.length) { x.fillStyle = P.ink; x.font = '600 10px "IBM Plex Sans",sans-serif'; x.textAlign = 'center'; x.fillText('×' + c.queue.length, 0, r + 17); }
-  if (c.team === 0 && S.sel.has(c.id)) { x.strokeStyle = '#ffffff'; x.lineWidth = 1.8; x.setLineDash([4, 3]); x.beginPath(); x.arc(0, 0, r + 9, 0, TAU); x.stroke(); x.setLineDash([]); }
+  if (c.team === ME && S.sel.has(c.id)) { x.strokeStyle = '#ffffff'; x.lineWidth = 1.8; x.setLineDash([4, 3]); x.beginPath(); x.arc(0, 0, r + 9, 0, TAU); x.stroke(); x.setLineDash([]); }
   if (c.hp < c.mhp) { const w = 26; x.fillStyle = 'rgba(0,0,0,.4)'; x.fillRect(-w / 2, -r - 12, w, 3); x.fillStyle = c.hp / c.mhp > .4 ? '#3fbf6a' : '#e0453a'; x.fillRect(-w / 2, -r - 12, w * Math.max(0, c.hp / c.mhp), 3); }
   x.restore();
 }
@@ -1916,7 +1953,7 @@ function drawCell(c, tt, x) {
   let nA = 0, nB = 0; for (const k in vr) if (os.has(k)) { if (vr[k] === 'A') nA++; else nB++; }
   x.save(); x.translate(c.x, c.y);
   { const hg = x.createRadialGradient(0, 0, r * .7, 0, 0, r * 1.9); hg.addColorStop(0, col + '55'); hg.addColorStop(1, col + '00'); x.fillStyle = hg; x.beginPath(); x.arc(0, 0, r * 1.9, 0, TAU); x.fill(); }
-  if (S.camoT > 0 && c.team === 0) x.globalAlpha = .45;
+  if (S.teams[c.team].camoT > 0) x.globalAlpha = .45;
   for (const k in AURA) if (os.has(k)) AURA[k](x, r, tt);
   if (os.has('mimetismo')) x.globalAlpha = .7;
   const PAINT = paintReady();
@@ -1975,7 +2012,7 @@ function drawCell(c, tt, x) {
   if (c.shield > 0) { x.strokeStyle = 'rgba(120,230,255,.9)'; x.lineWidth = 2.6; x.beginPath(); x.arc(0, 0, r + 5, 0, TAU); x.stroke(); }
   if (c.cyst > 0) { x.fillStyle = 'rgba(255,240,190,.55)'; x.strokeStyle = '#a07a2a'; x.lineWidth = 3; x.beginPath(); x.arc(0, 0, r + 4, 0, TAU); x.fill(); x.stroke(); }
   if (c.dash > 0) { x.strokeStyle = 'rgba(255,255,255,.7)'; x.lineWidth = 2; x.beginPath(); x.moveTo(-r * 1.2, 0); x.lineTo(-r * 2.8, 0); x.stroke(); }
-  if (c.id >= 0 && c.team === 0 && S.sel.has(c.id)) { x.strokeStyle = '#ffffff'; x.lineWidth = 1.6; x.setLineDash([4, 3]); x.beginPath(); x.arc(0, 0, r + 8, 0, TAU); x.stroke(); x.setLineDash([]); }
+  if (c.id >= 0 && c.team === ME && S.sel.has(c.id)) { x.strokeStyle = '#ffffff'; x.lineWidth = 1.6; x.setLineDash([4, 3]); x.beginPath(); x.arc(0, 0, r + 8, 0, TAU); x.stroke(); x.setLineDash([]); }
   if (c.id >= 0 && c.hp < c.mhp) { const w = 18 + (c.org ? r * .6 : 0); x.fillStyle = 'rgba(0,0,0,.4)'; x.fillRect(-w / 2, -r - 11, w, 3); x.fillStyle = c.hp / c.mhp > .4 ? '#3fbf6a' : '#e0453a'; x.fillRect(-w / 2, -r - 11, w * Math.max(0, c.hp / c.mhp), 3); }
   x.restore();
 }
@@ -2013,7 +2050,7 @@ function render() {
   for (const mw of S.meadows) {
     if (!vis(mw.x, mw.y)) continue;
     const g = ctx.createRadialGradient(mw.x, mw.y, 6, mw.x, mw.y, mw.r); g.addColorStop(0, 'rgba(80,170,70,.38)'); g.addColorStop(1, 'rgba(80,170,70,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(mw.x, mw.y, mw.r, 0, TAU); ctx.fill();
-    if (mw.own === 0) { ctx.strokeStyle = 'rgba(18,149,143,.8)'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.arc(mw.x, mw.y, mw.r, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+    if (mw.own === ME) { ctx.strokeStyle = 'rgba(18,149,143,.8)'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.arc(mw.x, mw.y, mw.r, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
     for (const lf of mw.leaves) { const px = mw.x + Math.cos(lf.a) * lf.d * mw.r * .9, py = mw.y + Math.sin(lf.a) * lf.d * mw.r * .9, sw = Math.sin(tt * 1.4 + lf.ph) * .35; ctx.save(); ctx.translate(px, py); ctx.rotate(-Math.PI / 2 + sw); ctx.fillStyle = '#4faa44'; ctx.strokeStyle = '#2a6a2a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(0, -9 * lf.s, 4 * lf.s, 11 * lf.s, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#7fd66a'; ctx.beginPath(); ctx.ellipse(1.5 * lf.s, -12 * lf.s, 1.6 * lf.s, 5 * lf.s, 0, 0, TAU); ctx.fill(); ctx.restore(); }
   }
   for (const rf of S.reefs) {
@@ -2094,8 +2131,8 @@ function renderMini() {
 /* ---------- Panel de especie (descendencia con modificación) ---------- */
 const prevCanvases = [];
 function fakeCell(type, org) {
-  const T = S.teams[0];
-  const c = { id: -1, team: 0, x: 0, y: 0, vx: 0, vy: 0, type, ph: 1.3, face: 0, mv: 0, hp: 1, mhp: 1, poisonT: 0, food: 100, org: org || null, g: { v: 1, h: 1, d: 1 }, frT: 0 };
+  const T = S.teams[ME];
+  const c = { id: -1, team: ME, x: 0, y: 0, vx: 0, vy: 0, type, ph: 1.3, face: 0, mv: 0, hp: 1, mhp: 1, poisonT: 0, food: 100, org: org || null, g: { v: 1, h: 1, d: 1 }, frT: 0 };
   c.r = org ? 9 + 3.4 * Math.sqrt(org.n) : TY[type].r + Math.min(3, T.mutCount * .25);
   return c;
 }
@@ -2104,7 +2141,7 @@ function buildPreview() {
   const sample = { n: 7, comp: {}, lobes: [], hp0: 0, dmg0: 0, spd: 0, gather: 0, heal: 0, acora: 0 };
   ['guerr', 'guerr', 'recol', 'recol', 'acora', 'simb', 'explo'].forEach((t, i) => sample.lobes.push({ t, a: i * 2.4, rr: Math.sqrt(i + .5) * 4.4 }));
   const items = [['basal', 'Basal'], ['recol', 'Recolectora'], ['guerr', 'Guerrera'], ['explo', 'Exploradora'], ['acora', 'Acorazada'], ['simb', 'Simbionte']];
-  if (S.fusion) items.push(['org', 'Organismo']);
+  if (S.teams[ME].fusion) items.push(['org', 'Organismo']);
   items.forEach(([k, n]) => {
     const f = document.createElement('figure'), cn = document.createElement('canvas');
     const w = 120, h = 100; cn.width = w * 2; cn.height = h * 2; cn.style.width = w + 'px'; cn.style.height = h + 'px';
@@ -2116,7 +2153,7 @@ function renderPreview() {
   const tt = performance.now() / 1000;
   for (const p of prevCanvases) {
     const x = p.cn.getContext('2d'), s = p.k === 'org' ? 1.9 : 2.4;
-    p.cell.r = p.k === 'org' ? 9 + 3.4 * Math.sqrt(7) : TY[p.k].r + Math.min(3, S.teams[0].mutCount * .25);
+    p.cell.r = p.k === 'org' ? 9 + 3.4 * Math.sqrt(7) : TY[p.k].r + Math.min(3, S.teams[ME].mutCount * .25);
     x.setTransform(2, 0, 0, 2, 0, 0); x.clearRect(0, 0, 120, 100);
     x.save(); x.translate(68, 50); x.scale(s, s); drawCell(p.cell, tt, x); x.restore();
   }
@@ -2131,7 +2168,7 @@ function drawChart() {
   x.globalAlpha = .3; x.strokeStyle = P.ink; x.lineWidth = 1; x.beginPath(); x.moveTo(30, 10); x.lineTo(30, h - 20); x.lineTo(w - 8, h - 20); x.stroke(); x.globalAlpha = 1;
   x.fillText(Math.round(mx), 2, 18); x.fillText('0', 14, h - 22);
   for (let t = 0; t < S.teams.length; t++) {
-    x.strokeStyle = TEAM_COL[t]; x.lineWidth = t === 0 ? 3 : 1.8; x.beginPath();
+    x.strokeStyle = TEAM_COL[t]; x.lineWidth = t === ME ? 3 : 1.8; x.beginPath();
     Hh.forEach((r, i) => { const px = 30 + i / (Hh.length - 1) * (w - 40), py = h - 20 - r[t] / mx * (h - 34); i ? x.lineTo(px, py) : x.moveTo(px, py); });
     x.stroke();
   }
@@ -2140,12 +2177,12 @@ function openSpecies() {
   if (!started || !S || S.over || $('sp').classList.contains('show')) return;
   if (S.modal && !$('sp').classList.contains('show')) return;
   S.modal = true; S.spWas = S.paused;
-  const T = S.teams[0];
+  const T = S.teams[ME];
   $('spInfo').textContent = T.branch ? 'Rama ' + BR[T.branch].n + ' · ' + T.mutCount + ' mutaciones. Todos los tipos de célula muestran tus mutaciones: así se ve la descendencia con modificación.' : 'Todavía no elegiste una rama. Acumulá ADN para tu primera mutación.';
-  const uni = S.cells.filter(c => c.team === 0 && !c.org), n = uni.length || 1;
+  const uni = S.cells.filter(c => c.team === ME && !c.org), n = uni.length || 1;
   const avg = k => uni.reduce((a, c) => a + c.g[k], 0) / n;
   const pc = v => (v >= 1 ? '+' : '') + Math.round((v - 1) * 100) + '%';
-  $('spGenes').innerHTML = '<div><b>' + pc(avg('v')) + '</b>Velocidad media (genes)</div><div><b>' + pc(avg('h')) + '</b>Vida media (genes)</div><div><b>' + pc(avg('d')) + '</b>Daño medio (genes)</div><div><b>' + (S.orgs || 0) + '</b>Organismos pluricelulares</div>';
+  $('spGenes').innerHTML = '<div><b>' + pc(avg('v')) + '</b>Velocidad media (genes)</div><div><b>' + pc(avg('h')) + '</b>Vida media (genes)</div><div><b>' + pc(avg('d')) + '</b>Daño medio (genes)</div><div><b>' + (S.teams[ME].orgs || 0) + '</b>Organismos pluricelulares</div>';
   const ml = $('spMuts'); ml.innerHTML = '';
   if (!T.owned.length) { ml.textContent = 'Sin mutaciones todavía.'; }
   T.owned.forEach(id => { const vm = id.indexOf(':') > 0 ? id.split(':') : null; const m = vm ? MUT.find(x => x.id === vm[0]) : (MUT.find(x => x.id === id) || FALLBACK); const s = document.createElement('span'); s.innerHTML = '<i class="tag" style="background:' + BR[m.br].c + '"></i>'; s.appendChild(document.createTextNode(vm ? 'Variante ' + vm[1] + ': ' + VAR[vm[0]][vm[1]].n : m.n)); ml.appendChild(s); });
@@ -2155,7 +2192,7 @@ function openSpecies() {
 }
 function closeSpecies() {
   previewOn = false; $('sp').classList.remove('show'); S.modal = false;
-  if (S.teams[0].pending > 0) openMutation();
+  if (S.teams[ME].pending > 0) openMutation();
 }
 
 /* ---------- HUD ---------- */
@@ -2175,40 +2212,45 @@ const AB = {
   drain: { n: 'Succión', ic: 'ventosas', cost: 5, cd: 15, d: 'Los haustorios drenan vida y nutrientes de rivales cercanos.', mut: ['ventosas', 'saqueo'] },
   prot: { n: 'Síntesis de proteínas', ic: 'mutrapida', cost: 3, cd: 18, d: 'Los ribosomas convierten 15 nutrientes en 6 de proteína.', mut: ['mutrapida'] }
 };
-const abLevel = k => AB[k].mut.filter(id => S.teams[0].os.has(id)).length;
-function abCells() { let l = [...S.sel].map(id => S.byId.get(id)).filter(c => c && !c.struct); if (!l.length) l = S.cells.filter(c => c.team === 0 && !c.struct && !c.dead); return l; }
+const abLevel = (k, team) => AB[k].mut.filter(id => S.teams[team == null ? ME : team].os.has(id)).length;
+function abCells() { let l = [...S.sel].map(id => S.byId.get(id)).filter(c => c && !c.struct); if (!l.length) l = S.cells.filter(c => c.team === ME && !c.struct && !c.dead); return l; }
 function aimPoint(cells) {
   if (lastAim && performance.now() - lastAimT < 8000) return lastAim;
   let cx = 0, cy = 0; cells.forEach(c => { cx += c.x; cy += c.y; }); cx /= cells.length; cy /= cells.length;
-  const e = nearestEnemy({ x: cx, y: cy, team: 0 }, 400); return e ? { x: e.x, y: e.y } : camCenter();
+  const e = nearestEnemy({ x: cx, y: cy, team: ME }, 400); return e ? { x: e.x, y: e.y } : camCenter();
 }
 function useAbility(k) {
-  if (!ready()) return; const T = S.teams[0], A = AB[k], lv = abLevel(k); if (!lv) return;
-  if ((S.abCd[k] || 0) > 0) { toast(A.n + ' se está recargando (' + Math.ceil(S.abCd[k]) + ' s).'); return; }
-  if (T.en < A.cost) { toast('Falta energía para ' + A.n.toLowerCase() + ': ' + A.cost + '.'); return; }
-  const cells = abCells(); if (!cells.length) return; const aim = aimPoint(cells); let ok = true;
+  if (!ready()) return; const T = S.teams[ME]; if (!AB[k] || !abLevel(k)) return;
+  const cells = abCells(); if (!cells.length) return;
+  dispatch('ab', { k, aim: aimPoint(cells) });
+}
+function x_ab(cmd) {
+  const k = cmd.k, A = AB[k]; if (!A) return; const T = S.teams[ACT], lv = abLevel(k, ACT); if (!lv) return;
+  if ((T.abCd[k] || 0) > 0) { tell(A.n + ' se está recargando (' + Math.ceil(T.abCd[k]) + ' s).'); return; }
+  if (T.en < A.cost) { tell('Falta energía para ' + A.n.toLowerCase() + ': ' + A.cost + '.'); return; }
+  let cells = myCells(cmd.ids, c => !c.struct); if (!cells.length) cells = S.cells.filter(c => c.team === ACT && !c.struct && !c.dead); if (!cells.length) return; const aim = cmd.aim; let ok = true;
   if (k === 'dash') { cells.forEach(c => { c.order = { type: 'move', x: aim.x + rnd(-14, 14), y: aim.y + rnd(-14, 14) }; c.dash = 1.2 + .25 * lv; }); }
   else if (k === 'engulf' || k === 'drain') {
     let hit = 0, reach = k === 'engulf' ? 30 : 60;
-    cells.forEach(c => { for (const e of S.cells) { if (e.dead || e.team === 0 || Math.hypot(e.x - c.x, e.y - c.y) > c.r + e.r + reach) continue; if (k === 'engulf') { hurt(e, 14 + 8 * lv, c); c.hp = Math.min(c.mhp, c.hp + 6 + 3 * lv); } else { hurt(e, 8 + 4 * lv, c); T.nut += 3; c.hp = Math.min(c.mhp, c.hp + 5); S.beams.push({ x1: e.x, y1: e.y, x2: c.x, y2: c.y, t: .35, c: '#c9a0ff' }); } hit++; S.rings.push({ x: e.x, y: e.y, r: 6, t: .4, c: k === 'engulf' ? '#ff6b6b' : '#c9a0ff' }); } });
-    if (!hit) { toast('No hay enemigos al alcance: acercate y repetí.'); ok = false; }
+    cells.forEach(c => { for (const e of S.cells) { if (e.dead || e.team === ACT || Math.hypot(e.x - c.x, e.y - c.y) > c.r + e.r + reach) continue; if (k === 'engulf') { hurt(e, 14 + 8 * lv, c); c.hp = Math.min(c.mhp, c.hp + 6 + 3 * lv); } else { hurt(e, 8 + 4 * lv, c); T.nut += 3; c.hp = Math.min(c.mhp, c.hp + 5); S.beams.push({ x1: e.x, y1: e.y, x2: c.x, y2: c.y, t: .35, c: '#c9a0ff' }); } hit++; S.rings.push({ x: e.x, y: e.y, r: 6, t: .4, c: k === 'engulf' ? '#ff6b6b' : '#c9a0ff' }); } });
+    if (!hit) { tell('No hay enemigos al alcance: acercate y repetí.'); ok = false; }
   }
-  else if (k === 'toxin') { let cx = 0, cy = 0; cells.forEach(c => { cx += c.x; cy += c.y; }); S.clouds.push({ x: aim.x, y: aim.y, r: 70 + 10 * lv, t: 5, dps: 5 + 2 * lv, ph: R() * 6 }); }
+  else if (k === 'toxin') { let cx = 0, cy = 0; cells.forEach(c => { cx += c.x; cy += c.y; }); S.clouds.push({ team: ACT, x: aim.x, y: aim.y, r: 70 + 10 * lv, t: 5, dps: 5 + 2 * lv, ph: R() * 6 }); }
   else if (k === 'shoot') {
-    let cx = 0, cy = 0; cells.forEach(c => { cx += c.x; cy += c.y; }); cx /= cells.length; cy /= cells.length; const e = nearestEnemy({ x: cx, y: cy, team: 0 }, 280);
-    if (!e) { toast('No hay enemigos cerca para el disparo.'); ok = false; } else { hurt(e, 24 + 10 * lv, cells[0]); S.beams.push({ x1: cx, y1: cy, x2: e.x, y2: e.y, t: .3, c: '#ff9a7a' }); S.rings.push({ x: e.x, y: e.y, r: 6, t: .4, c: '#ff9a7a' }); }
+    let cx = 0, cy = 0; cells.forEach(c => { cx += c.x; cy += c.y; }); cx /= cells.length; cy /= cells.length; const e = nearestEnemy({ x: cx, y: cy, team: ACT }, 280);
+    if (!e) { tell('No hay enemigos cerca para el disparo.'); ok = false; } else { hurt(e, 24 + 10 * lv, cells[0]); S.beams.push({ x1: cx, y1: cy, x2: e.x, y2: e.y, t: .3, c: '#ff9a7a' }); S.rings.push({ x: e.x, y: e.y, r: 6, t: .4, c: '#ff9a7a' }); }
   }
-  else if (k === 'atp') S.atpT = 6;
+  else if (k === 'atp') T.atpT = 6;
   else if (k === 'photo') { T.en += 10 + 4 * lv; T.nut += 8 + 3 * lv; cells.forEach(c => burst(c.x, c.y, 6, '#7fe070')); }
   else if (k === 'cyst') cells.forEach(c => { c.cyst = 4; c.order = null; });
   else if (k === 'shield') cells.forEach(c => { c.shield = 6; });
-  else if (k === 'rally') S.cells.filter(c => c.team === 0 && !c.struct).forEach(c => { c.order = { type: 'move', x: aim.x + rnd(-26, 26), y: aim.y + rnd(-26, 26) }; c.shield = Math.max(c.shield || 0, 3); });
-  else if (k === 'camo') S.camoT = 6;
-  else if (k === 'bud') { if (count(0) + 2 > capOf(0)) { toast('No hay lugar para más unidades.'); ok = false; } else for (let i = 0; i < 2; i++) { const p = pickParent(0); if (p) { const n = birth(p); burst(n.x, n.y, 8, TEAM_COL[0]); } } }
+  else if (k === 'rally') S.cells.filter(c => c.team === ACT && !c.struct).forEach(c => { c.order = { type: 'move', x: aim.x + rnd(-26, 26), y: aim.y + rnd(-26, 26) }; c.shield = Math.max(c.shield || 0, 3); });
+  else if (k === 'camo') T.camoT = 6;
+  else if (k === 'bud') { if (count(ACT) + 2 > capOf(0)) { tell('No hay lugar para más unidades.'); ok = false; } else for (let i = 0; i < 2; i++) { const p = pickParent(ACT); if (p) { const n = birth(p); burst(n.x, n.y, 8, TEAM_COL[ACT]); } } }
   else if (k === 'heal') cells.forEach(c => { c.hp = Math.min(c.mhp, c.hp + c.mhp * (.3 + .08 * lv)); burst(c.x, c.y, 4, '#7fe070'); });
-  else if (k === 'prot') { if (T.nut < 15) { toast('Necesitás 15 nutrientes.'); ok = false; } else { T.nut -= 15; T.prot += 6; } }
+  else if (k === 'prot') { if (T.nut < 15) { tell('Necesitás 15 nutrientes.'); ok = false; } else { T.nut -= 15; T.prot += 6; } }
   if (!ok) return;
-  T.en -= A.cost; S.abCd[k] = A.cd; S.abUsed = true;
+  T.en -= A.cost; T.abCd[k] = A.cd; if (ACT === ME) S.abUsed = true;
   cells.slice(0, 12).forEach(c => S.rings.push({ x: c.x, y: c.y, r: 4, t: .5, c: '#ffffff' }));
 }
 function abButtons() {
@@ -2225,29 +2267,29 @@ function abButtons() {
       const im = SPRC[A.ic]; if (im) b.querySelector('canvas').getContext('2d').drawImage(im, 0, 0, 76, 76);
       else { const cv2 = b.querySelector('canvas'); setTimeout(() => { const i2 = SPRC[A.ic]; if (i2) cv2.getContext('2d').drawImage(i2, 0, 0, 76, 76); }, 800); }
     }
-    const A = AB[k], cd = S.abCd[k] || 0; b.title = A.d + ' Nivel ' + abLevel(k) + '.';
-    b.querySelector('.cdv').style.height = cd > 0 ? Math.min(100, cd / A.cd * 100) + '%' : '0'; b.classList.toggle('cool', cd > 0 || S.teams[0].en < A.cost);
+    const A = AB[k], cd = S.teams[ME].abCd[k] || 0; b.title = A.d + ' Nivel ' + abLevel(k) + '.';
+    b.querySelector('.cdv').style.height = cd > 0 ? Math.min(100, cd / A.cd * 100) + '%' : '0'; b.classList.toggle('cool', cd > 0 || S.teams[ME].en < A.cost);
   });
 }
 function hintText() {
-  const T = S.teams[0], n = count(0), D = S.diff;
+  const T = S.teams[ME], n = count(ME), D = S.diff;
   if (S.over) return '';
   if (T.pending > 0) return 'Tenés una mutación para elegir.';
   if (S.abBtns.length && !S.abUsed) return 'Cada orgánulo te da una habilidad activa: tocá uno de los botones nuevos (o las teclas 3 a 0) para usarla.';
   if (canFuseBranches()) return 'Podés Fusionar ramas: combiná tu camino con otro y ganá un híbrido con aspecto nuevo.';
-  if (S.stage < 1) {
+  if (S.teams[ME].stage < 1) {
     if (n < 8) return 'Tus células recogen nutrientes solas. Tocá Dividir cada vez que puedas para llegar a 8 células.';
     if (T.mutCount < 1) return 'Juntá ADN (comiendo nutrientes o absorbiendo rivales) para tu primera mutación.';
     return 'Seguí recogiendo nutrientes: ya casi desbloqueás las estructuras.';
   }
-  if (!S.fusion) {
-    if ((S.structs || 0) < 2) return 'Tocá Construir y elegí una estructura: se arma sola con tus células más cercanas. Necesitás 2.';
+  if (!S.teams[ME].fusion) {
+    if ((S.teams[ME].structs || 0) < 2) return 'Tocá Construir y elegí una estructura: se arma sola con tus células más cercanas. Necesitás 2.';
     if (T.mutCount < 3) return 'Elegí más mutaciones: necesitás 3 en total.';
     if (n < 12) return 'Dividite hasta tener 12 células.';
     return '';
   }
   if (!S.canEvolve) {
-    if ((S.orgs || 0) < D.evoOrgs) return 'Tocá Fusionar para crear organismos pluricelulares (' + (S.orgs || 0) + '/' + D.evoOrgs + ').';
+    if ((S.teams[ME].orgs || 0) < D.evoOrgs) return 'Tocá Fusionar para crear organismos pluricelulares (' + (S.teams[ME].orgs || 0) + '/' + D.evoOrgs + ').';
     return 'Ganá más mutaciones y más vida que tus rivales para dominar el charco.';
   }
   return 'Conquista lista: tocá Pasar a la Era 2 (arriba a la derecha) o seguí hasta dominar todo.';
@@ -2260,19 +2302,19 @@ function layout() {
 }
 function hud() {
   if (!S || !started) return;
-  Snd.setState(cellTier(S.teams[0]), S.teams[0].branch, S.paused || S.modal);
-  const T = S.teams[0], n = count(0), cost = Math.ceil(18 * T.mods.divCost);
+  Snd.setState(cellTier(S.teams[ME]), S.teams[ME].branch, S.paused || S.modal);
+  const T = S.teams[ME], n = count(ME), cost = Math.ceil(18 * T.mods.divCost);
   $('vNut').textContent = Math.floor(T.nut); $('vEn').textContent = Math.floor(T.en); $('vProt').textContent = Math.floor(T.prot);
   $('vDna').textContent = Math.floor(T.dna); $('vDnaT').textContent = '/ ' + T.nextDNA + ' ADN';
   $('dnaBar').style.width = Math.min(100, T.dna / T.nextDNA * 100) + '%';
   $('vCells').textContent = n; $('vCap').textContent = '/ ' + capOf(0) + ' unidades';
   $('bDivC').textContent = cost + ' nutr. · 2 en.';
   $('bDiv').disabled = T.nut < cost || T.en < 2 || n >= capOf(0);
-  $('bBoost').disabled = T.en < 15 || S.boostT > 0; $('bBoost').classList.toggle('on', S.boostT > 0);
+  $('bBoost').disabled = T.en < 15 || T.boostT > 0; $('bBoost').classList.toggle('on', T.boostT > 0);
   $('bPause').classList.toggle('on', S.paused);
-  $('bFuse').classList.toggle('show', S.fusion);
-  $('bBuild').classList.toggle('show', S.stage >= 1);
-  $('bSow').classList.toggle('show', !!S.teams[0].branch); $('bSowC').textContent = sowCost() + ' nutr. · parche vegetal';
+  $('bFuse').classList.toggle('show', S.teams[ME].fusion);
+  $('bBuild').classList.toggle('show', S.teams[ME].stage >= 1);
+  $('bSow').classList.toggle('show', !!S.teams[ME].branch); $('bSowC').textContent = sowCost() + ' nutr. · parche vegetal';
   $('bBranch').classList.toggle('show', canFuseBranches());
   abButtons();
   const ht = hintText(); $('hint').textContent = ht; $('hint').classList.toggle('show', !!ht);
@@ -2290,12 +2332,12 @@ function hud() {
   const env = $('envChip');
   if (S.env) { env.classList.add('show'); env.textContent = ENV[S.env.kind].n + ' · ' + Math.ceil(S.env.t) + ' s'; } else env.classList.remove('show');
   const setG = (t, l, v, ok) => { $('goalT').textContent = t; l.forEach((x, i) => { $('g' + (i + 1) + 'l').textContent = x; $('g' + (i + 1) + 'v').textContent = v[i]; $('g' + (i + 1)).classList.toggle('ok', ok[i]); }); $('goalN').textContent = ok.filter(Boolean).length + '/3'; };
-  if (S.stage < 1) {
+  if (S.teams[ME].stage < 1) {
     setG('Hito: colonia', ['Células', 'Mutaciones', 'Nutrientes recogidos'], [Math.min(n, 8) + '/8', Math.min(T.mutCount, 1) + '/1', Math.min(Math.floor(T.gathered), 60) + '/60'], [n >= 8, T.mutCount >= 1, T.gathered >= 60]);
-  } else if (!S.fusion) {
-    setG('Hito: pluricelularidad', ['Células', 'Mutaciones', 'Estructuras'], [Math.min(n, 12) + '/12', Math.min(T.mutCount, 3) + '/3', Math.min(S.structs || 0, 2) + '/2'], [n >= 12, T.mutCount >= 3, (S.structs || 0) >= 2]);
+  } else if (!S.teams[ME].fusion) {
+    setG('Hito: pluricelularidad', ['Células', 'Mutaciones', 'Estructuras'], [Math.min(n, 12) + '/12', Math.min(T.mutCount, 3) + '/3', Math.min(S.teams[ME].structs || 0, 2) + '/2'], [n >= 12, T.mutCount >= 3, (S.teams[ME].structs || 0) >= 2]);
   } else {
-    const o = S.orgs || 0, sh = Math.round((S.share || 0) * 100);
+    const o = S.teams[ME].orgs || 0, sh = Math.round((S.share || 0) * 100);
     setG('Hito: conquista', ['Organismos', 'Mutaciones', 'Dominio'], [Math.min(o, S.diff.evoOrgs) + '/' + S.diff.evoOrgs, Math.min(T.mutCount, S.diff.evoMut) + '/' + S.diff.evoMut, sh + '% / ' + Math.round(S.diff.evoShare * 100) + '%'], [o >= S.diff.evoOrgs, T.mutCount >= S.diff.evoMut, sh >= S.diff.evoShare * 100]);
   }
   $('evoBtn').classList.toggle('show', S.canEvolve && !S.over);
