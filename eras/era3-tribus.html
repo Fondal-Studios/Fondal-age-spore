@@ -183,11 +183,11 @@ const DIFFS = [
 ];
 let DF = DIFFS[0];
 const ROLES = {
-  rec: { n: 'Recolectores', c: '#4aa83a', d: 'Juntan bayas y raíces. Rinden poco por viaje pero casi siempre.' },
-  caz: { n: 'Cazadores', c: '#d63a3a', d: 'Cazan con lanza o arco. Cazar en grupo rinde más, pero hay riesgo.' },
-  art: { n: 'Artesanos', c: '#e08a1b', d: 'Cortan madera y pican piedra para construir.' },
-  con: { n: 'Constructores', c: '#8c5a2b', d: 'Levantan los edificios.' },
-  cha: { n: 'Chamanes', c: '#7a4ad0', d: 'Guardan y enseñan la tradición: generan Conocimiento.' }
+  rec: { s: 'recolector', n: 'Recolectores', c: '#4aa83a', d: 'Juntan bayas y raíces. Rinden poco por viaje pero casi siempre.' },
+  caz: { s: 'cazador', n: 'Cazadores', c: '#d63a3a', d: 'Cazan con lanza o arco. Cazar en grupo rinde más, pero hay riesgo.' },
+  art: { s: 'artesano', n: 'Artesanos', c: '#e08a1b', d: 'Cortan madera y pican piedra para construir.' },
+  con: { s: 'constructor', n: 'Constructores', c: '#8c5a2b', d: 'Levantan los edificios.' },
+  cha: { s: 'chamán', n: 'Chamanes', c: '#7a4ad0', d: 'Guardan y enseñan la tradición: generan Conocimiento.' }
 };
 const RORDER = ['rec', 'caz', 'art', 'con', 'cha'];
 const TARGET = { rec: .4, caz: .2, art: .15, con: .15, cha: .1 };
@@ -382,7 +382,7 @@ function update(dt) {
   G.birthT -= dt; const pop = G.P.length;
   if (G.birthT <= 0) { G.birthT = rnd(22, 34); if (ad.length >= 2 && G.food > pop * 1.2 + 2 && pop < shelterCap() + 12) { const m = ad[Math.floor(R() * ad.length)]; G.P.push(mkPerson(m.x + rnd(-8, 8), m.y + rnd(-8, 8), 0, 'libre')); G.births++; logMsg('Nació un niño en la tribu.'); } }
   // asignación automática
-  G.assignT += dt; if (G.assignT > 4 && G.auto) { G.assignT = 0; const libres = ad.filter(p => p.role === 'libre'); if (libres.length) { const cnt = {}; RORDER.forEach(r => cnt[r] = ad.filter(p => p.role === r).length); const tot = ad.length || 1; let best = null, bd = -1; RORDER.forEach(r => { const d = TARGET[r] - cnt[r] / tot; if (d > bd) { bd = d; best = r; } }); libres[0].role = best; logMsg('Un joven ahora es ' + ROLES[best].n.toLowerCase().replace(/es$/, '') + '.'); } }
+  G.assignT += dt; if (G.assignT > 4 && G.auto) { G.assignT = 0; const libres = ad.filter(p => p.role === 'libre'); if (libres.length) { const cnt = {}; RORDER.forEach(r => cnt[r] = ad.filter(p => p.role === r).length); const tot = ad.length || 1; let best = null, bd = -1; RORDER.forEach(r => { const d = TARGET[r] - cnt[r] / tot; if (d > bd) { bd = d; best = r; } }); libres[0].role = best; logMsg('Un joven ahora es ' + ROLES[best].s + '.'); } }
   // cohesión (Dunbar), enfermedad
   const lim = cohLimit(); G.fissT += dt;
   if (pop > lim && G.fissT > 70) { G.fissT = 0; const go = shuffle(ad).slice(0, 3); go.forEach(p => p.dead = true); logMsg('La tribu es demasiado grande para mantenerse unida: un grupo se fue.'); toast('Fisión: un grupo se separó. Un tótem o más Tradición suben el límite de cohesión.', true); }
@@ -481,7 +481,7 @@ function setRole(role, delta) {
       p = ad.find(q => q.role === from);
     }
     p.role = role; p.tgt = null;
-    if (from) toast('Un ' + ROLES[from].n.toLowerCase().replace(/es$/, '') + ' pasó a ser ' + ROLES[role].n.toLowerCase().replace(/es$/, '') + '.');
+    if (from) toast('Un ' + ROLES[from].s + ' pasó a ser ' + ROLES[role].s + '.');
   } else {
     const p = ad.find(q => q.role === role); if (!p) return;
     if (isF(role) && food - 1 < minFood()) { toast('Quedarían muy pocos recolectores y cazadores: la tribu pasaría hambre.', true); return; }
@@ -604,7 +604,7 @@ RORDER.forEach(r => {
   row.children[3].onclick = () => setRole(r, -1); row.children[4].onclick = () => setRole(r, 1); $('roles').appendChild(row);
 });
 $('bAuto').onclick = () => { G.auto = !G.auto; $('bAuto').textContent = 'Asignar libres automáticamente: ' + (G.auto ? 'sí' : 'no'); };
-Object.keys(BLD).forEach(k => { const d = BLD[k], b = document.createElement('button'); b.innerHTML = '<b></b><small></small>'; b.firstChild.textContent = d.n + ' (' + d.w + ' madera' + (d.s ? ', ' + d.s + ' piedra' : '') + ')'; b.lastChild.textContent = d.d + (d.req ? ' Requiere ' + TECH[d.req].n + '.' : ''); b.id = 'bb_' + k; b.onclick = () => { if (!ready()) return; setMode(mode === 'b:' + k ? null : 'b:' + k); }; $('tray').appendChild(b); });
+Object.keys(BLD).forEach(k => { const d = BLD[k], b = document.createElement('button'); b.innerHTML = '<b></b><small></small>'; b.firstChild.textContent = d.n + ' (' + d.w + ' madera' + (d.s ? ', ' + d.s + ' piedra' : '') + ')'; b.lastChild.textContent = d.d + (d.req ? ' Requiere ' + TECH[d.req].n + '.' : ''); b.id = 'bb_' + k; b.onclick = () => { if (!ready()) return; setMode(mode === 'b:' + k ? null : 'b:' + k); if (mode && innerWidth <= 820) { $('tray').classList.remove('show'); $('bBuild').classList.remove('on'); $('cvWrap').scrollIntoView({ block: 'center', behavior: 'smooth' }); } }; $('tray').appendChild(b); });
 $('bBuild').onclick = () => { if (!ready()) return; $('tray').classList.toggle('show'); $('bBuild').classList.toggle('on'); };
 function renderTech() {
   $('techP').textContent = 'Conocimiento disponible: ' + Math.floor(G.know) + '. Lo generan sobre todo los chamanes; cada tecnología aprendida encarece las siguientes.';
@@ -659,7 +659,7 @@ function hud() {
   Object.keys(BLD).forEach(k => { const d = BLD[k]; $('bb_' + k).disabled = !!(d.req && !has(d.req)); });
   const nt = Object.keys(TECH).filter(k => !has(k) && TECH[k].req.every(has) && !(TECH[k].excl || []).some(has) && G.know >= techCost(k)).length; $('bTechS').textContent = nt ? nt + ' lista' + (nt > 1 ? 's' : '') + ': ¡tocá!' : 'Conocimiento ' + G.know.toFixed(1);
   const p = G.P.find(q => q.id === selId);
-  if (p) { const st = { idle: 'descansando', eat: 'comiendo', carry: 'llevando lo recolectado al campamento', gather: 'recolectando', hunt: 'cazando', build: 'construyendo', chop: 'cortando madera', mine: 'picando piedra', pray: 'enseñando y guardando la tradición', flee: 'huyendo de un lobo', farm: 'trabajando el huerto' }[p.st] || 'vagando'; $('selInfo').innerHTML = '<b>' + (p.age < CHILD ? 'Niño' : (p.role === 'libre' ? 'Adulto sin oficio' : ROLES[p.role].n.replace(/es$/, ''))) + '</b><br>Está ' + st + '.<br>Salud ' + Math.round(p.hp) + '/' + p.mhp + ' · Hambre ' + Math.round(p.hunger) + '%'; } else $('selInfo').textContent = 'Tocá a alguien en el mapa.';
+  if (p) { const st = { idle: 'descansando', eat: 'comiendo', carry: 'llevando lo recolectado al campamento', gather: 'recolectando', hunt: 'cazando', build: 'construyendo', chop: 'cortando madera', mine: 'picando piedra', pray: 'enseñando y guardando la tradición', flee: 'huyendo de un lobo', farm: 'trabajando el huerto' }[p.st] || 'vagando'; $('selInfo').innerHTML = '<b>' + (p.age < CHILD ? 'Niño' : (p.role === 'libre' ? 'Adulto sin oficio' : ROLES[p.role].s.charAt(0).toUpperCase() + ROLES[p.role].s.slice(1))) + '</b><br>Está ' + st + '.<br>Salud ' + Math.round(p.hp) + '/' + p.mhp + ' · Hambre ' + Math.round(p.hunger) + '%'; } else $('selInfo').textContent = 'Tocá a alguien en el mapa.';
   $('log').innerHTML = G.log.slice(0, 6).map(t => '<div>' + t + '</div>').join('');
   const gs = G.g || []; $('goalRows').innerHTML = gs.map(g => '<div class="g' + (g.ok ? ' ok' : '') + '">' + (g.ok ? '✓ ' : '') + g.t + '</div>').join(''); $('goalN').textContent = gs.filter(g => g.ok).length + '/5';
   const h = hintText(); $('hint').textContent = h; $('hint').style.display = h ? 'block' : 'none';

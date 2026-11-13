@@ -1,6 +1,6 @@
 # Equilibrio de la Era 3 (medido con bots)
 
-Cómo se midió: Chromium real (Playwright), partida simulada llamando `__e3.step` directo (paso fijo 0,05 s, sin dibujar), semilla distinta en cada corrida (`S<dificultad>x<n>`, posible desde que la Era 3 tiene PRNG con semilla). Tope de 2400 s (40 min) de juego: lo que no ganó ni se extinguió en ese tiempo cuenta como «estancada». Los scripts de medición eran temporales (no se versionan); la prueba permanente es `tests/era3-guardado.js` y `tests/era3-bot.js`.
+Cómo se midió: Chromium real (Playwright), partida simulada llamando `__e3.step` directo (paso fijo 0,05 s, sin dibujar), semilla distinta en cada corrida (`S<dificultad>x<n>`, posible desde que la Era 3 tiene PRNG con semilla). Tope de 2400 s (40 min) de juego: lo que no ganó ni se extinguió en ese tiempo cuenta como «estancada». Los scripts de medición están en `tests/era3-balance-bot.js` y `tests/era3-balance-run.js` (uso: `node tests/era3-balance-run.js 0,1,2 auto 32 2400 etiqueta`); además hay `tests/era3-guardado.js` y `tests/era3-bot.js`.
 
 Bots (todos con la misma lógica de construcción, tecnología y diplomacia; solo cambia lo que hacen con los oficios):
 - **auto** (referencia «razonable»): investiga por orden fijo, construye 3 refugios + almacén + tótem + huerto, regala comida al clan para aliarse, deja que «asignar libres» reparta oficios. No pone chamanes a mano.
