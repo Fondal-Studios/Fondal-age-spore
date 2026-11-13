@@ -10,7 +10,7 @@
 <style>
 :root{
   --bg:#e8e4d6; --panel:rgba(251,248,238,.95); --ink:#2a2418; --ink2:#6a604a; --line:rgba(42,36,24,.2);
-  --accent:#b5651d; --accent-ink:#ffffff; --warn:#c9406f; --dark:0; --stroke:#2a2418;
+  --accent:#9a520f; --accent-ink:#ffffff; --warn:#c9406f; --dark:0; --stroke:#2a2418;
   color-scheme:light; box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
@@ -33,7 +33,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
 #main{flex:1;min-height:0;display:flex;gap:6px}
 #cvWrap{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
-#legend{position:absolute;left:8px;bottom:6px;font-size:11px;color:#fff;background:rgba(0,0,0,.5);padding:3px 8px;border-radius:8px;pointer-events:none}
+#legend{position:absolute;left:8px;bottom:6px;font-size:12px;color:#fff;background:rgba(0,0,0,.5);padding:3px 8px;border-radius:8px;pointer-events:none}
 #modeTip{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--warn);color:#fff;font-weight:600;font-size:13px;padding:8px 14px;border-radius:10px;display:none;pointer-events:none;z-index:3}
 #side{width:262px;display:flex;flex-direction:column;gap:6px;overflow:auto}
 .box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--ink2)}
@@ -42,8 +42,8 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
 .role i{width:11px;height:11px;border-radius:50%;flex:none}
 .role span{flex:1;color:var(--ink)}
 .role b{min-width:18px;text-align:right;color:var(--ink)}
-.role button{width:28px;height:28px;border:1px solid var(--line);background:transparent;border-radius:8px;font-weight:700}
-.role small{display:block;color:var(--ink2);font-size:11px;font-weight:400}
+.role button{width:44px;height:44px;border:1px solid var(--line);background:transparent;border-radius:8px;font-weight:700}
+.role small{display:block;color:var(--ink2);font-size:12px;font-weight:400}
 #log{display:flex;flex-direction:column;gap:3px;font-size:12px}
 #log div{color:var(--ink2)}#log div:first-child{color:var(--ink);font-weight:600}
 #goal summary{cursor:pointer;font-weight:600;color:var(--ink);list-style:none;display:flex;justify-content:space-between}
@@ -51,40 +51,57 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
 .g{padding:2px 0}.g.ok{color:#2f8a3f;font-weight:600}
 #bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 #bar button{padding:7px 12px;min-height:54px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:14px;font-weight:600;min-width:112px}
-#bar button small{display:block;font-weight:400;color:var(--ink2);font-size:11px;line-height:1.25}
+#bar button small{display:block;font-weight:400;color:var(--ink2);font-size:12px;line-height:1.25}
 #bar button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}#bar button.on small{color:inherit;opacity:.85}
 #bar button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}#bar button.go small{color:inherit}
 #bar button:disabled{opacity:.45;cursor:not-allowed}
-#bar button.sm{min-height:40px;min-width:70px;font-size:12.5px}
+#bar button.sm{min-height:44px;min-width:70px;font-size:12.5px}
 #bar .brk{flex-basis:100%;height:0}
 #tray{flex-basis:100%;order:-1;display:none;gap:6px;flex-wrap:wrap;justify-content:center}#tray.show{display:flex}
-#toasts{position:absolute;left:50%;top:70px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,440px);z-index:6}
+#toasts{position:fixed;left:50%;top:70px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,440px);z-index:6}
 .toast{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;animation:tin .25s ease-out,tout .4s ease-in 4.2s forwards}
 .toast.warn{border-color:var(--warn)}
 @keyframes tin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 @keyframes tout{to{opacity:0}}
 @media (prefers-reduced-motion:reduce){.toast{animation:tout .4s ease-in 4.2s forwards}}
-.ov{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(4px);z-index:10;overflow:auto}
+.ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(4px);z-index:10;overflow:auto}
 .ov.show{display:flex}
 .card{width:min(720px,100%);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;max-height:100%;overflow:auto}
 .card h1{font-size:clamp(30px,8vw,44px);font-weight:800;line-height:1}
 .card h2{font-size:22px;font-weight:800;margin-bottom:6px}
 .card p{margin:8px 0;line-height:1.5;color:var(--ink2);font-size:14px}
-.bigbtn{width:100%;padding:13px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:16px;margin-top:10px}
-.ghost{width:100%;padding:10px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;margin-top:8px}
+.bigbtn{width:100%;min-height:48px;padding:13px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:16px;margin-top:10px}
+.ghost{width:100%;min-height:44px;padding:10px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;margin-top:8px}
 .seg{display:flex;gap:6px;margin:6px 0;flex-wrap:wrap}
-.seg button{flex:1;min-width:110px;padding:9px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;font-size:13px}
+.seg button{flex:1;min-width:96px;min-height:44px;padding:9px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;font-size:13px}
 .seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:10px}
-.tc{text-align:left;padding:10px;border:1px solid var(--line);background:transparent;border-radius:12px;display:block;width:100%}
+.tc{min-height:44px;text-align:left;padding:10px;border:1px solid var(--line);background:transparent;border-radius:12px;display:block;width:100%}
 .tc:hover:not(:disabled),.tc:focus-visible{border-color:var(--accent)}
 .tc:disabled{opacity:.5;cursor:not-allowed}
 .tc.done{border-color:#2f8a3f;background:color-mix(in srgb,#2f8a3f 12%,transparent)}
 .tc b{font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;display:block}
 .tc span{display:block;font-size:12.5px;color:var(--ink2);margin-top:2px}
-.tc em{display:block;font-style:normal;font-size:11.5px;margin-top:4px;color:var(--ink2)}
+.tc em{display:block;font-style:normal;font-size:12px;margin-top:4px;color:var(--ink2)}
 #pauseTag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;display:none;pointer-events:none;z-index:4}
-@media (max-width:820px){#main{flex-direction:column}#side{width:100%;max-height:38vh;flex-direction:row;flex-wrap:wrap}#side .box{flex:1;min-width:200px}#bar button{min-width:86px;padding:6px 8px;font-size:13px}}
+#bSave:disabled{opacity:.45}
+.ghost small{display:block;font-weight:400;color:var(--ink2);font-size:12px;margin-top:2px}
+.box .lin,#linBox span{color:var(--ink)}
+@media (max-width:820px){
+  body{overflow-y:auto;overflow-x:hidden}
+  #stage{height:auto;min-height:100%;padding:8px 8px 0}
+  .chip{padding:4px 7px}
+  #main{flex:none;flex-direction:column}
+  #cvWrap{flex:none;height:56vh;height:56svh;min-height:340px}
+  #cv{touch-action:pan-y}
+  #side{width:100%;overflow:visible;flex:none}
+  #bar{position:sticky;bottom:0;z-index:5;background:var(--bg);padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 8px -6px rgba(0,0,0,.25)}
+  #bar button{min-width:0;flex:1 1 30%;min-height:48px;padding:6px 8px;font-size:14px}
+  #bar button small{display:none}#bar #bTech small{display:block}
+  #bar button.sm{flex:1 1 30%;min-width:0}
+  #tray{max-height:34vh;overflow:auto}#tray button{flex:1 1 100%;text-align:left}#tray button small{display:block}
+  #toasts{top:auto;bottom:130px}
+}
 </style>
 </head>
 <body>
@@ -100,7 +117,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
   </div>
   <div id="hint"></div>
   <div id="main">
-    <div id="cvWrap"><canvas id="cv"></canvas><div id="modeTip"></div><div id="legend">Cada persona tiene un oficio (color) · barra amarilla: hambre · cuadrito: lo que lleva</div><div id="pauseTag">En pausa</div></div>
+    <div id="cvWrap"><canvas id="cv" role="img" aria-label="Mapa del valle: tu tribu, los arbustos, el bosque, el lago y los animales. Tocá a una persona para ver su estado."></canvas><div id="modeTip"></div><div id="legend">Cada persona tiene un oficio (color) · barra amarilla: hambre · cuadrito: lo que lleva</div><div id="pauseTag">En pausa</div></div>
     <div id="side">
       <div class="box"><h3>Oficios de la tribu <small id="libres"></small></h3><div id="roles"></div><button class="ghost" id="bAuto" style="margin-top:6px;padding:6px">Asignar libres automáticamente: sí</button></div>
       <div class="box"><h3>Persona seleccionada</h3><div id="selInfo">Tocá a alguien en el mapa.</div></div>
@@ -114,31 +131,40 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
     <button id="bTech" class="go">Tecnología<small id="bTechS">investigar con Conocimiento</small></button>
     <button id="bDip">Diplomacia<small>tribu vecina</small></button>
     <span class="brk"></span>
+    <button id="bSave" class="sm">Guardar</button>
     <button id="bPause" class="sm">Pausa</button>
     <button id="bSpd" class="sm">×1</button>
   </div>
   <div id="toasts"></div>
 
-  <div id="menu" class="ov show"><div class="card">
-    <h1>Era 3: Tribus</h1>
+  <div id="menu" class="ov show"><div class="card" role="dialog" aria-modal="true" aria-labelledby="menuT">
+    <h1 id="menuT">Era 3: Tribus</h1>
     <p>Una banda de cazadores-recolectores. Con oficios, fuego, herramientas y cultura, tu gente puede pasar de sobrevivir a fundar una ciudad. Todo se simula: hambre, trabajo, clima, depredadores, vecinos.</p>
-    <div class="seg" id="diffSeg"><button data-d="0" class="on">Fácil</button><button data-d="1">Normal</button></div>
+    <div class="seg" id="diffSeg" role="group" aria-label="Dificultad"><button data-d="0" class="on">Fácil</button><button data-d="1">Normal</button><button data-d="2">Difícil</button></div>
+    <div class="box" id="linBox" style="margin-top:8px"></div>
     <button class="bigbtn" id="startBtn">Empezar</button>
+    <button class="ghost" id="contBtn" style="display:none"></button>
     <p style="font-size:12.5px">Base científica (aprox.): las bandas de cazadores-recolectores suelen ser de 25 a 50 personas; el rendimiento de cada actividad se mide en calorías por hora (teoría del forrajeo óptimo); cazar en grupo rinde más (economías de escala); y los grupos estables tienen un límite de cohesión de unos 150 (Dunbar).</p>
   </div></div>
 
-  <div id="techm" class="ov"><div class="card"><h2>Tecnología</h2><p id="techP"></p><div class="grid" id="techGrid"></div><button class="ghost" id="techClose">Cerrar</button></div></div>
-  <div id="dipm" class="ov"><div class="card"><h2>Diplomacia con el Clan del Este</h2><p id="dipP"></p><div class="grid" id="dipGrid"></div><button class="ghost" id="dipClose">Cerrar</button></div></div>
-  <div id="dlg" class="ov"><div class="card"><h2 id="dT"></h2><div id="dB"></div><div id="dBtns"></div></div></div>
+  <div id="techm" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="techT"><h2 id="techT">Tecnología</h2><p id="techP"></p><div class="grid" id="techGrid"></div><button class="ghost" id="techClose">Cerrar</button></div></div>
+  <div id="dipm" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="dipT"><h2 id="dipT">Diplomacia con el Clan del Este</h2><p id="dipP"></p><div class="grid" id="dipGrid"></div><button class="ghost" id="dipClose">Cerrar</button></div></div>
+  <div id="dlg" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="dT"><h2 id="dT"></h2><div id="dB"></div><div id="dBtns"></div></div></div>
 </div>
 
 <script>
 (() => {
 "use strict";
 const $ = id => document.getElementById(id);
-const rnd = (a, b) => a + Math.random() * (b - a);
+/* PRNG con semilla (mulberry32): TODA la simulación usa R(); Math.random/Date solo fuera de la simulación */
+let _rs = 1;
+const seedRng = n => { _rs = (n >>> 0) || 1; };
+const R = () => { _rs = (_rs + 0x6D2B79F5) >>> 0; let t = _rs; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const hashStr = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const newSeedStr = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
+const rnd = (a, b) => a + R() * (b - a);
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
-const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const hyp = Math.hypot, TAU = Math.PI * 2;
 
 /* ---------- Datos ---------- */
@@ -148,7 +174,14 @@ const FOR = [{ x: 140, y: 120, r: 110 }, { x: 300, y: 60, r: 70 }, { x: 70, y: 3
 const isWater = (x, y) => { const dx = (x - LAKE.x) / LAKE.rx, dy = (y - LAKE.y) / LAKE.ry; return dx * dx + dy * dy < 1; };
 const okLand = (x, y) => x > 8 && y > 8 && x < W - 8 && y < H - 8 && !isWater(x, y);
 const SEAS = [{ n: 'Primavera', g: 1.1, c: '#b4cf86' }, { n: 'Verano', g: 1.4, c: '#a3c26a' }, { n: 'Otoño', g: .8, c: '#cdb572' }, { n: 'Invierno', g: .12, c: '#e3edf2' }];
-const SLEN = 40, CHILD = 45, HD = 1.83;
+const SLEN = 40, CHILD = 45, HD = 2.6;
+/* Dificultades: cada perilla es un multiplicador explicado en tests/era3-balance.md */
+const DIFFS = [
+  { n: 'Fácil', pop: 18, win: 1, raid0: 190, raidMul: 1.2, raidAdd: 0, rg: 150, rdmg: 5, hd: 1.1, cold: .3, bush: 1, know: 1, rel: .05 },
+  { n: 'Normal', pop: 24, win: 2, raid0: 130, raidMul: .9, raidAdd: 1, rg: 110, rdmg: 6, hd: 1.36, cold: .45, bush: .85, know: .9, rel: .09 },
+  { n: 'Difícil', pop: 26, win: 2, raid0: 100, raidMul: .7, raidAdd: 2, rg: 80, rdmg: 8, hd: 1.3, cold: .6, bush: .8, know: .8, rel: .14 }
+];
+let DF = DIFFS[0];
 const ROLES = {
   rec: { n: 'Recolectores', c: '#4aa83a', d: 'Juntan bayas y raíces. Rinden poco por viaje pero casi siempre.' },
   caz: { n: 'Cazadores', c: '#d63a3a', d: 'Cazan con lanza o arco. Cazar en grupo rinde más, pero hay riesgo.' },
@@ -162,11 +195,11 @@ const TECH = {
   fuego: { n: 'Fuego controlado', cost: 3, req: [], d: 'Cocinar da 30% más de energía aprovechable, abriga y espanta lobos del campamento.' },
   piedra: { n: 'Piedra tallada', cost: 4, req: [], d: '+25% en recolección, madera y piedra. Habilita el Taller.' },
   lanza: { n: 'Lanza', cost: 5, req: ['piedra'], d: 'Éxito de caza de 55% a 75%.' },
-  arco: { n: 'Arco', cost: 8, req: ['lanza'], d: 'Éxito de caza de 85% y menos heridos.' },
+  arco: { n: 'Arco', cost: 8, req: ['lanza'], excl: ['domes'], d: 'Éxito de caza de 85% y menos heridos. Excluye a la Domesticación: o cazás mejor o criás animales.' },
   cesta: { n: 'Cestería', cost: 4, req: ['piedra'], d: 'Cada viaje de recolección carga 40% más.' },
   ceram: { n: 'Cerámica', cost: 6, req: ['fuego', 'cesta'], d: 'La comida almacenada se echa a perder 60% más lento.' },
   agri: { n: 'Agricultura', cost: 10, req: ['ceram'], d: 'Habilita el Huerto: comida constante y vida sedentaria.' },
-  domes: { n: 'Domesticación', cost: 10, req: ['lanza', 'agri'], d: 'Habilita el Corral: comida estable de animales domésticos.' },
+  domes: { n: 'Domesticación', cost: 10, req: ['lanza', 'agri'], excl: ['arco'], d: 'Habilita el Corral: comida estable de animales domésticos. Excluye al Arco: o cazás mejor o criás animales.' },
   marcas: { n: 'Marcas de cuenta', cost: 12, req: ['ceram'], d: 'Proto-escritura para llevar cuentas. Requisito de la ciudad.' }
 };
 const BLD = {
@@ -179,7 +212,8 @@ const BLD = {
 };
 
 /* ---------- Estado ---------- */
-let G = null, started = false, spdI = 1, mode = null, selId = null, diffI = 0;
+let G = null, started = false, spdI = 1, mode = null, selId = null, diffI = 0, lastSaveT = 0, panX = null;
+const setDiff = v => { diffI = v; DF = DIFFS[v] || DIFFS[0]; };
 const ptr = { x: 0, y: 0, in: false };
 let VW = 0, VH = 0, DPR = 1, SC = 1, OX = 0, OY = 0;
 const cv = $('cv'), ctx = cv.getContext('2d');
@@ -191,18 +225,20 @@ const has = k => !!G.techs[k];
 function randLand(cx, cy, rad) { for (let i = 0; i < 80; i++) { const x = cx === undefined ? rnd(30, W - 30) : clamp(cx + rnd(-rad, rad), 12, W - 12), y = cy === undefined ? rnd(30, H - 30) : clamp(cy + rnd(-rad, rad), 12, H - 12); if (okLand(x, y)) return { x, y }; } return { x: 300, y: 330 }; }
 
 function mkPerson(x, y, age, role) { return { id: ++G.id, x, y, a: rnd(0, TAU), hunger: rnd(70, 100), hp: 30, mhp: 30, age, role: role || 'libre', st: 'idle', tgt: null, carry: null, cd: 0, tt: 0, tx: x, ty: y, wt: 0, dead: false, flash: 0, ph: rnd(0, 6), mv: 0 }; }
-function newGame() {
-  G = { t: 0, id: 0, season: 0, P: [], Gm: [], Wv: [], Rd: [], bushes: [], trees: [], rocks: [], B: [], sites: [], log: [], fx: [], food: 8, wood: 6, stone: 2, know: 0, trad: 0, techs: {}, relation: 10, allied: false, trades: 0, raidsOk: 0, raidT: diffI ? 110 : 190, pressure: 0, over: false, modal: false, paused: false, assignT: 0, goalT: 0, winters: 0, camp: { x: 300, y: 330 }, births: 0, deaths: 0, g: [], birthT: 20, fissT: 0, disT: 0, gmT: 0, wolfT: 0, auto: true, sheltered: new Set(), grass: [], lastSeason: 0, raidLog: 0 };
+function newGame(seedStr) {
+  const seed = seedStr || newSeedStr(); seedRng(hashStr(seed)); DF = DIFFS[diffI] || DIFFS[0]; const lin = readLineage();
+  G = { seed, t: 0, id: 0, season: 0, P: [], Gm: [], Wv: [], Rd: [], bushes: [], trees: [], rocks: [], B: [], sites: [], log: [], fx: [], food: 8, wood: 6, stone: 2, know: 0, trad: 0, techs: {}, relation: 10, allied: false, trades: 0, raidsOk: 0, raidT: DF.raid0, pressure: 0, over: false, modal: false, paused: false, assignT: 0, goalT: 0, winters: 0, camp: { x: 300, y: 330 }, births: 0, deaths: 0, g: [], birthT: 20, fissT: 0, disT: 0, gmT: 0, wolfT: 0, auto: true, sheltered: new Set(), grass: [], lastSeason: 0, raidLog: 0, raidActive: false, lin: lin, dc: {} };
   for (let i = 0; i < 260; i++) G.grass.push({ x: rnd(0, W), y: rnd(0, H), a: rnd(0, 1) });
   for (let i = 0; i < 46; i++) { const q = randLand(); if (hyp(q.x - 300, q.y - 330) > 50) G.bushes.push({ x: q.x, y: q.y, v: rnd(.5, 1) }); }
-  for (let i = 0; i < 34; i++) { const f = FOR[Math.floor(Math.random() * FOR.length)]; const a = rnd(0, TAU), d = Math.sqrt(Math.random()) * f.r; const x = f.x + Math.cos(a) * d, y = f.y + Math.sin(a) * d; if (okLand(x, y)) G.trees.push({ x, y, w: 3 }); }
-  for (let i = 0; i < 12; i++) { const q = randLand(); if (hyp(q.x - 300, q.y - 330) > 80) G.rocks.push({ x: q.x, y: q.y, s: 6, seed: Math.random() * 9 }); }
+  for (let i = 0; i < 34; i++) { const f = FOR[Math.floor(R() * FOR.length)]; const a = rnd(0, TAU), d = Math.sqrt(R()) * f.r; const x = f.x + Math.cos(a) * d, y = f.y + Math.sin(a) * d; if (okLand(x, y)) G.trees.push({ x, y, w: 3 }); }
+  for (let i = 0; i < 12; i++) { const q = randLand(); if (hyp(q.x - 300, q.y - 330) > 80) G.rocks.push({ x: q.x, y: q.y, s: 6, seed: R() * 9 }); }
   G.B.push({ k: 'fogata', x: 300, y: 330, prog: 1, done: true });
   const roles = ['rec', 'rec', 'rec', 'rec', 'caz', 'caz', 'art', 'con'];
   roles.forEach(r => { const q = randLand(300, 330, 40); G.P.push(mkPerson(q.x, q.y, rnd(60, 160), r)); });
   [['ciervo', 5], ['conejo', 9]].forEach(([k, n]) => { for (let i = 0; i < n; i++) spawnGame(k); });
-  for (let i = 0; i < 2; i++) { const f = FOR[Math.floor(Math.random() * 2)]; G.Wv.push({ x: f.x, y: f.y, hp: 30, st: 'wander', tx: f.x, ty: f.y, wt: 0, dead: false, cd: 0 }); }
-  mode = null; selId = null; setMode(null);
+  for (let i = 0; i < 2; i++) { const f = FOR[Math.floor(R() * 2)]; G.Wv.push({ x: f.x, y: f.y, hp: 30, st: 'wander', tx: f.x, ty: f.y, wt: 0, dead: false, cd: 0 }); }
+  if (lin) { G.know = lin.tier; logMsg('Tu linaje (' + BRN[lin.branch || 'none'] + ', nivel ' + lin.tier + ') da +' + lin.tier + ' de Conocimiento inicial.'); }
+  lastSaveT = 0; panX = null; mode = null; selId = null; setMode(null);
   logMsg('Tu banda llegó al valle. Asigná oficios en el panel de la derecha.');
 }
 function spawnGame(kind) { const q = randLand(); G.Gm.push({ kind, x: q.x, y: q.y, hp: 1, kcal: kind === 'ciervo' ? 7 : 1.2, spd: kind === 'ciervo' ? 52 : 60, tx: q.x, ty: q.y, wt: 0, fleeT: 0, dead: false, a: 0 }); }
@@ -221,14 +257,14 @@ function shelterCap() { return 4 * done('refugio').length; }
 function cohLimit() { return Math.min(60, 20 + (done('totem').length ? 25 : 0) + Math.floor(G.trad)); }
 const adults = () => G.P.filter(p => !p.dead && p.age >= CHILD);
 function prodMul() { return (1 + (has('piedra') ? .25 : 0)) * (done('taller').length ? 1.15 : 1) * (G.P.filter(p => !p.dead).length > cohLimit() ? .7 : 1); }
-function hurtP(p, d, why) { p.hp -= d; p.flash = .15; if (p.hp <= 0 && !p.dead) { p.dead = true; G.deaths++; logMsg((p.age < CHILD ? 'Murió un niño' : 'Murió un adulto') + ' (' + why + ').'); if (G.P.filter(q => !q.dead).length < 2 && !G.over) { /* lose chequeado en goals */ } } }
+function hurtP(p, d, why) { p.hp -= d; p.flash = .15; if (p.hp <= 0 && !p.dead) { p.dead = true; G.deaths++; G.dc[why] = (G.dc[why] || 0) + 1; logMsg((p.age < CHILD ? 'Murió un niño' : 'Murió un adulto') + ' (' + why + ').'); if (G.P.filter(q => !q.dead).length < 2 && !G.over) { /* lose chequeado en goals */ } } }
 
 /* ---------- Comportamiento de personas ---------- */
 function tickPerson(p, dt) {
   const child = p.age < CHILD; p.age += dt; p.cd -= dt; p.flash -= dt; p.mhp = child ? 20 : 30;
-  p.hunger = Math.max(0, p.hunger - HD * dt * (child ? .7 : 1));
+  p.hunger = Math.max(0, p.hunger - HD * DF.hd * dt * (child ? .7 : 1) * (G.season === 3 ? 1.4 : 1));
   if (p.hunger <= 0) { hurtP(p, 1.1 * dt, 'hambre'); if (p.dead) return; } else if (p.hp < p.mhp && p.hunger > 50) p.hp = Math.min(p.mhp, p.hp + .35 * dt);
-  if (G.season === 3 && !G.sheltered.has(p.id) && !fireNear(p.x, p.y)) { hurtP(p, .15 * dt, 'frío'); if (p.dead) return; }
+  if (G.season === 3 && !G.sheltered.has(p.id) && !fireNear(p.x, p.y)) { hurtP(p, DF.cold * (1 + .25 * Math.min(G.winters, 8)) * dt, 'frío'); if (p.dead) return; }
   const wv = nearestOf(G.Wv, p.x, p.y, 70, w => !fireNear(w.x, w.y));
   if (wv && !child) {
     const hunters = G.P.filter(q => !q.dead && q.role === 'caz' && hyp(q.x - wv.x, q.y - wv.y) < 80).length;
@@ -263,8 +299,8 @@ function tickPerson(p, dt) {
     if (hyp(t.x - p.x, t.y - p.y) < 16 && p.cd <= 0) {
       p.cd = 1.2; const mates = Math.min(3, G.P.filter(q => !q.dead && q.id !== p.id && q.role === 'caz' && hyp(q.x - p.x, q.y - p.y) < 120).length);
       let ps = has('arco') ? .85 : has('lanza') ? .75 : .55; ps = Math.min(.95, ps * (1 + .12 * mates));
-      if (Math.random() < ps) { t.dead = true; G.pressure += 1; p.carry = { k: 'food', amt: t.kcal * mul }; p.tgt = null; for (let i = 0; i < 6; i++) G.fx.push({ x: t.x, y: t.y, vx: rnd(-30, 30), vy: rnd(-30, 30), l: .6, c: '#b33' }); }
-      else { t.fleeT = 3; if (t.kind === 'ciervo' && Math.random() < (has('arco') ? .03 : .1)) hurtP(p, 9, 'cacería'); }
+      if (R() < ps) { t.dead = true; G.pressure += 1; p.carry = { k: 'food', amt: t.kcal * mul }; p.tgt = null; for (let i = 0; i < 6; i++) G.fx.push({ x: t.x, y: t.y, vx: rnd(-30, 30), vy: rnd(-30, 30), l: .6, c: '#b33' }); }
+      else { t.fleeT = 3; if (t.kind === 'ciervo' && R() < (has('arco') ? .03 : .1)) hurtP(p, 9, 'cacería'); }
     }
   } else if (p.role === 'art' || p.role === 'con') {
     if (p.role === 'con' && G.sites.length) { const s = nearestOf(G.sites, p.x, p.y, 1e9); if (s) { p.st = 'build'; moveP(p, s.x + Math.cos(p.id) * 24, s.y + Math.sin(p.id) * 24, sp, dt); return; } }
@@ -299,14 +335,14 @@ function tickRaider(r, dt) {
   if (r.fleeing) { moveP(r, W + 40, r.y, 60, dt); if (r.x > W - 10) r.dead = true; return; }
   const dest = G.camp; moveP(r, dest.x + 20, dest.y, 52, dt);
   const near = nearestOf(G.P, r.x, r.y, 22, q => !q.dead);
-  if (near && r.cd <= 0) { r.cd = 1; hurtP(near, 5, 'saqueo'); }
+  if (near && r.cd <= 0) { r.cd = 1; hurtP(near, DF.rdmg, 'saqueo'); }
   for (const q of G.P) if (!q.dead && q.role === 'caz' && hyp(q.x - r.x, q.y - r.y) < 34) r.hp -= 9 * dt * (has('lanza') ? 1.5 : 1);
   if (r.hp <= 0) { r.dead = true; logMsg('Los cazadores derrotaron a un saqueador.'); return; }
   if (hyp(r.x - dest.x, r.y - dest.y) < 30) { const loss = G.food * .2; G.food -= loss; r.fleeing = true; G.raidLog++; logMsg('Los saqueadores robaron ' + Math.round(loss) + ' raciones.'); }
 }
 function startRaid() {
-  const n = 3 + Math.floor(G.t / 150) + (diffI ? 1 : 0);
-  for (let i = 0; i < n; i++) G.Rd.push({ x: W - 20, y: rnd(60, 300), hp: 18, cd: 0, dead: false, fleeing: false });
+  const n = 3 + Math.floor(G.t / DF.rg) + DF.raidAdd; G.raidActive = true;
+  for (let i = 0; i < n; i++) G.Rd.push({ x: W - 20, y: rnd(60, 300), hp: 18 + 3 * Math.floor(G.t / 200), cd: 0, dead: false, fleeing: false });
   G.raidLog = 0; toast('¡Saqueadores del Clan del Este se acercan! Tus cazadores tienen que defender el campamento.', true); logMsg('Un grupo de saqueadores se acerca al campamento.');
 }
 
@@ -314,15 +350,16 @@ function startRaid() {
 function update(dt) {
   G.t += dt; const prev = G.season; G.season = Math.floor(G.t / SLEN) % 4; const sea = SEAS[G.season];
   if (prev === 3 && G.season === 0) { G.winters++; logMsg('Sobrevivieron al invierno (' + G.winters + ').'); }
-  for (const b of G.bushes) b.v = Math.min(1, b.v + .009 * sea.g * dt);
+  for (const b of G.bushes) b.v = Math.min(1, b.v + .009 * sea.g * DF.bush * dt);
   for (const t of G.trees) t.w = Math.min(3, t.w + .004 * dt);
   for (const r of G.rocks) r.s = Math.min(6, r.s + .0015 * dt);
   G.pressure = Math.max(0, G.pressure - .03 * dt);
   G.gmT += dt; if (G.gmT > 14 + G.pressure * 3) { G.gmT = 0; const c = { ciervo: 0, conejo: 0 }; G.Gm.forEach(g => { if (!g.dead) c[g.kind]++; }); if (c.ciervo < 5) spawnGame('ciervo'); if (c.conejo < 9) spawnGame('conejo'); }
   G.Gm = G.Gm.filter(g => !g.dead); for (const g of G.Gm) tickGame(g, dt);
-  G.wolfT += dt; if (G.wolfT > 90) { G.wolfT = 0; if (G.Wv.filter(w => !w.dead).length < 2) { const f = FOR[Math.floor(Math.random() * FOR.length)]; G.Wv.push({ x: f.x, y: f.y, hp: 30, wt: 0, tx: f.x, ty: f.y, dead: false, cd: 0 }); } }
+  G.wolfT += dt; if (G.wolfT > 90) { G.wolfT = 0; if (G.Wv.filter(w => !w.dead).length < 2) { const f = FOR[Math.floor(R() * FOR.length)]; G.Wv.push({ x: f.x, y: f.y, hp: 30, wt: 0, tx: f.x, ty: f.y, dead: false, cd: 0 }); } }
   G.Wv = G.Wv.filter(w => !w.dead); for (const w of G.Wv) tickWolf(w, dt);
   G.Rd = G.Rd.filter(r => !r.dead); for (const r of G.Rd) tickRaider(r, dt);
+  if (G.raidActive && G.Rd.length === 0) { G.raidActive = false; if (G.raidLog === 0) { G.raidsOk++; logMsg('Repelieron el saqueo sin perder raciones.'); toast('Saqueo repelido.'); } }
   G.sheltered = new Set(G.P.filter(p => !p.dead).sort((a, b) => b.age - a.age).slice(0, shelterCap()).map(p => p.id));
   for (const p of G.P) if (!p.dead) tickPerson(p, dt);
   G.P = G.P.filter(p => !p.dead);
@@ -336,14 +373,14 @@ function update(dt) {
   for (const b of G.B) if (b.done && (b.k === 'huerto' || b.k === 'corral')) { const crew = G.P.filter(p => p.role === 'rec' && p.age >= CHILD && hyp(p.x - b.x, p.y - b.y) < 45).length; b.crewN = crew; if (crew > 0) G.food += (b.k === 'huerto' ? .09 : .07) * (1 + .5 * (crew - 1)) * dt * prodMul() * (G.season === 3 && b.k === 'huerto' ? .3 : 1); }
   // conocimiento y tradición
   const ad = adults(), cha = ad.filter(p => p.role === 'cha').length;
-  G.know += dt * (.004 * ad.length + .05 * cha) * (G.allied ? 1.25 : 1);
+  G.know += dt * knowRate(ad, cha);
   G.trad += dt * (.002 * ad.length + .03 * cha + (done('totem').length ? .05 : 0));
   // deterioro de comida
   const cap = foodCap(); if (G.food > cap) G.food -= (G.food - cap) * .015 * (has('ceram') ? .4 : 1) * dt * 8;
   G.food = Math.max(0, G.food);
   // nacimientos
   G.birthT -= dt; const pop = G.P.length;
-  if (G.birthT <= 0) { G.birthT = rnd(22, 34); if (ad.length >= 2 && G.food > pop * 1.2 + 2 && pop < shelterCap() + 12) { const m = ad[Math.floor(Math.random() * ad.length)]; G.P.push(mkPerson(m.x + rnd(-8, 8), m.y + rnd(-8, 8), 0, 'libre')); G.births++; logMsg('Nació un niño en la tribu.'); } }
+  if (G.birthT <= 0) { G.birthT = rnd(22, 34); if (ad.length >= 2 && G.food > pop * 1.2 + 2 && pop < shelterCap() + 12) { const m = ad[Math.floor(R() * ad.length)]; G.P.push(mkPerson(m.x + rnd(-8, 8), m.y + rnd(-8, 8), 0, 'libre')); G.births++; logMsg('Nació un niño en la tribu.'); } }
   // asignación automática
   G.assignT += dt; if (G.assignT > 4 && G.auto) { G.assignT = 0; const libres = ad.filter(p => p.role === 'libre'); if (libres.length) { const cnt = {}; RORDER.forEach(r => cnt[r] = ad.filter(p => p.role === r).length); const tot = ad.length || 1; let best = null, bd = -1; RORDER.forEach(r => { const d = TARGET[r] - cnt[r] / tot; if (d > bd) { bd = d; best = r; } }); libres[0].role = best; logMsg('Un joven ahora es ' + ROLES[best].n.toLowerCase().replace(/es$/, '') + '.'); } }
   // cohesión (Dunbar), enfermedad
@@ -351,34 +388,105 @@ function update(dt) {
   if (pop > lim && G.fissT > 70) { G.fissT = 0; const go = shuffle(ad).slice(0, 3); go.forEach(p => p.dead = true); logMsg('La tribu es demasiado grande para mantenerse unida: un grupo se fue.'); toast('Fisión: un grupo se separó. Un tótem o más Tradición suben el límite de cohesión.', true); }
   G.disT += dt; if (pop > shelterCap() + 7 && G.disT > 80) { G.disT = 0; shuffle(G.P).slice(0, 3).forEach(p => hurtP(p, 14, 'enfermedad')); logMsg('Una enfermedad se propagó por el hacinamiento.'); toast('Enfermedad: faltan refugios.', true); }
   // diplomacia y saqueos
-  G.relation = clamp(G.relation + (G.allied ? .02 : -.01) * dt, -100, 100);
-  G.raidT -= dt; if (G.raidT <= 0) { G.raidT = rnd(110, 160) * (diffI ? .8 : 1.2); if (!G.allied && G.Rd.length === 0) startRaid(); else if (G.allied) logMsg('El Clan del Este, aliado, no atacó.'); }
+  G.relation = clamp(G.relation + (G.allied ? -DF.rel : -.01) * dt, -100, 100);
+  if (G.allied && G.relation < 15) { G.allied = false; logMsg('Se enfrió la relación con el Clan del Este: la alianza se rompió. Hay que cuidarla con regalos.'); toast('La alianza se rompió: hacele regalos al Clan del Este.', true); }
+  G.raidT -= dt; if (G.raidT <= 0) { G.raidT = rnd(110, 160) * DF.raidMul; if (!G.allied && G.Rd.length === 0) startRaid(); else if (G.allied) logMsg('El Clan del Este, aliado, no atacó.'); }
   if (G.Rd.length === 0 && G.raidLog === 0 && G.pendingRaid) { }
   for (const f of G.fx) { f.l -= dt; f.x += f.vx * dt; f.y += f.vy * dt; } G.fx = G.fx.filter(f => f.l > 0);
-  if (done('fogata').length && Math.random() < dt * 3) G.fx.push({ x: G.camp.x + rnd(-5, 5), y: G.camp.y - 6, vx: rnd(-6, 6), vy: rnd(-30, -15), l: .8, c: '#ffb347' });
+  if (done('fogata').length && R() < dt * 3) G.fx.push({ x: G.camp.x + rnd(-5, 5), y: G.camp.y - 6, vx: rnd(-6, 6), vy: rnd(-30, -15), l: .8, c: '#ffb347' });
   G.goalT += dt; if (G.goalT >= 1) { G.goalT = 0; goals(); }
 }
+function nTech() { return Object.keys(G.techs).length; }
+function techCost(k) { return Math.ceil(TECH[k].cost * (1 + .15 * nTech())); }
+function knowRate(ad, cha) { const art = ad.filter(p => p.role === 'art').length; return (.0015 * ad.length + .006 * art + .05 * cha) * (1 + .05 * nTech()) * (G.allied ? 1.25 : 1) * DF.know; }
 function goals() {
-  const ad = adults().length, pop = G.P.length, D = diffI;
+  const ad = adults().length, pop = G.P.length, NP = DF.pop, NW = DF.win;
   const techs = ['fuego', 'agri', 'ceram', 'marcas'].filter(has).length;
-  G.g = [{ t: 'Población: ' + pop + ' / ' + (D ? 24 : 18), ok: pop >= (D ? 24 : 18) }, { t: 'Tecnologías clave (Fuego, Cerámica, Agricultura, Marcas): ' + techs + ' / 4', ok: techs >= 4 }, { t: 'Edificios: ' + Math.min(3, done('refugio').length) + ' / 3 refugios, ' + (done('almacen').length ? '1' : '0') + ' / 1 almacén, ' + (done('totem').length ? '1' : '0') + ' / 1 tótem', ok: done('refugio').length >= 3 && done('almacen').length >= 1 && done('totem').length >= 1 }, { t: 'Huerto en marcha', ok: done('huerto').length >= 1 }, { t: 'Sobrevivir ' + (D ? 2 : 1) + ' invierno(s): ' + G.winters + ' / ' + (D ? 2 : 1), ok: G.winters >= (D ? 2 : 1) }];
+  G.g = [{ t: 'Población: ' + pop + ' / ' + NP, ok: pop >= NP }, { t: 'Tecnologías clave (Fuego, Cerámica, Agricultura, Marcas): ' + techs + ' / 4', ok: techs >= 4 }, { t: 'Edificios: ' + Math.min(3, done('refugio').length) + ' / 3 refugios, ' + (done('almacen').length ? '1' : '0') + ' / 1 almacén, ' + (done('totem').length ? '1' : '0') + ' / 1 tótem', ok: done('refugio').length >= 3 && done('almacen').length >= 1 && done('totem').length >= 1 }, { t: 'Huerto en marcha', ok: done('huerto').length >= 1 }, { t: 'Sobrevivir ' + NW + ' invierno' + (NW > 1 ? 's' : '') + ': ' + G.winters + ' / ' + NW, ok: G.winters >= NW }];
   if (!G.over && G.g.every(g => g.ok)) win();
   if (!G.over && ad === 0) lose();
 }
+function endCommon() { ['techm', 'dipm'].forEach(i => $(i).classList.remove('show')); G.modal = false; clearSave(); }
+const toIndex = () => { location.href = '../index.html'; };
 function win() {
-  G.over = true;
+  G.over = true; endCommon();
   const path = G.raidsOk >= 2 ? ['Jefatura', 'Repeliste varios saqueos: una jefatura militar organiza la ciudad.', 'Ciudad militarista'] : G.trades >= 3 ? ['Mercado', 'Tu red de intercambio con otros clanes sostiene una ciudad comerciante.', 'Ciudad mercantil'] : ['Templo', 'La Tradición y el tótem reunieron a la tribu en torno a un centro ceremonial.', 'Ciudad teocrática'];
-  dialog('Fundaron la primera ciudad: camino ' + path[0], '<p>' + path[1] + '</p><p>Civilización resultante en la Era 4: <b>' + path[2] + '</b>. La Era 4 todavía no está en el prototipo.</p><p>Población: ' + G.P.length + ' · Nacimientos: ' + G.births + ' · Muertes: ' + G.deaths + ' · Tiempo: ' + Math.floor(G.t / 60) + ' min ' + Math.floor(G.t % 60) + ' s</p>', [{ t: 'Volver al inicio', fn: toMenu }]);
+  writeLineage(path[2]);
+  dialog('Fundaron la primera ciudad: camino ' + path[0], '<p>' + path[1] + '</p><p>Civilización resultante: <b>' + path[2] + '</b>. La Era 4 todavía no está construida en este prototipo: tu linaje y tu camino quedan anotados en este navegador para cuando exista.</p><p>Población: ' + G.P.length + ' · Nacimientos: ' + G.births + ' · Muertes: ' + G.deaths + ' · Tiempo: ' + Math.floor(G.t / 60) + ' min ' + Math.floor(G.t % 60) + ' s</p>', [{ t: 'Volver a la portada', fn: toIndex }, { t: 'Jugar otra vez', fn: toMenu, ghost: 1 }]);
 }
-function lose() { G.over = true; dialog('La tribu desapareció', '<p>Sin adultos, la banda no pudo continuar. Probá asignar más recolectores al principio, refugiarte antes del invierno y defender el campamento.</p>', [{ t: 'Volver al inicio', fn: toMenu }]); }
-function toMenu() { $('menu').classList.add('show'); started = false; }
-function dialog(t, html, btns) { $('dT').textContent = t; $('dB').innerHTML = html; const bx = $('dBtns'); bx.innerHTML = ''; btns.forEach(b => { const e = document.createElement('button'); e.className = 'bigbtn'; e.textContent = b.t; e.onclick = () => { $('dlg').classList.remove('show'); b.fn && b.fn(); }; bx.appendChild(e); }); $('dlg').classList.add('show'); }
+function lose() { G.over = true; endCommon(); dialog('La tribu desapareció', '<p>Sin adultos, la banda no pudo continuar. Probá asignar más recolectores al principio, refugiarte antes del invierno y defender el campamento.</p>', [{ t: 'Volver a empezar', fn: toMenu }, { t: 'Volver a la portada', fn: toIndex, ghost: 1 }]); }
+function toMenu() { $('menu').classList.add('show'); started = false; refreshCont(); renderLin(); }
+function dialog(t, html, btns) { $('dT').textContent = t; $('dB').innerHTML = html; const bx = $('dBtns'); bx.innerHTML = ''; btns.forEach(b => { const e = document.createElement('button'); e.className = b.ghost ? 'ghost' : 'bigbtn'; e.textContent = b.t; e.onclick = () => { $('dlg').classList.remove('show'); b.fn && b.fn(); }; bx.appendChild(e); }); $('dlg').classList.add('show'); const f = bx.querySelector('button'); if (f) f.focus(); }
+
+/* ---------- Linaje (viene de la Era 2) ---------- */
+const BRN = { pred: 'Depredador', para: 'Parásito', foto: 'Fotosintético', colo: 'Colonial', none: 'sin rama' };
+const BCOL = { pred: '#d63a3a', para: '#8a6b2a', foto: '#3fa84a', colo: '#3a7fd6' };
+function readLineage() {
+  try {
+    const d = JSON.parse(localStorage.getItem('evo_lineage')); if (!d || d.v !== 1 || (d.from !== 2 && d.from !== 3)) return null;
+    const br = ['pred', 'para', 'foto', 'colo'].includes(d.branch) ? d.branch : null;
+    return { branch: br, tier: clamp(Math.round(+d.tier) || 0, 0, 3), mutCount: Math.max(0, Math.round(+d.mutCount) || 0), species: String(d.species || '').slice(0, 40), seed: String(d.seed || '').slice(0, 30), from: d.from };
+  } catch (e) { return null; }
+}
+function linText(l) { return l ? (l.species ? l.species + ' · ' : '') + (l.branch ? 'rama ' + BRN[l.branch] : 'sin rama') + ' · nivel ' + l.tier + ' · ' + l.mutCount + ' mutaciones' : ''; }
+function writeLineage(city) {
+  try { const l = G.lin || {}; localStorage.setItem('evo_lineage', JSON.stringify({ v: 1, from: 3, branch: l.branch || null, tier: l.tier || 0, mutCount: l.mutCount || 0, owned: [], seed: G.seed, species: l.species || '', city: city, pop: G.P.length, at: Date.now() })); } catch (e) { }
+}
+
+/* ---------- Guardado ---------- */
+const SAVE_KEY = 'evo_save3_v1', REFS = ['bushes', 'trees', 'rocks', 'Gm'];
+function snapshotObj() {
+  const idx = {}; REFS.forEach(k => idx[k] = new Map(G[k].map((o, i) => [o, i])));
+  const ref = o => { if (!o) return null; for (const k of REFS) { const i = idx[k].get(o); if (i !== undefined) return [k, i]; } return null; };
+  const g = {};
+  for (const k in G) { if (k === 'P') g.P = G.P.map(q => Object.assign({}, q, { tgt: ref(q.tgt) })); else if (k === 'sheltered') g.sheltered = [...G.sheltered]; else if (k === 'sites') g.sites = G.sites.map(x => G.B.indexOf(x)); else g[k] = G[k]; }
+  g.modal = false; g.paused = false;
+  return { v: 1, diffI, rs: _rs, G: g };
+}
+const snapshot = () => JSON.stringify(snapshotObj());
+const stateHash = () => hashStr(snapshot()).toString(16);
+function summary() { const ad = adults().length; return 'Tribu de ' + G.P.length + ' · año ' + (1 + Math.floor(G.t / (SLEN * 4))) + ' · ' + nTech() + ' tecnología' + (nTech() === 1 ? '' : 's'); }
+function saveGame(manual) {
+  if (!G || !started || G.over) return false;
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(Object.assign({ v: 1, at: Date.now(), summary: summary() }, snapshotObj()))); lastSaveT = G.t; if (manual) toast('Partida guardada.'); return true; }
+  catch (e) { if (manual) toast('No se pudo guardar (el navegador lo bloquea).', true); return false; }
+}
+function readSave() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY)); return d && d.v === 1 && d.G && d.G.P ? d : null; } catch (e) { return null; } }
+function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { } refreshCont(); }
+function restoreGame(d) {
+  setDiff(d.diffI | 0); _rs = d.rs >>> 0; G = d.G;
+  G.sheltered = new Set(G.sheltered || []); G.sites = (G.sites || []).map(i => G.B[i]).filter(Boolean);
+  for (const q of G.P) if (q.tgt) q.tgt = (G[q.tgt[0]] || [])[q.tgt[1]] || null;
+  started = true; spdI = 1; $('bSpd').textContent = '×1'; $('menu').classList.remove('show'); ['techm', 'dipm', 'dlg'].forEach(i => $(i).classList.remove('show'));
+  lastSaveT = G.t; panX = null; mode = null; selId = null; setMode(null); $('tray').classList.remove('show'); $('bBuild').classList.remove('on'); layout();
+}
+function refreshCont() {
+  const d = readSave(), b = $('contBtn'); if (!b) return;
+  b.style.display = d ? 'block' : 'none'; if (d) b.innerHTML = '<b>Continuar partida guardada</b><small></small>', b.lastChild.textContent = new Date(d.at).toLocaleString('es-AR') + ' · ' + d.summary;
+}
 
 /* ---------- Acciones ---------- */
+const minFood = () => Math.max(3, Math.ceil(adults().length * .6));
 function setRole(role, delta) {
   if (!started || G.over) return; const ad = adults();
-  if (delta > 0) { let p = ad.find(q => q.role === 'libre'); if (!p) { const cnt = {}; RORDER.forEach(r => cnt[r] = ad.filter(q => q.role === r).length); const from = RORDER.filter(r => r !== role && cnt[r] > 0).sort((a, b) => cnt[b] - cnt[a])[0]; if (!from) return; p = ad.find(q => q.role === from); } p.role = role; p.tgt = null; p.carry = p.carry; }
-  else { const p = ad.find(q => q.role === role); if (p) { p.role = 'libre'; p.tgt = null; } }
+  const cnt = {}; RORDER.forEach(r => cnt[r] = ad.filter(q => q.role === r).length);
+  const food = cnt.rec + cnt.caz, isF = r => r === 'rec' || r === 'caz';
+  if (delta > 0) {
+    let p = ad.find(q => q.role === 'libre'), from = null;
+    if (!p) {
+      // no se puede sacar gente de recolectores/cazadores si la tribu quedaría sin quien la alimente
+      const cands = RORDER.filter(r => r !== role && cnt[r] > 0 && (isF(role) || !isF(r) || food - 1 >= minFood()));
+      from = cands.sort((a, b) => (isF(a) - isF(b)) || cnt[b] - cnt[a])[0];
+      if (!from) { toast('No se puede: la tribu necesita al menos ' + minFood() + ' recolectores o cazadores para no pasar hambre.', true); return; }
+      p = ad.find(q => q.role === from);
+    }
+    p.role = role; p.tgt = null;
+    if (from) toast('Un ' + ROLES[from].n.toLowerCase().replace(/es$/, '') + ' pasó a ser ' + ROLES[role].n.toLowerCase().replace(/es$/, '') + '.');
+  } else {
+    const p = ad.find(q => q.role === role); if (!p) return;
+    if (isF(role) && food - 1 < minFood()) { toast('Quedarían muy pocos recolectores y cazadores: la tribu pasaría hambre.', true); return; }
+    p.role = 'libre'; p.tgt = null;
+  }
 }
 function placeBuilding(kind, w) {
   const d = BLD[kind], x = clamp(w.x, 30, W - 30), y = clamp(w.y, 30, H - 30);
@@ -392,11 +500,13 @@ function placeBuilding(kind, w) {
 function research(k) {
   const t = TECH[k]; if (has(k)) return;
   if (!t.req.every(has)) { toast('Falta una tecnología previa.'); return; }
-  if (G.know < t.cost) { toast('Falta Conocimiento: ' + t.cost + ' (tenés ' + Math.floor(G.know) + ').'); return; }
-  G.know -= t.cost; G.techs[k] = true; logMsg('Aprendieron: ' + t.n + '.'); toast('Nueva tecnología: ' + t.n); renderTech();
+  const ex = (t.excl || []).find(has); if (ex) { toast('Ya elegiste ' + TECH[ex].n + ': tu tribu no puede seguir los dos caminos.', true); return; }
+  const c = techCost(k);
+  if (G.know < c) { toast('Falta Conocimiento: ' + c + ' (tenés ' + Math.floor(G.know) + ').'); return; }
+  G.know -= c; G.techs[k] = true; logMsg('Aprendieron: ' + t.n + '.'); toast('Nueva tecnología: ' + t.n); renderTech();
 }
 function dip(a) {
-  if (a === 'trade') { if (G.food < 4) { toast('Necesitás 4 raciones para comerciar.'); return; } G.food -= 4; const g = Math.random() < .5 ? ['madera', 6] : ['piedra', 3]; if (g[0] === 'madera') G.wood += 6; else G.stone += 3; G.relation += 5; G.trades++; logMsg('Intercambiaron 4 raciones por ' + g[1] + ' de ' + g[0] + '.'); toast('Intercambio: +' + g[1] + ' ' + g[0] + '.'); }
+  if (a === 'trade') { if (G.food < 4) { toast('Necesitás 4 raciones para comerciar.'); return; } G.food -= 4; const g = R() < .5 ? ['madera', 6] : ['piedra', 3]; if (g[0] === 'madera') G.wood += 6; else G.stone += 3; G.relation += 5; G.trades++; logMsg('Intercambiaron 4 raciones por ' + g[1] + ' de ' + g[0] + '.'); toast('Intercambio: +' + g[1] + ' ' + g[0] + '.'); }
   else if (a === 'gift') { if (G.food < 5) { toast('Necesitás 5 raciones.'); return; } G.food -= 5; G.relation += 18; logMsg('Enviaron un regalo al Clan del Este.'); toast('Relación +18.'); }
   else if (a === 'ally') { if (G.relation < 50) { toast('La relación tiene que ser de 50 o más.'); return; } if (!G.allied) { G.allied = true; logMsg('¡Alianza con el Clan del Este! Dejan de atacar y comparten saberes.'); toast('Alianza sellada.'); } }
   renderDip();
@@ -410,6 +520,7 @@ function drawPerson(x, p, tt) {
   x.strokeStyle = '#3a2a1a'; x.lineWidth = 1.6; x.beginPath(); x.moveTo(-2, 5); x.lineTo(-2 + sw, 11); x.moveTo(2, 5); x.lineTo(2 - sw, 11); x.stroke();
   x.fillStyle = p.flash > 0 ? '#fff' : rc; x.strokeStyle = 'rgba(0,0,0,.6)'; x.lineWidth = 1; x.beginPath(); x.ellipse(0, 0, 4.6, 6.2, 0, 0, TAU); x.fill(); x.stroke();
   x.fillStyle = '#e0b48c'; x.beginPath(); x.arc(0, -8, 3.4, 0, TAU); x.fill(); x.stroke();
+  if (G && G.lin && G.lin.branch) { x.strokeStyle = BCOL[G.lin.branch]; x.lineWidth = 2; x.beginPath(); x.arc(0, -8, 3.4, Math.PI * 1.1, Math.PI * 1.9); x.stroke(); }
   x.strokeStyle = '#3a2a1a'; x.lineWidth = 1.4;
   if (p.role === 'caz' && !child) { x.beginPath(); x.moveTo(6, 8); x.lineTo(6, -12); x.stroke(); x.fillStyle = has('arco') ? '#444' : '#ddd'; x.beginPath(); x.moveTo(6, -15); x.lineTo(4, -10); x.lineTo(8, -10); x.fill(); if (has('arco')) { x.beginPath(); x.arc(-6, -2, 6, -1.2, 1.2); x.stroke(); } }
   else if (p.role === 'rec' && !child) { x.fillStyle = '#9a6a3a'; x.beginPath(); x.arc(-6, 3, 3.4, 0, TAU); x.fill(); x.stroke(); }
@@ -464,14 +575,26 @@ function render() {
 }
 
 /* ---------- Interfaz ---------- */
-function layout() { DPR = Math.min(window.devicePixelRatio || 1, 2); const r = cv.parentElement.getBoundingClientRect(); VW = r.width; VH = r.height; cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR); SC = Math.min(VW / W, VH / H); OX = (VW - W * SC) / 2; OY = (VH - H * SC) / 2; }
+function layout() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2); const r = cv.parentElement.getBoundingClientRect(); VW = r.width; VH = r.height; cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+  const sh = VH / H, sw = VW / W;
+  if (sw < sh * .7) { /* retrato (móvil): el mapa llena el alto y se desplaza con el dedo */ SC = sh; const lo = VW - W * SC; if (panX === null) panX = VW / 2 - (G ? G.camp.x : 300) * SC; panX = clamp(panX, lo, 0); OX = panX; OY = 0; PAN = true; }
+  else { SC = Math.min(sw, sh); OX = (VW - W * SC) / 2; OY = (VH - H * SC) / 2; PAN = false; }
+}
+let PAN = false, drag = null;
 const toW = e => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left - OX) / SC, y: (e.clientY - r.top - OY) / SC }; };
-cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(); ptr.x = e.clientX - r.left; ptr.y = e.clientY - r.top; ptr.in = true; });
+cv.addEventListener('pointermove', e => {
+  const r = cv.getBoundingClientRect(); ptr.x = e.clientX - r.left; ptr.y = e.clientY - r.top; ptr.in = true;
+  if (drag && drag.id === e.pointerId && PAN) { const dx = e.clientX - drag.x; if (Math.abs(dx) > 8) drag.moved = true; if (drag.moved) { panX = clamp(drag.ox + dx, VW - W * SC, 0); OX = panX; } }
+});
 cv.addEventListener('pointerleave', () => { ptr.in = false; });
-cv.addEventListener('pointerdown', e => {
+cv.addEventListener('pointercancel', () => { drag = null; });
+cv.addEventListener('pointerdown', e => { drag = { id: e.pointerId, x: e.clientX, ox: OX, moved: false }; try { cv.setPointerCapture(e.pointerId); } catch (_) { } });
+cv.addEventListener('pointerup', e => {
+  const d = drag; drag = null; if (!d || d.moved) return;
   if (!started || !G || G.modal || G.over) return; const w = toW(e);
   if (mode && mode.indexOf('b:') === 0) { placeBuilding(mode.slice(2), w); return; }
-  const p = nearestOf(G.P, w.x, w.y, 22, null); selId = p ? p.id : null;
+  const p = nearestOf(G.P, w.x, w.y, 26, null); selId = p ? p.id : null;
 });
 function setMode(m) { mode = m; const t = $('modeTip'); t.style.display = m ? 'block' : 'none'; t.textContent = m ? 'Tocá el mapa donde querés construir: ' + BLD[m.slice(2)].n : ''; }
 const ready = () => G && started && !G.over && !G.modal;
@@ -484,9 +607,9 @@ $('bAuto').onclick = () => { G.auto = !G.auto; $('bAuto').textContent = 'Asignar
 Object.keys(BLD).forEach(k => { const d = BLD[k], b = document.createElement('button'); b.innerHTML = '<b></b><small></small>'; b.firstChild.textContent = d.n + ' (' + d.w + ' madera' + (d.s ? ', ' + d.s + ' piedra' : '') + ')'; b.lastChild.textContent = d.d + (d.req ? ' Requiere ' + TECH[d.req].n + '.' : ''); b.id = 'bb_' + k; b.onclick = () => { if (!ready()) return; setMode(mode === 'b:' + k ? null : 'b:' + k); }; $('tray').appendChild(b); });
 $('bBuild').onclick = () => { if (!ready()) return; $('tray').classList.toggle('show'); $('bBuild').classList.toggle('on'); };
 function renderTech() {
-  $('techP').textContent = 'Conocimiento disponible: ' + Math.floor(G.know) + '. Lo generan los chamanes y la propia población.';
+  $('techP').textContent = 'Conocimiento disponible: ' + Math.floor(G.know) + '. Lo generan sobre todo los chamanes; cada tecnología aprendida encarece las siguientes.';
   const g = $('techGrid'); g.innerHTML = '';
-  Object.keys(TECH).forEach(k => { const t = TECH[k], b = document.createElement('button'); b.className = 'tc' + (has(k) ? ' done' : ''); const okReq = t.req.every(has); b.disabled = has(k) || !okReq; b.innerHTML = '<b></b><span></span><em></em>'; b.children[0].textContent = (has(k) ? '✓ ' : '') + t.n; b.children[1].textContent = t.d; b.children[2].textContent = has(k) ? 'Aprendida' : 'Costo: ' + t.cost + ' Conocimiento' + (t.req.length ? ' · requiere: ' + t.req.map(r => TECH[r].n).join(', ') : ''); b.onclick = () => research(k); g.appendChild(b); });
+  Object.keys(TECH).forEach(k => { const t = TECH[k], b = document.createElement('button'); b.className = 'tc' + (has(k) ? ' done' : ''); const okReq = t.req.every(has), exK = (t.excl || []).find(has); b.disabled = has(k) || !okReq || !!exK; b.innerHTML = '<b></b><span></span><em></em>'; b.children[0].textContent = (has(k) ? '✓ ' : '') + t.n; b.children[1].textContent = t.d; b.children[2].textContent = has(k) ? 'Aprendida' : exK ? 'Descartada: elegiste ' + TECH[exK].n : 'Costo: ' + techCost(k) + ' Conocimiento (sube con cada tecnología aprendida)' + (t.req.length ? ' · requiere: ' + t.req.map(r => TECH[r].n).join(', ') : ''); b.onclick = () => research(k); g.appendChild(b); });
 }
 function renderDip() {
   $('dipP').textContent = 'Relación: ' + Math.round(G.relation) + ' (de -100 a 100). ' + (G.allied ? 'Son aliados: no atacan y comparten saberes.' : 'Si la relación es baja, mandan saqueadores.');
@@ -498,9 +621,18 @@ $('techClose').onclick = () => { $('techm').classList.remove('show'); G.modal = 
 $('bDip').onclick = () => { if (!ready()) return; G.modal = true; renderDip(); $('dipm').classList.add('show'); };
 $('dipClose').onclick = () => { $('dipm').classList.remove('show'); G.modal = false; };
 $('bPause').onclick = () => { if (started && !G.over && !G.modal) G.paused = !G.paused; };
+$('bSave').onclick = () => { if (started && G && !G.over) saveGame(true); };
+$('contBtn').onclick = () => { const d = readSave(); if (d) { restoreGame(d); toast('Partida cargada.'); } };
 $('bSpd').onclick = () => { spdI = spdI === 1 ? 2 : spdI === 2 ? 4 : 1; $('bSpd').textContent = '×' + spdI; };
-document.querySelectorAll('#diffSeg button').forEach(b => b.onclick = () => { diffI = +b.dataset.d; document.querySelectorAll('#diffSeg button').forEach(x => x.classList.toggle('on', x === b)); });
+document.querySelectorAll('#diffSeg button').forEach(b => b.onclick = () => { setDiff(+b.dataset.d); document.querySelectorAll('#diffSeg button').forEach(x => x.classList.toggle('on', x === b)); });
 $('startBtn').onclick = () => { newGame(); started = true; $('menu').classList.remove('show'); spdI = 1; $('bSpd').textContent = '×1'; layout(); toast('Mirá el panel Oficios: cada persona trabaja según su oficio.'); };
+function renderLin() {
+  const l = readLineage(), b = $('linBox'); if (!b) return;
+  if (!l) { b.innerHTML = '<h3>Tu linaje</h3><span></span>'; b.lastChild.textContent = 'Todavía no tenés linaje. Si jugás la Era 2 y llegás hasta acá, tu especie te da un bono. Mientras tanto, empezás de cero.'; return; }
+  b.innerHTML = '<h3>Tu linaje</h3><span></span><br><small></small>';
+  b.children[1].textContent = linText(l);
+  b.lastChild.textContent = 'Bono: +' + l.tier + ' de Conocimiento inicial (uno por nivel evolutivo) y tu gente lleva una cinta del color de la rama' + (l.branch ? ' ' + BRN[l.branch] : '') + '.';
+}
 addEventListener('keydown', e => { if (!started || !G) return; if (e.key === ' ') { e.preventDefault(); $('bPause').onclick(); } });
 
 function hintText() {
@@ -517,15 +649,15 @@ function hintText() {
 }
 function hud() {
   if (!G || !started) return; const ad = adults(), pop = G.P.length, lim = cohLimit();
-  $('vSeason').textContent = SEAS[G.season].n; $('vYear').textContent = 'año ' + (1 + Math.floor(G.t / (SLEN * 4)));
+  cv.setAttribute('aria-label', 'Mapa del valle, ' + SEAS[G.season].n.toLowerCase() + ': ' + pop + ' personas, ' + Math.floor(G.food) + ' raciones. Tocá a una persona para ver su estado.'); $('vSeason').textContent = SEAS[G.season].n; $('vYear').textContent = 'año ' + (1 + Math.floor(G.t / (SLEN * 4)));
   $('vPop').textContent = pop; $('vPopT').textContent = 'personas (' + (pop - ad.length) + ' niños)';
   $('vFood').textContent = Math.floor(G.food) + '/' + foodCap(); $('cFood').classList.toggle('bad', G.food < 2);
-  $('vWood').textContent = Math.floor(G.wood); $('vStone').textContent = Math.floor(G.stone); $('vKnow').textContent = G.know.toFixed(1);
+  $('vWood').textContent = Math.floor(G.wood); $('vStone').textContent = Math.floor(G.stone); $('vKnow').textContent = G.know.toFixed(1); $('bSave').disabled = G.over;
   $('vCoh').textContent = pop + '/' + lim; $('cCoh').classList.toggle('bad', pop > lim);
   RORDER.forEach(r => { $('r_' + r).children[2].textContent = ad.filter(p => p.role === r).length; });
   const lib = ad.filter(p => p.role === 'libre').length; $('libres').textContent = lib ? '(' + lib + ' libres)' : '';
   Object.keys(BLD).forEach(k => { const d = BLD[k]; $('bb_' + k).disabled = !!(d.req && !has(d.req)); });
-  const nt = Object.keys(TECH).filter(k => !has(k) && TECH[k].req.every(has) && G.know >= TECH[k].cost).length; $('bTechS').textContent = nt ? nt + ' lista' + (nt > 1 ? 's' : '') + ': ¡tocá!' : 'Conocimiento ' + G.know.toFixed(1);
+  const nt = Object.keys(TECH).filter(k => !has(k) && TECH[k].req.every(has) && !(TECH[k].excl || []).some(has) && G.know >= techCost(k)).length; $('bTechS').textContent = nt ? nt + ' lista' + (nt > 1 ? 's' : '') + ': ¡tocá!' : 'Conocimiento ' + G.know.toFixed(1);
   const p = G.P.find(q => q.id === selId);
   if (p) { const st = { idle: 'descansando', eat: 'comiendo', carry: 'llevando lo recolectado al campamento', gather: 'recolectando', hunt: 'cazando', build: 'construyendo', chop: 'cortando madera', mine: 'picando piedra', pray: 'enseñando y guardando la tradición', flee: 'huyendo de un lobo', farm: 'trabajando el huerto' }[p.st] || 'vagando'; $('selInfo').innerHTML = '<b>' + (p.age < CHILD ? 'Niño' : (p.role === 'libre' ? 'Adulto sin oficio' : ROLES[p.role].n.replace(/es$/, ''))) + '</b><br>Está ' + st + '.<br>Salud ' + Math.round(p.hp) + '/' + p.mhp + ' · Hambre ' + Math.round(p.hunger) + '%'; } else $('selInfo').textContent = 'Tocá a alguien en el mapa.';
   $('log').innerHTML = G.log.slice(0, 6).map(t => '<div>' + t + '</div>').join('');
@@ -538,12 +670,15 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', pal);
 let last = performance.now(), acc = 0, hudN = 0;
 function loop(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
-  if (started && G && !G.paused && !G.modal && !G.over) { acc += dt * spdI; while (acc >= .05) { update(.05); acc -= .05; if (G.over) break; } }
+  if (started && G && !G.paused && !G.modal && !G.over) { acc += dt * spdI; while (acc >= .05) { update(.05); acc -= .05; if (G.over) break; } if (!G.over && G.t - lastSaveT >= 20) saveGame(false); }
   if ((hudN++ & 7) === 0) { hud(); if ((hudN & 63) === 1) pal(); }
   render(); requestAnimationFrame(loop);
 }
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(false); });
+addEventListener('pagehide', () => saveGame(false));
+refreshCont(); renderLin();
 pal(); layout(); requestAnimationFrame(loop);
-window.__e3 = { get G() { return G; }, newGame, update, setRole, placeBuilding, research, dip, goals, hud, render, adults, done, TECH, BLD, set diffI(v) { diffI = v; }, setStarted(v) { started = v; }, get has() { return has; } };
+window.__e3 = { forceWin() { win(); }, get G() { return G; }, step(dt) { const n = Math.max(1, Math.round((dt || .05) / .05)); for (let i = 0; i < n && G && !G.over; i++) update(.05); }, seedRng, hashStr, snapshot, stateHash, saveGame, readSave, restoreGame, clearSave, readLineage, techCost, DIFFS, newGame, update, setRole, placeBuilding, research, dip, goals, hud, render, adults, done, TECH, BLD, set diffI(v) { setDiff(v); }, get diffI() { return diffI; }, setStarted(v) { started = v; }, get has() { return has; } };
 })();
 </script>
 </body>
