@@ -50,3 +50,25 @@ Reglas comunes:
 - Determinismo: toda la simulación usa `R()`; nada de `Math.random`/`Date`/`performance.now` en `think`/`update`.
 - Pruebas obligatorias antes de commitear: `node tests/era2-guardado.js`, 0 errores de consola, y una prueba propia de lo nuevo en `tests/`.
 - No gastar créditos de Runway. No usar música comercial.
+
+## Resultado final (integrado en `claude/dazzling-davinci-wvedmk`)
+Notas después = lo comprobado por pruebas automáticas y capturas en Chromium headless. **Nadie escuchó el audio** (solo se midió energía/determinismo) y **no se probó en un dispositivo táctil real** (solo emulación de Playwright).
+
+| Categoría | Antes | Después | Evidencia |
+| --- | --- | --- | --- |
+| Arte de animales | 5 | 7 | `tests/era2-arte.js`, `docs/ARTGATE-ERA2.md`, `docs/artgate/` (antes/después y por bioma) |
+| Animación | 3 | 6 | comer, atacar, descansar, morir (`era2-arte.js`: 0 argumentos no finitos) |
+| HUD biológico / selección | 3 | 8 | `tests/era2-ui.js` (escritorio, móvil, tutorial); `docs/artgate/final/era2-hud-integrado.png` |
+| Acciones con consecuencias | 6 | 8 | energía, heridas, descanso, caza con riesgo (`tests/era2-calidad-sim.js`, `docs/ERA2-ACCIONES.md`) |
+| Habilidades | 4 | 6 | niveles y costo en energía; con bot «las 5» 46 %/33 % vs «ninguna» 38 %/17 % (Normal/Difícil, N=24); Alarma sigue sin utilidad demostrada |
+| Control táctico | 4 | 7 | selección por clic/arrastre/especie, órdenes move/attack/forage, indicadores, líder |
+| Combate comprensible | 3 | 7 | `matchup` con «por qué», panel «Últimos combates», bajas con causa |
+| Audio (Era 2) | 0 | 6 | `era2-audio.js`: determinismo con audio activo vs mudo igual; sin escucha humana |
+| Ecosistemas | 6 | 7 | mecánica por bioma solo medida en escenarios cerrados, no en partidas completas |
+| Herencia | 5 | 7 | linaje cambia rasgos/vida/velocidad/puntos de habilidad; guardado viejo carga |
+| UX / tutorial | 4 | 7 | tutorial interactivo probado; botón de sonido solapa un chip del HUD a 390 px |
+| Rendimiento | 8 | 7 | 55 fps con 574 animales (`era2-calidad-sim`); `era2-arte` midió 31-34 fps con 417 en máquina cargada |
+| QA | 7 | 8 | + calidad-sim, ui, arte, audio |
+
+**Balance (bot razonable, N=48)**: Fácil 100 %, Normal 46 %, Difícil 27 % (metas 70+/40-60/15-35).
+**Límites conocidos**: terrestres empeoraron en Normal (8→4 de 12) y Difícil (4→2); insectos por debajo de aves, Colmena 0/4 en Normal; el bot no usa niveles ni órdenes por animal; `era2-bot.js` (bot con clics) no se volvió a correr tras el merge.
