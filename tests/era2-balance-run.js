@@ -3,7 +3,7 @@
 // Cada corrida usa semilla 'S<dif>x<i>' y una de las 12 especies (i % 12). Escribe /tmp-scratch JSON en ./tests/.balance-out/ (ignorado) y un resumen por consola.
 const { chromium } = require('playwright'); const fs = require('fs'), path = require('path');
 const [,, diffs, bot, n, maxT, label, abArg, htmlArg, shard, ovArg] = process.argv; // ovArg: JSON {"0":{"hd":1.1},...} para pisar DIFFS sin tocar el archivo
-const SPECS = ['ter_cazador', 'ter_gigante', 'ter_ingeniero', 'ins_colmena', 'ins_enjambre', 'ins_parasito', 'acu_abisal', 'acu_arrecife', 'acu_anfibio', 'ave_rapaz', 'ave_carronera', 'ave_migratoria'];
+const SPECS = process.env.SPECS ? process.env.SPECS.split(',') : ['ter_cazador', 'ter_gigante', 'ter_ingeniero', 'ins_colmena', 'ins_enjambre', 'ins_parasito', 'acu_abisal', 'acu_arrecife', 'acu_anfibio', 'ave_rapaz', 'ave_carronera', 'ave_migratoria'];
 (async () => {
   const html = path.resolve(htmlArg || path.join(__dirname, '../eras/era2-animales.html'));
   // copia diagnóstica: cuenta de qué mueren los animales propios (no cambia la simulación)
@@ -21,7 +21,7 @@ const SPECS = ['ter_cazador', 'ter_gigante', 'ter_ingeniero', 'ins_colmena', 'in
   for (const d of diffs.split(',').map(Number)) {
     for (let i = 0; i < +n; i++) {
       if (i % sn !== si) continue;
-      out.push(await p.evaluate(o => window.runBot2(o), { seed: 'S' + d + 'x' + i, diff: d, spec: SPECS[i % 12], bot, maxT: +maxT || 2400, ab }));
+      out.push(await p.evaluate(o => window.runBot2(o), { seed: 'S' + d + 'x' + i, diff: d, spec: SPECS[i % SPECS.length], bot, maxT: +maxT || 2400, ab }));
     }
   }
   fs.writeFileSync(path.join(tmp, (label || 'x') + '-' + (si) + '.json'), JSON.stringify(out));

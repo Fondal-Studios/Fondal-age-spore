@@ -52,7 +52,7 @@ window.runBot2 = function (o) {
     for (const m of sample) for (const b of G.A) { if (b.dead || b.sp.team === 'player' || seen.has(b.id) || (b.sp.team === 'wild' && b.sp.diet === 'herb')) continue; if (Math.hypot(b.x - m.x, b.y - m.y) < 130) { seen.add(b.id); foes.push(b); } }
     const avgHp = mine.reduce((s, a) => s + a.hp / a.mhp, 0) / mine.length, avgHu = mine.reduce((s, a) => s + a.hunger, 0) / mine.length;
     const nearPl = c => { let v = 0; for (const p of G.plants) if (p.v > .5 && Math.hypot(p.x - c.x, p.y - c.y) < 100 && (G.me.hab === 'water' ? p.w : !p.w)) v++; return v; };
-    const ENERGY = { rug: 1, exc: 1, mig: 1 }; const can = id => abOn.has(id) && !(G.ab[id] > 0) && !(ENERGY[id] && avgHu < 40); // v2: no gasta energía si la manada ya tiene hambre
+    const avgEn = mine.reduce((s, a) => s + (a.en == null ? 70 : a.en), 0) / mine.length; const can = id => abOn.has(id) && !(G.ab[id] > 0) && avgEn > 35; // v3 (Calidad 2.0): las habilidades cuestan energía real; no se usan si la manada está cansada
     if (foes.length) {
       const boss = foes.some(f => f.sp.boss), pow = foes.reduce((s, f) => s + (f.sp.boss ? 8 : 1) * (f.sp.atk || 1) / 6, 0);
       if (can('rug') && (foes.length >= 2 || boss || avgHp < .7)) E.useAbility('rug');

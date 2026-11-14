@@ -86,7 +86,7 @@ async function desktop(browser) {
   // botón Ordenar (modo) y Detener
   await p.mouse.click(mine[0].x, mine[0].y); await p.click('#tOrd'); ok(await p.evaluate(() => document.getElementById('modeTip').style.display === 'block'), '«Ordenar» muestra la ayuda');
   await p.mouse.click(e1.x, e1.y); ok(await p.evaluate(id => { const a = window.__e2.G.A.find(q => q.id === id); return a.ord && a.ord.k === 'move'; }, mine[0].id), '«Ordenar» + clic emite move');
-  await p.click('#tStop'); ok(await p.evaluate(id => { const a = window.__e2.G.A.find(q => q.id === id); return a.ord && a.ord.k === 'forage'; }, mine[0].id), '«Detener» devuelve a lo automático (forage)');
+  await p.click('#tStop'); ok(await p.evaluate(id => { const a = window.__e2.G.A.find(q => q.id === id); return !a.ord || a.ord.k === 'forage'; }, mine[0].id), '«Detener» devuelve a lo automático (forage)');
   // atajos 1-5 siguen funcionando
   await p.evaluate(() => { window.__e2.G.inst = 40; }); const ab0 = await p.evaluate(() => JSON.stringify(window.__e2.G.ab)); await p.keyboard.press('2'); await p.keyboard.press('1'); ok(await p.evaluate(a => JSON.stringify(window.__e2.G.ab) !== a, ab0), 'las teclas 1-5 de habilidades siguen funcionando');
   // líder
@@ -161,7 +161,7 @@ async function touch(browser) {
   const ords = await p.evaluate(() => { const E = window.__e2; const s = E.ui.mySel(); return { n: s.length, mv: s.filter(a => a.ord && a.ord.k === 'move').length, marks: E.ui.UIs.marks.length }; });
   ok(ords.n > 0 && ords.mv === ords.n && ords.marks === 1, '«Ordenar» + toque en el suelo manda a todo el grupo (' + ords.mv + '/' + ords.n + ')');
   if (SHOTS) await p.screenshot({ path: SHOTS + '/ui-m-orden.png' });
-  await p.tap('#tStop'); ok(await p.evaluate(() => window.__e2.ui.mySel().every(a => a.ord && a.ord.k === 'forage')), '«Detener» vuelve a lo automático');
+  await p.tap('#tStop'); ok(await p.evaluate(() => window.__e2.ui.mySel().every(a => !a.ord || a.ord.k === 'forage')), '«Detener» vuelve a lo automático');
   // líder con joystick
   await p.tap('#tLead'); ok(await p.evaluate(() => window.__e2.ui.leaderOn && document.getElementById('joy').classList.contains('show')), '«Líder» muestra el joystick virtual');
   await p.evaluate(() => { window.__e2.G.paused = false; }); const jb = await p.evaluate(() => { const r = document.getElementById('joy').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; });
