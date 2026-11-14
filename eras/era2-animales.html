@@ -180,6 +180,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
   <div id="dlg" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="dT"><h2 id="dT"></h2><div id="dB"></div><div id="dBtns"></div></div></div>
 </div>
 
+<script src="audio-lofi.js"></script>
 <script>
 (() => {
 "use strict";
@@ -1244,6 +1245,102 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) autos
 addEventListener('pagehide', autosave);
 pal(); buildMenu(); layout(); requestAnimationFrame(loop);
 window.__e2 = { bioInfo, Bus, issueOrder, select(id) { selId = id; }, get selId() { return selId; }, DIFFS, win, lose, useAbility, placeMig, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2 };
+/* === AUDIO ===
+   Módulo de audio (eras/audio-lofi.js). Solo ESCUCHA: se suscribe al Bus y lee G; no modifica el estado ni usa R()
+   (el azar del audio es Math.random dentro del motor). Si el archivo no carga o falla algo, el juego sigue sin sonido.
+   - Director de ánimo (cada 0,5 s reales): combate / supervivencia / explorar según amenazas, golpes, hambre, población,
+     invierno y eventos; la evolución dispara un stinger + cambio de tonalidad (lo hace el motor).
+   - Ambiente por G.biomeKey (cambia al viajar). Efectos por Bus, con paneo según la posición en el mapa.
+   - Controles inyectados: botón de parlante + panel de volúmenes (esquina superior derecha, variables CSS --audio-top / --audio-right). */
+(function audioModule() {
+  const FA = window.FondalAudio; if (!FA) return;
+  let warned = false;
+  const safe = f => (a, b, c, d) => { try { f(a, b, c, d); } catch (e) { if (!warned) { warned = true; console.warn('[audio]', e); } } };
+  const on = (t, f) => Bus.on(t, safe(f));
+  const mine = a => !!(a && a.sp && a.sp.team === 'player');
+  const pan = a => FA.pan(a.x, W);
+  FA.wire();
+
+  /* ----- efectos ----- */
+  let lastHitMs = -1e9, combatUntil = 0;
+  on('eat', (a) => { if (mine(a)) FA.sfx('eat', { pan: pan(a), own: true }); });
+  on('hit', (a, b, d) => { const own = mine(a) || mine(b); if (own) lastHitMs = performance.now(); FA.sfx('hit', { pan: pan(b || a), own, vol: own ? Math.min(1, .5 + (d || 0) / 12) : .3 }); });
+  on('kill', (b, src) => { if (mine(b)) FA.sfx('kill', { pan: pan(b), own: true, v: 0 }); else if (mine(src)) FA.sfx('kill', { pan: pan(b), own: true, v: 1 }); });
+  on('state', (a, old, nw) => { if (nw === 'flee' && mine(a)) FA.sfx('flee', { pan: pan(a), own: true }); else if (nw === 'rest' && mine(a)) FA.sfx('rest', { pan: pan(a), vol: .8 }); });
+  on('lay', (a) => { if (mine(a)) FA.sfx('lay', { pan: pan(a), own: true }); });
+  on('born', (a) => { if (mine(a)) FA.sfx('born', { pan: pan(a), own: true }); });
+  on('hazard', (k) => FA.sfx(k === 'incendio' ? 'fire' : 'drought', { own: true }));
+  on('season', (s) => FA.sfx('season', { v: s }));
+  on('ability', (id) => FA.sfx(id, { own: true }));
+  on('order', () => FA.sfx('order', { own: true }));
+  on('select', (a) => { if (a) FA.sfx('select', { pan: pan(a), own: true }); else FA.sfx('ui', { vol: .6 }); });
+  on('evolve', () => FA.stinger(10));
+  on('phase', () => FA.sfx('phase', { own: true }));
+  on('travel', (k) => { FA.sfx('travel', { own: true }); if (k) FA.setBiome(k); });
+  on('rest', () => FA.sfx('rest', { vol: .8 }));
+  on('scarcity', () => FA.sfx('scarcity', { own: true }));
+  on('migration', () => FA.sfx('migration', { own: true }));
+  on('disobey', () => FA.sfx('disobey', { own: true }));
+  document.addEventListener('click', e => { const t = e.target; if (t && t.closest && t.closest('button') && !t.closest('#audioUI')) FA.sfx('ui', { vol: .7 }); }, true);
+
+  /* ----- director de ánimo ----- */
+  const own = [], dir = { mood: 'explorar', threats: 0, hunger: 100, pop: 0, why: '' };
+  function direct() {
+    const now = performance.now();
+    if (!started || !G) { dir.why = 'menú'; FA.setMood('explorar'); FA.setDuck(false); return dir; }
+    if (G.biomeKey) FA.setBiome(G.biomeKey);
+    FA.setDuck(!!(G.paused || G.modal));
+    own.length = 0; let hs = 0;
+    for (let i = 0; i < G.A.length; i++) { const a = G.A[i]; if (!a.dead && a.sp.team === 'player') { own.push(a); hs += a.hunger; } }
+    const pop = own.length, hunger = pop ? hs / pop : 100; let close = 0;
+    if (pop) {
+      const stp = Math.max(1, Math.floor(pop / 16));
+      for (let i = 0; i < G.A.length; i++) {
+        const t = G.A[i]; if (t.dead || t.sp.team === 'player' || !(t.sp.diet === 'carn' || t.sp.team === 'rival')) continue;
+        for (let j = 0; j < pop; j += stp) { const o = own[j], dx = o.x - t.x, dy = o.y - t.y; if (dx * dx + dy * dy < 4900) { close++; break; } }
+      }
+    }
+    if (now - lastHitMs < 5000 || close >= 2) combatUntil = now + 7000;
+    const winter = G.season === 3 && (!G.biome.coldAll || hunger < 55);
+    let m = 'explorar', why = 'calma';
+    if (now < combatUntil) { m = 'combate'; why = close >= 2 ? 'amenazas cerca' : 'golpes recientes'; }
+    else if (pop && (hunger < 35 || pop <= 4 || winter || G.ev)) { m = 'supervivencia'; why = hunger < 35 ? 'hambre' : pop <= 4 ? 'población baja' : winter ? 'invierno' : 'evento: ' + (G.ev && G.ev.k); }
+    dir.mood = m; dir.threats = close; dir.hunger = hunger; dir.pop = pop; dir.why = why;
+    FA.setMood(m); return dir;
+  }
+  setInterval(safe(direct), 500);
+
+  /* ----- controles: botón de parlante + panel de volúmenes ----- */
+  const css = document.createElement('style');
+  css.textContent = '#audioUI{position:fixed;top:calc(var(--audio-top,8px) + env(safe-area-inset-top,0px));right:var(--audio-right,8px);z-index:8;display:flex;flex-direction:column;align-items:flex-end;gap:6px;font:13px/1.35 "IBM Plex Sans",system-ui,sans-serif}' +
+    '#audioBtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line,rgba(0,0,0,.2));background:var(--panel,#fff);color:var(--ink,#123);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation}' +
+    '#audioBtn[aria-pressed="true"]{border-color:var(--warn,#c9406f)}#audioBtn svg{width:24px;height:24px}' +
+    '#audioPanel{width:min(78vw,240px);background:var(--panel,#fff);color:var(--ink,#123);border:1px solid var(--line,rgba(0,0,0,.2));border-radius:12px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.25)}' +
+    '#audioPanel[hidden]{display:none}#audioPanel h3{font-size:14px;margin:0 0 6px}#audioPanel label{display:flex;justify-content:space-between;gap:8px;color:var(--ink2,#456);margin-top:6px}' +
+    '#audioPanel input[type=range]{width:100%;min-height:28px;margin:0;accent-color:var(--accent,#0d7a74)}#audioPanel button{margin-top:8px;width:100%;min-height:40px;border-radius:10px;border:1px solid var(--line,rgba(0,0,0,.2));background:transparent;color:inherit;font:inherit;font-weight:600;cursor:pointer}' +
+    '#audioPanel small{display:block;margin-top:6px;color:var(--ink2,#456)}';
+  document.head.appendChild(css);
+  const ui = document.createElement('div'); ui.id = 'audioUI';
+  const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+  const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+  ui.innerHTML = '<button id="audioBtn" type="button" aria-label="Sonido y volúmenes" aria-expanded="false" aria-controls="audioPanel" title="Sonido y volúmenes"></button>' +
+    '<div id="audioPanel" hidden><h3>Sonido</h3>' +
+    ['master:Maestro', 'music:Música', 'sfx:Efectos', 'amb:Ambiente'].map(s => { const [k, n] = s.split(':'); return '<label for="aud_' + k + '"><span>' + n + '</span><output id="aud_' + k + '_o"></output></label><input id="aud_' + k + '" type="range" min="0" max="100" step="1" data-k="' + k + '">'; }).join('') +
+    '<button id="audioMute" type="button"></button><small id="audioNote"></small></div>';
+  document.body.appendChild(ui);
+  const btn = ui.querySelector('#audioBtn'), panel = ui.querySelector('#audioPanel'), muteB = ui.querySelector('#audioMute'), note = ui.querySelector('#audioNote');
+  function sync() {
+    const v = FA.volumes;
+    ui.querySelectorAll('input[type=range]').forEach(i => { i.value = Math.round(v[i.dataset.k] * 100); ui.querySelector('#aud_' + i.dataset.k + '_o').textContent = i.value + '%'; });
+    btn.innerHTML = v.mute ? ICON_OFF : ICON_ON; btn.setAttribute('aria-pressed', v.mute ? 'true' : 'false'); muteB.textContent = v.mute ? 'Activar sonido' : 'Silenciar todo';
+    note.textContent = FA.state === 'running' ? '' : 'El sonido se activa con tu primer toque o tecla.';
+  }
+  btn.onclick = () => { const open = panel.hidden; panel.hidden = !open; btn.setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) { FA.unlock(); sync(); } };
+  ui.querySelectorAll('input[type=range]').forEach(i => { i.oninput = () => { FA.setVolume(i.dataset.k, i.value / 100); if (FA.volumes.mute && i.value > 0) FA.setMuted(false); sync(); }; });
+  muteB.onclick = () => { FA.setMuted(!FA.volumes.mute); sync(); };
+  setInterval(() => { if (!panel.hidden) sync(); }, 1000); sync();
+  window.__e2.audio = FA; window.__e2.audioDir = { direct, get info() { return dir; }, sync, reset() { lastHitMs = -1e9; combatUntil = 0; } };
+})();
 })();
 </script>
 </body>
