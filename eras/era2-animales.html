@@ -223,6 +223,12 @@ const BIOMES = {
   tundra: { n: 'Tundra', col: '#dfe9ee', seasons: [3, 3, 0, 3, 1, 3], grow: .55, plants: 26, alg: 10, heat: 1, coldAll: true, snow: true, haz: [], boss: true, npp: 140, temp: 'media −10 °C', rain: 'menos de 300 mm', lake: { x: 700, y: 440, rx: 140, ry: 80 }, forest: [{ x: 200, y: 480, r: 60 }, { x: 480, y: 100, r: 50 }], init: { conejo: 8, ciervo: 6, escarabajo: 0, pez: 6, lobo: 2, lucio: 1 }, help: ['piel', 'sangre', 'hiber'], d: 'Inviernos larguísimos y frío casi todo el año. Resisten la grasa, el pelaje y la sangre caliente.' },
   oceano: { n: 'Océano y arrecife', col: '#7cc0e4', seasons: [1, 1, 2, 1], grow: 1.1, plants: 6, alg: 70, heat: 1, haz: [], boss: false, npp: 125, temp: 'media 15 °C', rain: 'no aplica', lake: { x: 480, y: 300, rx: 440, ry: 275 }, forest: [], init: { conejo: 0, ciervo: 0, escarabajo: 0, pez: 34, lobo: 0, lucio: 3 }, help: ['aletas', 'eco', 'alas'], d: 'Mar abierto con algas y cardúmenes. Solo especies acuáticas, anfibias o voladoras pueden vivir acá.' }
 };
+/* ---------- Bus de eventos de la simulación ----------
+   La simulación EMITE (Bus.emit) y los módulos de audio, arte e interfaz se SUSCRIBEN (Bus.on). Los suscriptores no deben
+   modificar el estado de la simulación ni consumir R() (solo Math.random para lo cosmético).
+   Eventos: eat(a,tgt,kind) hit(a,b,dmg) dmg(b,amt,src) kill(b,src) state(a,prev,next) lay(a) born(a) hazard(kind) season(n,prev)
+   ability(id,mine) order(ids,ord) select(a) evolve(opt) travel(biome) phase(n) */
+const Bus = { h: {}, on(t, f) { (this.h[t] = this.h[t] || []).push(f); }, emit(t, a, b, c, d) { const l = this.h[t]; if (l) for (let i = 0; i < l.length; i++) l[i](a, b, c, d); } };
 let colonized = {};
 const compat = (me, k) => k !== 'oceano' || ['water', 'amph', 'fly'].includes(me.hab);
 const isWater = (x, y) => { const dx = (x - LAKE.x) / LAKE.rx, dy = (y - LAKE.y) / LAKE.ry; return dx * dx + dy * dy < 1; };
@@ -309,7 +315,7 @@ function newGame(bk, carry, seedStr) {
   if (carry && prev) seedStr = prev.seed; else { seedStr = seedStr || newSeedStr(); seedRng(hashStr(seedStr)); }
   lastSaveT = 0;
   LAKE = B.lake; FOR = B.forest;
-  G = { seed: seedStr, lin: carry && prev ? prev.lin : linSummary(), ab: { rug: 0, cam: 0, exc: 0, ala: 0, mig: 0 }, camT: 0, digT: 0, alT: 0, migT: 0, mig: null, rings: [], t: 0, id: 0, season: 0, A: [], E: [], N: [], B: [], bB: null, phase: 1, trad: 0, food: 0, dom: {}, C: [], F: [], fx: [], plants: [], log: [], sp: {}, inst: 0, nextInst: 10, pending: 0, kills: 0, evos: 0, rally: null, nestB: null, ev: null, evT: 70, bossDone: false, over: false, modal: false, paused: false, immT: 0, goalT: 0, rivT: 0, winter1: false, grass: [] };
+  G = { x2: {}, seed: seedStr, lin: carry && prev ? prev.lin : linSummary(), ab: { rug: 0, cam: 0, exc: 0, ala: 0, mig: 0 }, camT: 0, digT: 0, alT: 0, migT: 0, mig: null, rings: [], t: 0, id: 0, season: 0, A: [], E: [], N: [], B: [], bB: null, phase: 1, trad: 0, food: 0, dom: {}, C: [], F: [], fx: [], plants: [], log: [], sp: {}, inst: 0, nextInst: 10, pending: 0, kills: 0, evos: 0, rally: null, nestB: null, ev: null, evT: 70, bossDone: false, over: false, modal: false, paused: false, immT: 0, goalT: 0, rivT: 0, winter1: false, grass: [] };
   G.biomeKey = bk || 'pradera'; G.biome = B; G.colT = 0;
   for (const k in WILD) G.sp[k] = mkSp(k, WILD[k], 'wild');
   const me = carry ? carry.me : mkSp(specKey, SP2[specKey], 'player'); G.me = me;
@@ -384,11 +390,11 @@ function spdOf(a) { const sp = a.sp, p = sp.p; let s = sp.spd * (1 + (p.d - 1) *
 function dmg(b, amt, src) {
   const sp = b.sp; if (sp.team === 'player' && G.digT > 0) return;
   let red = clamp((sp.def || 0) + sp.p.def + (sp.team === 'player' && nestNear(b.x, b.y) ? .15 : 0) + (sp.team === 'player' && G.alT > 0 ? .25 : 0), 0, .8);
-  amt *= (1 - red) * sp.p.m * (sp.team === 'player' ? DF().dmg : 1); b.hp -= amt; b.flash = .14;
+  amt *= (1 - red) * sp.p.m * (sp.team === 'player' ? DF().dmg : 1); b.hp -= amt; b.flash = .14; Bus.emit('dmg', b, amt, src);
   if (b.hp <= 0 && !b.dead) kill(b, src);
 }
 function kill(b, src) {
-  b.dead = true; G.C.push({ x: b.x, y: b.y, food: 30 + b.sp.r * 4, t: 30 });
+  b.dead = true; Bus.emit('kill', b, src); G.C.push({ x: b.x, y: b.y, food: 30 + b.sp.r * 4, t: 30 });
   for (let i = 0; i < 8; i++) G.fx.push({ x: b.x, y: b.y, vx: rnd(-40, 40), vy: rnd(-40, 40), l: .6, c: '#b33' });
   if (b.sp.team === 'player') logMsg('Murió un ejemplar de ' + b.sp.n.toLowerCase() + (src ? ' (atacado por ' + src.sp.n.toLowerCase() + ')' : ' (hambre o frío)') + '.');
   if (src && src.sp.team === 'player') { G.kills++; G.inst += 1 * G.me.p.inst; logMsg('Tu manada cazó a ' + b.sp.n.toLowerCase() + '. +Instinto'); if (b.sp.boss) { G.inst += 10; logMsg('¡Derrotaron al oso gigante!'); toast('¡Derrotaron al oso gigante!'); } }
@@ -399,11 +405,27 @@ function hit(a, b) {
   const al = useGrid ? alliesNear(a, 70) : (() => { let n = 0; for (const o of G.A) if (!o.dead && o !== a && o.sp === sp && hyp(o.x - a.x, o.y - a.y) < 70) n++; return n; })();
   d *= 1 + p.coop * Math.min(al, 4) / 4 * .8; a.cd = .9;
   G.fx.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, vx: rnd(-30, 30), vy: rnd(-30, 30), l: .35, c: '#fff' });
-  dmg(b, d, a);
+  Bus.emit('hit', a, b, d); dmg(b, d, a);
+}
+/* Órdenes por animal: a.ord = { k:'move'|..., x, y, t }. issueOrder la asigna a animales propios; think() la consume. */
+function issueOrder(ids, ord) { let n = 0; for (const a of G.A) if (!a.dead && a.sp.team === 'player' && ids.indexOf(a.id) >= 0) { a.ord = ord ? Object.assign({ t: 14 }, ord) : null; n++; } if (n) Bus.emit('order', ids, ord); return n; }
+/* bioInfo(a): ÚNICA fuente de datos del HUD biológico (la interfaz solo la consume; la jugabilidad la amplía).
+   { hp, mhp, hunger, en, rep:{ready,pct,note}, st, stLabel, ord, threats:[{id,label,d}], effects:[{id,label,t}], abilities:[{id,n,cd,ready}], juv, age } */
+const ST_LABEL = { idle: 'descansando', forage: 'buscando comida', eat: 'comiendo', hunt: 'cazando', flee: 'huyendo', build: 'construyendo el nido', move: 'yendo al punto marcado', lay: 'poniendo un huevo', rest: 'descansando en grupo', stun: 'aturdido', dig: 'bajo tierra, curándose' };
+function bioInfo(a) {
+  const sp = a.sp, isP = sp.team === 'player', juv = a.age < MAT, effects = [], threats = [], abilities = [];
+  if (a.stun > 0) effects.push({ id: 'stun', label: 'Aturdido', t: a.stun });
+  if (isP) { if (G.camT > 0) effects.push({ id: 'cam', label: 'Camuflado', t: G.camT }); if (G.digT > 0) effects.push({ id: 'dig', label: 'Bajo tierra', t: G.digT }); if (G.alT > 0) effects.push({ id: 'ala', label: 'Alerta (−daño)', t: G.alT }); if (G.migT > 0) effects.push({ id: 'mig', label: 'Migrando', t: G.migT }); }
+  if ((G.season === 3 || G.biome.coldAll) && !(isP && nestNear(a.x, a.y))) effects.push({ id: 'cold', label: 'Pasa frío', t: 0 });
+  if (a.hunger <= 0) effects.push({ id: 'starve', label: 'Muriendo de hambre', t: 0 });
+  const th = threatOf(a, 1); if (th) threats.push({ id: th.id, label: th.sp.n, d: Math.round(hyp(th.x - a.x, th.y - a.y)) });
+  if (isP) for (const id in ABD) abilities.push({ id, n: ABD[id].n, cd: G.ab[id] || 0, ready: !(G.ab[id] > 0) });
+  const rep = { ready: !juv && a.hunger >= 75 && a.rc <= 0, pct: juv ? clamp(a.age / MAT, 0, 1) : clamp(1 - a.rc / (sp.repro * 2.2), 0, 1), note: juv ? 'cría: todavía crece' : a.hunger < 75 ? 'necesita comer más' : a.rc > 0 ? 'recuperándose' : 'lista para reproducirse' };
+  return { hp: a.hp, mhp: a.mhp, hunger: a.hunger, en: a.en == null ? null : a.en, rep, st: a.st, stLabel: ST_LABEL[a.st] || 'vagando', ord: a.ord || null, threats, effects, abilities, juv, age: a.age };
 }
 function layEgg(a, cost) {
   a.hunger -= cost; G.E.push({ x: a.x + rnd(-6, 6), y: a.y + rnd(-6, 6), t: 14, sp: a.sp });
-  if (a.sp.team === 'player') { a.st = 'lay'; }
+  if (a.sp.team === 'player') { a.st = 'lay'; } Bus.emit('lay', a);
 }
 function capOf(sp) { return sp.team === 'player' ? 40 + 4 * (G ? bdone('refugio').length : 0) : sp.team === 'rival' ? 18 : sp.cap; }
 function herdCenter(sp) { let x = 0, y = 0, n = 0; for (const a of G.A) if (a.sp === sp && !a.dead) { x += a.x; y += a.y; n++; } return n ? { x: x / n, y: y / n } : null; }
@@ -431,6 +453,7 @@ function think(a, dt) {
   let gx = null, gy = null, spd = spdOf(a), st = 'idle', tgt = null, tk = null;
   const fleeing = threat && td < 105 && (sp.flee || (isP && !brave && stance !== 'attack') || (team === 'rival' && !brave && sp.diet === 'herb'));
   if (fleeing) { gx = a.x + (a.x - threat.x) * 2; gy = a.y + (a.y - threat.y) * 2; spd *= 1.3; st = 'flee'; }
+  else if (isP && a.ord && a.ord.k === 'move') { a.ord.t -= dt; gx = a.ord.x; gy = a.ord.y; st = 'move'; if (a.ord.t <= 0 || hyp(a.x - gx, a.y - gy) < 8) a.ord = null; }
   else if (isP && G.migT > 0 && G.mig) { gx = G.mig.x + ((a.id % 5) - 2) * 14; gy = G.mig.y + (((a.id >> 2) % 5) - 2) * 14; st = 'move'; spd *= 1.6; }
   else if (isP && G.rally && G.rally.t > 0) { gx = G.rally.x + ((a.id % 5) - 2) * 14; gy = G.rally.y + (((a.id >> 2) % 5) - 2) * 14; st = 'move'; }
   else if (isP && stance !== 'attack' && (G.nestB || G.bB)) { const n = G.nestB || G.bB; gx = n.x + Math.cos(a.id) * 28; gy = n.y + Math.sin(a.id) * 28; st = 'build'; if (hyp(a.x - n.x, a.y - n.y) < 62) n.work += dt; }
@@ -460,7 +483,7 @@ function think(a, dt) {
       } else if (d < 9 + a.rr * .4) {
         st = 'eat'; a.mv = 0; a.eatT += dt; a.a = Math.atan2(tgt.y - a.y, tgt.x - a.x);
         if (a.eatT >= 1.1) {
-          a.eatT = 0;
+          a.eatT = 0; Bus.emit('eat', a, tgt, tk);
           if (tk === 'plant') { tgt.v = Math.max(0, tgt.v - .25); a.hunger = Math.min(100, a.hunger + 24 * p.eff * (isP && warmNear(a.x, a.y) ? 1.25 : 1)); if (isP) G.inst += .05 * p.inst; }
           else if (tk === 'carc') { tgt.food -= 18; a.hunger = Math.min(100, a.hunger + 22 * p.eff * (isP && warmNear(a.x, a.y) ? 1.25 : 1)); if (tgt.food <= 0) tgt.dead = true; if (isP) G.inst += .05 * p.inst; }
           else if (tk === 'egg') { G.E.splice(G.E.indexOf(tgt), 1); a.hunger = Math.min(100, a.hunger + 15); }
@@ -479,6 +502,7 @@ function think(a, dt) {
     if (a.wt <= 0) { a.wt = rnd(2, 5); const c = (isP || team === 'rival') ? herdCenter(sp) : null; const q = randPos(sp, c ? c.x : a.x, c ? c.y : a.y, c ? 80 : 60); a.tx = q.x; a.ty = q.y; }
     gx = a.tx; gy = a.ty; spd *= .45; if (st === 'idle' && a.hunger < 62) st = 'forage';
   }
+  if (a.st !== st) Bus.emit('state', a, a.st, st);
   a.st = st;
   if (gx !== null) {
     const dx = gx - a.x, dy = gy - a.y, d = hyp(dx, dy);
@@ -492,7 +516,7 @@ function think(a, dt) {
 
 function evStart() {
   const hz = G.biome.haz; if (!hz.length) { G.ev = null; G.evT = 70; return; }
-  const k = shuffle(hz)[0];
+  const k = shuffle(hz)[0]; Bus.emit('hazard', k);
   if (k === 'sequia') { G.ev = { k, t: 30 }; toast('Sequía: las plantas dejan de crecer y hay más hambre. Resisten las que gastan poco o aguantan la sequía.', true); logMsg('Empezó una sequía.'); }
   else {
     const c = randPos({ hab: 'land' }), RAD = 90; G.ev = { k, t: 8 }; G.F.push({ x: c.x, y: c.y, r: RAD, t: 8 });
@@ -521,7 +545,7 @@ function separate() {
   }
 }
 function update(dt) {
-  G.t += dt; G.season = G.biome.seasons[Math.floor(G.t / SLEN) % G.biome.seasons.length];
+  G.t += dt; G.season = G.biome.seasons[Math.floor(G.t / SLEN) % G.biome.seasons.length]; if (G.season !== G.ps2) { Bus.emit('season', G.season, G.ps2); G.ps2 = G.season; }
   if (G.ev) { G.ev.t -= dt; if (G.ev.t <= 0) { G.ev = null; G.evT = rnd(50, 80); } } else { G.evT -= dt; if (G.evT <= 0) evStart(); }
   if (G.rally) { G.rally.t -= dt; if (G.rally.t <= 0) G.rally = null; }
   for (const k in G.ab) if (G.ab[k] > 0) G.ab[k] = Math.max(0, G.ab[k] - dt);
@@ -539,7 +563,7 @@ function update(dt) {
   for (let i = G.E.length - 1; i >= 0; i--) {
     const e = G.E[i], inN = e.sp.team === 'player' && nestNear(e.x, e.y);
     e.t -= dt * (inN ? 2 * (1 + e.sp.p.nest) : 1);
-    if (e.t <= 0) { G.E.splice(i, 1); spawn(e.sp, e.x, e.y, true); if (e.sp.team === 'player') { G.inst += .6 * e.sp.p.inst; logMsg('Nació una cría de ' + e.sp.n.toLowerCase() + '.'); for (let k = 0; k < 6; k++) G.fx.push({ x: e.x, y: e.y, vx: rnd(-30, 30), vy: rnd(-40, -5), l: .6, c: '#ffe08a' }); } }
+    if (e.t <= 0) { G.E.splice(i, 1); Bus.emit('born', spawn(e.sp, e.x, e.y, true)); if (e.sp.team === 'player') { G.inst += .6 * e.sp.p.inst; logMsg('Nació una cría de ' + e.sp.n.toLowerCase() + '.'); for (let k = 0; k < 6; k++) G.fx.push({ x: e.x, y: e.y, vx: rnd(-30, 30), vy: rnd(-40, -5), l: .6, c: '#ffe08a' }); } }
   }
   if (G.nestB) { const n = G.nestB; n.prog = Math.min(1, n.prog + Math.min(n.work, 6 * dt) * .045); n.work = 0; if (n.prog >= 1) { n.done = true; G.nestB = null; G.inst += 3; logMsg('¡El nido está terminado! Los huevos nacen más rápido y las crías están a salvo.'); toast('Nido terminado.'); } }
   if (G.bB) { const n = G.bB; n.prog = Math.min(1, n.prog + Math.min(n.work, 6 * dt) * .05); n.work = 0; if (n.prog >= 1) { n.done = true; G.bB = null; onBuilt(n); } }
@@ -618,7 +642,7 @@ function civGoalsList() {
   return [{ t: 'Fogata encendida', ok: bdone('fogata').length >= 1 }, { t: 'Aldea: ' + Math.min(3, ref) + ' / 3 refugios', ok: ref >= 3 }, { t: 'Corral con ' + Math.min(3, dom) + ' / 3 animales domésticos', ok: dom >= 3 }, { t: 'Tótem levantado', ok: bdone('totem').length >= 1 }];
 }
 function awaken() {
-  G.phase = 2; G.trad = Math.max(G.trad, 6); G.modal = true;
+  G.phase = 2; Bus.emit('phase', 2); G.trad = Math.max(G.trad, 6); G.modal = true;
   dialog('Tu especie despertó', '<p>Superaste lo que la naturaleza te puso enfrente. Ahora tu manada puede dar el siguiente paso: dominar el fuego, levantar una aldea, domesticar animales y erigir un tótem. Ese es el camino a la civilización.</p><p>Se desbloqueó el botón <b>Civilización</b> y el recurso <b>Tradición</b>, que se genera con el tiempo, con la población y con lo que construyas.</p>', [{ t: 'Seguir hacia la civilización', fn: () => { G.modal = false; logMsg('Tu especie despertó: empieza el camino a la civilización.'); } }]);
 }
 function goals() {
@@ -678,7 +702,7 @@ function useAbility(id) {
     const sel = mine.find(a => a.id === selId), c = sel || G.N.find(n => n.done) || herdCenter(G.me) || mine[0]; pay(ab, mine);
     G.rally = { x: c.x, y: c.y, t: 3 }; G.alT = 6; ring(c.x, c.y, 210, '230,70,70', 1); ringsOn(mine, 40, '230,70,70'); logMsg('¡Alarma! Tus aliados se reúnen y resisten más.'); toast('¡Alarma! Tus animales se reúnen y resisten más daño (6 s).');
   }
-  G.ab[id] = ab.cd;
+  G.ab[id] = ab.cd; Bus.emit('ability', id, mine);
 }
 function placeMig(w) {
   const ab = ABD.mig, mine = mineAn(), pr = payProblem(ab, mine); setMode(null);
@@ -717,7 +741,7 @@ function snapshot() {
     E: G.E.map(e => ({ x: e.x, y: e.y, t: e.t, sp: spId(e.sp) })),
     N: G.N.map(cp), B: G.B.map(cp), nb: G.nestB ? G.N.indexOf(G.nestB) : -1, bb: G.bB ? G.B.indexOf(G.bB) : -1,
     C: G.C, F: G.F, fx: G.fx, plants: G.plants, patch: G.patch, deco: G.deco, grass: G.grass, log: G.log, g: G.g || [],
-    rally: G.rally || null, ev: G.ev || null, ab: G.ab, mig: G.mig || null, rings: G.rings, lin: G.lin || null
+    x2: G.x2 || {}, rally: G.rally || null, ev: G.ev || null, ab: G.ab, mig: G.mig || null, rings: G.rings, lin: G.lin || null
   });
 }
 const stateHash = () => G ? hashStr(stable(snapshot())).toString(16) + '/' + G.A.length + '/' + Math.round(G.t) : null;
@@ -746,7 +770,7 @@ function restoreGame(d) {
   G.A = d.A.map(o => { const a = J(o); a.sp = spOf(o.sp); delete a.cr; if (o.cr >= 0) a.corral = G.B[o.cr]; return a; });
   G.E = d.E.map(e => ({ x: e.x, y: e.y, t: e.t, sp: spOf(e.sp) }));
   for (const k of ['C', 'F', 'fx', 'plants', 'patch', 'deco', 'grass', 'log']) G[k] = J(d[k]);
-  G.g = J(d.g || []); G.rally = d.rally ? J(d.rally) : null; G.ev = d.ev ? J(d.ev) : null; G.ab = J(d.ab); G.mig = d.mig ? J(d.mig) : null; G.rings = J(d.rings || []); G.lin = d.lin ? J(d.lin) : null;
+  G.g = J(d.g || []); G.rally = d.rally ? J(d.rally) : null; G.ev = d.ev ? J(d.ev) : null; G.ab = J(d.ab); G.mig = d.mig ? J(d.mig) : null; G.rings = J(d.rings || []); G.lin = d.lin ? J(d.lin) : null; G.x2 = d.x2 ? J(d.x2) : {};
   started = true; lastSaveT = G.t; selId = null; setMode(null); setStanceUI();
   for (const id of ['menu', 'mut', 'planet', 'dlg']) $(id).classList.remove('show');
   layout(); return true;
@@ -1035,7 +1059,7 @@ function tapAt(e) {
   if (mode === 'nest') { placeNest(w); return; }
   if (mode && mode.indexOf('b:') === 0) { placeBuilding(mode.slice(2), w); return; }
   if (mode === 'go') { G.rally = { x: clamp(w.x, 15, W - 15), y: clamp(w.y, 15, H - 15), t: 14 }; setMode(null); logMsg('Tu manada se dirige a donde marcaste.'); return; }
-  const a = nearest(G.A, w.x, w.y, 26, null); selId = a ? a.id : null;
+  const a = nearest(G.A, w.x, w.y, 26, null); selId = a ? a.id : null; Bus.emit('select', a);
 }
 function placeNest(w) { if (G.N.length >= 3) { toast('Máximo 3 nidos.'); setMode(null); return; } if (G.nestB || G.bB) { toast('Ya hay una construcción en marcha.'); setMode(null); return; } const n = { x: clamp(w.x, 30, W - 30), y: clamp(w.y, 30, H - 30), prog: 0, work: 0, done: false }; G.N.push(n); G.nestB = n; setMode(null); logMsg('Empezaron a construir un nido.'); toast('Tus animales van a construir el nido: mirá el anillo amarillo de progreso.'); }
 function setMode(m) { mode = m; const t = $('modeTip'); t.style.display = m ? 'block' : 'none'; t.textContent = (m && m.indexOf('b:') === 0) ? 'Tocá el mapa donde querés construir: ' + BLD[m.slice(2)].n : m === 'nest' ? 'Tocá el mapa donde querés el nido' : m === 'go' ? 'Tocá el mapa: tu manada irá ahí' : m === 'mig' ? 'Tocá el mapa: tu manada migra hacia ahí a toda marcha' : ''; $('bNest').classList.toggle('on', m === 'nest'); $('bGo').classList.toggle('on', m === 'go'); }
@@ -1074,7 +1098,7 @@ function planetCards() {
 function openPlanet() { if (!ready()) return; G.modal = true; $('planetP').textContent = 'Tu especie puede colonizar otros ecosistemas. Lo que evolucionaste viaja con ella, pero cada ecosistema pone a prueba rasgos distintos. Necesitás 8 animales para viajar y llevás a la mitad (hasta 6). Valores de productividad: aproximados de manual (biomasa por m² por año).'; drawGlobe(); planetCards(); $('planet').classList.add('show'); }
 function travel(k) {
   const pop = stats().pop; if (pop < 8) { toast('Necesitás al menos 8 animales para colonizar otro ecosistema.'); return; }
-  $('planet').classList.remove('show');
+  $('planet').classList.remove('show'); Bus.emit('travel', k);
   const carry = { me: G.me, inst: G.inst, nextInst: G.nextInst, pending: G.pending, evos: G.evos, kills: G.kills, trad: G.trad, phase: G.phase, colonists: Math.min(6, Math.floor(pop / 2)) };
   newGame(k, carry); G.modal = false; toast('Viajaron ' + carry.colonists + ' animales a ' + BIOMES[k].n.toLowerCase() + '. Lo que evolucionaste viaja con ellos.'); logMsg('Colonizadores llegaron a ' + BIOMES[k].n.toLowerCase() + '.');
 }
@@ -1128,6 +1152,7 @@ function openEvo() {
   $('mut').classList.add('show');
 }
 function pickEvo(o) {
+  Bus.emit('evolve', o);
   const me = G.me, t = TR[o.id], had = me.hyb.length, hm = me.mast.length;
   if (o.v) me.vars[o.id] = o.v; else me.traits.push(o.id);
   recalc(me); G.pending--; G.evos++; evoPrev = [];
@@ -1218,7 +1243,7 @@ const autosave = () => { if (started && G && !G.over) saveGame(true); };
 document.addEventListener('visibilitychange', () => { if (document.hidden) autosave(); });
 addEventListener('pagehide', autosave);
 pal(); buildMenu(); layout(); requestAnimationFrame(loop);
-window.__e2 = { DIFFS, win, lose, useAbility, placeMig, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2 };
+window.__e2 = { bioInfo, Bus, issueOrder, select(id) { selId = id; }, get selId() { return selId; }, DIFFS, win, lose, useAbility, placeMig, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2 };
 })();
 </script>
 </body>
