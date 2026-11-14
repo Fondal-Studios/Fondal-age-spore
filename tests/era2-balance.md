@@ -73,3 +73,36 @@ Ninguna habilidad es dominante: quitar cualquiera cambia ≤ 4 puntos (Rugido, C
 - Solo bioma inicial Pradera; los otros biomas se visitan al colonizar.
 - No se midió la fase 2 por separado más allá de los hitos; no hay Difícil guardada en partidas viejas (los guardados con `diffI` 0/1 siguen cargando; el 2 es nuevo).
 - Las cifras científicas del juego no se tocaron.
+
+---
+# Calidad 2.0 (módulo simulación): re-medición con energía, heridas, órdenes y habilidades con niveles
+Mismo método (bot razonable v3: sus habilidades se gatillan con energía media > 35 en vez de hambre; semillas `S<dif>x<i>`, 12 especies rotando). «Antes» = HTML del commit base 1bd2b9d re-medido hoy (N=48, reproduce lo de arriba). Scripts: `tests/era2-balance-run.js` (ahora acepta `SPECS=a,b,c`), `tests/era2-habilidades-bot.sh`.
+
+## Cambios de equilibrio hechos
+Hambre propia (`hd`): Normal 2,6 → **3,2**, Difícil 3 → **3,25** (las mecánicas nuevas facilitaron el juego; se recompensó con hambre). Otros cambios mecánicos que mueven el balance: costo de energía al moverse, descanso, heridas y contragolpes, reproducción con hambre ≥ 75 y energía ≥ 40, blanco chico/voladores difíciles de golpear, bocado de planta proporcional al tamaño, **Parasitoides pasan a omnívoros** (néctar + huevos ajenos; sin eso 0/12 en Normal).
+
+## Antes / después (bot razonable, N=48)
+| Dificultad | Antes | Después | Meta |
+| --- | --- | --- | --- |
+| Fácil | 100 %, ext. 0 % | **100 %** [93-100], ext. **0 %** | ≥ 70 % y < 10 % → cumple |
+| Normal | 50 % [36-64], ext. 38 % | **46 %** [33-60], ext. 40 % | 40-60 % → cumple |
+| Difícil | 19 % [10-32], ext. 60 % | **27 %** [17-41], ext. 54 % | 15-35 % → cumple |
+
+Por clase (ganadas de 12): Normal antes ter 8, ins **3**, acu 5, ave 8 → después ter 4, ins **5**, acu 4, ave 9. Difícil antes ter 4, ins **0**, acu 1, ave 4 → después ter 2, ins **3**, acu 1, ave 7. Los insectos mejoraron pero siguen por debajo de las aves; **los terrestres empeoraron** (Normal 8 → 4, Difícil 4 → 2) y no logré corregirlo sin romper lo demás. Colmena 0/4 en Normal. Con N=48 cada celda por clase es de 12 partidas: ±25 puntos de ruido.
+
+## Utilidad de las habilidades con el bot (N=24 por condición; IC95 de Wilson ±18 puntos)
+| Condición | Normal gana | Difícil gana |
+| --- | --- | --- |
+| las 5 | 46 % | 33 % |
+| ninguna | 38 % | 17 % |
+| sin Rugido | 42 % | 21 % |
+| sin Camuflaje | 54 % | 17 % |
+| sin Excavar | 38 % | 33 % |
+| sin Alarma | 54 % | 25 % |
+| sin Migrar | 38 % | 13 % |
+Hoy «las 5» rinde +8 (Normal) y +16 (Difícil) puntos sobre «ninguna» (antes: −19 en Difícil). Migrar y Rugido ayudan en ambas dificultades; Camuflaje y Excavar, solo en Difícil; **Alarma sigue sin demostrar utilidad con este bot** (quitarla no empeora). Todo dentro del ruido de N=24: no es prueba estadística.
+
+Efecto aislado (escenario cerrado, 3 lobos contra 8 animales, 15 s, pareado por semilla, N=24, `tests/era2-calidad-sim.js`): vida del grupo con vs sin la habilidad: Rugido +28 (±5,8; mejora 20/24), Camuflaje +40 (±5,8; 22/24), Excavar +29 (±6,8; 19/24), Alarma +3 (±4,7; 13/24, el más flojo), Migrar +13,5 de hambre+energía (±1,9; 22/24).
+
+## No verificado
+Sin jugadores humanos; el bot no aprovecha los niveles ni las órdenes por animal. `tests/era2-bot.js` (bot con clics) no se corrió esta vez. Biomas distintos de Pradera solo se midieron en escenarios cerrados, no en partidas completas.
