@@ -1,11 +1,11 @@
 // Ablación de mecánicas de la Era 2: cuánto pesa cada mecánica en el desbalance de una especie (método causal, no «ajustar hasta que dé»).
 // Genera copias temporales de eras/era2-animales.html con UNA mecánica desactivada (eras/_abl-<variante>.html, se borran al terminar),
 // corre tests/era2-perfiles.js sobre cada una y compara victorias, extinciones, hambre media y colapsos con la línea base.
-// Uso: NODE_PATH=$(npm root -g) node tests/era2-ablacion.js [--src HEAD|trabajo|<commit>] [--specs ter_cazador,ter_gigante,ter_ingeniero] [--n 8] [--diff 1] [--profile razonable] [--variants a,b,c] [--maxT 600]
+// Uso: NODE_PATH=$(npm root -g) node tests/era2-ablacion.js [--src <commit, por defecto 1166564 = el código del que salen las tablas de tests/era2-balance.md §1>|trabajo] [--specs ter_cazador,ter_gigante,ter_ingeniero] [--n 8] [--diff 1] [--profile razonable] [--variants a,b,c] [--maxT 600]
 const fs = require('fs'), path = require('path'), cp = require('child_process');
 const A = {}; for (let i = 2; i < process.argv.length; i += 2) A[process.argv[i].slice(2)] = process.argv[i + 1];
-// la fuente es el archivo COMMITEADO (HEAD) salvo --src trabajo: así la ablación mide el código de referencia aunque haya cambios sin commitear
-const SRC = path.join(__dirname, '../eras/era2-animales.html'), src = A.src === 'trabajo' ? fs.readFileSync(SRC, 'utf8') : cp.execSync('git show ' + (A.src || 'HEAD') + ':eras/era2-animales.html', { cwd: path.join(__dirname, '..'), maxBuffer: 1 << 26 }).toString();
+// la fuente es el archivo de un COMMIT (por defecto 1166564, el estado previo al Ciclo 3) salvo --src trabajo (el archivo del árbol de trabajo; las variantes buscaActiva y gananciaProp se miden así): así la ablación mide el código de referencia aunque haya cambios sin commitear
+const SRC = path.join(__dirname, '../eras/era2-animales.html'), src = A.src === 'trabajo' ? fs.readFileSync(SRC, 'utf8') : cp.execSync('git show ' + (A.src || '1166564') + ':eras/era2-animales.html', { cwd: path.join(__dirname, '..'), maxBuffer: 1 << 26 }).toString();
 const VARIANTS = {
   base: [],
   sinFallos: [['miss = Math.min(.75, miss);', 'miss = 0;']],
