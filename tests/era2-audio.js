@@ -200,7 +200,7 @@ const LIB = () => {
       const env = []; for (let i = 0; i + W <= d.length; i += W) env.push(T.rms(d, i, i + W));
       const jump = (i0, i1) => { let m = 0; for (let i = i0 + 1; i < i1; i++) m = Math.max(m, Math.abs(env[i] - env[i - 1]) / (Math.max(env[i], env[i - 1]) + 1e-4)); return m; };
       const click = (t0, t1) => { let m = 0; for (let i = Math.floor(sr * t0) + 2; i < sr * t1; i++) m = Math.max(m, Math.abs(d[i] - 2 * d[i - 1] + d[i - 2])); return m; };
-      out[a + '>' + b2] = { jumpTrans: jump(Math.floor(15 / .05), Math.floor(26 / .05)), jumpSteady: jump(Math.floor(4 / .05), Math.floor(14 / .05)), clickTrans: click(15, 26), clickSteady: click(4, 14), pk: Math.max(T.peak(r.l), T.peak(r.r)), nan: [...r.l, ...r.r].some(v => !isFinite(v)) ? 1 : 0 };
+      out[a + '>' + b2] = { jumpTrans: jump(Math.floor(15 / .05), Math.floor(26 / .05)), jumpSteady: Math.max(jump(Math.floor(2 / .05), Math.floor(14 / .05)), jump(Math.floor(28 / .05), Math.floor(33 / .05))), clickTrans: click(15, 26), clickSteady: Math.max(click(2, 14), click(28, 33)), pk: Math.max(T.peak(r.l), T.peak(r.r)), nan: [...r.l, ...r.r].some(v => !isFinite(v)) ? 1 : 0 };
     }
     return out;
   });
