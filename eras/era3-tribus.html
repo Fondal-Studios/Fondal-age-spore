@@ -165,6 +165,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
   <div id="dlg" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="dT"><h2 id="dT"></h2><div id="dB"></div><div id="dBtns"></div></div></div>
 </div>
 
+<script src="audio-lofi.js"></script>
 <script>
 (() => {
 "use strict";
@@ -1191,6 +1192,113 @@ pal(); layout(); requestAnimationFrame(loop);
 window.__e3 = { scr(x, y) { const r = cv.getBoundingClientRect(); return { x: r.left + OX + x * SC, y: r.top + OY + y * SC }; }, select(id) { selId = id; }, forceWin() { win(); }, get G() { return G; }, step(dt) { const n = Math.max(1, Math.round((dt || .05) / .05)); for (let i = 0; i < n && G && !G.over; i++) update(.05); }, seedRng, hashStr, snapshot, stateHash, saveGame, readSave, restoreGame, clearSave, readLineage, techCost, DIFFS, newGame, update, setRole, placeBuilding, research, dip, goals, hud, render, adults, done, TECH, BLD, set diffI(v) { setDiff(v); }, get diffI() { return diffI; }, setStarted(v) { started = v; }, get has() { return has; },
   /* ciclo 4: bus, datos para la interfaz y acciones estratégicas */
   Bus, tribeInfo, rivalInfo, buildingInfo, roleInfo, upgradeBuilding, upgradeCheck, setPrio, releasePins, choosePath, deal, dealList, targetCounts, rebalance, alerts, growthCheck, tribeStr, raidSize, raidGate, spawnRaid, clanOf, relAdd, foodRunway, foodStress, workItems, farmSlots, shelterCap, foodCap, cohLimit, PERS, PRIOS, ROLES, RORDER, PATHS, STAGES, CLAN_SITES, POI_SITES, mkPerson, setRoleOf, ensureX3, discoverPoi, pathProgress, selectB(i) { selB = i; }, get x3() { return G && G.x3; } };
+/* === AUDIO ===
+   Módulo de audio de la Era 3 (eras/audio-lofi.js). Solo ESCUCHA: se suscribe al Bus y LEE G; nunca modifica la simulación ni usa R()
+   (el azar del audio es Math.random dentro del motor). Si el archivo no carga o algo falla, el juego sigue sin sonido.
+   Diseño: estrategia tribal. El audio acompaña decisiones y consecuencias, no hace de banda sonora de una persona.
+   - Director de ánimo (cada 0,5 s reales), por prioridad: combate > amenaza > supervivencia (hambruna/frío/enfermedad) > construcción > calma.
+     Sube de inmediato y baja tras 6 s sostenidos (sin vaivenes). Tecnología/descubrimiento/camino/alianza/victoria = golpe de «evolución» temporal.
+   - Ambiente: campamento (fuego, viento, pájaros); en invierno, «campamento_frio». El ruido de trabajo (hacha, picota, martillo, huerto, recolección)
+     sube con la cantidad de gente por oficio, de forma logarítmica: 1 persona ~35 %, 8 o más ~100 %. No es un sonido por persona.
+   - Efectos por Bus: los eventos de mucha gente (recolectar, cargar, soltar, comer, golpes) se AGRUPAN cada 250 ms (un sonido con volumen según cuántos fueron);
+     los importantes (tecnología, obra terminada, alianza, saqueo) suenan al instante. El motor limita voces y frecuencia por tipo.
+   - Ducking: alerta crítica (Bus 'alert' level crit), preparación de saqueo y saqueo bajan la música ~1,4 s.
+   - Controles: botón de parlante en la ESQUINA SUPERIOR DERECHA (fija) + panel de volúmenes; el HUD debe reservar --audio-reserve (52 px) a la derecha de su banda superior. */
+(function audioModule3() {
+  const FA = window.FondalAudio; if (!FA) return;
+  let warned = false;
+  const safe = f => (a, b, c, d) => { try { f(a, b, c, d); } catch (e) { if (!warned) { warned = true; console.warn('[audio]', e); } } };
+  const on = (t, f) => Bus.on(t, safe(f));
+  const pan = x => FA.pan(x === undefined ? W / 2 : x, W);
+  const lg2 = Math.log2;
+  FA.wire(); FA.modulate(3);
+
+  /* ----- efectos agrupados: cuenta eventos en 250 ms y suena UNO con volumen según cuántos fueron ----- */
+  const Q = {};
+  function q(kind, x, v, vol) { const e = Q[kind] || (Q[kind] = { n: 0, px: 0, v: 0, vol: 0 }); e.n++; e.px += pan(x); e.v = v || 0; e.vol = Math.max(e.vol, vol === undefined ? 1 : vol); }
+  // separación mínima entre dos sonidos agrupados del mismo tipo (s): con muchísima gente el tipo suena a ritmo parejo y más fuerte (log2 de cuántos fueron), no a un sonido por persona
+  const GAP = { gather: .5, chop: .5, mine: .5, hammer: .55, farm: 1, carry: .7, drop: .55, eat: .8, hit: .3, hunt: .6, death: 1.2, pray: 5 }, lastK = {};
+  function flush(tms) {
+    const now = tms === undefined ? nowMs() : tms;
+    for (const k in Q) { if (lastK[k] !== undefined && now - lastK[k] < (GAP[k] || .25) * 1000) continue; const e = Q[k]; delete Q[k]; lastK[k] = now; FA.sfx(k, { pan: e.px / e.n, vol: Math.min(1.1, e.vol * (.55 + .2 * lg2(1 + Math.min(e.n, 40)))), v: e.v }); }
+  }
+  const aggIv = setInterval(safe(flush), 250);
+  const sx = (name, x, o) => FA.sfx(name, Object.assign({ pan: pan(x), own: true }, o));
+  const kindOf = v => v && v.role !== undefined ? 'persona' : v && v.cl !== undefined ? 'saqueador' : v && v.kcal !== undefined ? 'presa' : 'lobo';
+
+  /* ----- estado leído por el director ----- */
+  const st = { fightMs: -1e9, wolvesNear: 0, lastWolves: 0 };
+  let nowMs = () => performance.now();
+  on('hit', (a, b, d, why) => { if (why === 'lobo' || why === 'saqueo' || why === 'defensa') { st.fightMs = nowMs(); q('hit', (b || a).x, 0, why === 'defensa' ? .6 : 1); } /* 'cacería': sin sonido de golpe (la presa abatida suena como 'hunt') */ });
+  on('kill', (v, src) => { const k = kindOf(v); if (k === 'presa') q('hunt', v.x, 0, .9); else if (k !== 'persona') sx('kill', v.x, { v: 1 }); });
+  on('death', (p, why) => q('death', p.x, p.age < CHILD ? 1 : 0, 1));
+  on('born', (p) => sx('born', p.x));
+  on('eat', (p) => q('eat', p.x, 0, .55));
+  on('work', (p, tipo, o, fase) => {
+    if (fase === 'end') { if (tipo === 'gather' || tipo === 'chop' || tipo === 'mine') q(tipo, p.x, 0, .8); }
+    else if (tipo === 'build') q('hammer', p.x, 0, .6); else if (tipo === 'farm') q('farm', p.x, 0, .5); else if (tipo === 'pray') q('pray', p.x, 0, .6);
+  });
+  on('carry', (p) => q('carry', p.x, 0, .5));
+  on('drop', (p, c) => q('drop', p.x, c && c.k === 'wood' ? 1 : c && c.k === 'stone' ? 2 : 0, .8));
+  on('build', (b, prog) => { q('hammer', b.x, 0, prog > 0 ? 1 : .8); });
+  on('built', (b, up) => sx(up ? 'upgrade' : 'built', b.x));
+  on('tech', () => { sx('tech', W / 2); FA.modulate(); FA.setMood('evolucion', { hold: 9 }); });
+  on('discover', (pt) => { sx('discover', pt && pt.x); FA.setMood('evolucion', { hold: 5 }); });
+  on('path', (k) => { if (k) { sx('path', W / 2); FA.setMood('evolucion', { hold: 6 }); } else sx('prio', W / 2, { vol: .7 }); });
+  on('prio', () => sx('prio', W / 2, { vol: .8 }));
+  on('season', (s) => { sx('season', W / 2, { v: s, vol: .8 }); FA.setBiome(s === 3 ? 'campamento_frio' : 'campamento'); });
+  on('raidPrep', () => { sx('horn', W / 2); FA.duckFor(1.6, .4); });
+  on('raid', () => { sx('raid', W / 2); FA.duckFor(2, .35); });
+  on('raidEnd', (ok, c, drove) => { if (drove) { sx('path', W / 2); FA.setMood('evolucion', { hold: 5 }); } else sx('scarcity', W / 2); });
+  on('trade', () => sx('trade', W / 2));
+  on('gift', () => sx('gift', W / 2));
+  on('ally', () => { sx('ally', W / 2); FA.setMood('evolucion', { hold: 7 }); });
+  on('deal', (c, id, okk) => { if (okk === false) sx('ambush', W / 2); else if (id === 'paso') sx('trade', W / 2, { vol: .7 }); });
+  on('fission', () => sx('fission', W / 2));
+  on('disease', () => sx('disease', W / 2));
+  on('alert', (a) => {
+    if (!a) return;
+    if (a.level === 'crit') { if (a.kind !== 'saqueo') sx(a.kind === 'frio' ? 'cold' : 'alarm', a.x); FA.duckFor(1.4, .4); }
+    else if (a.level === 'warn') sx(a.kind === 'hambruna' ? 'scarcity' : a.kind === 'frio' ? 'cold' : 'alert', a.x, { vol: .8 });
+    else if (a.level === 'ok' && a.kind !== 'saqueo') sx('okay', a.x, { vol: .6 });
+  });
+  on('win', () => { FA.stinger(14); sx('win', W / 2); });
+  on('lose', () => { sx('lose', W / 2); FA.setMood('supervivencia', { hold: 12 }); });
+  document.addEventListener('click', e => { const t = e.target; if (t && t.closest && t.closest('button') && !t.closest('#audioUI')) FA.sfx('ui', { vol: .7 }); }, true);
+
+  /* ----- director de ánimo + ambiente ----- */
+  const RANK = { explorar: 0, construccion: 1, supervivencia: 2, amenaza: 3, combate: 4 };
+  const dir = { mood: 'explorar', target: 'explorar', why: 'calma', since: 0, work: {}, wolves: 0, builders: 0, pop: 0, biome: 'campamento' };
+  const WORKK = { chop: 'chop', mine: 'mine', build: 'build', farm: 'farm', gather: 'gather' };
+  function direct(tms) {
+    const now = tms === undefined ? nowMs() : tms;
+    if (!started || !G) { dir.why = 'menú'; FA.setBiome('campamento'); FA.setMood('explorar'); FA.setDuck(false); for (const k in WORKK) FA.setWork(k, 0); dir.mood = 'explorar'; return dir; }
+    FA.setBiome(G.season === 3 ? 'campamento_frio' : 'campamento'); dir.biome = G.season === 3 ? 'campamento_frio' : 'campamento';
+    const quiet = G.paused || G.modal || G.over; FA.setDuck(!!(G.paused || G.modal));
+    const cnt = { chop: 0, mine: 0, build: 0, farm: 0, gather: 0 }; let pop = 0, hungry = 0;
+    for (let i = 0; i < G.P.length; i++) { const p = G.P[i]; if (p.dead) continue; pop++; if (p.hunger < 25) hungry++; if (cnt[p.st] !== undefined) cnt[p.st]++; }
+    for (const k in WORKK) { const n = quiet ? 0 : cnt[k]; dir.work[k] = n ? Math.min(1, .35 + .25 * lg2(n)) : 0; FA.setWork(k, dir.work[k]); }
+    let wn = 0; const cx = G.camp.x, cy = G.camp.y; for (let i = 0; i < G.Wv.length; i++) { const w = G.Wv[i]; if (!w.dead && Math.hypot(w.x - cx, w.y - cy) < 260) wn++; }
+    if (wn > st.lastWolves && !quiet) FA.sfx('wolf', { pan: pan(cx), own: true }); st.lastWolves = wn; dir.wolves = wn; dir.pop = pop; dir.builders = cnt.build;
+    const X = G.x3 || {}, al = X.al || {}, prep = (X.clans || []).some(c => c.prep > 0);
+    const famine = al.hambruna && al.hambruna.l !== 'ok', cold = al.frio && al.frio.l === 'crit', sick = (X.dis || 0) > 40;
+    let m = 'explorar', why = 'calma';
+    if (G.raidActive || now - st.fightMs < 5000) { m = 'combate'; why = G.raidActive ? 'saqueo en curso' : 'golpes recientes'; }
+    else if (prep || wn > 0) { m = 'amenaza'; why = prep ? 'saqueo en preparación' : 'lobos cerca del campamento'; }
+    else if (famine || cold || sick || (pop > 0 && pop <= 4)) { m = 'supervivencia'; why = famine ? 'hambre' : cold ? 'frío' : sick ? 'enfermedad' : 'población baja'; }
+    else if (cnt.build > 0) { m = 'construccion'; why = 'obra en marcha'; }
+    dir.target = m;
+    if (RANK[m] >= RANK[dir.mood]) { dir.mood = m; dir.why = why; dir.since = now; }   // sube (o sigue) de inmediato
+    else if (now - dir.since >= 6000) { dir.mood = m; dir.why = why; dir.since = now; }   // baja solo tras 6 s sostenidos de ánimo más bajo
+    FA.setMood(dir.mood); return dir;
+  }
+  const dirIv = setInterval(safe(() => direct()), 500);
+
+  /* ----- controles: esquina superior derecha fija; el HUD reserva 52 px a la derecha de su banda superior ----- */
+  const audUI = FA.mountUI({ corner: 'tr', reserve: '52px', css: '#hud{padding-right:var(--audio-reserve,0px)}@media (min-width:821px){#hint{margin-right:var(--audio-reserve,0px)}}' });
+  window.__e3.audio = FA;
+  window.__e3.audioDir = { direct, flush, get info() { return dir; }, get queue() { return Q; }, ui: audUI, clock(f) { nowMs = f || (() => performance.now()); }, reset() { st.fightMs = -1e9; st.lastWolves = 0; dir.mood = 'explorar'; dir.since = 0; for (const k in lastK) delete lastK[k]; for (const k in Q) delete Q[k]; } };
+})();
 })();
 </script>
 </body>

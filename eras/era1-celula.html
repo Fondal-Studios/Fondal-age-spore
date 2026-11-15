@@ -780,7 +780,10 @@ const Snd = (() => {
   const MODES = { gen: { root: 110, sc: [0, 2, 3, 5, 7, 8, 10], bpm: 72 }, pred: { root: 110, sc: [0, 1, 3, 5, 7, 8, 10], bpm: 86 }, para: { root: 98, sc: [0, 2, 3, 5, 6, 8, 9, 11], bpm: 66 }, foto: { root: 131, sc: [0, 2, 4, 7, 9], bpm: 62 }, colo: { root: 147, sc: [0, 2, 4, 6, 7, 9, 11], bpm: 76 } };
   const PROG = [0, 3, 4, 2];
   let ctx = null, master = null, L = {}, mode = MODES.gen, brKey = 'gen', tier = 0, tens = 0, muted = false, duck = false, nextT = 0, step = 0, timer = null, lastHit = 0, noiseBuf = null;
-  try { muted = localStorage.getItem('evo_snd') === '0'; } catch (e) {}
+  // Persistencia unificada con las demás eras (evo_audio_v1: {master, music, sfx, amb, mute, bm}). Si todavía no existe se usa la clave vieja evo_snd.
+  let mvol = 1;
+  try { const d = JSON.parse(localStorage.getItem('evo_audio_v1') || 'null'); if (d) { muted = !!d.mute; if (typeof d.master === 'number') mvol = Math.max(0, Math.min(1, d.master / .8)); } else muted = localStorage.getItem('evo_snd') === '0'; } catch (e) {}
+  const saveShared = () => { try { const d = JSON.parse(localStorage.getItem('evo_audio_v1') || 'null') || { master: .8, music: .7, sfx: .85, amb: .7, bm: { music: false, sfx: false, amb: false } }; d.mute = muted; if (typeof d.master !== 'number') d.master = .8; localStorage.setItem('evo_audio_v1', JSON.stringify(d)); localStorage.setItem('evo_snd', muted ? '0' : '1'); } catch (e) {} };
   const midi = (semi, oct) => mode.root * Math.pow(2, semi / 12 + (oct || 0));
   const note = (semis, i) => mode.sc[((i % mode.sc.length) + mode.sc.length) % mode.sc.length] + 12 * Math.floor(i / mode.sc.length);
   function gainNode(v, dest) { const g = ctx.createGain(); g.gain.value = v; g.connect(dest || master); return g; }
@@ -790,7 +793,7 @@ const Snd = (() => {
     for (let i = 0; i < n; i++) { last = (last + .02 * (Math.sin(i * 12.9898) * 43758.5453 % 1)) / 1.02; d[i] = last * 3.2; } return noiseBuf = b;
   }
   function attach(c) {
-    ctx = c; nextT = 0; step = 0; noiseBuf = null; master = c.createGain(); master.gain.value = muted ? 0 : .5; master.connect(c.destination);
+    ctx = c; nextT = 0; step = 0; noiseBuf = null; master = c.createGain(); master.gain.value = muted ? 0 : .5 * mvol; master.connect(c.destination);
     const sea = c.createBufferSource(); sea.buffer = noise(); sea.loop = true; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420;
     L.sea = gainNode(.5); sea.connect(lp); lp.connect(L.sea); sea.start();
     const lfo = c.createOscillator(); lfo.frequency.value = .07; const lg = c.createGain(); lg.gain.value = 160; lfo.connect(lg); lg.connect(lp.frequency); lfo.start();
@@ -823,11 +826,11 @@ const Snd = (() => {
     if (!ctx) return;
     target(L.pad, tier >= 1 ? .18 : 0); target(L.arp, tier >= 2 ? .3 : 0); target(L.lead, tier >= 3 ? .22 : 0); target(L.kick, tens > .1 || (tier >= 2 && brKey === 'pred') ? .7 : 0, .3);
     target(L.sea, .5 - tier * .06); target(L.drone, .22 + tier * .02);
-    master.gain.setTargetAtTime(muted ? 0 : duck ? .12 : .5, ctx.currentTime, .4);
+    master.gain.setTargetAtTime(muted ? 0 : (duck ? .12 : .5) * mvol, ctx.currentTime, .4);
   }
   const api = {
     attach, schedule, kick, get ctx() { return ctx; }, get _L() { return L; },
-    init() { if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; } const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; try { attach(new AC()); nextT = ctx.currentTime + .1; timer = setInterval(() => { tens = Math.max(0, tens - .03); schedule(ctx.currentTime + .6); apply(); }, 250); } catch (e) { ctx = null; } },
+    init() { if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return; } const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; try { attach(new AC()); nextT = ctx.currentTime + .1; document.addEventListener('visibilitychange', () => { try { if (!ctx) return; if (document.hidden) ctx.suspend(); else ctx.resume(); } catch (e) {} }); timer = setInterval(() => { tens = Math.max(0, tens - .03); schedule(ctx.currentTime + .6); apply(); }, 250); } catch (e) { ctx = null; } },
     setState(t, br, paused) { const b = MODES[br] ? br : 'gen'; if (b !== brKey) { brKey = b; mode = MODES[b]; if (ctx) L.droneO.frequency.setTargetAtTime(mode.root / 2, ctx.currentTime, 1.5); } tier = t; duck = !!paused; apply(); },
     evolve(t) { if (!ctx) return; const now = ctx.currentTime; for (let i = 0; i < 4 + t; i++) pluck(now + i * .09, midi(note(0, i * 2), 1 + (i > 4 ? 1 : 0)), .3, 1.2, 'triangle', L.fx); pluck(now, mode.root, .5, 2.5, 'sawtooth', L.fx); },
     sfx(k) {
@@ -839,7 +842,9 @@ const Snd = (() => {
       else if (k === 'rumble') { kick(now, .8); kick(now + .25, .6); }
     },
     hit() { const n = performance.now(); tens = Math.min(1, tens + .08); if (!ctx || muted || n - lastHit < 110) return; lastHit = n; kick(ctx.currentTime, .35); },
-    toggle() { muted = !muted; try { localStorage.setItem('evo_snd', muted ? '0' : '1'); } catch (e) {} apply(); this.init(); return !muted; },
+    toggle() { muted = !muted; saveShared(); apply(); this.init(); return !muted; },
+    setVolume(v) { mvol = Math.max(0, Math.min(1, +v || 0)); try { const d = JSON.parse(localStorage.getItem('evo_audio_v1') || 'null') || { music: .7, sfx: .85, amb: .7, mute: muted, bm: { music: false, sfx: false, amb: false } }; d.master = mvol * .8; localStorage.setItem('evo_audio_v1', JSON.stringify(d)); } catch (e) {} apply(); },
+    get volume() { return mvol; },
     get muted() { return muted; }, get layers() { return { tier, branch: brKey, tens }; }
   };
   return api;

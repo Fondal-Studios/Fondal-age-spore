@@ -124,3 +124,29 @@ jobs:
             ci-shots
           if-no-files-found: ignore
           retention-days: 14
+
+  audio-eras34:
+    name: Audio Eras 3 y 4 (mediciones offline, cableado, controles, escucha.html)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Audio Era 3 (ánimos, ambientes, efectos, transiciones, ducking, fugas, determinismo, controles)
+        run: mkdir -p ci-logs && node tests/era3-audio.js 2>&1 | tee ci-logs/era3-audio.log
+      - name: Audio Era 4 (cableado y controles)
+        if: ${{ !cancelled() }}
+        run: node tests/era4-audio.js 2>&1 | tee ci-logs/era4-audio.log
+      - name: Página de escucha humana
+        if: ${{ !cancelled() }}
+        run: node tests/escucha.js 2>&1 | tee ci-logs/escucha.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fallo-audio-eras34
+          path: ci-logs
+          if-no-files-found: ignore
+          retention-days: 14

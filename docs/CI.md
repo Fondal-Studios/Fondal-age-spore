@@ -19,6 +19,7 @@ Cada trabajo es independiente (no hay matriz, así que cada uno corre hasta el f
 | `era2` | 30 min | `era2-guardado`, `era2-ui` (con capturas), `era2-arte --sinfps`, `era2-audio`, `era2-calidad-sim` |
 | `era3` | 20 min | `era3-guardado`, `era3-bot` (10 min de juego a ×4, capturas) |
 | `era4` | 20 min | `era4-guardado`, `era4-bot` (5 min a ×4, capturas) |
+| `audio-eras34` | 45 min | `era3-audio` (mediciones offline, ~10 a 20 min en un runner compartido), `era4-audio`, `escucha` (la página de escucha humana abre y sus botones andan). Independiente de los demás trabajos |
 
 Si un trabajo falla se sube un artefacto `fallo-eraN` (14 días) con `ci-logs/`, `ci-shots/` y, en la Era 2, `docs/artgate/screens/`. Se baja desde la página del run, sección «Artifacts».
 
