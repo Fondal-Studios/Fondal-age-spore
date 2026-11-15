@@ -1,9 +1,25 @@
+# Pruebas por era, en trabajos separados (uno que falle no tapa a los demás: no hay matriz, así que
+# «fail-fast: false» no hace falta; cada trabajo corre hasta el final aunque otro falle).
+# push solo en main + pull_request en el resto de las ramas: así un mismo SHA no corre dos veces (push y PR).
+# Las suites largas de balance NO están acá: ver balance.yml (manual).
 name: Pruebas
 on:
   push:
+    branches: [main]
   pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: pruebas-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash   # bash -e -o pipefail: un fallo dentro de «| tee» también corta el paso
+
 jobs:
   era1:
+    name: Era 1 (determinismo, acciones, sonido, online, relay)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -13,5 +29,93 @@ jobs:
       - run: npm install
       - run: npx playwright install --with-deps chromium
       - run: cd server && npm install
-      - name: Determinismo, acciones, sonido, online y relay
-        run: npm test
+      - name: npm test
+        run: mkdir -p ci-logs && npm test 2>&1 | tee ci-logs/era1.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fallo-era1
+          path: ci-logs
+          if-no-files-found: ignore
+          retention-days: 14
+
+  era2:
+    name: Era 2 (guardado, UI, arte, audio, calidad-sim)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Guardado y determinismo
+        run: mkdir -p ci-logs ci-shots && node tests/era2-guardado.js 2>&1 | tee ci-logs/era2-guardado.log
+      - name: Interfaz (escritorio, móvil, tutorial)
+        run: SHOTS=ci-shots node tests/era2-ui.js 2>&1 | tee ci-logs/era2-ui.log
+      - name: "Arte (sin medir fps, el runner es lento y comparte CPU)"
+        run: node tests/era2-arte.js --sinfps 2>&1 | tee ci-logs/era2-arte.log
+      - name: Audio (mediciones con OfflineAudioContext)
+        run: node tests/era2-audio.js 2>&1 | tee ci-logs/era2-audio.log
+      - name: Calidad de simulación (rápida)
+        env:
+          CI_NO_FPS: "1"   # el runner comparte CPU: se mide fps en local, no en CI
+        run: node tests/era2-calidad-sim.js 2>&1 | tee ci-logs/era2-calidad-sim.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fallo-era2
+          path: |
+            ci-logs
+            ci-shots
+            docs/artgate/screens
+          if-no-files-found: ignore
+          retention-days: 14
+
+  era3:
+    name: Era 3 (guardado, bot de 10 min)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Guardado y determinismo
+        run: mkdir -p ci-logs ci-shots && node tests/era3-guardado.js 2>&1 | tee ci-logs/era3-guardado.log
+      - name: Bot de 10 minutos (escritorio y móvil)
+        run: node tests/era3-bot.js ci-shots/era3-escritorio.png ci-shots/era3-movil.png 2>&1 | tee ci-logs/era3-bot.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fallo-era3
+          path: |
+            ci-logs
+            ci-shots
+          if-no-files-found: ignore
+          retention-days: 14
+
+  era4:
+    name: Era 4 (guardado, bot de 5 min)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Guardado, determinismo y linaje
+        run: mkdir -p ci-logs ci-shots && node tests/era4-guardado.js 2>&1 | tee ci-logs/era4-guardado.log
+      - name: Bot de 5 minutos (escritorio y móvil)
+        run: node tests/era4-bot.js ci-shots/era4-escritorio.png ci-shots/era4-movil.png 2>&1 | tee ci-logs/era4-bot.log
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: fallo-era4
+          path: |
+            ci-logs
+            ci-shots
+          if-no-files-found: ignore
+          retention-days: 14

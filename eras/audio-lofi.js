@@ -43,19 +43,19 @@
 
   /* ---------- Ambientes por ecosistema: capas continuas + eventos al azar (por segundo) ---------- */
   const BIOMES = {
-    pradera:  { wind: [.12, 650, .8, .11],  water: [0, 400],  rain: [0, 4800],   low: [0, 52],  ev: { cricket: .45, bird: .14 } },
-    selva:    { wind: [.05, 480, .7, .09], water: [0, 400],  rain: [.11, 4800], low: [0, 52],  ev: { insect: 1.1, bird: .35, drip: .5 } },
-    desierto: { wind: [.12, 1000, 3.2, .05], water: [0, 400], rain: [0, 4800],  low: [0, 52],  ev: { gust: .07, buzz: .05 } },
-    tundra:   { wind: [.17, 520, 1.6, .08], water: [0, 400],  rain: [0, 4800],   low: [0, 52],  ev: { chime: .16 } },
-    oceano:   { wind: [0, 600, .7, .1],     water: [.11, 380], rain: [0, 4800],  low: [.1, 52],  ev: { bubble: .9, whale: .035 } }
-  };
+    pradera:  { wind: [.12, 650, .8, .11],  water: [0, 400],  rain: [0, 4800],   low: [0, 52],  ev: { cricket: .45, bird: .14 }, trim: 1 },
+    selva:    { wind: [.05, 480, .7, .09], water: [0, 400],  rain: [.11, 4800], low: [0, 52],  ev: { insect: 1.1, bird: .35, drip: .5 }, trim: .5 },
+    desierto: { wind: [.12, 1000, 3.2, .05], water: [0, 400], rain: [0, 4800],  low: [0, 52],  ev: { gust: .07, buzz: .05 }, trim: 1.5 },
+    tundra:   { wind: [.17, 520, 1.6, .08], water: [0, 400],  rain: [0, 4800],   low: [0, 52],  ev: { chime: .16 }, trim: 1 },
+    oceano:   { wind: [0, 600, .7, .1],     water: [.11, 380], rain: [0, 4800],  low: [.1, 52],  ev: { bubble: .9, whale: .035 }, trim: .3 }
+  };   // trim: nivela el ambiente (medido con tests/era2-audio.js: rms de pradera .019, selva .041, desierto .012, océano .069 sin trim; con trim queda en ~.02 ±3 dB)
 
   function create(opts) {
     opts = opts || {};
     const KEY = opts.storageKey === undefined ? 'evo_audio_v1' : opts.storageKey;
-    const vol = { master: .8, music: .7, sfx: .85, amb: .7, mute: false };
-    try { if (KEY) { const d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (d) { for (const k of ['master', 'music', 'sfx', 'amb']) if (typeof d[k] === 'number') vol[k] = clamp(d[k], 0, 1); vol.mute = !!d.mute; } } } catch (e) {}
-    const save = () => { try { if (KEY) localStorage.setItem(KEY, JSON.stringify(vol)); } catch (e) {} };
+    const vol = { master: .8, music: .7, sfx: .85, amb: .7, mute: false }, bm = { music: false, sfx: false, amb: false };   // bm: silencio por bus (independiente del volumen: al reactivar vuelve al nivel anterior)
+    try { if (KEY) { const d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (d) { for (const k of ['master', 'music', 'sfx', 'amb']) if (typeof d[k] === 'number') vol[k] = clamp(d[k], 0, 1); vol.mute = !!d.mute; if (d.bm) for (const k in bm) bm[k] = !!d.bm[k]; } } } catch (e) {}
+    const save = () => { try { if (KEY) localStorage.setItem(KEY, JSON.stringify(Object.assign({}, vol, { bm }))); } catch (e) {} };
 
     let ctx = null, offline = false, N = {}, timer = null, wired = false, unlocked = false, duck = false, hidden = false;
     let nextT = 0, ambT = 0, step = 0, bar = 0, progBar = 99, prog = null, progMood = '', keySemi = 0, keyTarget = 0;
@@ -65,9 +65,9 @@
     const lastFx = {}, ends = [], stats = { schedMs: 0, schedCalls: 0, dropped: 0, played: 0 };
 
     const now = () => (ctx ? ctx.currentTime : 0);
-    function ramp(p, v, tc, t) { // transición suave (instantánea en offline)
-      if (!ctx) return; const at = t === undefined ? ctx.currentTime : t;
-      try { p.setTargetAtTime(v, at, offline ? .001 : (tc || .5)); } catch (e) { p.value = v; }
+    function ramp(p, v, tc, t) { // transición suave: la misma en vivo que en offline (antes en offline era instantánea y los tests no medían el crossfade real). Para saltar al valor, quien llama pasa tc = .001
+      if (!ctx || !isFinite(v)) return; const at = t === undefined ? ctx.currentTime : t;
+      try { p.setTargetAtTime(v, at, tc || .5); } catch (e) { try { p.value = v; } catch (e2) {} }
     }
 
     /* ---------- buffers ---------- */
@@ -127,9 +127,10 @@
       return api;
     }
 
+    function ambGain() { const B = BIOMES[biome]; return bm.amb ? 0 : vol.amb * 1.6 * (duck ? .6 : 1) * (B && B.trim || 1); }
     function applyVolumes(inst) {
       if (!ctx) return; const m = vol.mute ? 0 : 1, tc = inst ? .001 : .08;
-      ramp(N.master.gain, vol.master * m, tc); ramp(N.musicVol.gain, vol.music * .9 * (duck ? .5 : 1), tc); ramp(N.sfxVol.gain, vol.sfx * 1.9, tc); ramp(N.ambVol.gain, vol.amb * 1.6 * (duck ? .6 : 1), tc);
+      ramp(N.master.gain, vol.master * m, tc); ramp(N.musicVol.gain, bm.music ? 0 : vol.music * .9 * (duck ? .5 : 1), tc); ramp(N.sfxVol.gain, bm.sfx ? 0 : vol.sfx * 1.9, tc); ramp(N.ambVol.gain, ambGain(), tc);
     }
     function applyKey(inst) {
       if (!ctx) return; const r = 55 * Math.pow(2, keySemi / 12), tc = inst ? .001 : 1.4;
@@ -141,7 +142,7 @@
       ramp(N.lfoWf.gain, B.wind[1] * .3, tc); ramp(N.lfoWa.gain, B.wind[0] * .55, tc);
       ramp(N.waterG.gain, B.water[0], tc); ramp(N.waterLP.frequency, B.water[1], tc); ramp(N.lfoSw.gain, B.water[0] * .5, tc);
       ramp(N.rainG.gain, B.rain[0], tc); ramp(N.rainBP.frequency, B.rain[1], tc);
-      ramp(N.lowG.gain, B.low[0], tc); ramp(N.low.frequency, B.low[1], tc); ramp(N.lfoSl.gain, B.low[0] * .6, tc);
+      ramp(N.lowG.gain, B.low[0], tc); ramp(N.low.frequency, B.low[1], tc); ramp(N.lfoSl.gain, B.low[0] * .6, tc); ramp(N.ambVol.gain, ambGain(), tc);
     }
     function moodApply(inst) { // ajusta lo que no pasa por el paso del scheduler
       if (!ctx) return; if (inst) for (const k of NUMS) cur[k] = T[k];
@@ -310,16 +311,17 @@
 
     function sfx(name, o) {
       if (!ctx || (ctx.state !== 'running' && !offline)) return false; o = o || {};
-      name = FX_ALIAS[name] || name; const d = FX[name]; if (!d || vol.mute) return false;
-      const t = o.at !== undefined ? o.at : ctx.currentTime + .005, tn = ctx.currentTime;
+      name = FX_ALIAS[name] || name; const d = FX[name]; if (!d || vol.mute || bm.sfx) return false;
+      const t = o.at !== undefined && isFinite(+o.at) ? +o.at : ctx.currentTime + .005, tn = ctx.currentTime;
       for (let i = ends.length - 1; i >= 0; i--) if (ends[i].e < tn) ends.splice(i, 1);
       const prio = d.p + (o.own ? 1 : 0), act = ends.length;
       if (act >= 18 ? prio < 4 : act >= 10 ? prio < 3 : false) { stats.dropped++; return false; }
       if (lastFx[name] !== undefined && tn - lastFx[name] < d.cd && !o.force) { stats.dropped++; return false; }
       let same = 0; for (const x of ends) if (x.n === name) same++; if (same >= d.max && !o.force) { stats.dropped++; return false; }
       lastFx[name] = tn;
-      let out = N.sfxVol; if (ctx.createStereoPanner && o.pan) { const p = ctx.createStereoPanner(); p.pan.value = clamp(o.pan, -1, 1); p.connect(N.sfxVol); out = p; }
-      d.fn(out, t, clamp(o.vol === undefined ? 1 : o.vol, 0, 1.4), o.v);
+      const pv = +o.pan, vv = o.vol === undefined ? 1 : +o.vol;   // entradas no finitas (NaN/Infinity) se ignoran: nunca llegan a un AudioParam
+      let out = N.sfxVol; if (ctx.createStereoPanner && isFinite(pv) && pv) { const p = ctx.createStereoPanner(); p.pan.value = clamp(pv, -1, 1); p.connect(N.sfxVol); out = p; }
+      d.fn(out, t, isFinite(vv) ? clamp(vv, 0, 1.4) : 1, o.v);
       ends.push({ n: name, e: t + 1.2 }); stats.played++; return true;
     }
 
@@ -334,6 +336,7 @@
     function stinger(hold) { sfx('evolve', { force: true, own: true }); modulate(); setMood('evolucion', { hold: hold || 10 }); }
     function setBiome(k, inst) { if (!BIOMES[k] || k === biome && !inst) return; biome = k; applyBiome(!!inst); }
     function setVolume(k, v) { if (!(k in vol) || k === 'mute') return; vol[k] = clamp(+v || 0, 0, 1); save(); applyVolumes(offline); }
+    function setBusMuted(k, m) { if (!(k in bm)) return; bm[k] = !!m; save(); applyVolumes(offline); }
     function setMuted(m) { vol.mute = !!m; save(); applyVolumes(offline); }
     function setDuck(d) { d = !!d; if (d !== duck) { duck = d; applyVolumes(false); } }
 
@@ -368,12 +371,12 @@
     }
 
     const api = {
-      create, attach, schedule, wire, unlock, setMood, setBiome, setVolume, setMuted, setDuck, sfx, stinger, modulate,
+      create, attach, schedule, wire, unlock, setMood, setBiome, setVolume, setMuted, setBusMuted, setDuck, sfx, stinger, modulate,
       moods: Object.keys(MOODS), biomes: Object.keys(BIOMES), effects: Object.keys(FX),
       pan(x, w) { return clamp((x / (w || 960)) * 2 - 1, -1, 1) * .8; },
       resetVoices() { ends.length = 0; for (const k in lastFx) delete lastFx[k]; },
       get ctx() { return ctx; }, get state() { return ctx ? ctx.state : 'none'; }, get mood() { return moodName; }, get biome() { return biome; },
-      get volumes() { return Object.assign({}, vol); }, get muted() { return vol.mute; }, get key() { return keySemi; }, get targetKey() { return keyTarget; }, get stats() { return Object.assign({}, stats); },
+      get volumes() { return Object.assign({}, vol); }, get muted() { return vol.mute; }, get busMuted() { return Object.assign({}, bm); }, get key() { return keySemi; }, get targetKey() { return keyTarget; }, get stats() { return Object.assign({}, stats, { active: ends.length }); },
       get params() { return Object.assign({}, cur); }
     };
     return api;
