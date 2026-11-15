@@ -977,6 +977,9 @@ const costTxt = c => c.inst ? c.inst + ' Instinto' : 'energía −' + c.en;
 const mineAn = () => G.A.filter(a => a.sp === G.me && !a.dead);
 function payProblem(ab, mine, P) { return mine.some(a => enOf(a) >= P.en + 5) ? null : 'Tus animales están muy cansados para ' + ab.n.toLowerCase() + ' (cuesta ' + P.en + ' de energía por animal): dejalos descansar.'; }
 function pay(P, mine) { for (const a of mine) a.en = Math.max(2, enOf(a) - P.en); }
+/* Costo solo para los que PARTICIPAN (como decía la documentación): Rugido, los que están a alcance de un enemigo; Alarma, los del radio. Medido en partidas completas: cobrarle a toda la manada
+   un efecto local bajaba la energía media 9 puntos y subía 46 % los colapsos; sin Rugido el bot ganaba 83 % en Normal contra 58 % con él. */
+const near = (mine, c, r) => mine.filter(a => hyp(a.x - c.x, a.y - c.y) < r);
 function ring(x, y, max, c, t, lv) { G.rings.push({ x, y, max, c, t: t || .7, tt: t || .7, lv: lv || 1 }); }
 function ringsOn(mine, max, c, lv) { const step = Math.max(1, Math.floor(mine.length / 6)); for (let i = 0; i < mine.length; i += step) ring(mine[i].x, mine[i].y, max, c, .7 + .1 * ((lv || 1) - 1), lv); }
 function useAbility(id) {
@@ -991,11 +994,11 @@ function useAbility(id) {
     for (const m of mine) for (const b of G.A) { if (b.dead || b.sp.team === 'player' || seen.has(b.id) || (b.sp.team === 'wild' && b.sp.diet === 'herb') || hyp(b.x - m.x, b.y - m.y) >= P.r) continue; seen.add(b.id); foes.push([b, m]); }
     if (!foes.length) { toast('Rugiste, pero no hay enemigos cerca de tu manada. No gastaste nada.'); return; }
     for (const [b, m] of foes) { b.stun = b.sp.boss ? P.stun / 2 : P.stun; if (P.dbf) b.dbf = P.dbf; const d = hyp(b.x - m.x, b.y - m.y) || 1, nx = b.x + (b.x - m.x) / d * P.push, ny = b.y + (b.y - m.y) / d * P.push; if (okPos(b.sp, nx, ny)) { b.x = nx; b.y = ny; } for (let i = 0; i < 4; i++) G.fx.push({ x: b.x, y: b.y, vx: rnd(-30, 30), vy: rnd(-40, -10), l: .5, c: '#ffd23a' }); }
-    ringsOn(mine, P.r + 5, col, L); pay(P, mine); const s = foes.length > 1 ? 's' : ''; logMsg('¡Rugido' + nv + '! ' + foes.length + ' enemigo' + s + ' aturdido' + s + '.'); toast('¡Rugido' + nv + '! ' + foes.length + ' enemigo' + s + ' aturdido' + s + ' y empujado' + s + '.');
+    ringsOn(mine, P.r + 5, col, L); pay(P, mine.filter(m => foes.some(([b]) => hyp(b.x - m.x, b.y - m.y) < P.r))); const s = foes.length > 1 ? 's' : ''; logMsg('¡Rugido' + nv + '! ' + foes.length + ' enemigo' + s + ' aturdido' + s + '.'); toast('¡Rugido' + nv + '! ' + foes.length + ' enemigo' + s + ' aturdido' + s + ' y empujado' + s + '.');
   } else if (id === 'cam') { pay(P, mine); G.camT = P.t; ringsOn(mine, 70 + 15 * (L - 1), col, L); logMsg('Camuflaje' + nv + ': tus animales se vuelven invisibles para los depredadores.'); toast('Camuflaje' + nv + ': ' + P.t + ' s sin ser objetivo.'); }
   else if (id === 'exc') { pay(P, mine); G.digT = P.t; ringsOn(mine, 60 + 12 * (L - 1), col, L); logMsg('Tus animales se refugian bajo tierra y se curan' + nv + '.'); toast('Excavar' + nv + ': ' + P.t + ' s bajo tierra, sin daño y con curación.'); }
   else if (id === 'ala') {
-    const sel = mine.find(a => a.id === selId), c = sel || G.N.find(n => n.done) || herdCenter(G.me) || mine[0]; pay(P, mine);
+    const sel = mine.find(a => a.id === selId), c = sel || G.N.find(n => n.done) || herdCenter(G.me) || mine[0]; pay(P, near(mine, c, P.r));
     const dang = []; for (const b of G.A) if (!b.dead && b.sp.team !== 'player' && !(b.sp.team === 'wild' && b.sp.diet === 'herb') && hyp(b.x - c.x, b.y - c.y) < P.r + 140) dang.push(b);
     let warned = 0;
     for (const a of mine) if (hyp(a.x - c.x, a.y - c.y) < P.r) {
