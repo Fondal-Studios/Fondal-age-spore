@@ -52,12 +52,16 @@ jobs:
       - name: Guardado y determinismo
         run: mkdir -p ci-logs ci-shots && node tests/era2-guardado.js 2>&1 | tee ci-logs/era2-guardado.log
       - name: Interfaz (escritorio, móvil, tutorial)
+        if: ${{ !cancelled() }}
         run: SHOTS=ci-shots node tests/era2-ui.js 2>&1 | tee ci-logs/era2-ui.log
       - name: "Arte (sin medir fps, el runner es lento y comparte CPU)"
+        if: ${{ !cancelled() }}
         run: node tests/era2-arte.js --sinfps 2>&1 | tee ci-logs/era2-arte.log
       - name: Audio (mediciones con OfflineAudioContext)
+        if: ${{ !cancelled() }}
         run: node tests/era2-audio.js 2>&1 | tee ci-logs/era2-audio.log
       - name: Calidad de simulación (rápida)
+        if: ${{ !cancelled() }}
         env:
           CI_NO_FPS: "1"   # el runner comparte CPU: se mide fps en local, no en CI
         run: node tests/era2-calidad-sim.js 2>&1 | tee ci-logs/era2-calidad-sim.log
