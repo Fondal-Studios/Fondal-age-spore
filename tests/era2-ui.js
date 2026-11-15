@@ -175,6 +175,38 @@ async function touch(browser) {
   await ctx.close();
 }
 
+/* Etapa 1.4: a 360, 390 y 430 px nada solapado (rectángulos intersectados), objetivos táctiles >= 44 px y sin scroll horizontal.
+   Se miden botones, resúmenes, chips del HUD, pista, tutorial y el botón de sonido; con evento activo, Tradición, selección y panel de sonido abierto. */
+const overlapsIn = p => p.evaluate(() => {
+  const vis = e => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && !e.closest('.ov:not(.show)') && !e.closest('[hidden]'); };
+  const els = [...document.querySelectorAll('button, summary, .chip, #hint, #tut, #audioBtn, #audioPanel, #mapTools')].filter(vis);
+  const out = [];
+  for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
+    const a = els[i], b = els[j]; if (a.contains(b) || b.contains(a)) continue;
+    const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect(), w = Math.min(ra.right, rb.right) - Math.max(ra.left, rb.left), h = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
+    if (w > 1 && h > 1) out.push((a.id || a.className || a.textContent.slice(0, 14)) + ' x ' + (b.id || b.className || b.textContent.slice(0, 14)) + ' (' + Math.round(w) + 'x' + Math.round(h) + ')');
+  }
+  const small = [...document.querySelectorAll('button, summary, #audioBtn')].filter(vis).filter(e => { const r = e.getBoundingClientRect(); return (r.height < 43.5 || r.width < 43.5); }).map(e => (e.id || e.textContent.slice(0, 16)) + ' ' + Math.round(e.getBoundingClientRect().width) + 'x' + Math.round(e.getBoundingClientRect().height));
+  return { out, small, n: els.length, sw: document.documentElement.scrollWidth, iw: innerWidth };
+});
+async function anchos(browser) {
+  console.log('Solapamiento y objetivos táctiles a 360, 390 y 430 px');
+  for (const w of [360, 390, 430]) {
+    for (const tut of [true, false]) {
+      const { ctx, p } = await open(browser, { viewport: { width: w, height: 800 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1 }, tut);
+      await p.evaluate(() => { const E = window.__e2; E.G.ev = { k: 'sequia', t: 20 }; document.getElementById('chipTrad').classList.add('show'); E.ui.setSel([E.G.A.find(a => a.sp.team === 'player').id]); E.hud(); });
+      await wait(150); let m = await overlapsIn(p);
+      ok(m.out.length === 0, w + ' px' + (tut ? '' : ' con tutorial') + ': ningún control solapado entre sí (' + m.n + ' elementos)' + (m.out.length ? ' SOLAPAN: ' + m.out.join('; ') : ''));
+      ok(m.small.length === 0, w + ' px: objetivos táctiles >= 44 px' + (m.small.length ? ' FALLAN: ' + m.small.join('; ') : ''));
+      ok(m.sw <= m.iw, w + ' px: sin scroll horizontal (' + m.sw + '/' + m.iw + ')');
+      if (tut) { await p.tap('#audioBtn'); await wait(120); const pn = await p.evaluate(() => { const r = document.getElementById('audioPanel').getBoundingClientRect(), b = document.getElementById('audioBtn').getBoundingClientRect(); return { l: r.left, r: r.right, vis: r.width > 0, sw: document.documentElement.scrollWidth, iw: innerWidth, hitsBtn: Math.min(r.right, b.right) - Math.max(r.left, b.left) > 1 && Math.min(r.bottom, b.bottom) - Math.max(r.top, b.top) > 1 }; });   /* el panel es una ventana emergente a propósito: debe caber en pantalla y no tapar su propio botón */
+        ok(pn.vis && pn.l >= 0 && pn.r <= pn.iw && pn.sw <= pn.iw && !pn.hitsBtn, w + ' px: panel de sonido abierto cabe en pantalla y no tapa su botón'); if (SHOTS) await p.screenshot({ path: SHOTS + '/ui-' + w + '-sonido.png' }); }
+      else if (SHOTS) await p.screenshot({ path: SHOTS + '/ui-' + w + '-tutorial.png' });
+      await ctx.close();
+    }
+  }
+}
+
 async function tutorial(browser) {
   console.log('Tutorial interactivo');
   const { ctx, p } = await open(browser, { viewport: { width: 1280, height: 800 } }, false);
@@ -199,7 +231,7 @@ async function tutorial(browser) {
 
 (async () => {
   const browser = await chromium.launch();
-  try { await desktop(browser); await touch(browser); await tutorial(browser); } finally { await browser.close(); }
+  try { await desktop(browser); await touch(browser); await tutorial(browser); await anchos(browser); } finally { await browser.close(); }
   console.log('errores de consola:', errs.slice(0, 5)); assert.strictEqual(errs.length, 0, '0 errores de consola');
   console.log('UI ERA 2 OK');
 })().catch(e => { console.error(e); process.exit(1); });

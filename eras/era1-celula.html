@@ -2225,8 +2225,10 @@ function render() {
   for (const q of S.beams) { ctx.globalAlpha = clamp(q.t * 4, 0, 1); ctx.strokeStyle = q.c; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(q.x1, q.y1); ctx.lineTo(q.x2, q.y2); ctx.stroke(); } ctx.globalAlpha = 1;
   for (const f of S.fx) { ctx.globalAlpha = Math.min(1, f.l * 2.5); ctx.fillStyle = f.c; ctx.beginPath(); ctx.arc(f.x, f.y, 2.2, 0, TAU); ctx.fill(); }
   ctx.globalAlpha = 1;
-  ctx.textAlign = 'center'; ctx.font = '600 12px "IBM Plex Sans",sans-serif';
-  for (const t of S.texts) { ctx.globalAlpha = Math.min(1, t.t * 2); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,20,30,.85)'; ctx.strokeText(t.s, t.x, t.y); ctx.fillStyle = t.c === '#3f56d9' ? '#8fa8ff' : t.c; ctx.fillText(t.s, t.x, t.y); }
+  // Ciclo 3 (solo dibujo): los rótulos flotantes mantienen 12 px en pantalla con cualquier zoom y no se pisan entre sí (se separan en vertical al dibujar; S.texts no cambia).
+  ctx.textAlign = 'center'; ctx.font = '700 ' + 12 / cam.z + 'px "IBM Plex Sans",sans-serif'; ctx.lineJoin = 'round';
+  { const gap = 13 / cam.z, placed = []; for (const t of S.texts) { let y = t.y; for (let g = 0; g < 4; g++) { let hit = false; for (const q of placed) if (Math.abs(q.x - t.x) < 70 / cam.z && Math.abs(q.y - y) < gap) { y = q.y - gap; hit = true; } if (!hit) break; } placed.push({ x: t.x, y });
+    ctx.globalAlpha = Math.min(1, t.t * 2); ctx.lineWidth = 3 / cam.z; ctx.strokeStyle = 'rgba(0,20,30,.85)'; ctx.strokeText(t.s, t.x, y); ctx.fillStyle = t.c === '#3f56d9' ? '#8fa8ff' : t.c; ctx.fillText(t.s, t.x, y); } }
   ctx.globalAlpha = 1;
 
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);

@@ -48,6 +48,38 @@ const assert = require('assert'); const path = require('path'), fs = require('fs
   await p.waitForTimeout(1300); const left = await p.evaluate(() => { const F = window.__e2.ART.FX; return F.nums.length + F.hits.length + F.arrows.length + F.ghosts.length; });
   assert.strictEqual(left, 0, 'los efectos cosméticos se limpian solos'); console.log('efectos limpios: ok');
 
+  // ---- Ciclo 3 · etapa 3: señales de estado y burbujas de causa
+  const sg = await p.evaluate(async () => {
+    const E = window.__e2, S = E.ART.SIG, out = {}; E.cls = 'ter'; E.specKey = 'ter_cazador'; E.diffI = 1; E.newGame('pradera', null, 'SIGNALS'); E.setStarted(true); E.G.modal = false; E.G.paused = true; document.querySelectorAll('.ov.show').forEach(o => o.classList.remove('show'));
+    const G = E.G; for (let i = 0; i < 60; i++) E.step(.05);
+    const mine = G.A.filter(a => a.sp.team === 'player' && !a.dead), wild = G.A.filter(a => a.sp.team === 'wild' && !a.dead);
+    mine.forEach((a, i) => { a.x = 300 + (i % 3) * 80; a.y = 200 + Math.floor(i / 3) * 80; });
+    // un estado por animal: peligro (huye), hambre, hambre extrema, caza, descanso, huevo
+    mine[0].st = 'flee'; mine[1].st = 'idle'; mine[1].hunger = 22; mine[2].st = 'idle'; mine[2].hunger = 0; mine[3].st = 'hunt'; mine[4].st = 'rest'; mine[5].st = 'lay';
+    for (const k in S.drawn) S.drawn[k] = 0; E.ui.setSel([]); for (let i = 0; i < 12; i++) E.render();
+    out.kinds = Object.assign({}, S.drawn);
+    // evolución: brillo
+    for (const k in S.drawn) S.drawn[k] = 0; E.Bus.emit('evolve', { id: 'x' }); E.render(); out.evo = S.drawn.evo;
+    // causas: propio -> burbuja y registro; salvaje sin seleccionar -> nada; salvaje seleccionado -> burbuja; tope 3
+    S.bub.length = 0; const log0 = G.log.length;
+    E.Bus.emit('cause', mine[0], 'Huye de Lobos', 'peligro'); out.b1 = S.bub.length; out.logged = G.log.slice(0, 3).some(t => /Huye de Lobos/.test(t));
+    E.Bus.emit('cause', wild[0], 'Pasta tranquilo', 'info'); out.bWild = S.bub.length;
+    E.ui.setSel([wild[0].id]); E.select(wild[0].id); E.Bus.emit('cause', wild[0], 'Observa', 'info'); out.bSel = S.bub.length;
+    E.Bus.emit('cause', mine[1], 'Busca comida: hambre 22', 'hambre'); E.Bus.emit('cause', mine[2], 'Muriendo de hambre', 'hambre'); E.Bus.emit('cause', mine[4], 'Descansa: energía 12', 'descanso'); out.bMax = S.bub.length;
+    E.Bus.emit('cause', mine[4], 'Descansa: energía 12', 'descanso'); out.dup = S.bub.length;
+    E.Bus.emit('cause', mine[3], '<b>x</b>', 'info'); out.esc = !G.log.some(t => /<b>/.test(t));
+    E.render(); out.rendered = true; out.logDelta = G.log.length - log0; out.cols = S.bub.map(b => b.col);
+    return out;
+  });
+  console.log('señales:', JSON.stringify(sg));
+  for (const k of ['danger', 'hunger', 'starve', 'hunt', 'rest', 'lay']) assert.ok(sg.kinds[k] > 0, 'señal «' + k + '» se dibuja');
+  assert.ok(sg.evo > 0, 'brillo de evolución tras el evento evolve');
+  assert.strictEqual(sg.b1, 1, 'una causa de un animal propio crea una burbuja'); assert.ok(sg.logged, 'la causa llega al registro de eventos');
+  assert.strictEqual(sg.bWild, 1, 'una causa de un salvaje no seleccionado no muestra burbuja'); assert.strictEqual(sg.bSel, 2, '...pero sí si está seleccionado');
+  assert.ok(sg.bMax <= 3, 'máximo 3 burbujas simultáneas (' + sg.bMax + ')'); assert.strictEqual(sg.dup, sg.bMax, 'el mismo texto del mismo animal no se repite'); assert.ok(sg.esc, 'el texto del registro se escapa');
+  await p.waitForTimeout(2600); const bl = await p.evaluate(() => { window.__e2.render(); return window.__e2.ART.SIG.bub.length; }); assert.strictEqual(bl, 0, 'las burbujas se desvanecen y se limpian en ~2 s');
+  console.log('señales y burbujas: ok');
+
   // capturas
   if (!noShots) {
     const dir = path.resolve(__dirname, '../docs/artgate/screens'); fs.mkdirSync(dir, { recursive: true });
@@ -66,6 +98,11 @@ const assert = require('assert'); const path = require('path'), fs = require('fs
     await p.evaluate(() => { const E = window.__e2; E.cls = 'ter'; E.specKey = 'ter_cazador'; E.diffI = 1; E.newGame('pradera', null, 'FPS'); E.setStarted(true); const G = E.G, sps = [G.me, ...G.riv], base = G.A.slice(); let i = 0; while (G.A.length < 540) { const t = base[i++ % base.length], sp = sps[i % sps.length]; const a = Object.assign({}, t, { id: ++G.id, sp, x: 30 + (i * 53) % 900, y: 30 + (i * 37) % 540, rr: sp.r, st: 'idle' }); a.mhp = sp.hp; a.hp = a.mhp; G.A.push(a); } G.modal = false; G.paused = false; });
     await p.waitForTimeout(2500); const f = [];
     for (let k = 0; k < 3; k++) f.push(await p.evaluate(() => new Promise(res => { let n = 0, t0 = performance.now(); const fn = () => { n++; if (performance.now() - t0 > 3000) res(n / ((performance.now() - t0) / 1000)); else requestAnimationFrame(fn); }; requestAnimationFrame(fn); })));
+
+    const ms = await p.evaluate(() => { const E = window.__e2, S = E.ART.SIG, g = E.G; g.paused = true; const t = on => { S.on = on; const t0 = performance.now(); for (let i = 0; i < 30; i++) E.render(); return (performance.now() - t0) / 30; }; for (let i = 0; i < 5; i++) E.render();
+      const sel = g.A.filter(a => a.sp.team === 'player').slice(0, 40).map(a => a.id); E.ui.setSel(sel); const r = { off: t(false), on: t(true), off2: t(false), on2: t(true), signalsMs: 0 }; S.ms = 0; t(true); r.signalsMs = S.ms / 30; S.on = true; g.paused = false; return r; });
+    console.log('render con ' + 540 + ' animales: sin señales ' + ((ms.off + ms.off2) / 2).toFixed(1) + ' ms, con señales ' + ((ms.on + ms.on2) / 2).toFixed(1) + ' ms (coste de señales por cuadro ' + ms.signalsMs.toFixed(2) + ' ms)');
+    assert.ok(ms.signalsMs < 3, 'las señales cuestan < 3 ms por cuadro con 540 animales');
     const n = await p.evaluate(() => window.__e2.G.A.length); console.log('animales', n, 'fps', f.map(v => v.toFixed(1)).join(' '));
     const best = Math.max(...f); if (best < 40) console.log('AVISO: fps < 40 (la máquina compartida puede estar cargada)'); else console.log('fps >= 40: ok');
   }

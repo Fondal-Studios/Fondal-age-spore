@@ -405,12 +405,12 @@
   /* ================================================================ ESTADO COSMÉTICO (efectos) ================================================================ */
   const FX = { nums: [], hits: [], bits: [], arrows: [], ghosts: [], dust: [], rings: [], lunge: Object.create(null), recoil: Object.create(null), lastHit: null, scarce: false, scarceT: 0, migBurst: 0, seen: new Set(), scorch: [], gref: null, plantAvg: 1, plantT: 0 };
   const now = () => performance.now() / 1000;
-  function reset() { FX.nums.length = FX.hits.length = FX.bits.length = FX.arrows.length = FX.ghosts.length = FX.dust.length = FX.rings.length = 0; FX.lunge = Object.create(null); FX.recoil = Object.create(null); FX.lastHit = null; FX.scorch.length = 0; FX.seen = new Set(); FX.scarce = false; FX.migBurst = 0; }
+  function reset() { FX.nums.length = FX.hits.length = FX.bits.length = FX.arrows.length = FX.ghosts.length = FX.dust.length = FX.rings.length = 0; FX.lunge = Object.create(null); FX.recoil = Object.create(null); FX.lastHit = null; FX.scorch.length = 0; FX.seen = new Set(); FX.scarce = false; FX.migBurst = 0; SIG.bub.length = 0; SIG.info.clear(); SIG.burstT = -1e9; }
   const cap = (arr, n) => { if (arr.length > n) arr.splice(0, arr.length - n); };
   let getG = () => null, getSel = () => null;
 
   function attach(Bus, hooks) {
-    if (hooks) { if (hooks.getG) getG = hooks.getG; if (hooks.getSel) getSel = hooks.getSel; }
+    if (hooks) { if (hooks.getG) getG = hooks.getG; if (hooks.getSel) getSel = hooks.getSel; if (hooks.getInfo) getInfo = hooks.getInfo; if (hooks.getSelSet) getSelSet = hooks.getSelSet; if (hooks.log) logFn = hooks.log; }
     Bus.on('hit', (a, b, d, info) => {
       const t = now(); FX.lunge[a.id] = t; FX.lastHit = { a, b, d, info: info || null };
       const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1, ang = Math.atan2(dy, dx), sz = clamp(a.sp.r / 7, .7, 2.2);
@@ -433,6 +433,8 @@
     Bus.on('eat', (a, tgt, tk) => { if (FX.bits.length > 120) return; const c = tk === 'plant' ? '#6cc850' : '#c04040'; for (let i = 0; i < 3; i++) FX.bits.push({ x: a.x + Math.cos(a.a) * a.rr * 1.5, y: a.y + Math.sin(a.a) * a.rr * 1.5, vx: (Math.random() - .5) * 30, vy: -10 - Math.random() * 20, t0: now(), l: .5, c, s: 1.3 }); });
     Bus.on('born', a => { if (!a) return; for (let i = 0; i < 5; i++) { const q = Math.random() * TAU; FX.bits.push({ x: a.x, y: a.y, vx: Math.cos(q) * 26, vy: Math.sin(q) * 26 - 8, t0: now(), l: .7, c: '#ffe08a', s: 1.6 }); } cap(FX.bits, 140); });
     Bus.on('lay', a => { FX.rings.push({ x: a.x, y: a.y, t0: now(), c: '255,224,138', max: 22, l: .9 }); cap(FX.rings, 16); });
+    Bus.on('evolve', () => { SIG.burstT = now(); });
+    Bus.on('cause', onCause);   // (animal, texto corto, tipo): lo emite la jugabilidad; aquí solo se muestra
     Bus.on('ability', () => {});
     Bus.on('hazard', () => {});
     Bus.on('season', () => { FX.scarceT = 0; });
@@ -462,7 +464,7 @@
       ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1.5 / SC * SC; ctx.lineCap = 'round'; ctx.beginPath();
       for (const k of [-1, 0, 1]) { const c = Math.cos(a.a), s = Math.sin(a.a), px = -s * k * r * .5, py = c * k * r * .5; ctx.moveTo(bx + px, by + py); ctx.lineTo(bx + px - c * r * (1 + u * .5), by + py - s * r * (1 + u * .5)); } ctx.stroke();
       const dx = a.x + r * .6, dy = a.y - r * 1.7 + u * r * .4; ctx.fillStyle = 'rgba(120,200,255,' + (1 - u * .6) + ')'; ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(dx, dy - 4.5); ctx.quadraticCurveTo(dx + 3.6, dy + .5, dx, dy + 3); ctx.quadraticCurveTo(dx - 3.6, dy + .5, dx, dy - 4.5); ctx.fill(); ctx.stroke();
-    } else if (a.st === 'rest' || a.st === 'lay') {   // z de descanso como burbujita (sin texto)
+    } else if (!SIG.on && (a.st === 'rest' || a.st === 'lay')) {   // z de descanso como burbujita (sin texto)
       const u = (tt * .8 + (a.ph || 0)) % 1; ctx.fillStyle = 'rgba(255,255,255,' + (.75 - u * .6) + ')'; for (let i = 0; i < 2; i++) { const k = (u + i * .5) % 1; ctx.beginPath(); ctx.arc(a.x + r * (.8 + k * .5), a.y - r * (1.1 + k * .9), 1.2 + k * 1.6, 0, TAU); ctx.fill(); }
     }
   }
@@ -511,6 +513,112 @@
       }
       ctx.globalAlpha = 1;
     }
+  }
+
+
+  /* ================================================================ SEÑALES DE ESTADO Y CAUSA (Ciclo 3) ================================================================
+     Iconos pequeños sobre el animal (hambre, peligro, caza, descanso, reproducción/huevo, frío, evolución) y burbujas de causa («Descansa: energía 12»).
+     Solo LEE: bioInfo(a) (hooks.getInfo, con caché de 0,3 s y presupuesto de 24 consultas por cuadro) o, con muchos animales, los campos baratos del animal
+     (st, hunger). Nada toca G ni usa R(): el único estado es cosmético (SIG). LOD: con más de LOD_N animales solo los propios en peligro/hambre extrema y los
+     seleccionados; sin LOD, los propios y los seleccionados (los salvajes solo si los seleccionás). */
+  const SIG = { on: true, info: new Map(), budget: 0, bub: [], seen: new Map(), lastLogG: -1e9, burstT: -1e9, wcache: new Map(), drawn: { danger: 0, starve: 0, hunger: 0, hunt: 0, rest: 0, lay: 0, rep: 0, cold: 0, evo: 0, total: 0 }, frame: 0, ms: 0 };
+  const CAUSE_COL = { peligro: '#e0453a', danger: '#e0453a', huida: '#e0453a', hambre: '#e6a21b', comida: '#4aa83a', caza: '#d9534f', ataque: '#d9534f', descanso: '#3f8fd1', energia: '#3f8fd1', repro: '#e070a8', reproduccion: '#e070a8', frio: '#7ab8e8', evolucion: '#f0c33a', info: '#8aa09a' };
+  let getInfo = null, getSelSet = null, logFn = null;
+  const SCRATCH = { danger: false, starve: false, hungry: false, hunt: false, rest: false, lay: false, rep: false, cold: false, hunger: 100 };
+  function cheapFlags(a) { const f = SCRATCH; f.danger = a.st === 'flee'; f.starve = a.hunger <= 0; f.hungry = a.hunger < 30; f.hunt = a.st === 'hunt'; f.rest = a.st === 'rest'; f.lay = a.st === 'lay'; f.rep = false; f.cold = false; f.hunger = a.hunger; return f; }
+  function mapInfo(a, I) {
+    const ef = I.effects || [], has = id => { for (let i = 0; i < ef.length; i++) if (ef[i].id === id) return true; return false; }, th = I.threats && I.threats[0];
+    return { danger: a.st === 'flee' || !!(th && th.d < 130), starve: has('starve') || I.hunger <= 0, hungry: I.hunger < 30, hunt: I.st === 'hunt' || !!(I.ord && I.ord.k === 'attack'), rest: I.st === 'rest' || has('rest'),
+      lay: I.st === 'lay', rep: !!(I.rep && I.rep.ready && !I.juv), cold: has('cold'), hunger: I.hunger };
+  }
+  function flagsOf(a, full) {
+    if (!full || !getInfo) return cheapFlags(a);
+    const t = now(); let e = SIG.info.get(a.id);
+    if ((!e || t - e.t > .3) && SIG.budget > 0) { SIG.budget--; let f; try { f = mapInfo(a, getInfo(a)); } catch (_) { f = Object.assign({}, cheapFlags(a)); } e = { t, f }; SIG.info.set(a.id, e); if (SIG.info.size > 900) SIG.info.clear(); }
+    return e ? e.f : cheapFlags(a);
+  }
+  /* ---- iconos (centro cx,cy; tamaño u en unidades de mundo; todos con contorno INK) */
+  function icoBegin(ctx, cx, cy, s) { ctx.save(); ctx.translate(cx, cy); ctx.scale(s, s); ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.strokeStyle = INK; }
+  const ICO = {
+    danger(ctx, u, tt, ph) { const s = 1 + .1 * Math.sin(tt * 9 + ph); ctx.scale(s, s); ctx.lineWidth = u * .16; ctx.fillStyle = '#ffcf3a'; ctx.beginPath(); ctx.moveTo(0, -u); ctx.lineTo(u * 1.05, u * .75); ctx.lineTo(-u * 1.05, u * .75); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.lineWidth = u * .2; ctx.beginPath(); ctx.moveTo(0, -u * .38); ctx.lineTo(0, u * .12); ctx.stroke(); ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(0, u * .44, u * .12, 0, TAU); ctx.fill(); },
+    hunger(ctx, u, tt, ph, severe) {   // cuenco vacío + gota
+      const p = severe ? 1 + .14 * Math.sin(tt * 10 + ph) : 1; ctx.scale(p, p); ctx.lineWidth = u * .16; ctx.fillStyle = severe ? '#ff9a8a' : '#ffe08a'; ctx.beginPath(); ctx.moveTo(-u * .95, -u * .1); ctx.quadraticCurveTo(-u * .8, u * .85, 0, u * .85); ctx.quadraticCurveTo(u * .8, u * .85, u * .95, -u * .1); ctx.closePath(); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.ellipse(0, -u * .1, u * .95, u * .22, 0, 0, TAU); ctx.fill(); ctx.stroke();
+      const k = (tt * 1.1 + ph) % 1; ctx.globalAlpha = 1 - k * .8; ctx.fillStyle = severe ? '#e0453a' : '#e6a21b'; ctx.beginPath(); const dy = -u * (.95 + k * .1) - 0; ctx.moveTo(0, dy - u * .5); ctx.quadraticCurveTo(u * .35, dy + u * .05, 0, dy + u * .2); ctx.quadraticCurveTo(-u * .35, dy + u * .05, 0, dy - u * .5); ctx.fill(); ctx.lineWidth = u * .1; ctx.stroke(); },
+    hunt(ctx, u, tt) { ctx.rotate(tt * .8); ctx.lineWidth = u * .34; ctx.strokeStyle = INK; ctx.beginPath(); ctx.arc(0, 0, u * .72, 0, TAU); for (let i = 0; i < 4; i++) { const q = i * Math.PI / 2; ctx.moveTo(Math.cos(q) * u * .45, Math.sin(q) * u * .45); ctx.lineTo(Math.cos(q) * u * 1.12, Math.sin(q) * u * 1.12); } ctx.stroke();
+      ctx.lineWidth = u * .18; ctx.strokeStyle = '#ff5a48'; ctx.beginPath(); ctx.arc(0, 0, u * .72, 0, TAU); for (let i = 0; i < 4; i++) { const q = i * Math.PI / 2; ctx.moveTo(Math.cos(q) * u * .45, Math.sin(q) * u * .45); ctx.lineTo(Math.cos(q) * u * 1.12, Math.sin(q) * u * 1.12); } ctx.stroke(); ctx.fillStyle = '#ff5a48'; ctx.beginPath(); ctx.arc(0, 0, u * .15, 0, TAU); ctx.fill(); },
+    rest(ctx, u, tt, ph) {   // «zz» flotando
+      for (let i = 0; i < 2; i++) { const k = (tt * .7 + ph + i * .5) % 1, z = u * (.55 + i * .35), x = -u * .3 + i * u * .75 + k * u * .3, y = u * .5 - i * u * .7 - k * u * .9; ctx.globalAlpha = Math.min(1, (1 - k) * 1.6);
+        ctx.beginPath(); ctx.moveTo(x - z * .5, y - z * .5); ctx.lineTo(x + z * .5, y - z * .5); ctx.lineTo(x - z * .5, y + z * .5); ctx.lineTo(x + z * .5, y + z * .5);
+        ctx.lineWidth = u * .42; ctx.strokeStyle = INK; ctx.stroke(); ctx.lineWidth = u * .2; ctx.strokeStyle = '#bfe0ff'; ctx.stroke(); } ctx.globalAlpha = 1; },
+    rep(ctx, u, tt, ph) { const s = 1 + .12 * Math.max(0, Math.sin(tt * 6 + ph)); ctx.scale(s, s); ctx.lineWidth = u * .16; ctx.fillStyle = '#ff6fa6'; ctx.beginPath(); ctx.moveTo(0, u * .8); ctx.bezierCurveTo(-u * 1.5, -u * .1, -u * .7, -u * 1, 0, -u * .3); ctx.bezierCurveTo(u * .7, -u * 1, u * 1.5, -u * .1, 0, u * .8); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.beginPath(); ctx.ellipse(-u * .4, -u * .32, u * .22, u * .13, -.6, 0, TAU); ctx.fill(); },
+    lay(ctx, u, tt, ph) { const s = 1 + .08 * Math.sin(tt * 5 + ph); ctx.scale(s, s); ctx.lineWidth = u * .16; ctx.fillStyle = '#fff3d0'; ctx.beginPath(); ctx.ellipse(0, 0, u * .62, u * .85, 0, 0, TAU); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(224,112,168,.65)'; ctx.beginPath(); ctx.arc(-u * .12, u * .15, u * .13, 0, TAU); ctx.arc(u * .2, -u * .15, u * .1, 0, TAU); ctx.fill(); },
+    cold(ctx, u, tt) { ctx.rotate(tt * .3); ctx.lineWidth = u * .34; ctx.strokeStyle = INK; ctx.beginPath(); for (let i = 0; i < 3; i++) { const q = i * Math.PI / 3; ctx.moveTo(-Math.cos(q) * u, -Math.sin(q) * u); ctx.lineTo(Math.cos(q) * u, Math.sin(q) * u); } ctx.stroke(); ctx.lineWidth = u * .16; ctx.strokeStyle = '#bfe6ff'; ctx.stroke(); },
+    evo(ctx, u, tt, ph) { const k = .8 + .3 * Math.sin(tt * 8 + ph); ctx.scale(k, k); ctx.rotate(tt * .5); ctx.lineWidth = u * .16; ctx.fillStyle = '#ffd84a'; ctx.beginPath(); for (let i = 0; i < 8; i++) { const q = i * Math.PI / 4, rr = i % 2 ? u * .3 : u * 1.05; ctx.lineTo(Math.cos(q) * rr, Math.sin(q) * rr); } ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  };
+  function icon(ctx, kind, cx, cy, u, tt, ph, SC) {
+    icoBegin(ctx, cx, cy, 1);
+    if (kind === 'starve') ICO.hunger(ctx, u, tt, ph, true); else if (kind === 'hunger') ICO.hunger(ctx, u, tt, ph, false); else ICO[kind](ctx, u, tt, ph);
+    ctx.restore(); SIG.drawn[kind]++; SIG.drawn.total++;
+  }
+  function textW(ctx, txt, font) { const k = font + '|' + txt; let w = SIG.wcache.get(k); if (w === undefined) { ctx.font = font; w = ctx.measureText(txt).width; if (SIG.wcache.size > 300) SIG.wcache.clear(); SIG.wcache.set(k, w); } return w; }
+  function bubbles(ctx, S, tt, SC) {
+    const t = now(); let n = 0; const placed = SIG._pl || (SIG._pl = []); placed.length = 0;
+    for (let i = SIG.bub.length - 1; i >= 0; i--) {
+      const b = SIG.bub[i], u = (t - b.t0) / 2.2; if (u >= 1) { SIG.bub.splice(i, 1); continue; }
+      const a = b.a;
+      const fs = 12 / SC, font = '700 ' + fs + 'px system-ui, sans-serif', w = textW(ctx, b.txt, font) + 16 / SC, h = 19 / SC, rr = a.rr * 1.4;
+      let x = clamp(a.x, w / 2 + 4, W - w / 2 - 4), y = a.y - rr * 1.9 - 34 / SC - b.slot * (h + 3 / SC) - u * 7 / SC;
+      if (y < h) y = h + b.slot * (h + 3 / SC);
+      for (let g = 0; g < 4; g++) { let hit = false; for (const q of placed) if (Math.abs(q.x - x) < (q.w + w) / 2 && Math.abs(q.y - y) < h + 1 / SC) { y = q.y - h - 2 / SC; hit = true; } if (!hit) break; }
+      placed.push({ x, y, w });
+      const al = u > .7 ? 1 - (u - .7) / .3 : 1; ctx.globalAlpha = al; ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.strokeStyle = INK; ctx.lineWidth = 1.2 / SC; ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x - w / 2, y - h / 2, w, h, h / 2); else ctx.rect(x - w / 2, y - h / 2, w, h); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(clamp(a.x, x - w / 2 + h / 2, x + w / 2 - h / 2) - 3 / SC, y + h / 2 - .3 / SC); ctx.lineTo(clamp(a.x, x - w / 2 + h / 2, x + w / 2 - h / 2), y + h / 2 + 5 / SC); ctx.lineTo(clamp(a.x, x - w / 2 + h / 2, x + w / 2 - h / 2) + 3 / SC, y + h / 2 - .3 / SC); ctx.fillStyle = 'rgba(255,255,255,.95)'; ctx.fill();
+      ctx.fillStyle = b.col; ctx.beginPath(); ctx.arc(x - w / 2 + 7 / SC, y, 3.2 / SC, 0, TAU); ctx.fill();
+      ctx.font = font; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillStyle = INK; ctx.fillText(b.txt, x - w / 2 + 13 / SC, y + .5 / SC); ctx.globalAlpha = 1; n++;
+    }
+    return n;
+  }
+  /* Se llama una vez por cuadro, después de dibujar a todos los animales. */
+  function signals(ctx, S, tt, SC, lodOn) {
+    if (!SIG.on) return; const t0 = now(); SIG.budget = lodOn ? 10 : 24; SIG.frame++;
+    const selSet = getSelSet ? getSelSet() : null, selId = getSel(), burst = t0 - SIG.burstT < 1.8 ? (t0 - SIG.burstT) / 1.8 : -1, pend = S.pending > 0;
+    let drawn = 0;
+    for (let i = 0; i < S.A.length && drawn < 90; i++) {
+      const a = S.A[i]; if (a.dead) continue; const own = a.sp.team === 'player', isSel = a.id === selId || (selSet && selSet.has(a.id));
+      if (!own && !isSel) continue;
+      if (own && S.camT > 0 && !isSel) continue;   // camuflado: no delatar al grupo
+      const f = flagsOf(a, !lodOn || isSel); let k0 = 0; const kinds = SIG._k || (SIG._k = []); kinds.length = 0;
+      if (f.danger) kinds.push('danger'); if (f.starve) kinds.push('starve'); else if (f.hungry) kinds.push('hunger'); if (f.hunt) kinds.push('hunt'); if (f.rest) kinds.push('rest'); if (f.lay) kinds.push('lay'); else if (f.rep) kinds.push('rep'); if (f.cold) kinds.push('cold');
+      if (lodOn && !isSel) { // solo lo crítico
+        let j = 0; for (let q = 0; q < kinds.length; q++) if (kinds[q] === 'danger' || kinds[q] === 'starve') kinds[j++] = kinds[q]; kinds.length = j;
+      }
+      const evo = own && ((burst >= 0 && burst < 1) || (pend && isSel)); if (!kinds.length && !evo) continue;
+      const r = a.rr * 1.4, u = clamp(r * .95, 6 / SC, 9 / SC), bar = a.hp < a.mhp || isSel ? 11 : 5, y = a.y - r * 1.9 - bar / SC * .5 - u * 1.2, max = isSel ? 3 : 2, n = Math.min(kinds.length, max), sp = u * 2.3;
+      for (let q = 0; q < n; q++) icon(ctx, kinds[q], a.x + (q - (n - 1) / 2) * sp, y, u, tt, a.ph || 0, SC);
+      if (evo) {   // brillo de evolución: estrella que titila + anillo que se expande
+        const ex = a.x + (n ? ((n + 1) / 2) * sp : 0), ey = n ? y : y; icoBegin(ctx, ex, ey, 1); ICO.evo(ctx, u * .8, tt, a.id * .7); ctx.restore(); SIG.drawn.evo++; SIG.drawn.total++;
+        if (burst >= 0 && burst < 1) { ctx.strokeStyle = 'rgba(255,216,74,' + (1 - burst) * .9 + ')'; ctx.lineWidth = 2 / SC; ctx.beginPath(); ctx.arc(a.x, a.y, r * (1.2 + burst * 2.2), 0, TAU); ctx.stroke(); }
+      }
+      drawn++;
+    }
+    bubbles(ctx, S, tt, SC); SIG.ms += (now() - t0) * 1000;
+  }
+  function onCause(a, txt, tipo) {
+    if (!a || !a.sp || !txt) return; const G = getG(); if (!G) return; const t = now(), own = a.sp.team === 'player', selSet = getSelSet ? getSelSet() : null, sel = a.id === getSel() || (selSet && selSet.has(a.id));
+    txt = String(txt).slice(0, 46); const key = a.id + '|' + txt;
+    if (own && logFn) {   // registro: solo animales propios y con el reloj de la simulación; el estado vive en G.x2.arte para que guardar/cargar no cambie nada
+      const X = (G.x2 = G.x2 || {}).arte || (G.x2.arte = { lg: -1e9, seen: {} });
+      if (G.t - X.lg >= 2 && !(X.seen[key] > G.t - 6)) { X.lg = G.t; logFn(a, txt, tipo); const ks = Object.keys(X.seen); if (ks.length > 60) for (const k of ks.slice(0, 30)) delete X.seen[k]; }
+      X.seen[key] = G.t;
+    }
+    if (!own && !sel) return;
+    for (const b of SIG.bub) if (b.a === a && b.txt === txt && t - b.t0 < 3) return;
+    if (!own && SIG.bub.length >= 3) return;
+    const live = SIG.bub.filter(b => b.a === a).length; SIG.bub.push({ a, txt, col: CAUSE_COL[String(tipo || 'info').toLowerCase()] || '#8aa09a', t0: t, slot: live });
+    while (SIG.bub.length > 3) SIG.bub.shift();
+    let s = 0; for (const b of SIG.bub) if (b.a === a) b.slot = s++;
   }
 
   /* ================================================================ AMBIENTE POR BIOMA ================================================================ */
@@ -619,5 +727,5 @@
     }
   }
 
-  window.Era2Arte = { drawAnimal, attach, opts, linOf, lodBob, status, breath, groundDetail, topDetail, plantStyle, under, over, drawFX, reset, TV, DRAW, FX, BRCOL, pose };
+  window.Era2Arte = { SIG, ICO, signals, drawAnimal, attach, opts, linOf, lodBob, status, breath, groundDetail, topDetail, plantStyle, under, over, drawFX, reset, TV, DRAW, FX, BRCOL, pose };
 })();

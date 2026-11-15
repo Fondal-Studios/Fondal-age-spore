@@ -25,13 +25,13 @@ h1,h2,h3{font-family:'Bricolage Grotesque','IBM Plex Sans',system-ui,sans-serif;
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 #stage{height:100%;display:flex;flex-direction:column;gap:6px;padding:8px;position:relative}
-#hud{display:flex;gap:6px;flex-wrap:wrap}
+#hud{display:flex;gap:6px;flex-wrap:wrap;padding-right:54px}   /* deja libre la esquina del botón de sonido (44 px + margen) */
 .chip{display:flex;align-items:baseline;gap:6px;padding:5px 10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:12px;color:var(--ink2)}
 .chip b{font-family:'Bricolage Grotesque',sans-serif;font-size:17px;color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
 .chip.ev{display:none;border-color:var(--warn);color:var(--ink);font-weight:600}.chip.ev.show{display:flex}
 .bar{display:block;width:54px;height:6px;border-radius:3px;background:var(--line);align-self:center;overflow:hidden}
 .bar u{display:block;height:100%;width:0;background:var(--accent);text-decoration:none}
-#hint{font-size:13px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:7px 11px;color:var(--ink);line-height:1.4}
+#hint{margin-right:54px;font-size:13px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:7px 11px;color:var(--ink);line-height:1.4}
 #main{flex:1;min-height:0;display:flex;gap:6px}
 #cvWrap{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:manipulation}
@@ -168,6 +168,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
   #side{display:contents}
   #bio{order:3}#cmb{order:3}
   #side>.box:not(#bio):not(#cmb),#side>details:not(#cmb){order:6}
+  #cmb summary,#goal summary{min-height:44px;align-items:center}   /* objetivo táctil >= 44 px */
   #tut{order:1;display:none;grid-template-columns:1fr auto;gap:2px 8px}#tut.show{display:grid}
   #tutT{grid-column:1}#tutB{grid-column:1;flex:none;font-size:12.5px}#tutBtns{grid-column:2;grid-row:1/3;flex-direction:column;justify-content:center}
   #tutBtns button{padding:2px 8px;font-size:12.5px}
@@ -1146,7 +1147,8 @@ function writeLineage(extra) {
 /* ---------- Dibujo del animal y de los rasgos: ahora vive en eras/era2-arte.js (módulo Arte/Animación) ---------- */
 const ART = window.Era2Arte;
 function drawAnimal(x, sp, o) { ART.drawAnimal(x, sp, o); }
-ART.attach(Bus, { getG: () => G, getSel: () => selId });
+ART.attach(Bus, { getG: () => G, getSel: () => selId, getSelSet: () => UIs.selSet, getInfo: a => bioInfo(a),
+  log: (a, txt) => logMsg('· ' + a.sp.n + ': ' + String(txt).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))) });
 const _sh = {};
 function shade(hex, f) { const k = hex + f; if (_sh[k]) return _sh[k]; const n = parseInt(hex.slice(1), 16), c = v => clamp(Math.round(v * f), 0, 255); return _sh[k] = '#' + ((1 << 24) + (c(n >> 16) << 16) + (c((n >> 8) & 255) << 8) + c(n & 255)).toString(16).slice(1); }
 
@@ -1178,13 +1180,15 @@ function drawStatic(ctx, S, sea) {
 }
 /* Con muchos animales (más de LOD_N) se dibujan desde un sprite precalculado en vez de trazar cada cuerpo con sus degradados: mismo aspecto, sin el aleteo. */
 const LOD_N = 160, SPRC = new Map();
-function getSprite(sp, s, cloth, ang) {
+/* fr: 0 = quieto, 1 y 2 = las dos poses extremas del paso (los que caminan alternan 1-0-2-0: con cientos de animales siguen viéndose caminar). */
+const WALK_TT = [0, .157, .471];   // sin(tt*10) = +1 y -1 (marcha del motor de dibujo)
+function getSprite(sp, s, cloth, ang, fr) {
   if (!sp._sk) sp._sk = sp.key + '|' + sp.traits.join(',') + '|' + JSON.stringify(sp.vars);
   const lin = sp === G.me ? ART.linOf(sp, G) : null;
-  const NB = 16, bk = (Math.round((ang || 0) / TAU * NB) % NB + NB) % NB, q = Math.max(.5, Math.round(s * 6) / 6), key = sp._sk + '|' + q + (cloth ? 'c' : '') + (lin ? 'L' + lin.col + lin.tier : '') + '|' + bk; let e = SPRC.get(key); if (e) return e;
+  const NB = 16, bk = (Math.round((ang || 0) / TAU * NB) % NB + NB) % NB, q = Math.max(.5, Math.round(s * 6) / 6), key = sp._sk + '|' + q + (cloth ? 'c' : '') + (lin ? 'L' + lin.col + lin.tier : '') + '|' + bk + '|' + (fr | 0); let e = SPRC.get(key); if (e) return e;
   if (SPRC.size > 1800) SPRC.clear();
   const k = DPR * SC, hs = sp.r * q * 2.7, n = Math.max(8, Math.ceil(hs * 2 * k)), cn = document.createElement('canvas'); cn.width = cn.height = n;
-  const x = cn.getContext('2d'); x.scale(n / (hs * 2), n / (hs * 2)); drawAnimal(x, sp, { px: hs, py: hs, a: bk * TAU / NB, s: q, tt: 0, ph: 0, mv: 0, cloth, traits: sp.traits, vars: sp.vars, lin, lite: false });
+  const x = cn.getContext('2d'); x.scale(n / (hs * 2), n / (hs * 2)); drawAnimal(x, sp, { px: hs, py: hs, a: bk * TAU / NB, s: q, tt: WALK_TT[fr | 0], ph: 0, mv: fr ? 1 : 0, st: fr ? 'move' : undefined, cloth, traits: sp.traits, vars: sp.vars, lin, lite: false });
   e = { cn, hs }; SPRC.set(key, e); return e;
 }
 function render() {
@@ -1250,7 +1254,7 @@ function render() {
     if (a.id === selId) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.arc(a.x, a.y, r * 2.2, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
     if (sp.team === 'player' && S.camT > 0) ctx.globalAlpha = .42;
     if (sp.team === 'player' && a.st === 'dig' && S.digT > 0) { ctx.fillStyle = '#6b4a2a'; ctx.beginPath(); ctx.ellipse(a.x, a.y + r * .35, r * 1.5, r * .8, 0, 0, TAU); ctx.fill(); ctx.fillStyle = '#4a3220'; ctx.beginPath(); ctx.ellipse(a.x, a.y + r * .3, r * .9, r * .42, 0, 0, TAU); ctx.fill(); ctx.fillStyle = '#8a6a43'; for (let q = 0; q < 4; q++) { ctx.beginPath(); ctx.arc(a.x + Math.cos(q * 1.6 + a.id) * r * 1.2, a.y + r * .35 + Math.sin(q * 1.6 + a.id) * r * .6, 1.6, 0, TAU); ctx.fill(); } }
-    else if (lodOn && a.id !== selId && !sp.boss && !(a.flash > 0)) { const e = getSprite(sp, r / sp.r, S.phase === 2 && sp === S.me, a.a); ctx.drawImage(e.cn, a.x - e.hs, a.y - e.hs + ART.lodBob(a, tt), e.hs * 2, e.hs * 2); }
+    else if (lodOn && a.id !== selId && !sp.boss && !(a.flash > 0)) { const wf = a.mv ? ((tt * 7 + (a.ph || 0)) % 1) : .3, e = getSprite(sp, r / sp.r, S.phase === 2 && sp === S.me, a.a, wf < .25 ? 1 : wf > .5 && wf < .75 ? 2 : 0); ctx.drawImage(e.cn, a.x - e.hs, a.y - e.hs + ART.lodBob(a, tt), e.hs * 2, e.hs * 2); }
     else drawAnimal(ctx, sp, ART.opts(a, S, tt, r, lodOn ? { lite: true } : null));
     if (S.biomeKey === 'tundra' && !lodOn && sp.g !== 'acu' && sp.g !== 'ins' && a.mv) ART.breath(ctx, a, r, tt);
     if (!lodOn || sp.team !== 'wild') ART.status(ctx, a, r, tt, SC);
@@ -1265,6 +1269,7 @@ function render() {
     if ((sp.team === 'player' || sp.team === 'rival') && STC[a.st]) { ctx.fillStyle = STC[a.st]; ctx.beginPath(); ctx.arc(a.x + bw / 2 + 3, by + 3, 3.4, 0, TAU); ctx.fill(); }
     if (sp.boss) { ctx.fillStyle = '#a00'; ctx.font = '700 ' + 12 / SC + 'px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('¡Oso gigante!', a.x, a.y - r * 2.4 - 8); }
   }
+  ART.signals(ctx, S, tt, SC, lodOn);
   for (const g of S.rings) { const u = 1 - g.t / g.tt; ctx.strokeStyle = 'rgba(' + g.c + ',' + (1 - u) * .85 + ')'; ctx.lineWidth = 3 * (1 - u) + 1; ctx.beginPath(); ctx.arc(g.x, g.y, 6 + g.max * u, 0, TAU); ctx.stroke(); }
   if (S.migT > 0 && S.mig) { ctx.strokeStyle = '#3f8fd1'; ctx.lineWidth = 2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.arc(S.mig.x, S.mig.y, 22 + 3 * Math.sin(tt * 6), 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
   for (const f of S.fx) { ctx.globalAlpha = clamp(f.l * 2.5, 0, 1); ctx.fillStyle = f.c; ctx.beginPath(); ctx.arc(f.x, f.y, 2.2, 0, TAU); ctx.fill(); } ctx.globalAlpha = 1;
