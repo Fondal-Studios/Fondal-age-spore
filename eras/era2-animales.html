@@ -167,7 +167,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
   #legend{display:none}
   #side{display:contents}
   #bio{order:3}#cmb{order:3}
-  #side>.box:not(#bio):not(#cmb),#side>details:not(#cmb){order:6}
+  #side>.box:not(#bio):not(#cmb):not(#prio):not(#grp),#side>details:not(#cmb):not(#prio):not(#grp){order:6}
   #cmb summary,#goal summary{min-height:44px;align-items:center}   /* objetivo táctil >= 44 px */
   #tut{order:1;display:none;grid-template-columns:1fr auto;gap:2px 8px}#tut.show{display:grid}
   #tutT{grid-column:1}#tutB{grid-column:1;flex:none;font-size:12.5px}#tutBtns{grid-column:2;grid-row:1/3;flex-direction:column;justify-content:center}
@@ -177,6 +177,56 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
   #mapTools{left:8px;right:8px;justify-content:space-between}
   #mapTools button{flex:1 1 0;min-width:0;padding:4px 4px}
   .chip{padding:3px 8px}
+}
+/* === ESTRATEGIA (Ciclo 4): prioridades, resumen de población, alertas, grupos, indicadores de habilidades === */
+#popBar{display:contents}
+#popBar .chip b{font-size:15px}
+#popBar .chip.warn{border-color:var(--warn);color:var(--ink)}
+#alerts{position:absolute;left:8px;top:8px;display:flex;flex-direction:column;gap:6px;width:min(300px,calc(100% - 16px));z-index:3;pointer-events:none}
+#alerts>*{pointer-events:auto}
+#alerts.tip{top:64px}
+.al{display:block;min-height:44px;width:100%;text-align:left;padding:5px 10px;background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--warn);border-radius:10px;font-size:13px;line-height:1.3;color:var(--ink);font-weight:600}
+.al.p1{border-left-color:var(--accent)}.al.p2{border-left-color:#e0a21a}
+.al small{display:block;font-weight:400;color:var(--ink2);font-size:12px}
+.alMore{min-height:44px;width:100%;padding:4px 10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:13px;font-weight:600;color:var(--ink)}
+#prio,#grp{order:-1}
+#prio summary,#grp summary{cursor:pointer;font-weight:600;color:var(--ink);list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;min-height:44px}
+#prio summary::-webkit-details-marker,#grp summary::-webkit-details-marker{display:none}
+#prio summary span+span,#grp summary span+span{font-weight:400;color:var(--ink2);font-size:12px;text-align:right}
+#prioRows{display:flex;flex-direction:column;gap:4px}
+.prow{display:grid;grid-template-columns:minmax(88px,1fr) 2fr;gap:6px;align-items:center}
+.prow .pl{min-height:44px;text-align:left;background:transparent;border:0;padding:0 2px;font-size:12.5px;font-weight:600;color:var(--ink)}
+.prow.sel .pl{text-decoration:underline}
+.prow kbd{font-family:inherit;font-size:12px;border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--ink2);margin-left:4px;font-weight:400}
+.seg3{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+.seg3 button{min-height:44px;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:transparent;border-radius:8px;padding:0 2px;color:var(--ink)}
+.seg3 button[aria-checked="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+#prioDet{margin-top:6px;font-size:12.5px;line-height:1.4;color:var(--ink2)}
+#prioDet b{color:var(--ink)}#prioDet div{margin-top:3px;padding-left:6px;border-left:3px solid var(--line)}
+#prioDet div.cur{border-left-color:var(--accent);color:var(--ink)}
+#spBreak{font-size:12.5px;line-height:1.4;color:var(--ink2)}#spBreak div{margin-top:2px}#spBreak b{color:var(--ink)}
+.gq{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
+.gq button,#cgSave{min-height:44px;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:transparent;border-radius:8px;color:var(--ink);padding:2px 6px}
+.gq button:disabled{opacity:.5;cursor:not-allowed}
+.gq button i{font-style:normal;color:var(--ink2);margin-left:4px}
+#cgSave{width:100%;margin-top:4px}#cgSave[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.cgs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:4px}
+.cgs button{min-height:44px;font-size:13px;font-weight:700;border:1px solid var(--line);background:transparent;border-radius:8px;color:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;padding:2px}
+.cgs button small{font-weight:400;font-size:12px;color:var(--ink2)}
+.cgs button.full{border-color:var(--accent)}
+.cgs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}.cgs button.on small{color:inherit}
+#grpHelp{margin-top:6px;font-size:12px;line-height:1.35;color:var(--ink2)}
+#abRes{position:fixed;left:50%;transform:translateX(-50%);display:none;max-width:min(92vw,440px);background:var(--panel);border:1px solid var(--accent);border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--ink);z-index:4;pointer-events:none;text-align:center;line-height:1.3}
+#abRes.show{display:block}
+#bar button.ab{position:relative;overflow:hidden}
+#bar button.ab::before{content:'';position:absolute;left:0;top:0;height:4px;width:calc(var(--p,0)*100%);background:var(--ink2);opacity:.85}
+#bar button.ab.act{border-color:#2f8a3f;border-width:2px}#bar button.ab.act::before{background:#2f8a3f}
+@media (max-width:820px){
+  #prio,#grp{order:3}
+  #alerts{width:min(80%,320px)}
+  .al small{display:none}
+  #hud{gap:4px}#hud .chip{padding:2px 7px;gap:4px;font-size:12px}#hud .chip b{font-size:14px}
+  .al{display:flex;align-items:center}
 }
 </style>
 </head>
@@ -189,12 +239,19 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
     <div class="chip"><b id="vNest">0</b><span>nidos</span></div>
     <div class="chip" id="chipTrad"><b id="vTrad">0</b><span>Tradición</span></div>
     <div class="chip"><b id="vInst">0</b><span id="vInstT">Instinto</span><em class="bar"><u id="instBar"></u></em></div>
+    <div id="popBar" role="group" aria-label="Resumen de tu población">
+      <div class="chip" id="pcHun"><b id="pHun">0 %</b><span>con hambre</span></div>
+      <div class="chip"><b id="pEn">0 %</b><span>energía</span></div>
+      <div class="chip" id="pcHurt"><b id="pHurt">0</b><span>heridos</span></div>
+      <div class="chip"><b id="pTerr">0 %</b><span>territorio</span></div>
+      <div class="chip" id="pcThr"><b id="pThr">baja</b><span>amenaza</span></div>
+    </div>
     <div class="chip ev" id="evChip"></div>
   </div>
   <div id="hint"></div>
   <div id="tut" role="region" aria-label="Tutorial"><div id="tutT"></div><div id="tutB"></div><div id="tutBtns"><button id="tutSkipStep">Saltar paso</button><button id="tutSkip">Saltar tutorial</button></div></div>
   <div id="main">
-    <div id="cvWrap"><canvas id="cv" role="img" aria-label="Mapa del ecosistema: tus animales (aro turquesa), rivales (aro rosa) y fauna salvaje. Tocá un animal para ver su estado; arrastrá para seleccionar varios; clic derecho para ordenar."></canvas><div id="modeTip"></div><div id="legend">aro turquesa: tus animales · aro rosa: rival · sin aro: fauna salvaje</div><div id="pauseTag">En pausa</div>
+    <div id="cvWrap"><canvas id="cv" role="img" aria-label="Mapa del ecosistema: tus animales (aro turquesa), rivales (aro rosa) y fauna salvaje. Tocá un animal para ver su estado; arrastrá para seleccionar varios; clic derecho para ordenar."></canvas><div id="modeTip"></div><div id="alerts" role="region" aria-label="Alertas de tu especie"></div><div id="legend">aro turquesa: tus animales · aro rosa: rival · sin aro: fauna salvaje</div><div id="pauseTag">En pausa</div>
       <div id="joy" aria-label="Joystick del líder" role="group"><i></i></div>
       <div id="mapTools" role="toolbar" aria-label="Selección y órdenes">
         <button id="tSel" aria-pressed="false" title="Activa el recuadro: arrastrá sobre el mapa para seleccionar varios">Seleccionar</button>
@@ -221,6 +278,18 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
         </div>
       </section>
       <details class="box" id="cmb" open><summary><span>Últimos combates</span><span id="cmbN"></span></summary><div id="cmbDead"></div><div id="cmbRows"><div class="cr0">Todavía no hubo peleas.</div></div></details>
+      <details class="box" id="prio"><summary><span>Prioridades de la especie</span><span id="prioSum">todo normal</span></summary>
+        <div id="prioRows" role="group" aria-label="Prioridades"></div><div id="prioDet" aria-live="polite"></div></details>
+      <details class="box" id="grp"><summary><span>Grupos y población</span><span id="grpSum"></span></summary>
+        <div id="spBreak"></div>
+        <div class="gq" role="group" aria-label="Elegir por estado"><button id="qHun" data-q="hungry">Hambrientos<i></i></button><button id="qHurt" data-q="hurt">Heridos<i></i></button><button id="qDan" data-q="danger">En peligro<i></i></button><button id="qAll" data-q="all">Todos<i></i></button></div>
+        <div class="lbl">Grupos de control</div>
+        <div class="cgs" id="cgSlots" role="group" aria-label="Grupos de control"></div>
+        <button id="cgSave" aria-pressed="false">Guardar la selección en un grupo</button>
+        <div class="lbl">Orden de grupo (se ve el destino en el mapa)</div>
+        <div class="gq" role="group" aria-label="Órdenes de grupo"><button id="oNest" title="Todo el grupo elegido va al nido terminado más cercano">Al nido</button><button id="oFood" title="El grupo va hacia la comida más cercana">A comer</button></div>
+        <div id="grpHelp">Mayús+1…9 recupera un grupo (dos veces: centra la cámara). Ctrl+Mayús+1…9 guarda la selección. Teclas H, J, K: hambrientos, heridos, en peligro.</div>
+      </details>
       <div class="box"><h3 id="spName">Tu especie</h3><canvas id="portrait" width="220" height="130" role="img" aria-label="Dibujo de tu especie con sus rasgos"></canvas><div class="chips" id="spTraits"></div></div>
       <div class="box"><h3>Ecosistema: <span id="ecoName"></span></h3><div id="ecoInfo"></div><canvas id="pyr" width="230" height="104" role="img" aria-label="Pirámide trófica: productores, herbívoros y carnívoros" style="width:100%;height:auto;margin-top:6px"></canvas><div id="pyrTxt"></div></div>
       <div class="box"><h3>Qué está pasando</h3><div id="log"></div></div>
@@ -237,6 +306,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
     <button id="bCiv">Civilización<small>fogata, aldea, corral, tótem</small></button>
     <button id="bEvo" class="go">Evolucionar<small id="bEvoS">Instinto 0/8</small></button>
     <span class="brk"></span>
+    <button id="bPrio" class="sm" title="Prioridades de la especie (P)">Prioridades</button>
     <button id="bGo" class="sm">Ir a…</button>
     <button id="bPlanet" class="sm">Planeta</button>
     <button id="bSave" class="sm">Guardar</button>
@@ -244,6 +314,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
     <button id="bSpd" class="sm">×1</button>
   </div>
   <div id="toasts" role="status" aria-live="polite"></div>
+  <div id="abRes" role="status" aria-live="polite"></div>
 
   <div id="menu" class="ov show"><div class="card" role="dialog" aria-modal="true" aria-labelledby="menuT">
     <h1 id="menuT">Era 2: Animales</h1>
@@ -415,6 +486,7 @@ function newGame(bk, carry, seedStr) { CLOG.length = 0;
   LAKE = B.lake; FOR = B.forest;
   G = { x2: {}, seed: seedStr, lin: carry && prev ? prev.lin : linSummary(), ab: { rug: 0, cam: 0, exc: 0, ala: 0, mig: 0 }, camT: 0, digT: 0, alT: 0, migT: 0, mig: null, rings: [], t: 0, id: 0, season: 0, A: [], E: [], N: [], B: [], bB: null, phase: 1, trad: 0, food: 0, dom: {}, C: [], F: [], fx: [], plants: [], log: [], sp: {}, inst: 0, nextInst: 10, pending: 0, kills: 0, evos: 0, rally: null, nestB: null, ev: null, evT: 70, bossDone: false, over: false, modal: false, paused: false, immT: 0, goalT: 0, rivT: 0, winter1: false, grass: [] };
   G.biomeKey = bk || 'pradera'; G.biome = B; G.colT = 0;
+  G.x2.prio = prioNorm(carry && prev && prev.x2 ? prev.x2.prio : null);   // Ciclo 4: prioridades estratégicas (0|1|2, por defecto 1); viajan entre ecosistemas
   for (const k in WILD) G.sp[k] = mkSp(k, WILD[k], 'wild');
   const me = carry ? carry.me : mkSp(specKey, SP2[specKey], 'player'); G.me = me;
   if (!carry) applyLinTraits(me); applyLinStats(me);
@@ -1164,6 +1236,7 @@ function restoreGame(d) {
   G.E = d.E.map(e => ({ x: e.x, y: e.y, t: e.t, sp: spOf(e.sp) }));
   for (const k of ['C', 'F', 'fx', 'plants', 'patch', 'deco', 'grass', 'log']) G[k] = J(d[k]);
   G.g = J(d.g || []); G.rally = d.rally ? J(d.rally) : null; G.ev = d.ev ? J(d.ev) : null; G.ab = J(d.ab); G.mig = d.mig ? J(d.mig) : null; G.rings = J(d.rings || []); G.lin = d.lin ? J(d.lin) : null; G.x2 = d.x2 ? J(d.x2) : {};
+  G.x2.prio = prioNorm(G.x2.prio);   // partidas viejas sin prioridades: todo en 1 (normal)
   started = true; lastSaveT = G.t; selId = null; setMode(null); setStanceUI();
   for (const id of ['menu', 'mut', 'planet', 'dlg']) $(id).classList.remove('show');
   layout(); return true;
@@ -1546,7 +1619,7 @@ function hud() {
   $('ecoName').textContent = G.biome.n; $('ecoInfo').textContent = 'Productividad primaria ≈ ' + G.biome.npp + ' g/m²/año · ' + G.biome.temp + ' · ' + G.biome.rain + (colonized[G.biomeKey] ? ' · colonizado ✓' : ''); drawPyramid();
   $('chipTrad').classList.toggle('show', G.phase === 2); $('vTrad').textContent = Math.floor(G.trad) + (G.food ? ' · comida ' + G.food : ''); $('bCiv').classList.toggle('show', G.phase === 2);
   document.querySelector('#goal summary span').textContent = G.phase === 2 ? 'Camino a la civilización' : 'Metas de la Era 2';
-  abHud();
+  abHud(); uiAbil();
   $('pauseTag').style.display = G.paused && !G.modal && !G.over ? 'block' : 'none';
 }
 /* === INTERFAZ (Calidad 2.0): selección, órdenes, panel biológico, combates, líder, tutorial ===
@@ -1762,32 +1835,305 @@ const tutGet = () => { try { return localStorage.getItem(TUT_KEY); } catch (_) {
 const tutSet = v => { try { localStorage.setItem(TUT_KEY, v); } catch (_) {} };
 const coarse = () => panMode || matchMedia('(pointer:coarse)').matches;
 const TUT = [
-  { t: '1 de 6 · Mirá a tu criatura', b: () => (coarse() ? 'Tocá uno de tus animales (aro turquesa)' : 'Hacé clic en uno de tus animales (aro turquesa)') + ' y leé sus barras en el panel: vida (verde), hambre (ámbar), energía (azul) y reproducción (rosa).' },
-  { t: '2 de 6 · Dale una orden', b: () => (coarse() ? 'Tocá «Ordenar» y después un lugar del suelo.' : 'Clic derecho en un lugar del suelo (o «Ordenar» y clic).') + ' Tu animal va hasta ahí; se ve una línea punteada y un anillo.' },
-  { t: '3 de 6 · Mirá cómo come', b: () => 'Cuando tiene hambre, busca plantas o presas solo. Esperá un momento y mirá cómo sube la barra ámbar al comer (probá «Detener» para devolverle el control).' },
-  { t: '4 de 6 · Usá una habilidad', b: () => 'Tocá un botón de la barra de abajo (Rugido, Camuflaje, Excavar, Alarma o Migrar) o apretá las teclas 1 a 5.' },
-  { t: '5 de 6 · Hacé un nido', b: () => 'Tocá «Anidar» y después el mapa. En el nido los huevos nacen más rápido y las crías están a salvo.' },
-  { t: '6 de 6 · ¡Listo!', b: () => 'Ya sabés lo básico: elegir, ordenar, ver cómo comen, usar habilidades y anidar. En «Últimos combates» entendés por qué se gana o se pierde.' }
+  { id: 'what', info: true, t: 'Qué controlás', b: () => 'Controlás una ESPECIE, no un animal: ellos comen y se reproducen solos; vos fijás prioridades, grupos y territorio. Necesita comida, energía, nido y crías.' },
+  { id: 'select', t: 'Mirá a tu criatura', b: () => (coarse() ? 'Tocá uno de tus animales (aro turquesa)' : 'Hacé clic en uno de tus animales (aro turquesa)') + ' y leé sus barras en el panel: vida (verde), hambre (ámbar), energía (azul) y reproducción (rosa).' },
+  { id: 'order', t: 'Dale una orden', b: () => (coarse() ? 'Tocá «Ordenar» y después un lugar del suelo.' : 'Clic derecho en un lugar del suelo (o «Ordenar» y clic).') + ' Tu animal va hasta ahí; se ve una línea punteada y un anillo. Es la excepción: lo normal es dirigir grupos y prioridades.' },
+  { id: 'prio', t: 'Prioridades de la especie', b: () => 'Abrí «Prioridades» y subí o bajá una (' + (coarse() ? 'tocá Baja, Normal o Alta' : 'o usá las teclas Z X C V B') + '). Cada nivel tiene un costo y un beneficio: leelos en el panel.' },
+  { id: 'alert', info: true, t: 'Resumen y alertas', b: () => 'Arriba ves hambre, energía y heridos de toda la población. Cuando aparece una alerta en el mapa (depredador, hambre, frío, nido en peligro), tocala: te lleva al grupo afectado y lo selecciona.' },
+  { id: 'eat', t: 'Mirá cómo come', b: () => 'Cuando tiene hambre, busca plantas o presas solo. Esperá un momento y mirá cómo sube la barra ámbar al comer (probá «Detener» para devolverle el control).' },
+  { id: 'abil', t: 'Usá una habilidad', b: () => 'Tocá un botón de la barra de abajo (Rugido, Camuflaje, Excavar, Alarma o Migrar) o apretá las teclas 1 a 5. La barra fina sobre el botón muestra cuánto dura y cuánto falta para volver a usarla.' },
+  { id: 'nest', t: 'Hacé un nido', b: () => 'Tocá «Anidar» y después el mapa. En el nido los huevos nacen más rápido y las crías están a salvo.' },
+  { id: 'next', t: 'Cómo progresás a la siguiente era', b: () => 'Cada cría, cada nido y cada evolución suman Instinto. Cumplí las metas (población, 4 evoluciones, 2 nidos, 2 ecosistemas), despertá la civilización (fogata, aldea, corral, tótem) y pasás a la Era 3: tribus.' }
 ];
+const tutAt = id => tut.i >= 0 && !!TUT[tut.i] && TUT[tut.i].id === id;
 const tut = { i: -1, base: 0, okT: 0, endT: 0 };
 function tutShow() {
   const el = $('tut'); if (tut.i < 0 || tut.i >= TUT.length) { el.classList.remove('show'); return; }
-  const s = TUT[tut.i]; el.classList.add('show'); el.classList.toggle('ok', tut.okT > 0); $('tutT').textContent = tut.okT > 0 ? '¡Bien!' : s.t; $('tutB').textContent = tut.okT > 0 ? 'Paso cumplido.' : s.b();
-  $('tutSkipStep').style.display = tut.i >= TUT.length - 1 ? 'none' : ''; $('tutSkip').textContent = tut.i >= TUT.length - 1 ? 'Cerrar' : 'Saltar tutorial';
+  const s = TUT[tut.i]; el.classList.add('show'); el.classList.toggle('ok', tut.okT > 0); $('tutT').textContent = tut.okT > 0 ? '¡Bien!' : (tut.i + 1) + ' de ' + TUT.length + ' · ' + s.t; $('tutB').textContent = tut.okT > 0 ? 'Paso cumplido.' : s.b();
+  const last = tut.i >= TUT.length - 1; $('tutSkipStep').style.display = last ? 'none' : ''; $('tutSkipStep').textContent = s.info ? 'Siguiente' : 'Saltar paso'; $('tutSkip').textContent = last ? 'Cerrar' : 'Saltar tutorial';
+  if (s.id === 'prio' && !tut.opened) { tut.opened = true; $('prio').open = true; }
 }
-function tutNext() { if (tut.i < 0) return; tut.i++; tut.okT = 0; if (tut.i === 4) tut.base = G ? G.N.length : 0; if (tut.i >= TUT.length - 1) { tut.endT = performance.now(); tutSet('done'); } tutShow(); }
-function tutDone(step) { if (tut.i === step && !tut.okT) { tut.okT = performance.now(); tutShow(); setTimeout(() => { if (tut.i === step && tut.okT) tutNext(); }, 900); } }
+function tutNext() { if (tut.i < 0) return; tut.i++; tut.okT = 0; if (tutAt('nest')) tut.base = G ? G.N.length : 0; if (tut.i >= TUT.length - 1) { tut.endT = performance.now(); tutSet('done'); } tutShow(); }
+function tutDone(id) { if (tutAt(id) && !tut.okT) { const i0 = tut.i; tut.okT = performance.now(); tutShow(); setTimeout(() => { if (tut.i === i0 && tut.okT) tutNext(); }, 900); } }
 function tutSkip(v) { tut.i = -1; tutSet(v || 'skip'); tutShow(); }
-function tutReset() { try { localStorage.removeItem(TUT_KEY); } catch (_) {} tut.i = 0; tut.okT = 0; tutShow(); }
+function tutReset() { try { localStorage.removeItem(TUT_KEY); } catch (_) {} tut.i = 0; tut.okT = 0; tut.opened = false; tutShow(); }
 $('tutSkip').onclick = () => tutSkip('skip'); $('tutSkipStep').onclick = () => { if (tut.i >= 0 && tut.i < TUT.length - 1) tutNext(); };
-Bus.on('select', () => { if (tut.i === 0 && mySel().length) tutDone(0); });
-Bus.on('order', (ids, o) => { if (tut.i === 1 && o && o.k === 'move' && !leaderOn) tutDone(1); });
-Bus.on('eat', a => { if (tut.i === 2 && a.sp.team === 'player') tutDone(2); });
-Bus.on('ability', () => { if (tut.i === 3) tutDone(3); });
+Bus.on('select', () => { if (tutAt('select') && mySel().length) tutDone('select'); });
+Bus.on('order', (ids, o) => { if (tutAt('order') && o && o.k === 'move' && !leaderOn) tutDone('order'); });
+Bus.on('eat', a => { if (tutAt('eat') && a.sp.team === 'player') tutDone('eat'); });
 function uiTut() {
   if (tut.i === -1 && !tut.began && G && started && !G.over) { tut.began = true; if (!tutGet()) { tut.i = 0; tutShow(); } }
-  if (tut.i === 4 && !tut.okT && G.N.length > tut.base) tutDone(4);
+  if (tutAt('nest') && !tut.okT && G.N.length > tut.base) tutDone('nest');
   if (tut.i === TUT.length - 1 && tut.endT && performance.now() - tut.endT > 15000) tutSkip('done');
+}
+
+/* ---------- ESTRATEGIA (Ciclo 4): prioridades, resumen de población, alertas, grupos de control, indicadores de habilidades ----------
+   El jugador dirige una ESPECIE: aquí van las decisiones de población, no de individuo. Todo lo de este bloque es LECTURA de G (cada ~0,5 s, con caché) y estado de interfaz (ST),
+   salvo setPrio(), que es lo único que escribe: G.x2.prio (0|1|2 por clave). No usa R(), Math.random ni nada que cambie la simulación.
+   El EFECTO de las prioridades lo aplica think() (módulo de balance): esta interfaz solo guarda el valor y explica el costo/beneficio. */
+const PRIO_KEYS = ['comida', 'reproduccion', 'expansion', 'defensa', 'exploracion'];
+const PRIO_N = { comida: 'Comida', reproduccion: 'Reproducción', expansion: 'Expansión', defensa: 'Defensa', exploracion: 'Exploración' };
+const PRIO_SC = { comida: 'z', reproduccion: 'x', expansion: 'c', defensa: 'v', exploracion: 'b' };   // atajos: Z X C V B (Mayús = bajar un nivel); P abre el panel
+const PRIO_LV = ['Baja', 'Normal', 'Alta'];
+/* TEXTO PROVISORIO: reconciliar con docs/ERA2-HABILIDADES.md (el agente de balance documenta el efecto real de cada nivel; estos textos son la propuesta de la interfaz). */
+const PRIO_TXT = {
+  comida:       { 0: 'Comen solo si sobra: ahorran energía, pero el hambre llega antes.', 1: 'Buscan comida a su ritmo normal.', 2: 'Salen a buscar comida lejos: comen mejor, pero gastan más energía y se exponen.' },
+  reproduccion: { 0: 'Crían poco: la población se mantiene estable, pero se recupera lento tras las bajas.', 1: 'Se reproducen cuando están bien alimentados.', 2: 'Ponen huevos apenas pueden: crecen rápido, pero con más hambre y más vulnerables.' },
+  expansion:    { 0: 'Se quedan cerca del nido: seguros, pero sin ganar territorio.', 1: 'Se alejan del nido lo justo.', 2: 'Ocupan terreno nuevo lejos del nido: más comida a la vista, más riesgo.' },
+  defensa:      { 0: 'Huyen antes: menos bajas en peleas, pero ceden comida y territorio.', 1: 'Pelean o huyen según el momento.', 2: 'Se agrupan y enfrentan las amenazas: protegen nido y crías, a costa de más heridos.' },
+  exploracion:  { 0: 'Recorren lo conocido: gastan poco, descubren poco.', 1: 'Recorren con normalidad.', 2: 'Recorren más mapa: encuentran comida y peligros antes, pero gastan más energía.' }
+};
+function prioDefault() { const o = {}; for (const k of PRIO_KEYS) o[k] = 1; return o; }
+function prioNorm(x) { const o = prioDefault(); if (x && typeof x === 'object') for (const k of PRIO_KEYS) { const v = x[k]; if (v === 0 || v === 1 || v === 2) o[k] = v; } return o; }
+const prioGet = () => prioNorm(G && G.x2 && G.x2.prio);
+/* Única escritura de este módulo. Devuelve true si el valor era válido. */
+function setPrio(clave, nivel) {
+  if (!G || PRIO_KEYS.indexOf(clave) < 0) return false; const n = Number(nivel); if (!(n === 0 || n === 1 || n === 2)) return false;
+  const x = G.x2 || (G.x2 = {}); if (!x.prio) x.prio = prioDefault(); x.prio[clave] = n; ST.prioSel = clave; ST.sig.prio = ''; uiPrio();
+  if (tutAt('prio')) tutDone('prio'); return true;
+}
+const prioCycle = (clave, dir) => { const v = prioGet()[clave], n = (v + dir + 3) % 3; if (setPrio(clave, n)) toast(PRIO_N[clave] + ': ' + PRIO_LV[n].toLowerCase() + '. ' + PRIO_TXT[clave][n]); };
+
+const ST = { t: 0, al: new Map(), cool: {}, pop: null, sig: {}, prioSel: 'comida', cg: {}, cgAct: 0, saveMode: false, more: false, ping: null, abAct: {}, abPill: 0, off: false, g: null, cgLast: { n: 0, t: 0 }, ms: 0, nSamples: 0 };
+const SC_CELL = 110, SC_COLS = Math.ceil(W / SC_CELL) + 1, SC_ROWS = Math.ceil(H / SC_CELL) + 1, TC = 40, TC_COLS = Math.ceil(W / TC), TC_ROWS = Math.ceil(H / TC);
+let FG = null, TG = null;
+const HUNGRY_AT = 35;
+const isHurt = a => a.hp < a.mhp * .7 || (a.inj || 0) > .3;
+const centroid = list => { let x = 0, y = 0, n = 0; for (const a of list) { if (!a) continue; x += a.x; y += a.y; n++; } return n ? { x: x / n, y: y / n } : null; };
+const plural = (n, a, b) => n + ' ' + (n === 1 ? a : b);
+function markT(cx, cy, r) { for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const gx = cx + dx, gy = cy + dy; if (gx >= 0 && gy >= 0 && gx < TC_COLS && gy < TC_ROWS) TG[gy * TC_COLS + gx] = 1; } }
+function stratSample() {
+  const t0 = performance.now(), A = G.A, me = G.me;
+  if (!FG || FG.length !== SC_COLS * SC_ROWS) FG = Array.from({ length: SC_COLS * SC_ROWS }, () => []); else for (const c of FG) c.length = 0;
+  if (!TG) TG = new Uint8Array(TC_COLS * TC_ROWS); else TG.fill(0);
+  const mine = [];
+  for (let i = 0; i < A.length; i++) {
+    const a = A[i]; if (a.dead) continue;
+    if (a.sp.team === 'player') mine.push(a);
+    else if (a.sp.diet !== 'herb') FG[clamp(Math.floor(a.y / SC_CELL), 0, SC_ROWS - 1) * SC_COLS + clamp(Math.floor(a.x / SC_CELL), 0, SC_COLS - 1)].push(a);
+  }
+  const P = { n: mine.length, hungry: 0, hurt: 0, enS: 0, spp: new Map(), ids: { hungry: [], hurt: [], danger: [], all: [] }, thr: new Map(), exposed: [], eggs: 0, nests: 0 };
+  const winter = G.season === 3 || G.biome.coldAll;
+  for (const a of mine) {
+    P.ids.all.push(a.id); let sp = P.spp.get(a.sp); if (!sp) { sp = { sp: a.sp, n: 0, juv: 0, hungry: 0, hurt: 0, anim: [] }; P.spp.set(a.sp, sp); } sp.n++; sp.anim.push(a);
+    if (a.age < MAT) sp.juv++;
+    if (a.hunger < HUNGRY_AT) { P.hungry++; sp.hungry++; P.ids.hungry.push(a.id); } if (isHurt(a)) { P.hurt++; sp.hurt++; P.ids.hurt.push(a.id); } P.enS += enOf(a);
+    markT(Math.floor(a.x / TC), Math.floor(a.y / TC), 1);
+    if (winter && !safeNear(a.x, a.y)) P.exposed.push(a);
+    // amenaza: depredador o rival que puede comerlo a menos de 110 px
+    const gx0 = Math.floor(a.x / SC_CELL), gy0 = Math.floor(a.y / SC_CELL); let best = null, bd = SC_CELL;
+    for (let gy = Math.max(0, gy0 - 1); gy <= Math.min(SC_ROWS - 1, gy0 + 1); gy++) for (let gx = Math.max(0, gx0 - 1); gx <= Math.min(SC_COLS - 1, gx0 + 1); gx++) {
+      const c = FG[gy * SC_COLS + gx]; for (let k = 0; k < c.length; k++) { const b = c[k], dx = b.x - a.x, dy = b.y - a.y, d2 = dx * dx + dy * dy; if (d2 >= bd * bd || !canEat(b, a)) continue; bd = Math.sqrt(d2); best = b; }
+    }
+    if (best) { P.ids.danger.push(a.id); let g = P.thr.get(best.sp.n); if (!g) { g = { name: best.sp.n, anim: [], d: 1e9 }; P.thr.set(best.sp.n, g); } g.anim.push(a); if (bd < g.d) g.d = bd; }
+  }
+  for (const n of G.N) if (n.done) { P.nests++; markT(Math.floor(n.x / TC), Math.floor(n.y / TC), 2); }
+  for (const b of G.B) if (b.done) markT(Math.floor(b.x / TC), Math.floor(b.y / TC), 2);
+  for (const e of G.E) if (e.sp.team === 'player') P.eggs++;
+  let tc = 0; for (let i = 0; i < TG.length; i++) tc += TG[i];
+  P.terr = Math.round(tc / TG.length * 100); P.en = P.n ? Math.round(P.enS / P.n) : 0; P.hungryPct = P.n ? Math.round(P.hungry / P.n * 100) : 0;
+  P.thrN = P.ids.danger.length; P.thrLbl = P.thrN === 0 ? 'baja' : P.thrN / Math.max(1, P.n) >= .25 || P.thrN >= 5 ? 'alta' : 'media';
+  ST.pop = P; stratAlerts(P, mine);
+  ST.ms += performance.now() - t0; ST.nSamples++;
+}
+/* Alertas: se derivan del estado en cada muestreo. Aparecen con un umbral de entrada, siguen con uno de salida más laxo (histéresis), se van tras 1 s sin condición y
+   no vuelven a levantarse durante 10 s de juego (enfriamiento). Estado de interfaz: nunca en G. */
+function stratAlerts(P, mine) {
+  const seen = new Set(), me = G.me, x2 = X2();
+  const raise = (key, pri, enter, stay, o) => {
+    const ex = ST.al.get(key); if (!(ex ? stay : enter)) return; if (!ex && G.t < (ST.cool[key] || 0)) return;
+    seen.add(key); if (ex) { Object.assign(ex, o); ex.pri = pri; ex.miss = 0; } else ST.al.set(key, Object.assign({ key, pri, t0: G.t, miss: 0 }, o));
+  };
+  const herd = herdCenter(me) || { x: W / 2, y: H / 2 };
+  // 1. extinción cercana de una especie propia
+  for (const sp of P.spp.values()) {
+    const eg = G.E.filter(e => e.sp === sp.sp).length, n = sp.n, c = centroid(sp.anim) || herd;
+    raise('ext:' + sp.sp.n, 90, n <= 3, n <= 4, { kind: 'ext', txt: 'Peligro de extinción: ' + sp.sp.n, sub: plural(n, 'animal', 'animales') + (eg ? ' y ' + plural(eg, 'huevo', 'huevos') : ''), ids: sp.anim.map(a => a.id), x: c.x, y: c.y });
+  }
+  if (!P.n && G.E.some(e => e.sp === me)) { const e = G.E.find(q => q.sp === me); raise('ext:' + me.n, 95, true, true, { kind: 'ext', txt: 'Sin animales: solo quedan huevos', sub: 'protegé los huevos', ids: [], x: e.x, y: e.y }); }
+  // 2. nido o huevos en peligro
+  const foes = []; for (const c of FG) for (let k = 0; k < c.length; k++) foes.push(c[k]);
+  const nearFoe = (x, y, r) => { let best = null, bd = r; for (const b of foes) { const d = Math.hypot(b.x - x, b.y - y); if (d < bd) { bd = d; best = b; } } return best ? { b: best, d: Math.round(bd) } : null; };
+  G.N.forEach((n, i) => { if (!n.done) return; const f = nearFoe(n.x, n.y, 100); raise('nest:' + i, 80, !!f, !!f || !!nearFoe(n.x, n.y, 130), { kind: 'nest', txt: 'Nido en peligro', sub: f ? f.b.sp.n + ' a ' + f.d + ' px' : 'la amenaza sigue cerca', ids: mine.filter(a => Math.hypot(a.x - n.x, a.y - n.y) < 160).map(a => a.id), x: n.x, y: n.y }); });
+  { let hit = null, fh = null; for (const e of G.E) { if (e.sp.team !== 'player' || nestNear(e.x, e.y)) continue; const f = nearFoe(e.x, e.y, 80); if (f) { hit = e; fh = f; break; } }
+    raise('eggs', 78, !!hit, !!hit, { kind: 'nest', txt: 'Huevos en peligro', sub: fh ? fh.b.sp.n + ' a ' + fh.d + ' px' : '', ids: hit ? mine.filter(a => Math.hypot(a.x - hit.x, a.y - hit.y) < 160).map(a => a.id) : [], x: hit ? hit.x : herd.x, y: hit ? hit.y : herd.y }); }
+  // 3. incendio / sequía (G.ev)
+  if (G.ev) {
+    if (G.ev.k === 'sequia') raise('hz:sequia', 55, true, true, { kind: 'hz', txt: 'Sequía', sub: 'las plantas no crecen · ' + Math.ceil(G.ev.t) + ' s', ids: P.ids.all.slice(), x: herd.x, y: herd.y });
+    else { const f = G.F[0]; if (f) { const inF = mine.filter(a => Math.hypot(a.x - f.x, a.y - f.y) < f.r + 40); raise('hz:fuego', inF.length ? 75 : 35, true, true, { kind: 'hz', txt: 'Incendio' + (inF.length ? ': ' + plural(inF.length, 'animal tuyo', 'animales tuyos') + ' en la zona' : ' en el mapa'), sub: Math.ceil(G.ev.t) + ' s', ids: inF.map(a => a.id), x: f.x, y: f.y }); } }
+  }
+  // 4. depredadores cerca de grupos propios
+  for (const g of P.thr.values()) { const c = centroid(g.anim); raise('pred:' + g.name, 70 + Math.min(9, g.anim.length), g.anim.length >= 2 || P.n <= 4, true, { kind: 'pred', txt: g.name + ' cerca de ' + plural(g.anim.length, 'animal tuyo', 'animales tuyos'), sub: 'a ' + Math.round(g.d) + ' px del más cercano', ids: g.anim.map(a => a.id), x: c.x, y: c.y }); }
+  // 5. hambruna inminente
+  { const fr = P.hungry / Math.max(1, P.n), c = centroid(mine.filter(a => a.hunger < HUNGRY_AT)) || herd;
+    raise('hunger', 60, P.hungry >= 2 && fr >= .3, P.hungry >= 2 && fr >= .18, { kind: 'hunger', txt: 'Hambre: ' + P.hungry + ' de ' + P.n + ' sin comer', sub: 'buscá comida cerca de ellos', ids: P.ids.hungry.slice(), x: c.x, y: c.y }); }
+  // 6. frío / invierno
+  { const winter = G.season === 3 || G.biome.coldAll, ex = P.exposed, fr = ex.length / Math.max(1, P.n), c = centroid(ex) || herd;
+    raise('cold', 50, winter && ex.length >= 2 && fr >= .3, winter && ex.length >= 2 && fr >= .15, { kind: 'cold', txt: 'Frío: ' + plural(ex.length, 'animal', 'animales') + ' sin refugio', sub: 'un nido o una fogata los abriga', ids: ex.map(a => a.id), x: c.x, y: c.y });
+    const ss = G.biome.seasons, idx = Math.floor(G.t / SLEN), left = SLEN - (G.t % SLEN), soon = ss.length > 1 && !G.biome.coldAll && ss[(idx + 1) % ss.length] === 3 && ss[idx % ss.length] !== 3 && left < 14 && P.nests === 0;
+    raise('winter', 30, soon, soon, { kind: 'cold', txt: 'Se viene el invierno', sub: 'sin nido, tus animales van a pasar frío', ids: P.ids.all.slice(), x: herd.x, y: herd.y }); }
+  // 7. escasez de plantas (x2.scar lo calcula la simulación con histéresis propia)
+  { const lv = x2.scar || 0; raise('scar', lv === 2 ? 45 : 40, lv >= 1, lv >= 1, { kind: 'scar', txt: lv === 2 ? 'Escasez grave de plantas' : 'Escasez de plantas', sub: x2.av != null ? Math.round(x2.av * 100) + ' % con comida disponible' : '', ids: P.ids.hungry.length ? P.ids.hungry.slice() : P.ids.all.slice(), x: herd.x, y: herd.y }); }
+  // 8. migración de rebaños (informativa)
+  if (x2.mg) for (const k in x2.mg) { const m = x2.mg[k], sp = G.sp[k]; if (!sp) continue; raise('mig:' + k, 10, true, true, { kind: 'mig', txt: sp.n + ': el rebaño migra', sub: 'hacia el ' + compass(m.x - herd.x, m.y - herd.y), ids: [], x: m.x, y: m.y }); }
+  for (const [k, a] of ST.al) if (!seen.has(k)) { a.miss = (a.miss || 0) + 1; if (a.miss >= 2) { ST.al.delete(k); ST.cool[k] = G.t + 10; } }
+}
+const alertList = () => [...ST.al.values()].sort((a, b) => b.pri - a.pri || a.t0 - b.t0);
+function focusAt(x, y) {
+  ST.ping = { x, y, t: performance.now() };
+  if (panMode) { camX = clamp(x, 0, W); camY = clamp(y, 0, H); panHold = 6; placeCam(); }
+}
+function alertGo(key) {
+  const a = ST.al.get(key); if (!a) return false;
+  const alive = a.ids.map(animalById).filter(o => o && o.sp.team === 'player'); let x = a.x, y = a.y;
+  if (alive.length) { setSel(alive.map(o => o.id)); const c = centroid(alive); x = c.x; y = c.y; }
+  focusAt(x, y); return true;
+}
+$('alerts').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.classList.contains('alMore')) { ST.more = !ST.more; ST.sig.al = ''; uiAlerts(); return; } alertGo(b.dataset.k); });
+function uiAlerts() {
+  const L = alertList(), vis = ST.more ? L : L.slice(0, 3), rest = L.length - 3;
+  const sig = vis.map(a => a.key + '|' + a.txt + '|' + a.sub).join('~') + '#' + Math.max(0, rest) + ST.more;
+  if (sig !== ST.sig.al) {
+    ST.sig.al = sig;
+    $('alerts').innerHTML = vis.map(a => '<button class="al p' + (a.pri >= 70 ? 3 : a.pri >= 45 ? 2 : 1) + '" data-k="' + escH(a.key) + '" title="Tocá para ir al grupo afectado">' + escH(a.txt) + (a.sub ? '<small>' + escH(a.sub) + '</small>' : '') + '</button>').join('') +
+      (rest > 0 ? '<button class="alMore" aria-expanded="' + ST.more + '">' + (ST.more ? 'Ver menos' : '+' + rest + ' alerta' + (rest > 1 ? 's' : '') + ' más') + '</button>' : '');
+  }
+  const tip = $('modeTip').style.display === 'block'; if (tip !== ST.tip) { ST.tip = tip; $('alerts').classList.toggle('tip', tip); }
+}
+/* Resumen de población (barra siempre visible + caja «Grupos y población») */
+const setT = (id, v) => { const e = $(id); if (e.textContent !== v) e.textContent = v; };
+function uiPop() {
+  const P = ST.pop; if (!P) return;
+  setT('pHun', P.hungryPct + ' %'); setT('pEn', P.en + ' %'); setT('pHurt', String(P.hurt)); setT('pTerr', P.terr + ' %'); setT('pThr', P.thrLbl);
+  $('pcHun').classList.toggle('warn', P.hungryPct >= 30); $('pcHurt').classList.toggle('warn', P.hurt >= 3 && P.hurt / Math.max(1, P.n) >= .25); $('pcThr').classList.toggle('warn', P.thrLbl === 'alta');
+  const rows = [...P.spp.values()].map(s => '<div><b>' + escH(s.sp.n) + '</b>: ' + s.n + (s.juv ? ' (' + plural(s.juv, 'cría', 'crías') + ')' : '') + (s.hungry ? ' · ' + s.hungry + ' con hambre' : '') + (s.hurt ? ' · ' + s.hurt + ' heridos' : '') + '</div>').join('');
+  const html = (rows || '<div>Sin animales vivos.</div>') + '<div>Huevos: <b>' + P.eggs + '</b> · Nidos: <b>' + P.nests + '</b> · Territorio: <b>≈ ' + P.terr + ' %</b> del mapa</div><div>Amenaza: <b>' + P.thrLbl + '</b>' + (P.thrN ? ' (' + plural(P.thrN, 'animal', 'animales') + ' con un depredador cerca)' : '') + '</div>';
+  if (html !== ST.sig.sp) { ST.sig.sp = html; $('spBreak').innerHTML = html; }
+  const q = { qHun: P.ids.hungry.length, qHurt: P.ids.hurt.length, qDan: P.ids.danger.length, qAll: P.n };
+  for (const id in q) { const b = $(id), n = String(q[id]); if (b.lastChild.textContent !== n) b.lastChild.textContent = n; b.disabled = q[id] === 0; }
+}
+/* Selección por estado (usa la caché de ≤0,5 s y descarta a los que ya murieron) */
+function selectQuick(kind) {
+  if (!G || !ST.pop) return 0; const ids = (ST.pop.ids[kind] || []).filter(id => { const a = animalById(id); return a && a.sp.team === 'player'; });
+  if (!ids.length) { toast(kind === 'hungry' ? 'Ningún animal tuyo tiene hambre.' : kind === 'hurt' ? 'Ningún animal tuyo está herido.' : kind === 'danger' ? 'Ningún animal tuyo tiene un depredador cerca.' : 'No tenés animales.'); return 0; }
+  setSel(ids); return ids.length;
+}
+document.querySelectorAll('.gq [data-q]').forEach(b => { b.onclick = () => { if (ready()) selectQuick(b.dataset.q); }; });
+/* Grupos de control: ids guardados en ST.cg (estado de interfaz, no se guarda con la partida) */
+const cgAlive = n => { const ids = (ST.cg[n] || []).filter(id => { const a = animalById(id); return a && a.sp.team === 'player'; }); if (ids.length) ST.cg[n] = ids; else delete ST.cg[n]; return ids; };
+function cgSave(n) { const ids = mySel().map(a => a.id); if (!ids.length) { toast('Elegí animales tuyos antes de guardar un grupo.'); return false; } ST.cg[n] = ids; ST.saveMode = false; ST.sig.cg = ''; toast('Grupo ' + n + ' guardado: ' + plural(ids.length, 'animal', 'animales') + '.'); return true; }
+function cgRecall(n) {
+  const twice = ST.cgLast.n === n && performance.now() - ST.cgLast.t < 450; ST.cgLast = { n, t: performance.now() };
+  const ids = cgAlive(n); if (!ids.length) { toast('El grupo ' + n + ' está vacío: elegí animales y guardalo (Ctrl+Mayús+' + n + ').'); return false; }
+  setSel(ids); if (twice) { const c = centroid(ids.map(animalById)); if (c) focusAt(c.x, c.y); } ST.sig.cg = ''; return true;
+}
+function uiGroups() {
+  const sel = new Set(selIds); let act = 0, html = '';
+  for (let n = 1; n <= 9; n++) { const ids = cgAlive(n), same = ids.length > 0 && ids.length === sel.size && ids.every(i => sel.has(i)); if (same) act = n; html += n + ':' + ids.length + (same ? '*' : '') + ';'; }
+  ST.cgAct = act; const sig = html + ST.saveMode;
+  if (sig !== ST.sig.cg) {
+    ST.sig.cg = sig;
+    $('cgSlots').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => { const k = (ST.cg[n] || []).length; return '<button data-n="' + n + '" class="' + (k ? 'full ' : '') + (n === act ? 'on' : '') + '" aria-label="Grupo ' + n + (k ? ', ' + k + ' animales' : ', vacío') + (n === act ? ', elegido' : '') + '">' + n + '<small>' + (k || '—') + '</small></button>'; }).join('');
+    $('cgSave').setAttribute('aria-pressed', String(ST.saveMode)); $('cgSave').textContent = ST.saveMode ? 'Tocá el número del grupo donde guardar…' : 'Guardar la selección en un grupo';
+  }
+  const has = mySel().length > 0; $('oNest').disabled = !has; $('oFood').disabled = !has; $('cgSave').disabled = !has && !ST.saveMode;
+  setT('oFood', G.me.diet !== 'herb' ? 'A cazar' : 'A comer');
+  const ng = Object.keys(ST.cg).length; setT('grpSum', (ST.pop ? ST.pop.n : 0) + ' animales' + (ng ? ' · ' + ng + (ng === 1 ? ' grupo' : ' grupos') : ''));
+}
+$('cgSlots').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || !ready()) return; const n = +b.dataset.n; if (ST.saveMode || e.ctrlKey || e.shiftKey) cgSave(n); else cgRecall(n); });
+$('cgSave').onclick = () => { if (!ready()) return; ST.saveMode = !ST.saveMode; ST.sig.cg = ''; uiGroups(); };
+/* Órdenes de grupo contextuales: usan doOrder (orden «move» común) y dejan el marcador y la línea de destino en el mapa */
+function groupGoNest() {
+  const ms = mySel(); if (!ms.length) return 0; const c = centroid(ms); let best = null, bd = 1e9;
+  for (const n of G.N) if (n.done) { const d = Math.hypot(n.x - c.x, n.y - c.y); if (d < bd) { bd = d; best = n; } }
+  if (!best) { toast('Todavía no hay un nido terminado: tocá Anidar y marcá el mapa.'); return 0; }
+  const r = doOrder(ms.map(a => a.id), { k: 'move', x: best.x, y: best.y }); toast('El grupo vuelve al nido (' + plural(r, 'animal', 'animales') + ').'); return r;
+}
+function groupGoFood() {
+  const ms = mySel(); if (!ms.length) return 0; const c = centroid(ms), me = G.me; let tx = null, ty = null, what = '';
+  if (me.diet !== 'herb') { let best = null, bd = 1e9; for (const b of G.A) { if (b.dead || b.sp.team === 'player' || b.sp.diet !== 'herb' || !canEat(ms[0], b)) continue; const d = Math.hypot(b.x - c.x, b.y - c.y); if (d < bd) { bd = d; best = b; } } if (best) { tx = best.x; ty = best.y; what = 'las presas (' + best.sp.n.toLowerCase() + ')'; } }
+  if (tx == null) {
+    const hb = me.hab; let best = null, bs = -1e9;
+    for (const q of G.plants) { if (q.v < .6 || (hb === 'water' ? !q.w : hb === 'land' ? q.w : false)) continue; let rich = 0; for (const o of G.plants) if (o.v > .5 && Math.abs(o.x - q.x) < 60 && Math.abs(o.y - q.y) < 60) rich++; const sc = rich - Math.hypot(q.x - c.x, q.y - c.y) * .03; if (sc > bs) { bs = sc; best = q; } }
+    if (best) { tx = best.x; ty = best.y; what = 'las plantas'; }
+  }
+  if (tx == null) { toast('No hay comida a la vista para mandarlos.'); return 0; }
+  const r = doOrder(ms.map(a => a.id), { k: 'move', x: tx, y: ty }); toast('El grupo va hacia ' + what + '.'); return r;
+}
+$('oNest').onclick = () => { if (ready()) groupGoNest(); }; $('oFood').onclick = () => { if (ready()) groupGoFood(); };
+/* Prioridades: tres botones por fila (radiogrupo); el detalle muestra el costo y beneficio de los 3 niveles de la fila elegida */
+$('prioRows').innerHTML = PRIO_KEYS.map(k => '<div class="prow" data-k="' + k + '"><button class="pl" data-sel="' + k + '">' + PRIO_N[k] + '<kbd>' + PRIO_SC[k].toUpperCase() + '</kbd></button><div class="seg3" role="radiogroup" aria-label="Prioridad ' + PRIO_N[k] + '">' +
+  PRIO_LV.map((l, i) => '<button role="radio" data-l="' + i + '" aria-checked="false" tabindex="-1" title="' + escH(PRIO_TXT[k][i]) + '">' + l + '</button>').join('') + '</div></div>').join('');
+$('prioRows').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const k = b.closest('.prow').dataset.k; if (b.dataset.sel) { ST.prioSel = k; ST.sig.prio = ''; uiPrio(); return; } if (G) setPrio(k, +b.dataset.l); });
+$('prioRows').addEventListener('keydown', e => {
+  const b = e.target.closest('.seg3 button'); if (!b || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return; e.preventDefault(); e.stopPropagation();
+  const k = b.closest('.prow').dataset.k, l = Math.max(0, Math.min(2, +b.dataset.l + (e.key === 'ArrowRight' ? 1 : -1))); if (G && setPrio(k, l)) b.closest('.seg3').querySelector('[data-l="' + l + '"]').focus();
+});
+function uiPrio() {
+  if (!G) return; const pr = prioGet(), sel = ST.prioSel, sig = PRIO_KEYS.map(k => pr[k]).join('') + sel; if (sig === ST.sig.prio) return; ST.sig.prio = sig;
+  document.querySelectorAll('#prioRows .prow').forEach(r => { const k = r.dataset.k; r.classList.toggle('sel', k === sel); r.querySelectorAll('.seg3 button').forEach(b => { const on = +b.dataset.l === pr[k]; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; }); });
+  $('prioDet').innerHTML = '<b>' + PRIO_N[sel] + '</b>' + [0, 1, 2].map(i => '<div class="' + (pr[sel] === i ? 'cur' : '') + '"><b>' + PRIO_LV[i] + (pr[sel] === i ? ' (elegida)' : '') + ':</b> ' + escH(PRIO_TXT[sel][i]) + '</div>').join('');
+  const nn = PRIO_KEYS.filter(k => pr[k] !== 1).map(k => PRIO_N[k] + ' ' + PRIO_LV[pr[k]].toLowerCase()); setT('prioSum', nn.length ? nn.join(' · ') : 'todo normal');
+}
+const lsGet = k => { try { return localStorage.getItem(k); } catch (_) { return null; } }, lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} };
+if (lsGet('evo_prio_open') === '1') $('prio').open = true;
+if (lsGet('evo_grp_open') === '1') $('grp').open = true;
+$('prio').addEventListener('toggle', () => lsSet('evo_prio_open', $('prio').open ? '1' : '0'));
+$('grp').addEventListener('toggle', () => lsSet('evo_grp_open', $('grp').open ? '1' : '0'));
+function togglePrio() {
+  const d = $('prio'); d.open = !d.open;
+  if (d.open) { ST.sig.prio = ''; uiPrio(); d.scrollIntoView({ block: 'nearest' }); const b = d.querySelector('.seg3 [aria-checked="true"]'); if (b && !matchMedia('(pointer:coarse)').matches) b.focus({ preventScroll: true }); }
+}
+$('bPrio').onclick = () => { if (started) togglePrio(); };
+/* Atajos: Z X C V B = prioridades (Mayús = nivel anterior); P = panel; H J K = hambrientos / heridos / en peligro; Mayús+1..9 recupera un grupo; Ctrl(+Mayús)+1..9 guarda */
+addEventListener('keydown', e => {
+  if (!started || !G || !ready() || e.altKey || e.metaKey) return; const tag = (e.target && e.target.tagName) || ''; if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  const dm = /^Digit([1-9])$/.exec(e.code || '');
+  if (dm && (e.shiftKey || e.ctrlKey)) { e.preventDefault(); e.stopImmediatePropagation(); if (e.ctrlKey) cgSave(+dm[1]); else cgRecall(+dm[1]); return; }
+  if (e.ctrlKey || e.repeat) return; const k = (e.key || '').toLowerCase();
+  for (const c of PRIO_KEYS) if (PRIO_SC[c] === k) { e.preventDefault(); prioCycle(c, e.shiftKey ? -1 : 1); return; }
+  if (k === 'p') { e.preventDefault(); togglePrio(); } else if (k === 'h') selectQuick('hungry'); else if (k === 'j') selectQuick('hurt'); else if (k === 'k') selectQuick('danger');
+}, true);
+/* Habilidades: indicador de activación (barra fina sobre el botón), duración restante y rótulo breve del resultado. Acepta Bus 'ability' con objeto { id, nivel, costo, duracion, afectados, resultado }
+   o con el formato actual (id, animales, nivel, P), y 'abilityEnd' (id o objeto); si falta un campo, se omite. */
+const abNorm = (a, b, c, d) => {
+  const o = a && typeof a === 'object' && !Array.isArray(a) ? Object.assign({}, a) : { id: a, afectados: b, nivel: c, costo: d && d.en, duracion: d && d.t };
+  if (o.id == null && o.ab != null) o.id = o.ab; if (o.duracion == null) o.duracion = o['duración'] != null ? o['duración'] : o.dur; if (Array.isArray(o.afectados)) o.afectados = o.afectados.length;
+  if (o.resultado && typeof o.resultado === 'object') o.resultado = o.resultado.txt || o.resultado.texto || ''; return o;
+};
+function abPill(txt) { const el = $('abRes'); el.textContent = txt; el.classList.add('show'); const b = $('bar').getBoundingClientRect(); el.style.bottom = Math.max(8, innerHeight - b.top + 6) + 'px'; ST.abPill = performance.now() + 4200; }
+Bus.on('ability', (a, b, c, d) => {
+  const o = abNorm(a, b, c, d), ab = ABD[o.id]; if (!ab) return; const dur = o.duracion != null ? +o.duracion : 0;
+  ST.abAct[o.id] = { t0: G ? G.t : 0, dur, ended: false };
+  abPill(ab.n + (o.nivel > 1 ? ' (nivel ' + o.nivel + ')' : '') + ': ' + (o.resultado ? o.resultado : o.afectados != null ? plural(o.afectados, 'animal afectado', 'animales afectados') : 'activado') + (o.costo != null ? ' · energía −' + o.costo : '') + (dur > 0 ? ' · ' + Math.round(dur) + ' s' : ''));
+  if (tutAt('abil')) tutDone('abil');
+});
+Bus.on('abilityEnd', (a, b) => { const o = a && typeof a === 'object' ? a : { id: a, resultado: b }, ab = ABD[o.id]; if (!ab) return; if (ST.abAct[o.id]) ST.abAct[o.id].ended = true; abPill(ab.n + ' terminó' + (typeof o.resultado === 'string' && o.resultado ? ': ' + o.resultado : '') + '.'); });
+Bus.on('scarcity', () => { ST.t = 0; }); Bus.on('migration', () => { ST.t = 0; }); Bus.on('hazard', () => { ST.t = 0; });
+function uiAbil() {
+  if (!G) return; const act = { rug: 0, cam: G.camT, exc: G.digT, ala: G.alT, mig: G.migT };
+  for (const id of ABK) {
+    const b = abBtn[id], P = ABD[id].L[abl(id) - 1] || ABD[id].L[0], A = ST.abAct[id], t = act[id] || 0, cd = G.ab[id] || 0; let f = 0;
+    if (t > 0) f = Math.min(1, t / ((A && A.dur > 0) ? A.dur : (P.t || t))); else if (cd > 0) f = Math.min(1, cd / (P.cd || cd));
+    b.style.setProperty('--p', f.toFixed(2)); b.classList.toggle('act', t > 0);
+    const lab = ABD[id].n + ': ' + (t > 0 ? 'activo, quedan ' + Math.ceil(t) + ' s' : cd > 0 ? 'enfría ' + Math.ceil(cd) + ' s' : 'lista, cuesta energía −' + P.en); if (b.getAttribute('aria-label') !== lab) b.setAttribute('aria-label', lab);
+  }
+  if (ST.abPill && performance.now() > ST.abPill) { ST.abPill = 0; $('abRes').classList.remove('show'); }
+}
+function uiStrat() {
+  if (ST.off || !G || !started) return;
+  if (ST.g !== G) { ST.g = G; ST.al.clear(); ST.cool = {}; ST.cg = {}; ST.pop = null; ST.sig = {}; ST.abAct = {}; ST.saveMode = false; ST.cgAct = 0; ST.t = 0; }
+  const now = performance.now(); if (!ST.pop || now - ST.t >= 500) { ST.t = now; stratSample(); }
+  uiPop(); uiAlerts(); uiGroups(); uiPrio();
+}
+/* Marcadores en el mapa: alertas visibles, ping al ir a una alerta y etiqueta del grupo de control elegido */
+function stratOverlay(ctx, px, tt) {
+  if (ST.off || !G) return; const now = performance.now();
+  if (ST.al.size) { let n = 0; for (const a of alertList()) { if (n++ >= 3) break; if (a.kind === 'mig') continue; const r = 14 + 2 * Math.sin(tt * 5), col = a.pri >= 70 ? '214,58,58' : a.pri >= 45 ? '224,162,26' : '63,143,209';
+    ctx.lineWidth = 3 * px; ctx.strokeStyle = 'rgba(0,0,0,.45)'; ctx.setLineDash([5 * px, 4 * px]); ctx.beginPath(); ctx.arc(a.x, a.y, r + 8, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.8 * px; ctx.strokeStyle = 'rgba(' + col + ',.95)'; ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = 'rgb(' + col + ')'; ctx.beginPath(); ctx.moveTo(a.x, a.y - r - 8); ctx.lineTo(a.x - 6, a.y - r - 20); ctx.lineTo(a.x + 6, a.y - r - 20); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,.6)'; ctx.lineWidth = px; ctx.stroke(); } }
+  if (ST.ping) { const u = (now - ST.ping.t) / 2200; if (u >= 1) ST.ping = null; else for (let k = 0; k < 2; k++) { const v = (u + k * .35) % 1; ctx.strokeStyle = 'rgba(255,210,58,' + (1 - v) * .95 + ')'; ctx.lineWidth = 3.5 * px; ctx.beginPath(); ctx.arc(ST.ping.x, ST.ping.y, 12 + 60 * v, 0, TAU); ctx.stroke(); } }
+  if (ST.cgAct) { const L = []; for (const id of selIds) { const a = UIs.byId.get(id); if (a && !a.dead) L.push(a); } const c = centroid(L); if (c) { const t = 'Grupo ' + ST.cgAct + ' · ' + L.length, fs = 12 * px; ctx.font = '700 ' + fs + 'px sans-serif'; const w = ctx.measureText(t).width + 12 * px; ctx.fillStyle = 'rgba(20,30,24,.9)'; ctx.fillRect(c.x - w / 2, c.y - 34 * px, w, 18 * px); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(t, c.x, c.y - 21 * px); } }
 }
 
 /* ---------- Dibujo sobre el mapa: solo lo mínimo (seleccionados, destino, recuadro, hover, bajas) ---------- */
@@ -1817,9 +2163,10 @@ function uiOverlay(ctx, tt) {
     const wx = (ptr.x - OX) / SC, wy = (ptr.y - OY) / SC, h = nearest(G.A, wx, wy, 22, null);
     if (h) { UIs.hov = h.id; if (h.id !== selId) { const t = h.sp.n + ' · vida ' + Math.round(h.hp / h.mhp * 100) + ' %', fs = 12 * px; ctx.font = '600 ' + fs + 'px sans-serif'; const w = ctx.measureText(t).width + 10 * px, x = h.x - w / 2, y = h.y - h.rr * 2.6 - 18 * px; ctx.fillStyle = 'rgba(20,30,24,.88)'; ctx.fillRect(x, y, w, 17 * px); ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(t, h.x, y + 12.5 * px); } }
   }
+  stratOverlay(ctx, px, tt);
   ctx.restore();
 }
-function uiHud() { uiSync(); uiBio(); uiCombat(); uiTools(); uiTut(); }
+function uiHud() { uiSync(); uiBio(); uiCombat(); uiTools(); uiTut(); uiStrat(); }
 addEventListener('resize', layout);
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', pal);
 let last = performance.now(), acc = 0;
@@ -1843,7 +2190,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) autos
 addEventListener('pagehide', autosave);
 pal(); buildMenu(); layout(); requestAnimationFrame(loop);
 window.__e2 = { drawAnimal, ART, bioInfo, Bus, issueOrder, spawn, matchup, speciesInfo, abilityInfo, abLevel, biomeInfo, BMECH, ABL, EN0, select(id) { selId = id; },
-  ui: { clog: () => CLOG.slice(), get selIds() { return selIds.slice(); }, setSel, orderAt, doOrder, boxSelect, selectSpeciesVisible, setLeader, get leaderOn() { return leaderOn; }, get boxMode() { return boxMode; }, uiTick, UIs, tut, tutNext, tutSkip, tutReset, tutGet, TUT, uiHud, mySel, scr(x, y) { const r = cv.getBoundingClientRect(); return { x: r.left + OX + x * SC, y: r.top + OY + y * SC }; }, get panMode() { return panMode; }, keys }, get selId() { return selId; }, DIFFS, win, lose, useAbility, placeMig, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2, recalcSp: recalc };
+  ui: { clog: () => CLOG.slice(), get selIds() { return selIds.slice(); }, setSel, orderAt, doOrder, boxSelect, selectSpeciesVisible, setLeader, get leaderOn() { return leaderOn; }, get boxMode() { return boxMode; }, uiTick, UIs, tut, tutNext, tutSkip, tutReset, tutGet, TUT, uiHud, mySel, setPrio, getPrio: prioGet, PRIO_TXT, PRIO_KEYS, strat: { ST, sample: stratSample, get pop() { return ST.pop; }, alerts: alertList, alertGo, selectQuick, cgSave, cgRecall, groupGoNest, groupGoFood, focusAt, uiStrat, tick() { ST.t = 0; uiStrat(); } }, tutAt, scr(x, y) { const r = cv.getBoundingClientRect(); return { x: r.left + OX + x * SC, y: r.top + OY + y * SC }; }, get panMode() { return panMode; }, keys }, get selId() { return selId; }, DIFFS, win, lose, useAbility, placeMig, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2, recalcSp: recalc };
 /* === AUDIO ===
    Módulo de audio (eras/audio-lofi.js). Solo ESCUCHA: se suscribe al Bus y lee G; no modifica el estado ni usa R()
    (el azar del audio es Math.random dentro del motor). Si el archivo no carga o falla algo, el juego sigue sin sonido.
