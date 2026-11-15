@@ -289,12 +289,13 @@ const LIB = () => {
     const sfxHook = [1, 3, 5, 7].map(t => ({ t, fn: A => A.sfx('born', { force: true }) })), base = A => { for (const k of ['master', 'music', 'sfx', 'amb']) A.setVolume(k, .8); A.setMood('explorar', { instant: true }); A.setBiome('selva', true); };
     const out = { all: await run(base, sfxHook) };
     out.noMusic = await run(A => { base(A); A.setBusMuted('music', true); }, sfxHook); out.noSfx = await run(A => { base(A); A.setBusMuted('sfx', true); }, sfxHook); out.noAmb = await run(A => { base(A); A.setBusMuted('amb', true); }, sfxHook);
-    out.onlyMusic = await run(A => { base(A); A.setBusMuted('sfx', true); A.setBusMuted('amb', true); }, sfxHook); out.onlySfx = await run(A => { base(A); A.setBusMuted('music', true); A.setBusMuted('amb', true); }, sfxHook);
+    out.onlyMusic = await run(A => { base(A); A.setBusMuted('sfx', true); A.setBusMuted('amb', true); }, sfxHook); out.onlySfx = await run(A => { base(A); A.setBusMuted('music', true); A.setBusMuted('amb', true); }, sfxHook); out.onlyAmb = await run(A => { base(A); A.setBusMuted('music', true); A.setBusMuted('sfx', true); }, sfxHook);
     out.none = await run(A => { base(A); for (const k of ['music', 'sfx', 'amb']) A.setBusMuted(k, true); }, sfxHook);
     return out;
   });
   console.log('SILENCIO POR BUS (rms)', busR);
-  assert.ok(busR.noMusic < busR.all * .95 && busR.noSfx < busR.all * .995 && busR.noAmb < busR.all * .99, 'silenciar un bus baja la señal'); assert.ok(busR.onlyMusic > busR.none * 3 && busR.onlySfx > busR.none * 1.5 && busR.none < 1e-4, 'cada bus suena solo cuando es el único activo; los tres en silencio callan');
+  // el ambiente de selva aporta ~1 % del rms de la mezcla: comparar «todo» contra «sin ambiente» es ruido (falló con .0727 vs .0730). Se mide la capa sola.
+  assert.ok(busR.noMusic < busR.all * .95 && busR.noSfx < busR.all * .995 && busR.noAmb < busR.all * 1.01 && busR.onlyAmb > busR.none * 3 && busR.onlyAmb > .002, 'silenciar un bus baja la señal (ambiente medido solo: ' + (busR.onlyAmb || 0).toFixed(4) + ')'); assert.ok(busR.onlyMusic > busR.none * 3 && busR.onlySfx > busR.none * 1.5 && busR.none < 1e-4, 'cada bus suena solo cuando es el único activo; los tres en silencio callan');
   await p.evaluate(() => { localStorage.removeItem('evo_audio_v1'); });
   const ui1 = await p.evaluate(() => { const E = window.__e2; E.newGame('pradera', null, 'UI1'); E.setStarted(true); const btn = document.getElementById('audioBtn'); btn.click(); const panel = document.getElementById('audioPanel'); const q = s => document.querySelector(s);
     const r = { opened: !panel.hidden, expanded: btn.getAttribute('aria-expanded'), labels: [...panel.querySelectorAll('input[type=range]')].map(i => i.getAttribute('aria-label') + '|' + i.getAttribute('aria-valuetext')), muteBtns: [...panel.querySelectorAll('button.aud-m')].map(b => b.getAttribute('aria-label') + '|' + b.getAttribute('aria-pressed')), size: [...panel.querySelectorAll('button,input')].map(e => { const b2 = e.getBoundingClientRect(); return Math.round(b2.height); }) };
