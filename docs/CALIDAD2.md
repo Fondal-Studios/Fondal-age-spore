@@ -72,3 +72,20 @@ Notas después = lo comprobado por pruebas automáticas y capturas en Chromium h
 
 **Balance (bot razonable, N=48)**: Fácil 100 %, Normal 46 %, Difícil 27 % (metas 70+/40-60/15-35).
 **Límites conocidos**: terrestres empeoraron en Normal (8→4 de 12) y Difícil (4→2); insectos por debajo de aves, Colmena 0/4 en Normal; el bot no usa niveles ni órdenes por animal; `era2-bot.js` (bot con clics) no se volvió a correr tras el merge.
+
+## Ciclo 3 · jugabilidad/simulación (resultado)
+Detalle, tablas y evidencia en `tests/era2-balance.md`; contrato del evento `cause` y reglas nuevas en `docs/ERA2-ACCIONES.md` (§5 y §8). Rama `worktree-agent-a10380960df1aac86`.
+
+| Tema | Resultado medido |
+| --- | --- |
+| Terrestres | **Causa**: el umbral de reproducir subió de 60 a 75 en el rework (con hambre ×3,2 los de crianza lenta no llegaban a 10 animales a tiempo para colonizar antes de que la pradera se quedara sin plantas). Ninguna otra mecánica del rework, apagada por separado, lo explica (ablación). Arreglo: 60 para tu especie (75 para salvajes). Terrestres Normal/Difícil: 2/12 y 2/12 → 22/48 (46 %) y 9/48 (19 %) con 8 perfiles |
+| Insectos / Colmena | El «0/4» era ruido (N = 4, IC [0-49]); no hay mecánica propia que los castigue; siguen por debajo de las aves (48 % contra 71 % en Normal) |
+| Alarma | Rediseñada (aviso + huida + sin sorpresa, sin costo de energía extra al huir, costo 4-5 solo a los del radio). Escenario cerrado N = 96: +0,3 a +1,2 sobrevivientes de 6 (IC95 excluye 0 en 8 de 12). **Partidas completas: neutra** (68 %/38 % con, 69 %/39 % sin, N = 72) |
+| Rugido y Alarma cobraban energía a TODA la manada | Medido: −9 de energía media y +46 % de colapsos; ahora pagan solo los que participan |
+| Océano | Fase 2 imposible para voladores y anfibios (sin tierra ni herbívoros): arreglado (0/24 → 8/24) |
+| Desierto / tundra | Oferta de comida 0,19 / 0,15 de la pradera con las mismas metas: comprimida, con topes de salvajes y meta de población propia. Desierto (camino real) 6 % → 21 %; **tundra 4 % → 6 %: sigue injugable** |
+| Órdenes | `move` ya no huye de un depredador normal (solo pánico); nueva desobediencia por hambre; verificado `attack`/`move`/`forage`/desobediencia |
+| Causa y consecuencia | `Bus.emit('cause', animal, texto, tipo)`: 11 tipos, límite de 3 frases por segundo para los no seleccionados |
+| Dificultad | Fácil 97 %, Normal 51 %, Difícil 27 % (8 perfiles, IC95 de Wilson [91-99], [44-58], [21-33]); bot razonable Normal 63-65 % (borde alto de la meta) |
+| No resuelto | Aves 25 puntos por encima de las demás clases; tundra; posible efecto negativo del Rugido en Normal (+16 puntos al quitarlo, N = 36); estrategias agresivas/defensivas y de órdenes rinden menos que la automática |
+
