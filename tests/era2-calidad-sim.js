@@ -110,12 +110,23 @@ const ok = (c, m) => { assert.ok(c, m); console.log('  ok -', m); };
     // anillos por nivel vía Bus
     const ringsSeen = []; E.Bus.on('ability', (id, mine, L, P) => ringsSeen.push([id, L, E.G.rings.length ? E.G.rings[E.G.rings.length - 1].max : 0, E.G.rings.length ? E.G.rings[E.G.rings.length - 1].c : '']));
     for (const L of [1, 3]) { const G = scen('RING' + L, 'ins_enjambre', 'ins', 'fight', 'rug'); G.me.traits = L === 3 ? ['garras', 'veneno', 'cuernos'] : []; G.A.forEach(a => { a.en = 95; }); E.useAbility('rug'); }
+    // coherencia: lo que dice speciesInfo («Nace con X de nivel 2») coincide con el nivel real de cada habilidad al empezar, y las fuentes de abilityInfo explican el nivel
+    const NM = { Rugido: 'rug', Camuflaje: 'cam', Excavar: 'exc', Alarma: 'ala', Migrar: 'mig' }; res.coh = [];
+    for (const spec of Object.keys(E.SP2)) {
+      E.cls = E.SP2[spec].cls; E.specKey = spec; E.diffI = 1; E.newGame('pradera', null, 'COH' + spec); E.setStarted(true); E.G.lin = null; E.G.me.traits = [];
+      const txt = E.speciesInfo(spec).adv.join(' | '), said = {}; const re = /(Rugido|Camuflaje|Excavar|Alarma|Migrar)(?: y (Rugido|Camuflaje|Excavar|Alarma|Migrar))?[^|.;]*?(?:de nivel 2|nivel 2)/g; let m;
+      while ((m = re.exec(txt))) { said[NM[m[1]]] = 1; if (m[2]) said[NM[m[2]]] = 1; }
+      for (const id in NM) { /* nada */ }
+      for (const id of ['rug', 'cam', 'exc', 'ala', 'mig']) { const i = E.abilityInfo(id), real = i.nivel; const says = !!said[id]; res.coh.push([spec, id, real, says, real >= 2 === says, (real >= 2) === (i.fuentes.length > 0)]); }
+    }
     res.rings = ringsSeen; return res;
   }, N);
   console.log('2)', JSON.stringify(r2));
-  for (const id of ['rug', 'cam', 'exc', 'ala']) ok(r2[id].mean > 0 && r2[id].better >= r2[id].n * .5, id + ': vida del grupo tras 15 s con la habilidad vs sin ella: ' + (r2[id].mean > 0 ? '+' : '') + r2[id].mean + ' (±' + r2[id].se + ') mejora en ' + r2[id].better + '/' + r2[id].n + ' semillas');
+  console.log('  (Alarma se mide aparte, con su propio escenario de emboscada y N grande: tests/era2-alarma.js; el escenario de aquí, 8 cazadores contra 3 lobos, no la pone a prueba: la manada gana igual) Alarma aquí: ' + (r2.ala.mean > 0 ? '+' : '') + r2.ala.mean + ' ±' + r2.ala.se);
+  for (const id of ['rug', 'cam', 'exc']) ok(r2[id].mean > 0 && r2[id].better >= r2[id].n * .5, id + ': vida del grupo tras 15 s con la habilidad vs sin ella: ' + (r2[id].mean > 0 ? '+' : '') + r2[id].mean + ' (±' + r2[id].se + ') mejora en ' + r2[id].better + '/' + r2[id].n + ' semillas');
   ok(r2.mig.mean > 0 && r2.mig.better >= r2.mig.n * .5, 'mig: hambre+energía media tras llegar a la comida: ' + (r2.mig.mean > 0 ? '+' : '') + r2.mig.mean + ' (±' + r2.mig.se + ') mejora en ' + r2.mig.better + '/' + r2.mig.n);
   for (const id in r2.lv) ok(r2.lv[id][1] > r2.lv[id][0] && r2.lv[id][6] && r2.lv[id][7], id + ': nivel ' + r2.lv[id][0] + ' → ' + r2.lv[id][1] + ' con rasgos; costo ' + r2.lv[id][2] + ' → ' + r2.lv[id][3] + ', enfriamiento ' + r2.lv[id][4] + ' → ' + r2.lv[id][5] + ', el efecto cambia y abilityInfo da «próximo»');
+  { const bad = r2.coh.filter(c => !c[4]); ok(bad.length === 0, 'niveles y textos coherentes: lo que speciesInfo dice («nace con X de nivel 2») coincide con abilityInfo en las 12 especies x 5 habilidades' + (bad.length ? ' — incoherentes: ' + JSON.stringify(bad.slice(0, 6)) : '')); const bad2 = r2.coh.filter(c => !c[5]); ok(bad2.length === 0, 'abilityInfo.fuentes explica de dónde sale cada nivel ≥ 2 (y no inventa fuentes en nivel 1)' + (bad2.length ? ': ' + JSON.stringify(bad2.slice(0, 6)) : '')); }
   ok(r2.rings.length === 2 && r2.rings[1][1] > r2.rings[0][1] && r2.rings[1][2] > r2.rings[0][2] && r2.rings[1][3] !== r2.rings[0][3], 'el evento ability trae el nivel y el anillo cambia de tamaño y color: ' + JSON.stringify(r2.rings));
 
   // ---------- 3. Biomas: diferencias mecánicas medidas ----------
