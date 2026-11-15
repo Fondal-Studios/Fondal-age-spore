@@ -1858,26 +1858,39 @@ window.__e2 = { drawAnimal, ART, bioInfo, Bus, issueOrder, spawn, matchup, speci
     '#audioPanel{width:min(78vw,240px);background:var(--panel,#fff);color:var(--ink,#123);border:1px solid var(--line,rgba(0,0,0,.2));border-radius:12px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.25)}' +
     '#audioPanel[hidden]{display:none}#audioPanel h3{font-size:14px;margin:0 0 6px}#audioPanel label{display:flex;justify-content:space-between;gap:8px;color:var(--ink2,#456);margin-top:6px}' +
     '#audioPanel input[type=range]{width:100%;min-height:28px;margin:0;accent-color:var(--accent,#0d7a74)}#audioPanel button{margin-top:8px;width:100%;min-height:40px;border-radius:10px;border:1px solid var(--line,rgba(0,0,0,.2));background:transparent;color:inherit;font:inherit;font-weight:600;cursor:pointer}' +
-    '#audioPanel small{display:block;margin-top:6px;color:var(--ink2,#456)}';
+    '#audioPanel small{display:block;margin-top:6px;color:var(--ink2,#456)}' +
+    '#audioPanel .aud-ctl{display:flex;align-items:center;gap:6px}#audioPanel .aud-ctl input{flex:1;min-width:0}' +
+    '#audioPanel button.aud-m{width:44px;min-width:44px;height:44px;min-height:44px;margin:0;padding:0;display:flex;align-items:center;justify-content:center}#audioPanel button.aud-m svg{width:20px;height:20px}' +
+    '#audioPanel button.aud-m[aria-pressed="true"]{border-color:var(--warn,#c9406f);color:var(--warn,#c9406f)}' +
+    '#audioPanel input:focus-visible,#audioPanel button:focus-visible,#audioBtn:focus-visible{outline:2px solid var(--accent,#0d7a74);outline-offset:2px}';
   document.head.appendChild(css);
   const ui = document.createElement('div'); ui.id = 'audioUI';
   const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
   const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
   ui.innerHTML = '<button id="audioBtn" type="button" aria-label="Sonido y volúmenes" aria-expanded="false" aria-controls="audioPanel" title="Sonido y volúmenes"></button>' +
     '<div id="audioPanel" hidden><h3>Sonido</h3>' +
-    ['master:Maestro', 'music:Música', 'sfx:Efectos', 'amb:Ambiente'].map(s => { const [k, n] = s.split(':'); return '<label for="aud_' + k + '"><span>' + n + '</span><output id="aud_' + k + '_o"></output></label><input id="aud_' + k + '" type="range" min="0" max="100" step="1" data-k="' + k + '">'; }).join('') +
-    '<button id="audioMute" type="button"></button><small id="audioNote"></small></div>';
+    ['master:Maestro', 'music:Música', 'sfx:Efectos', 'amb:Ambiente'].map(s => { const [k, n] = s.split(':'); return '<label for="aud_' + k + '"><span>Volumen: ' + n + '</span><output id="aud_' + k + '_o" aria-hidden="true"></output></label><div class="aud-ctl"><input id="aud_' + k + '" type="range" min="0" max="100" step="1" data-k="' + k + '" aria-label="Volumen ' + n.toLowerCase() + '">' + (k === 'master' ? '' : '<button class="aud-m" type="button" data-m="' + k + '" aria-pressed="false" aria-label="Silenciar ' + n.toLowerCase() + '" title="Silenciar ' + n.toLowerCase() + '"></button>') + '</div>'; }).join('') +
+    '<button id="audioMute" type="button" aria-keyshortcuts="M"></button><small id="audioNote" role="status" aria-live="polite"></small></div>';
   document.body.appendChild(ui);
   const btn = ui.querySelector('#audioBtn'), panel = ui.querySelector('#audioPanel'), muteB = ui.querySelector('#audioMute'), note = ui.querySelector('#audioNote');
   function sync() {
     const v = FA.volumes;
-    ui.querySelectorAll('input[type=range]').forEach(i => { i.value = Math.round(v[i.dataset.k] * 100); ui.querySelector('#aud_' + i.dataset.k + '_o').textContent = i.value + '%'; });
+    const bmu = FA.busMuted;
+    ui.querySelectorAll('input[type=range]').forEach(i => { i.value = Math.round(v[i.dataset.k] * 100); ui.querySelector('#aud_' + i.dataset.k + '_o').textContent = i.value + '%'; i.setAttribute('aria-valuetext', i.value + ' por ciento' + (bmu[i.dataset.k] ? ', silenciado' : '')); });
+    ui.querySelectorAll('button.aud-m').forEach(m => { const on = !!bmu[m.dataset.m]; m.innerHTML = on ? ICON_OFF : ICON_ON; m.setAttribute('aria-pressed', on ? 'true' : 'false'); });
     btn.innerHTML = v.mute ? ICON_OFF : ICON_ON; btn.setAttribute('aria-pressed', v.mute ? 'true' : 'false'); muteB.textContent = v.mute ? 'Activar sonido' : 'Silenciar todo';
     note.textContent = FA.state === 'running' ? '' : 'El sonido se activa con tu primer toque o tecla.';
   }
   btn.onclick = () => { const open = panel.hidden; panel.hidden = !open; btn.setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) { FA.unlock(); sync(); } };
   ui.querySelectorAll('input[type=range]').forEach(i => { i.oninput = () => { FA.setVolume(i.dataset.k, i.value / 100); if (FA.volumes.mute && i.value > 0) FA.setMuted(false); sync(); }; });
   muteB.onclick = () => { FA.setMuted(!FA.volumes.mute); sync(); };
+  ui.querySelectorAll('button.aud-m').forEach(m => { m.onclick = () => { FA.setBusMuted(m.dataset.m, !FA.busMuted[m.dataset.m]); sync(); }; });
+  // teclado: M silencia/activa todo; Escape cierra el panel; tocar fuera del panel lo cierra (móvil)
+  const closePanel = () => { if (!panel.hidden) { panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); } };
+  addEventListener('keydown', e => { if (e.ctrlKey || e.metaKey || e.altKey) return; const k = (e.key || '').toLowerCase(), tg = e.target && e.target.tagName;
+    if (k === 'm' && tg !== 'INPUT' && tg !== 'TEXTAREA' && tg !== 'SELECT' && !e.repeat) { FA.unlock(); FA.setMuted(!FA.volumes.mute); sync(); }
+    else if (k === 'escape' && !panel.hidden) { closePanel(); btn.focus(); } });
+  document.addEventListener('pointerdown', e => { if (!panel.hidden && !ui.contains(e.target)) closePanel(); }, true);
   setInterval(() => { if (!panel.hidden) sync(); }, 1000); sync();
   window.__e2.audio = FA; window.__e2.audioDir = { direct, get info() { return dir; }, sync, reset() { lastHitMs = -1e9; combatUntil = 0; } };
 })();

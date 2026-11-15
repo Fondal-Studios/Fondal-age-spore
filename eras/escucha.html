@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prueba de escucha</title>
+<meta name="description" content="Página de prueba de escucha humana del audio lo-fi de Fondal Age Spore: ánimos, ambientes, efectos, transición adaptativa y ficha de respuestas.">
+<style>
+:root{--bg:#f4f1ea;--panel:#fff;--ink:#1d2330;--ink2:#566074;--line:#cfc8b8;--accent:#0d7a74;--accent-ink:#fff;--warn:#b3365f;--ok:#2f7d3a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171f;--panel:#1d222e;--ink:#e8e9ef;--ink2:#a0a8ba;--line:#374055;--accent:#37b3aa;--accent-ink:#06201e;--warn:#ef7a9f;--ok:#6fcf7b}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:860px;margin:0 auto;padding:16px 16px 80px}
+h1{font-size:1.5rem;margin:.2em 0 .1em}h2{font-size:1.15rem;margin:0 0 .5rem}
+p.lead{color:var(--ink2);margin:.2em 0 1em}
+section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin:14px 0}
+.grid{display:flex;flex-wrap:wrap;gap:8px}
+button,select,textarea,input[type=text]{font:inherit;color:inherit}
+button{min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:transparent;cursor:pointer;touch-action:manipulation}
+button:hover{border-color:var(--accent)}
+button.on,button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.big{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+button.stop{border-color:var(--warn);color:var(--warn)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.vol{display:grid;grid-template-columns:minmax(80px,120px) 1fr 3.2em;gap:8px;align-items:center;margin:6px 0}
+.vol input{width:100%;min-height:32px;accent-color:var(--accent)}
+.vol output{text-align:right;color:var(--ink2);font-variant-numeric:tabular-nums}
+.note{color:var(--ink2);font-size:.92rem}
+#status{position:sticky;top:0;z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:8px 16px;margin:0 -16px;font-size:.95rem}
+#tl{display:grid;gap:4px;margin:8px 0;padding:0;list-style:none}
+#tl li{display:flex;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;color:var(--ink2)}
+#tl li.now{border-color:var(--accent);color:var(--ink);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+#tl li.done{opacity:.55}
+progress{width:100%;height:10px;accent-color:var(--accent)}
+fieldset{border:1px solid var(--line);border-radius:10px;margin:10px 0;padding:8px 12px}
+legend{font-weight:600;padding:0 6px}
+.scale{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.scale label{display:inline-flex;align-items:center;gap:4px;min-height:44px;padding:0 10px;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+.scale input{width:18px;height:18px;accent-color:var(--accent)}
+.row{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:620px){.row{grid-template-columns:1fr 1fr}}
+textarea,input[type=text],select{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);min-height:44px}
+textarea{min-height:90px}
+#out{white-space:pre-wrap;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:10px;max-height:260px;overflow:auto}
+.hint{font-size:.85rem;color:var(--ink2)}
+@media (max-width:420px){.vol{grid-template-columns:80px 1fr 3em}}
+</style>
+</head>
+<body>
+<main>
+<h1>Prueba de escucha</h1>
+<p class="lead">Audio lo-fi generativo de Fondal Age Spore (Era 2). Todo se sintetiza en el navegador, sin archivos ni música de terceros. Esta página sirve para <strong>escuchar</strong> lo que hoy solo se midió con instrumentos. Protocolo completo en <code>docs/ESCUCHA.md</code>.</p>
+
+<div id="status" role="status" aria-live="polite">Tocá «Activar sonido» para empezar (los navegadores exigen un gesto).</div>
+
+<section aria-labelledby="h-vol">
+  <h2 id="h-vol">0. Sonido y volúmenes</h2>
+  <div class="grid"><button id="go" class="big" type="button">Activar sonido</button><button id="stopAll" class="stop" type="button">Parar todo</button><button id="muteAll" type="button" aria-pressed="false">Silenciar todo</button></div>
+  <div id="vols" style="margin-top:10px"></div>
+  <fieldset><legend>Aislar para escuchar de a una capa</legend>
+    <div class="scale" role="radiogroup" aria-label="Aislar capa">
+      <label><input type="radio" name="iso" value="mix" checked> Mezcla</label>
+      <label><input type="radio" name="iso" value="music"> Solo música</label>
+      <label><input type="radio" name="iso" value="amb"> Solo ambiente</label>
+      <label><input type="radio" name="iso" value="sfx"> Solo efectos</label>
+    </div>
+  </fieldset>
+  <p class="note">Mismos controles y misma memoria (<code>evo_audio_v1</code>) que dentro del juego. Aislar usa el silencio por capa; al volver a «Mezcla» se restaura.</p>
+</section>
+
+<section aria-labelledby="h-mood">
+  <h2 id="h-mood">1. Ánimos de la música</h2>
+  <p class="note">Escuchá cada uno 30 s como mínimo. Pregunta clave: ¿se entiende qué está pasando solo con el sonido?</p>
+  <div class="grid" id="moods"></div>
+  <p class="hint" id="moodInfo"></p>
+</section>
+
+<section aria-labelledby="h-biome">
+  <h2 id="h-biome">2. Ambiente de los 5 ecosistemas</h2>
+  <p class="note">Conviene «Solo ambiente». Cada bioma debería reconocerse con los ojos cerrados.</p>
+  <div class="grid" id="biomes"></div>
+</section>
+
+<section aria-labelledby="h-fx">
+  <h2 id="h-fx">3. Efectos</h2>
+  <p class="note">Tocá varias veces seguidas y con música de fondo: ¿se pisan? ¿molestan?</p>
+  <div id="fx"></div>
+  <div class="grid" style="margin-top:8px"><button id="fxStorm" type="button">Ráfaga de combate (8 s)</button></div>
+</section>
+
+<section aria-labelledby="h-sim">
+  <h2 id="h-sim">4. Simulación de transición adaptativa</h2>
+  <p class="note">Recorre un guion de partida: calma, hambre, combate, evolución y vuelta a la calma, con efectos al azar como en el juego. Dura lo que el guion (la completa es de 5 minutos: sirve para la pregunta «¿molesta a los 5 minutos?»).</p>
+  <div class="grid"><button id="sim60" type="button">Demo corta (60 s)</button><button id="sim300" type="button">Partida de 5 minutos</button><button id="simStop" class="stop" type="button">Cortar simulación</button></div>
+  <progress id="simBar" value="0" max="100" aria-label="Progreso de la simulación"></progress>
+  <ol id="tl" aria-label="Guion de la simulación"></ol>
+</section>
+
+<section aria-labelledby="h-form">
+  <h2 id="h-form">5. Ficha de escucha</h2>
+  <form id="form" autocomplete="off">
+    <div class="row">
+      <div><label for="who">Quién escucha (nombre o iniciales)</label><input id="who" type="text"></div>
+      <div><label for="dev">Cómo escuchás</label><select id="dev"><option value="">elegir…</option><option>Auriculares</option><option>Parlantes de escritorio / notebook</option><option>Celular (parlante)</option><option>Celular con auriculares</option><option>Otro</option></select></div>
+      <div><label for="mins">Minutos escuchados en total</label><input id="mins" type="text" inputmode="numeric" placeholder="ej. 20"></div>
+      <div><label for="env">Entorno (silencioso, ruidoso, transporte…)</label><input id="env" type="text"></div>
+    </div>
+    <p class="hint">Escala: 1 = muy mal, 3 = regular, 5 = muy bien. «—» = no lo probé.</p>
+    <div id="qs"></div>
+    <label for="free">Comentarios libres (qué sonido molestó, qué faltó, qué te gustó)</label>
+    <textarea id="free"></textarea>
+  </form>
+  <div class="grid" style="margin-top:10px"><button id="gen" class="big" type="button">Generar texto</button><button id="copy" type="button">Copiar</button><button id="dl" type="button">Descargar .txt</button><button id="clr" class="stop" type="button">Borrar ficha</button></div>
+  <pre id="out" aria-label="Texto de la ficha" tabindex="0"></pre>
+  <p class="note">Las respuestas quedan solo en este navegador (borrador automático) hasta que las copies o descargues. Pegalas en el issue o en el chat del equipo; sin eso, el audio sigue «sin aprobar».</p>
+</section>
+</main>
+<script src="audio-lofi.js"></script>
+<script>
+(function () {
+  'use strict';
+  const FA = window.FondalAudio, $ = id => document.getElementById(id);
+  if (!FA) { $('status').textContent = 'No se pudo cargar audio-lofi.js (tiene que estar en la misma carpeta que esta página).'; return; }
+  const S = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) {} return null; };
+  const status = t => { $('status').textContent = t; };
+  FA.wire();
+
+  const MOODS = { explorar: 'Explorar: calmo, acordes mayores, bombo suave.', supervivencia: 'Supervivencia: grave sostenido, pulso lento, tono menor.', combate: 'Combate: tempo alto, bombo y hi-hat, bajo marcado.', evolucion: 'Evolución: brillante, melodía alta (en el juego va con un arpegio de premio).' };
+  const BIOMES = { pradera: 'Pradera', selva: 'Selva', desierto: 'Desierto', tundra: 'Tundra', oceano: 'Océano' };
+  const FXG = [
+    ['Habilidades', { rug: 'Rugido', cam: 'Camuflaje', exc: 'Excavar', ala: 'Alarma', mig: 'Migrar' }],
+    ['Combate y vida', { hit: 'Golpe', kill: 'Baja propia', 'kill1': 'Baja enemiga', flee: 'Huida', eat: 'Comer', lay: 'Poner huevo', born: 'Nacimiento', rest: 'Descanso', disobey: 'Desobediencia' }],
+    ['Mundo', { season0: 'Primavera', season1: 'Verano', season2: 'Otoño', season3: 'Invierno', fire: 'Incendio', drought: 'Sequía', travel: 'Viaje', phase: 'Cambio de fase', scarcity: 'Escasez', migration: 'Migración' }],
+    ['Interfaz y evolución', { select: 'Seleccionar', order: 'Dar orden', ui: 'Botón', evolve: 'Evolución (arpegio)' }]
+  ];
+  function playFx(k) {
+    if (k === 'kill1') return FA.sfx('kill', { force: true, own: true, v: 1 });
+    if (k === 'kill') return FA.sfx('kill', { force: true, own: true, v: 0 });
+    if (/^season\d$/.test(k)) return FA.sfx('season', { force: true, v: +k.slice(6) });
+    if (k === 'evolve') return FA.stinger(6);
+    return FA.sfx(k, { force: true, own: true });
+  }
+  const need = () => { FA.unlock(); if (FA.state === 'none') return false; return true; };
+
+  // ----- volúmenes -----
+  const volsEl = $('vols'), NAMES = { master: 'Maestro', music: 'Música', sfx: 'Efectos', amb: 'Ambiente' };
+  Object.keys(NAMES).forEach(k => { const d = document.createElement('div'); d.className = 'vol'; d.innerHTML = '<label for="v_' + k + '">' + NAMES[k] + '</label><input id="v_' + k + '" type="range" min="0" max="100" step="1" aria-label="Volumen ' + NAMES[k].toLowerCase() + '"><output id="o_' + k + '"></output>'; volsEl.appendChild(d);
+    const i = d.querySelector('input'); i.oninput = () => { FA.setVolume(k, i.value / 100); sync(); }; });
+  function sync() { const v = FA.volumes; Object.keys(NAMES).forEach(k => { $('v_' + k).value = Math.round(v[k] * 100); $('o_' + k).textContent = Math.round(v[k] * 100) + '%'; }); $('muteAll').setAttribute('aria-pressed', v.mute ? 'true' : 'false'); $('muteAll').textContent = v.mute ? 'Activar sonido' : 'Silenciar todo'; }
+  sync();
+  $('go').onclick = () => { if (need()) status('Sonido activo (' + FA.state + '). Elegí un ánimo, un ambiente o un efecto.'); else status('Este navegador no permite WebAudio.'); $('go').textContent = 'Sonido activado'; };
+  $('muteAll').onclick = () => { FA.setMuted(!FA.volumes.mute); sync(); };
+  document.querySelectorAll('input[name=iso]').forEach(r => r.onchange = () => { const v = r.value; ['music', 'amb', 'sfx'].forEach(k => FA.setBusMuted(k, v !== 'mix' && v !== k)); });
+  let curMood = null, curBiome = null;
+  function mark(box, key) { box.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === key ? 'true' : 'false')); }
+
+  // ----- ánimos -----
+  Object.keys(MOODS).forEach(m => { const b = document.createElement('button'); b.type = 'button'; b.dataset.k = m; b.textContent = m[0].toUpperCase() + m.slice(1); b.setAttribute('aria-pressed', 'false');
+    b.onclick = () => { if (!need()) return; stopSim(); FA.setMood(m, { instant: false }); curMood = m; mark($('moods'), m); $('moodInfo').textContent = MOODS[m]; status('Ánimo: ' + m + '. La mezcla tarda ~3 s en asentarse (no es un corte).'); };
+    $('moods').appendChild(b); });
+  Object.keys(BIOMES).forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.dataset.k = k; b.textContent = BIOMES[k]; b.setAttribute('aria-pressed', 'false');
+    b.onclick = () => { if (!need()) return; FA.setBiome(k); curBiome = k; mark($('biomes'), k); status('Ambiente: ' + BIOMES[k] + '.'); };
+    $('biomes').appendChild(b); });
+  FXG.forEach(([g, items]) => { const f = document.createElement('fieldset'), l = document.createElement('legend'); l.textContent = g; f.appendChild(l); const gr = document.createElement('div'); gr.className = 'grid';
+    Object.keys(items).forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.textContent = items[k]; b.onclick = () => { if (!need()) return; playFx(k); }; gr.appendChild(b); }); f.appendChild(gr); $('fx').appendChild(f); });
+  let storm = 0;
+  $('fxStorm').onclick = () => { if (!need()) return; clearInterval(storm); let n = 0; const seq = ['hit', 'hit', 'kill', 'flee', 'hit', 'rug', 'eat', 'hit']; storm = setInterval(() => { FA.sfx(seq[n++ % seq.length], { force: n % 3 === 0, own: n % 2 === 0, pan: (Math.random() - .5) * 1.4 }); if (n > 40) clearInterval(storm); }, 200); status('Ráfaga: ¿los golpes se pisan con la música?'); };
+
+  // ----- simulación de transición adaptativa -----
+  // t en segundos; m = ánimo; b = bioma; e = efectos fijos [nombre, opciones]. Los efectos al azar cambian con el ánimo (densidad por segundo).
+  const SCRIPT = [
+    { t: 0, m: 'explorar', b: 'pradera', n: 'Calma en la pradera' },
+    { t: 60, m: 'supervivencia', n: 'Hambre: población baja' },
+    { t: 110, m: 'explorar', n: 'Se recupera' },
+    { t: 140, m: 'combate', n: 'Aparecen depredadores' },
+    { t: 185, m: 'explorar', n: 'Termina el combate' },
+    { t: 215, evo: 1, n: 'Evolución: arpegio y cambio de tonalidad' },
+    { t: 235, b: 'selva', n: 'Viaje a la selva' },
+    { t: 275, m: 'explorar', n: 'Calma otra vez' },
+    { t: 300, end: 1, n: 'Fin' }
+  ];
+  const SHORT = [
+    { t: 0, m: 'explorar', b: 'pradera', n: 'Calma' }, { t: 12, m: 'supervivencia', n: 'Hambre' }, { t: 24, m: 'combate', n: 'Combate' },
+    { t: 38, evo: 1, n: 'Evolución' }, { t: 50, m: 'explorar', b: 'oceano', n: 'Viaje al océano, calma' }, { t: 60, end: 1, n: 'Fin' }
+  ];
+  const DENS = { explorar: { eat: .12, select: .05, born: .015 }, supervivencia: { flee: .04, scarcity: .01, rest: .03 }, combate: { hit: 1.6, kill: .12, flee: .1, rug: .04 }, evolucion: { born: .1 } };
+  let simT0 = 0, simTimer = 0, simScript = null, simIdx = -1, simMood = 'explorar', last = 0;
+  function renderTl() { const ol = $('tl'); ol.innerHTML = ''; simScript.forEach((s, i) => { const li = document.createElement('li'); li.dataset.i = i; li.innerHTML = '<span>' + s.n + '</span><span>' + Math.floor(s.t / 60) + ':' + String(s.t % 60).padStart(2, '0') + '</span>'; ol.appendChild(li); }); }
+  function simGo(script) {
+    if (!need()) return; stopSim(); simScript = script; simIdx = -1; simT0 = performance.now(); last = 0; renderTl(); document.querySelectorAll('input[name=iso]')[0].checked = true; ['music', 'amb', 'sfx'].forEach(k => FA.setBusMuted(k, false));
+    simTimer = setInterval(simTick, 250); simTick(); status('Simulación en curso… escuchá los cambios sin tocar nada.');
+  }
+  function simTick() {
+    const t = (performance.now() - simT0) / 1000, total = simScript[simScript.length - 1].t; $('simBar').value = Math.min(100, t / total * 100);
+    while (simIdx + 1 < simScript.length && simScript[simIdx + 1].t <= t) {
+      simIdx++; const s = simScript[simIdx];
+      if (s.end) { stopSim(true); return; }
+      if (s.b) { FA.setBiome(s.b); curBiome = s.b; mark($('biomes'), s.b); }
+      if (s.m) { FA.setMood(s.m); simMood = s.m; curMood = s.m; mark($('moods'), s.m); }
+      if (s.evo) { FA.stinger(10); simMood = 'evolucion'; }
+      if (s.n === 'Viaje a la selva') FA.sfx('travel', { force: true, own: true });
+      $('tl').querySelectorAll('li').forEach((li, i) => { li.className = i < simIdx ? 'done' : i === simIdx ? 'now' : ''; });
+    }
+    const dt = t - last; last = t; const d = DENS[simMood] || {};
+    for (const k in d) if (Math.random() < d[k] * dt) FA.sfx(k, { pan: (Math.random() - .5) * 1.4, own: k === 'hit' || k === 'kill' ? Math.random() < .6 : false, v: k === 'kill' ? (Math.random() < .5 ? 1 : 0) : undefined });
+  }
+  function stopSim(done) { clearInterval(simTimer); simTimer = 0; if (done) { status('Simulación terminada. Completá la ficha de abajo.'); $('simBar').value = 100; } }
+  $('sim60').onclick = () => { simScript = SHORT; simGo(SHORT); };
+  $('sim300').onclick = () => simGo(SCRIPT);
+  $('simStop').onclick = () => { stopSim(); status('Simulación cortada.'); };
+
+  $('stopAll').onclick = () => { stopSim(); clearInterval(storm); FA.setMood('explorar'); ['music', 'sfx', 'amb'].forEach(k => FA.setBusMuted(k, true)); document.querySelectorAll('input[name=iso]').forEach(r => { r.checked = false; }); status('Todo en silencio (capas silenciadas). Elegí «Mezcla» para volver.'); };
+
+  // ----- ficha -----
+  const QS = [
+    ['mood_explorar', '¿Se entiende el ánimo «explorar»? (calma, descubrir)'], ['mood_supervivencia', '¿Se entiende el ánimo «supervivencia»? (tensión sin molestar)'],
+    ['mood_combate', '¿Se entiende el ánimo «combate»? (urgencia, ritmo)'], ['mood_evolucion', '¿Se entiende el ánimo «evolución»? (premio, logro)'],
+    ['trans', '¿Las transiciones entre ánimos son suaves y llegan a tiempo?'], ['biomas', '¿Cada uno de los 5 ambientes se reconoce?'],
+    ['habil', '¿Los 5 sonidos de habilidad se distinguen entre sí?'], ['pisa', '¿Los efectos se pisan con la música o entre sí? (5 = no se pisan)'],
+    ['mezcla', '¿Están balanceados música, ambiente y efectos con los volúmenes por defecto?'], ['lofi', '¿Suena lo-fi (cálido, cinta, vinilo) y no a «campanita» o a juguete?'],
+    ['cansa', '¿Molesta o cansa luego de 5 minutos? (5 = no cansa)'], ['mute', '¿Los controles de volumen y silencio son fáciles de usar?']
+  ];
+  const qs = $('qs'); QS.forEach(([k, t]) => { const f = document.createElement('fieldset'), l = document.createElement('legend'); l.textContent = t; f.appendChild(l); const sc = document.createElement('div'); sc.className = 'scale'; sc.setAttribute('role', 'radiogroup');
+    ['—', 1, 2, 3, 4, 5].forEach(v => { const lb = document.createElement('label'); lb.innerHTML = '<input type="radio" name="' + k + '" value="' + v + '"' + (v === '—' ? ' checked' : '') + '> ' + v; sc.appendChild(lb); }); f.appendChild(sc);
+    const n = document.createElement('input'); n.type = 'text'; n.id = 'n_' + k; n.placeholder = 'nota (opcional)'; n.setAttribute('aria-label', 'Nota: ' + t); n.style.marginTop = '6px'; f.appendChild(n); qs.appendChild(f); });
+  const fields = () => ['who', 'dev', 'mins', 'env', 'free'].concat(QS.map(q => 'n_' + q[0]));
+  function collect() { const o = {}; fields().forEach(id => { o[id] = $(id).value; }); QS.forEach(([k]) => { const c = document.querySelector('input[name=' + k + ']:checked'); o[k] = c ? c.value : '—'; }); return o; }
+  function save() { S('escucha_borrador_v1', JSON.stringify(collect())); }
+  function load() { try { const o = JSON.parse(S('escucha_borrador_v1') || 'null'); if (!o) return; fields().forEach(id => { if (o[id] !== undefined) $(id).value = o[id]; }); QS.forEach(([k]) => { const r = document.querySelector('input[name=' + k + '][value="' + o[k] + '"]'); if (r) r.checked = true; }); } catch (e) {} }
+  load(); $('form').addEventListener('input', save); $('form').addEventListener('change', save);
+  function text() {
+    const o = collect(), v = FA.volumes, L = [];
+    L.push('PRUEBA DE ESCUCHA — Fondal Age Spore (audio lo-fi, Era 2)'); L.push('Fecha: ' + new Date().toISOString().slice(0, 16).replace('T', ' ') + ' (hora local del navegador)');
+    L.push('Quién: ' + (o.who || '(sin nombre)') + ' · Dispositivo: ' + (o.dev || '?') + ' · Minutos: ' + (o.mins || '?') + ' · Entorno: ' + (o.env || '?'));
+    L.push('Volúmenes al generar: maestro ' + Math.round(v.master * 100) + '%, música ' + Math.round(v.music * 100) + '%, efectos ' + Math.round(v.sfx * 100) + '%, ambiente ' + Math.round(v.amb * 100) + '%' + (v.mute ? ' (SILENCIADO)' : '')); L.push('Navegador: ' + navigator.userAgent.slice(0, 120) + ' · pantalla ' + innerWidth + 'x' + innerHeight);
+    L.push(''); L.push('Respuestas (1 muy mal … 5 muy bien, — no probado):');
+    QS.forEach(([k, t]) => { L.push('- ' + t + ' → ' + o[k] + (o['n_' + k] ? ' · ' + o['n_' + k] : '')); });
+    const vals = QS.map(q => o[q[0]]).filter(x => x !== '—').map(Number); if (vals.length) L.push(''), L.push('Promedio (' + vals.length + ' respuestas): ' + (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) + ' · mínimo ' + Math.min.apply(null, vals));
+    const bad = QS.filter(q => o[q[0]] !== '—' && +o[q[0]] <= 2).map(q => q[0]); L.push('Puntos flojos (≤2): ' + (bad.length ? bad.join(', ') : 'ninguno'));
+    L.push(''); L.push('Comentarios: ' + (o.free || '(ninguno)')); L.push(''); L.push('Aprobación: SOLO si esta ficha la completó una persona escuchando. Este texto no aprueba nada por sí mismo.');
+    return L.join('\n');
+  }
+  $('gen').onclick = () => { $('out').textContent = text(); };
+  $('copy').onclick = async () => { const t = text(); $('out').textContent = t; try { await navigator.clipboard.writeText(t); status('Copiado al portapapeles.'); } catch (e) { const r = document.createRange(); r.selectNodeContents($('out')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); status('No se pudo copiar solo: el texto quedó seleccionado, copialo con Ctrl+C / mantener pulsado.'); } };
+  $('dl').onclick = () => { const t = text(); $('out').textContent = t; const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], { type: 'text/plain;charset=utf-8' })); a.download = 'escucha-fondal-' + new Date().toISOString().slice(0, 10) + '.txt'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
+  $('clr').onclick = () => { if (!confirm('¿Borrar toda la ficha?')) return; $('form').reset(); QS.forEach(([k]) => { document.querySelector('input[name=' + k + '][value="—"]').checked = true; }); S('escucha_borrador_v1', ''); $('out').textContent = ''; };
+  window.__escucha = { text, collect, simGo, SCRIPT, SHORT, QS };
+})();
+</script>
+</body>
+</html>

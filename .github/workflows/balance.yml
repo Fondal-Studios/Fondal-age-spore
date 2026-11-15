@@ -1,0 +1,51 @@
+# Suites largas de balance (bots, decenas de partidas). SOLO manual: nunca corren en push ni en pull_request.
+name: Balance (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Qué suite correr"
+        type: choice
+        options: [era2-balance, era3-balance, era2-bot-10min]
+        default: era2-balance
+      partidas:
+        description: "Partidas por dificultad (N)"
+        default: "12"
+      dificultades:
+        description: "Dificultades a medir (0 Fácil, 1 Normal, 2 Difícil), separadas por coma"
+        default: "0,1,2"
+
+jobs:
+  balance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    env:
+      DIFS: ${{ inputs.dificultades }}
+      N: ${{ inputs.partidas }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Era 2, bot razonable
+        if: inputs.suite == 'era2-balance'
+        run: mkdir -p ci-logs && node tests/era2-balance-run.js "$DIFS" razonable "$N" 2400 ci 2>&1 | tee ci-logs/era2-balance.log
+      - name: Era 3, bot automático
+        if: inputs.suite == 'era3-balance'
+        run: mkdir -p ci-logs && node tests/era3-balance-run.js "$DIFS" auto "$N" 1800 ci 2>&1 | tee ci-logs/era3-balance.log
+      - name: Era 2, bot con clics de 10 minutos
+        if: inputs.suite == 'era2-bot-10min'
+        run: mkdir -p ci-logs && node tests/era2-bot.js 10 1 ter ter_cazador 2>&1 | tee ci-logs/era2-bot.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: balance-${{ inputs.suite }}
+          path: |
+            ci-logs
+            tests/.balance-out
+          if-no-files-found: ignore
+          retention-days: 30
