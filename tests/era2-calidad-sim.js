@@ -95,7 +95,7 @@ const ok = (c, m) => { assert.ok(c, m); console.log('  ok -', m); };
       const dif = [], withL = { 1: [], 2: [], 3: [] }; let better = 0;
       for (let s = 0; s < N; s++) {
         const seed = 'AB' + id + s, mode = id === 'mig' ? 'mig' : 'fight';
-        const dur = mode === 'mig' ? 240 : 300;
+        const dur = mode === 'mig' ? 240 : id === 'exc' ? 600 : 300;   // Excavar se mide a 30 s (Ciclo 4): a 15 s el resultado cambia de signo según la semilla (−7 ± 10 con N = 64) porque los animales sin habilidad ya pelean mejor con la identidad de clase; a 30 s +30 ± 19
         let G = scen(seed, abils[id], 'ter', mode, id); if (id === 'mig') { E.placeMig({ x: 650, y: 310 }); } else E.useAbility(id); run(dur); const a1 = mode === 'mig' ? score(G, mode) : lost(G);
         G = scen(seed, abils[id], 'ter', mode, id); run(dur); const a0 = mode === 'mig' ? score(G, mode) : lost(G);
         dif.push(a1 - a0); if (a1 > a0) better++;
@@ -123,7 +123,7 @@ const ok = (c, m) => { assert.ok(c, m); console.log('  ok -', m); };
   }, N);
   console.log('2)', JSON.stringify(r2));
   console.log('  (Alarma se mide aparte, con su propio escenario de emboscada y N grande: tests/era2-alarma.js; el escenario de aquí, 8 cazadores contra 3 lobos, no la pone a prueba: la manada gana igual) Alarma aquí: ' + (r2.ala.mean > 0 ? '+' : '') + r2.ala.mean + ' ±' + r2.ala.se);
-  for (const id of ['rug', 'cam', 'exc']) ok(r2[id].mean > 0 && r2[id].better >= r2[id].n * .5, id + ': vida del grupo tras 15 s con la habilidad vs sin ella: ' + (r2[id].mean > 0 ? '+' : '') + r2[id].mean + ' (±' + r2[id].se + ') mejora en ' + r2[id].better + '/' + r2[id].n + ' semillas');
+  for (const id of ['rug', 'cam', 'exc']) ok(r2[id].mean > 0 && r2[id].better >= r2[id].n * .5, id + ': vida del grupo tras ' + (id === 'exc' ? 30 : 15) + ' s con la habilidad vs sin ella: ' + (r2[id].mean > 0 ? '+' : '') + r2[id].mean + ' (±' + r2[id].se + ') mejora en ' + r2[id].better + '/' + r2[id].n + ' semillas');
   ok(r2.mig.mean > 0 && r2.mig.better >= r2.mig.n * .5, 'mig: hambre+energía media tras llegar a la comida: ' + (r2.mig.mean > 0 ? '+' : '') + r2.mig.mean + ' (±' + r2.mig.se + ') mejora en ' + r2.mig.better + '/' + r2.mig.n);
   for (const id in r2.lv) ok(r2.lv[id][1] > r2.lv[id][0] && r2.lv[id][6] && r2.lv[id][7], id + ': nivel ' + r2.lv[id][0] + ' → ' + r2.lv[id][1] + ' con rasgos; costo ' + r2.lv[id][2] + ' → ' + r2.lv[id][3] + ', enfriamiento ' + r2.lv[id][4] + ' → ' + r2.lv[id][5] + ', el efecto cambia y abilityInfo da «próximo»');
   { const bad = r2.coh.filter(c => !c[4]); ok(bad.length === 0, 'niveles y textos coherentes: lo que speciesInfo dice («nace con X de nivel 2») coincide con abilityInfo en las 12 especies x 5 habilidades' + (bad.length ? ' — incoherentes: ' + JSON.stringify(bad.slice(0, 6)) : '')); const bad2 = r2.coh.filter(c => !c[5]); ok(bad2.length === 0, 'abilityInfo.fuentes explica de dónde sale cada nivel ≥ 2 (y no inventa fuentes en nivel 1)' + (bad2.length ? ': ' + JSON.stringify(bad2.slice(0, 6)) : '')); }

@@ -67,6 +67,7 @@ async function worker(jobFile, i, n, tag) {
     p.on('crash', () => errs.push('CRASH de la página')); p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/font|ERR_|Failed to load/i.test(m.text())) errs.push(m.text()); });
     await p.goto('file://' + html); await p.addScriptTag({ content: fs.readFileSync(path.join(__dirname, 'era2-perfiles-bot.js'), 'utf8') });
     if (J.ov) await p.evaluate(o => { const D = window.__e2.DIFFS; for (const k in o) Object.assign(D[k], o[k]); }, J.ov);
+    if (J.js) await p.evaluate(J.js);   // --js '<código>': ajuste de constantes en la página antes de jugar (p. ej. __e2.CLSX.ave.hg = 1)
   };
   await open(); const out = [];
   for (let k = i; k < J.jobs.length; k += n) {
@@ -88,7 +89,7 @@ async function worker(jobFile, i, n, tag) {
   const col2s = a.col2 ? a.col2.split(',') : [null];   // --col2 selva,tundra...: empieza en el bioma indicado (pradera por defecto) y el 2.º ecosistema que coloniza es ESE (el camino real del jugador: Empezar siempre es en la pradera)
   const jobs = []; for (const bio of biomes) for (const c2 of col2s) for (const d of diffs) for (const pr of profs) for (const sp of specsA) { if ((bio === 'oceano' || c2 === 'oceano') && !HAB[sp] && c2 === 'oceano') continue; if (bio === 'oceano' && !HAB[sp]) continue; for (let i = 0; i < n; i++) jobs.push({ seed: 'P' + d + pr + bio + (c2 || '') + sp + '#' + i, diff: d, spec: sp, profile: pr, biome: bio, col2: c2 }); }
   // mezcla estable para repartir las partidas largas entre los workers
-  jobs.sort((x, y) => (x.seed < y.seed ? -1 : 1)); const jf = path.join(OUT, label + '-jobs.json'); fs.writeFileSync(jf, JSON.stringify({ jobs, maxT, html: a.html || null, ov: a.ov ? JSON.parse(a.ov) : null, abOff: a.abOff ? a.abOff.split(',') : [] }));
+  jobs.sort((x, y) => (x.seed < y.seed ? -1 : 1)); const jf = path.join(OUT, label + '-jobs.json'); fs.writeFileSync(jf, JSON.stringify({ jobs, maxT, html: a.html || null, ov: a.ov ? JSON.parse(a.ov) : null, abOff: a.abOff ? a.abOff.split(',') : [], js: a.js || null }));
   console.log('partidas: ' + jobs.length + ', workers: ' + W); const t0 = Date.now();
   await Promise.all(Array.from({ length: W }, (_, i) => new Promise(res => { const c = cp.spawn(process.execPath, [__filename, '--worker', jf, '--i', String(i), '--n', String(W), '--tag', label], { stdio: 'inherit', env: process.env }); c.on('exit', res); })));
   let rs = [], errs = []; for (let i = 0; i < W; i++) { const f = path.join(OUT, label + '-w' + i + '.json'); if (fs.existsSync(f)) { const d = JSON.parse(fs.readFileSync(f)); rs = rs.concat(d.out); errs = errs.concat(d.errs); fs.unlinkSync(f); } }

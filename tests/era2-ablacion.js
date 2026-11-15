@@ -24,11 +24,11 @@ const VARIANTS = {
   buscaActiva: [["a.wt = rnd(2, 5); const c = (isP || team === 'rival') ? herdCenter(sp) : mg || null; const q = randPos(sp, c ? c.x : a.x, c ? c.y : a.y, c ? (mg ? 60 : 80) : 60);", "a.wt = rnd(2, 5); const hs = isP && a.hunger < 62; const c = hs ? null : (isP || team === 'rival') ? herdCenter(sp) : mg || null; const q = randPos(sp, c ? c.x : a.x, c ? c.y : a.y, hs ? 220 : c ? (mg ? 60 : 80) : 60);"], ["gx = a.tx; gy = a.ty; spd *= mg ? .75 : .45; if (st === 'idle' && a.hunger < 62) st = 'forage';", "gx = a.tx; gy = a.ty; spd *= mg ? .75 : (isP ? .45 + .4 * clamp((62 - a.hunger) / 62, 0, 1) : .45); if (st === 'idle' && a.hunger < 62) st = 'forage';"]],
   gananciaProp: [['a.hunger = Math.min(100, a.hunger + 24 * p.eff * (isP && warmNear(a.x, a.y) ? 1.25 : 1)); a.en = Math.min(100, a.en + 5);', 'a.hunger = Math.min(100, a.hunger + 24 * clamp(a.rr / 9, .7, 1.25) * p.eff * (isP && warmNear(a.x, a.y) ? 1.25 : 1)); a.en = Math.min(100, a.en + 5);']],
   // ---- tundra (Ciclo 4): una palanca por vez, para medir CUAL pesa (se corre con --biome tundra --src trabajo)
-  tPlantas2: [['plants: 44, alg: 10, heat: 1, coldAll', 'plants: 88, alg: 10, heat: 1, coldAll']],
-  tCrece2: [['gmin: .6, seasons: [3, 3, 0, 3, 1, 3], grow: 1,', 'gmin: 1.2, seasons: [3, 3, 0, 3, 1, 3], grow: 2,']],
+  tPlantas2: [['plants: 60, alg: 10, heat: 1, coldAll', 'plants: 120, alg: 10, heat: 1, coldAll']],   // (Ciclo 4 módulo balance: textos actualizados a la tundra con plants 60 / gmin .75 / hsave .08)
+  tCrece2: [['gmin: .75, hsave: .08, seasons: [3, 3, 0, 3, 1, 3], grow: 1,', 'gmin: 1.5, hsave: .08, seasons: [3, 3, 0, 3, 1, 3], grow: 2,']],
   tSinFrio: [['dmg(a, .35 * p.cold * dt', 'dmg(a, 0 * p.cold * dt']],
   tSinHg: [["tundra: { en: 1.1, sp: .93, hg: 1.12,", "tundra: { en: 1.1, sp: .93, hg: 1,"]],
-  tHambre50: [["hr *= BM('hg');", "hr *= BM('hg') * (G.biomeKey === 'tundra' ? .5 : 1);"]],
+  tHambre50: [["hr *= BM('hg'); if (sp.cls)", "hr *= BM('hg') * (G.biomeKey === 'tundra' ? .5 : 1); if (sp.cls)"]],
   tMeta25: [["kw: .5, kp: .55, gmin", "kw: .5, kp: .25, gmin"]],
   tSinSalvajes: [["kw: .5, kp: .55, gmin", "kw: .1, kp: .55, gmin"]],
   tSinHuevoCosto: [['a.hunger -= cost; a.en = Math.max(0, enOf(a) - 18); a.vul = 8;', "a.hunger -= cost * (G.biomeKey === 'tundra' ? .3 : 1); a.en = Math.max(0, enOf(a) - 18); a.vul = 8;"]],
@@ -36,6 +36,19 @@ const VARIANTS = {
   rugGratis: [['L: [{ cd: 25, en: 10, r: 120, stun: 3, push: 26, dbf: 0 }, { cd: 24, en: 12, r: 150, stun: 4, push: 34, dbf: 0 }, { cd: 22, en: 14, r: 180, stun: 5, push: 42, dbf: 5 }]', 'L: [{ cd: 25, en: 0, r: 120, stun: 3, push: 26, dbf: 0 }, { cd: 24, en: 0, r: 150, stun: 4, push: 34, dbf: 0 }, { cd: 22, en: 0, r: 180, stun: 5, push: 42, dbf: 5 }]']],
   rugBarato: [['L: [{ cd: 25, en: 10, r: 120, stun: 3, push: 26, dbf: 0 }, { cd: 24, en: 12, r: 150, stun: 4, push: 34, dbf: 0 }, { cd: 22, en: 14, r: 180, stun: 5, push: 42, dbf: 5 }]', 'L: [{ cd: 25, en: 5, r: 120, stun: 3, push: 26, dbf: 0 }, { cd: 24, en: 6, r: 150, stun: 4, push: 34, dbf: 0 }, { cd: 22, en: 7, r: 180, stun: 5, push: 42, dbf: 5 }]']],
   rugCercanos: [['pay(P, mine.filter(m => foes.some(([b]) => hyp(b.x - m.x, b.y - m.y) < P.r)));', 'pay(P, mine.filter(m => foes.some(([b]) => hyp(b.x - m.x, b.y - m.y) < P.r * .5)));']],
+  // ---- desierto (Ciclo 4, módulo balance): una palanca por vez (se corre con --biome desierto --src trabajo)
+  dPlantas2: [['grow: .6, plants: 30, alg: 6, heat: 1.18', 'grow: .6, plants: 60, alg: 6, heat: 1.18']],
+  dCrece2: [['grow: .6, plants: 30,', 'grow: 1.2, plants: 30,']],
+  dSinSequia: [["heat: 1.18, haz: ['sequia'], boss: false", "heat: 1.18, haz: [], boss: false"]],
+  dSinCalor: [['plants: 30, alg: 6, heat: 1.18,', 'plants: 30, alg: 6, heat: 1,']],
+  dSinEn: [['desierto: { en: 1.3, rg: .85, adv:', 'desierto: { en: 1, rg: 1, adv:']],
+  dHambre50: [["hr *= BM('hg'); if (sp.cls)", "hr *= BM('hg') * (G.biomeKey === 'desierto' ? .5 : 1); if (sp.cls)"]],
+  dMeta25: [['kw: .4, kp: .55, seasons: [1, 1, 2, 1]', 'kw: .4, kp: .25, seasons: [1, 1, 2, 1]']],
+  dSinSol: [["if (G.biomeKey === 'desierto' && pa.drought > .8) f(.9, 'Calor del desierto');", '']],
+  // ---- aves (Ciclo 4): ¿por qué ganan más? se corre con --specs ave_rapaz,ave_carronera,ave_migratoria --src trabajo
+  aveSinAlgas: [["if (h === 'fly' || h === 'amph') return true; return h === 'water'", "if (h === 'amph' || (h === 'fly' && a.sp.cls === 'ins')) return true; if (h === 'fly') return !pl.w; return h === 'water'"]],
+  aveVista150: [["vis: 220, col: '#6a4a3a'", "vis: 150, col: '#6a4a3a'"], ["vis: 210, col: '#4a4a52'", "vis: 150, col: '#4a4a52'"], ["vis: 200, col: '#3f8fd1'", "vis: 150, col: '#3f8fd1'"]],
+  aveSinEsquiva: [["if (sb.hab === 'fly' && sa.hab !== 'fly') { miss += .2; mw = 'la presa vuela'; }", '']],
   sinDesistir: [['else if (a.en < 20 && !oa && !(isP && stance === \'attack\')) {', 'else if (false) {']]
 };
 const names = (A.variants ? A.variants.split(',') : Object.keys(VARIANTS)), diff = A.diff || '1', specs = A.specs || 'ter_cazador,ter_gigante,ter_ingeniero', n = A.n || '8', prof = A.profile || 'razonable', bio = A.biome || 'pradera', maxT = A.maxT || '600';
