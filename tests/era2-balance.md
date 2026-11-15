@@ -194,6 +194,55 @@ Verificado con escenarios cerrados (todos ok): **attack** (el animal golpeó 7 v
 - `tests/era2-bot.js` (bot con clics) no se corrió.
 
 ---
+## 11. Ciclo 4: tundra, Rugido, Anfibios y Gigantes (por causa medida)
+Código de referencia = commit `18e9821`. Todo con Normal, partidas completas, tope 700 s, IC95 de Wilson (pareado por semilla cuando se dice). Reproducir: `tests/era2-ablacion.js --src trabajo --biome tundra ...` (variantes `t*` y `rug*`), `tests/era2-perfiles.js` (`--col2 tundra` para el camino real pradera → tundra) y `tests/era2-biomas.js`.
+
+### 11.1 Tundra
+**Ablación (razonable, 12 especies x 4 semillas = N = 48, empezando en tundra; línea base 11/48 = 23 %)**: se cambia UNA palanca por vez.
+| Palanca | Victorias | Extinciones | Pob. media | Lectura |
+| --- | --- | --- | --- | --- |
+| línea base | 11/48 (23 %) | 34 | 7 | — |
+| plantas ×2 (44 → 88) | 31/48 (65 %) | 13 | 14 | **la comida es la causa** |
+| crecimiento ×2 y piso invernal ×2 | 28/48 (58 %) | 16 | 13 | idem |
+| hambre propia −50 % en tundra | 34/48 (71 %) | 7 | 17 | idem (otro lado de la misma cuenta) |
+| sin daño por frío | 11/48 (23 %) | 31 | 8 | **el frío no pesa** |
+| sin el +12 % de hambre de la tundra | 11/48 (23 %) | 33 | 8 | no pesa |
+| meta de población 55 % → 25 % | 11/48 (23 %) | 34 | 7 | idéntico: la meta no es la restricción |
+| salvajes ×0,2 (menos competencia) | 8/48 (17 %) | 33 | 7 | no pesa |
+| huevo con 30 % del costo | 15/48 (31 %) | 28 | 9 | poco |
+**Causa**: oferta de plantas contra gasto de hambre. Con hambre propia ×3,3 un animal gasta ≈ 4 de hambre por s y cada bocado da 24: la tundra rebrotaba ≈ 0,18 plantas/s en invierno (44 plantas, 4 de cada 6 estaciones son invierno) y alcanzaba para ≈ 4 animales. Muertes: hambre 70 de 80 no ganadas, frío 6, rival 4. La conclusión del informe anterior («frío y metas») no se sostiene: el frío y la meta no mueven nada.
+**Cambio (coherente con la ecología)**, solo en `BIOMES.tundra` y un término de hambre: (a) `plants` 44 → 60 y piso de crecimiento invernal `gmin` .6 → .75: líquenes, arbustos enanos y musgo crecen lento pero todo el año, incluso bajo la nieve; (b) nuevo `hsave: .08`: cada rasgo de los que «ayudan» en tundra (piel, sangre, hibernación) baja 8 % el hambre de tus animales (máx. 3): metabolismo ahorrador y letargo; premia elegir bien los rasgos. No se tocó el hambre global ni la dificultad.
+**Antes / después (Normal, 4 perfiles razonable/defensivo/migrador/tactico x 12 especies x n = 2 → N = 96 por celda)**
+| | Antes | Después |
+| --- | --- | --- |
+| Empezar en tundra (A) | 16/96 = 17 % [11-25] | **30/96 = 31 % [23-41]** |
+| Pradera → tundra (B, el camino real) | 9/96 = 9 % [5-17] | **20/96 = 21 % [14-30]** |
+| A por perfil (de 24) | def 1, mig 2, raz 7, tac 6 | def 4, mig 7, raz 11, tac 8 |
+| B por perfil (de 24) | def 2, mig 2, raz 2, tac 3 | def 4, mig 4, raz 7, tac 5 |
+| Causas de no victoria, A | hambre 70, frío 6, rival 4 | hambre 53, rival 10, frío 3 |
+| Causas de no victoria, B (después) | — | hambre 63, rival 12, frío 1 |
+Con n = 1 (N = 48, semillas `#0`) el «antes» había dado 4/48 (8 %) y 3/48 (6 %): era una racha mala; con N = 96 es 17 % y 9 %. Selección de la magnitud: probé plantas 72 / piso .85 (A 60 %: demasiado fácil) y plantas 66 / piso .8 (A 44 % [34-54], B 23 %); me quedé con 60 / .75 porque deja a la tundra como el bioma más duro con comida jugable (pradera 50 %). **Es una elección de dificultad, no un resultado**: la curva es empinada (±6 plantas mueven A unos 13 puntos). Medición completa de biomas con el código final (N = 48, `tests/era2-biomas.js`): pradera 24/48 (50 %), selva 18/48 (38 %), desierto 6/48 (13 %), tundra 16/48 (33 %), océano 24/36 (67 %).
+**Sigue mal**: el perfil defensivo gana 4/24 en tundra (reunirse en el nido gasta tiempo de forrajeo; no lo toqué); el desierto sigue en 13 % (A) y es el bioma más difícil; la tundra **no** tiene fuentes propias de carroña ni de pesca bajo hielo (se midió que la comida de plantas alcanza para llegar al objetivo; agregar fuentes nuevas sería diseño, no corrección).
+
+### 11.2 Rugido
+**Pareado por semilla, perfil `habil`, 12 especies x n = 16 (N = 192), Normal**, mismas semillas en todas las variantes:
+| Condición | Victorias | Colapsos por partida | Energía media |
+| --- | --- | --- | --- |
+| Rugido como estaba (10/12/14 de energía) | 132/192 = 69 % [62-75] | 5,9 | 65 |
+| sin Rugido | 146/192 = 76 % [70-82] | 1,6 | 72 |
+| Rugido gratis (0 de energía) | 143/192 = 74 % [68-80] | 1,7 | 72 |
+| solo pagan los que están a < 50 % del radio | 141/192 = 73 % [66-79] | 3,3 | 69 |
+| **Rugido con la mitad (5/6/7)** | **152/192 = 79 % [73-84]** | 4,4 | 68 |
+**Confirmado: el Rugido viejo restaba**: sin Rugido +7,3 puntos (±7,3; McNemar z = 1,8, en el límite). **Causa mecánica: la energía.** Quien participa paga 10-14, el radio de 120-180 abarca casi toda la manada y el bot lo usa en cuanto hay 2 enemigos: los colapsos (energía 0 → aturdido 2,5 s y a descansar) se multiplican ×3,7 y los descansos ×2,8. Con costo 0 el resultado vuelve al de «sin Rugido»: el aturdimiento en sí no resta ni suma de forma medible en partidas completas. **Cambio**: energía 10/12/14 → **5/6/7** (`ABD.rug`). Pareado contra el viejo: **+10,4 puntos (±6,4; z = 2,9)**; contra «sin Rugido» +3,1 (±6,6: indistinguible). Difícil con el costo nuevo (habil, N = 192): con Rugido 68/192 = 35 % [29-42], sin 61/192 = 32 % [26-39] (+3,6 ±8,1, ruido). Conclusión honesta: el Rugido ya **no resta**, pero **tampoco se demostró que sume** en partidas completas (en el escenario cerrado sí: +28 de vida, §6).
+
+### 11.3 Anfibios y Gigantes
+Con el código del Ciclo 4 **no se reproduce que sean las especies más débiles**: razonable, N = 16 por especie: Gigantes 12/16, Anfibios 12/16 (el más flojo es el abisal, 5/16). Con 4 perfiles (n = 4): Gigantes 9/16, Anfibios 5/16, Ingenieros 5/16, Abisales 4/16, y el perfil defensivo se lleva casi toda la caída (10/48 contra 33/48 del migrador). Gigantes y Anfibios con razonable + tactico, N = 96: 58/96 = 60 % (media general 49 %). **Causa mecánica única: no encontré.** Pistas medidas: los Gigantes colapsan por energía 24 veces por partida (los demás ≤ 8); quitar el costo de moverse deja los colapsos en 0 y las victorias en 60/96 contra 58/96 (no es la causa de perder). En Anfibios y Acuáticos pesan las muertes por rivales (≈ 10 por partida, igual que en insectos). Sin cambios; lo que sigue siendo cierto es que las clases se reparten desparejo con N chicos (celdas de 4 partidas: ±35 puntos).
+
+### 11.4 Verificaciones del Ciclo 4
+`tests/era2-guardado.js` OK (mismo hash con la misma semilla; el guardado viejo carga), `tests/era2-ordenes.js` OK (mismo hash con y sin selección), `tests/era2-calidad-sim.js` con `CI_NO_FPS=1` OK (incluye 3.º guardado viejo; fps medido igual 43,3 con 558 animales). El cambio es solo de constantes de bioma (`plants`, `gmin`, `hsave`) y del costo de Rugido: los guardados viejos conservan sus plantas y siguen cargando; no se agregó estado nuevo.
+**NO resuelto**: perfil defensivo débil en tundra y pradera; desierto 13 %; Alarma/Excavar/Migrar siguen sin utilidad demostrada en partidas completas; todo es con bots (sin personas); Rugido y tundra se calibraron con la dificultad Normal, Difícil solo se midió para Rugido.
+
+---
 # Historial (Calidad 2.0 y anteriores): cifras de código anterior, ya no vigentes
 
 ## Cómo se midió
