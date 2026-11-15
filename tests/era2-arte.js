@@ -61,14 +61,14 @@ const assert = require('assert'); const path = require('path'), fs = require('fs
     // evolución: brillo
     for (const k in S.drawn) S.drawn[k] = 0; E.Bus.emit('evolve', { id: 'x' }); E.render(); out.evo = S.drawn.evo;
     // causas: propio -> burbuja y registro; salvaje sin seleccionar -> nada; salvaje seleccionado -> burbuja; tope 3
-    S.bub.length = 0; const log0 = G.log.length;
-    E.Bus.emit('cause', mine[0], 'Huye de Lobos', 'peligro'); out.b1 = S.bub.length; out.logged = G.log.slice(0, 3).some(t => /Huye de Lobos/.test(t));
+    S.bub.length = 0; G.t += 3; const log0 = E.ui.clog().length;
+    E.Bus.emit('cause', mine[0], 'Huye de Lobos', 'peligro'); out.b1 = S.bub.length; out.logged = E.ui.clog().slice(0, 3).some(t => /Huye de Lobos/.test(t));
     E.Bus.emit('cause', wild[0], 'Pasta tranquilo', 'info'); out.bWild = S.bub.length;
     E.ui.setSel([wild[0].id]); E.select(wild[0].id); E.Bus.emit('cause', wild[0], 'Observa', 'info'); out.bSel = S.bub.length;
     E.Bus.emit('cause', mine[1], 'Busca comida: hambre 22', 'hambre'); E.Bus.emit('cause', mine[2], 'Muriendo de hambre', 'hambre'); E.Bus.emit('cause', mine[4], 'Descansa: energía 12', 'descanso'); out.bMax = S.bub.length;
     E.Bus.emit('cause', mine[4], 'Descansa: energía 12', 'descanso'); out.dup = S.bub.length;
-    E.Bus.emit('cause', mine[3], '<b>x</b>', 'info'); out.esc = !G.log.some(t => /<b>/.test(t));
-    E.render(); out.rendered = true; out.logDelta = G.log.length - log0; out.cols = S.bub.map(b => b.col);
+    E.Bus.emit('cause', mine[3], '<b>x</b>', 'info'); out.esc = !E.ui.clog().some(t => /<b>/.test(t));
+    E.render(); out.rendered = true; out.logDelta = E.ui.clog().length - log0; out.cols = S.bub.map(b => b.col);
     return out;
   });
   console.log('señales:', JSON.stringify(sg));

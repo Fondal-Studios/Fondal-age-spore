@@ -392,6 +392,8 @@ function recalc(sp) {
 }
 function mkSp(key, d, team, col) { const sp = Object.assign({ key, team, traits: [], vars: {}, aff: {}, mast: [], hyb: [] }, d); if (col) sp.ring = col; recalc(sp); return sp; }
 function toast(txt, warn) { const d = document.createElement('div'); d.className = 'toast' + (warn ? ' warn' : ''); d.textContent = txt; $('toasts').appendChild(d); setTimeout(() => d.remove(), 4800); while ($('toasts').children.length > 3) $('toasts').firstChild.remove(); }
+/* Registro SOLO de interfaz (frases de causa): fuera de G para no entrar en el guardado ni en el hash (dependen de qué animal está seleccionado). */
+const CLOG = [];
 function logMsg(t) { G.log.unshift(t); if (G.log.length > 30) G.log.pop(); }
 
 function randPos(sp, cx, cy, rad) {
@@ -406,7 +408,7 @@ function spawn(sp, x, y, juv) {
 const count = sp => { let n = 0; for (const a of G.A) if (a.sp === sp && !a.dead) n++; return n; };
 const eggCount = sp => G.E.filter(e => e.sp === sp).length;
 
-function newGame(bk, carry, seedStr) {
+function newGame(bk, carry, seedStr) { CLOG.length = 0;
   const D = diffI, B = BIOMES[bk || 'pradera'], prev = G;
   if (carry && prev) seedStr = prev.seed; else { seedStr = seedStr || newSeedStr(); seedRng(hashStr(seedStr)); }
   lastSaveT = 0;
@@ -1200,7 +1202,7 @@ function writeLineage(extra) {
 const ART = window.Era2Arte;
 function drawAnimal(x, sp, o) { ART.drawAnimal(x, sp, o); }
 ART.attach(Bus, { getG: () => G, getSel: () => selId, getSelSet: () => UIs.selSet, getInfo: a => bioInfo(a),
-  log: (a, txt) => logMsg('· ' + a.sp.n + ': ' + String(txt).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))) });
+  log: (a, txt) => { CLOG.unshift('· ' + a.sp.n + ': ' + String(txt).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))); if (CLOG.length > 12) CLOG.pop(); } });
 const _sh = {};
 function shade(hex, f) { const k = hex + f; if (_sh[k]) return _sh[k]; const n = parseInt(hex.slice(1), 16), c = v => clamp(Math.round(v * f), 0, 255); return _sh[k] = '#' + ((1 << 24) + (c(n >> 16) << 16) + (c((n >> 8) & 255) << 8) + c(n & 255)).toString(16).slice(1); }
 
@@ -1539,7 +1541,7 @@ function hud() {
   $('spName').textContent = me.n + ' (' + CLSN[me.cls].n.toLowerCase() + ')';
   $('spTraits').innerHTML = me.traits.length || Object.keys(me.vars).length ? me.traits.map(id => { const t = TR[id], v = me.vars[id]; return '<span><i class="tag" style="background:' + HCOL[t.h] + '"></i>' + t.n + (v ? ' · ' + t[v].n : '') + '</span>'; }).join('') : '<span>Sin rasgos: evolucioná para cambiar su aspecto</span>';
   uiHud();
-  $('log').innerHTML = G.log.slice(0, 6).map(t => '<div>' + t + '</div>').join('');
+  $('log').innerHTML = CLOG.slice(0, 2).concat(G.log).slice(0, 6).map(t => '<div>' + t + '</div>').join('');
   const gs = G.g || []; $('goalRows').innerHTML = gs.map(g => '<div class="g' + (g.ok ? ' ok' : '') + '"><span>' + (g.ok ? '✓ ' : '') + g.t + '</span></div>').join(''); $('goalN').textContent = gs.filter(g => g.ok).length + '/4';
   $('ecoName').textContent = G.biome.n; $('ecoInfo').textContent = 'Productividad primaria ≈ ' + G.biome.npp + ' g/m²/año · ' + G.biome.temp + ' · ' + G.biome.rain + (colonized[G.biomeKey] ? ' · colonizado ✓' : ''); drawPyramid();
   $('chipTrad').classList.toggle('show', G.phase === 2); $('vTrad').textContent = Math.floor(G.trad) + (G.food ? ' · comida ' + G.food : ''); $('bCiv').classList.toggle('show', G.phase === 2);
@@ -1841,7 +1843,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) autos
 addEventListener('pagehide', autosave);
 pal(); buildMenu(); layout(); requestAnimationFrame(loop);
 window.__e2 = { drawAnimal, ART, bioInfo, Bus, issueOrder, spawn, matchup, speciesInfo, abilityInfo, abLevel, biomeInfo, BMECH, ABL, EN0, select(id) { selId = id; },
-  ui: { get selIds() { return selIds.slice(); }, setSel, orderAt, doOrder, boxSelect, selectSpeciesVisible, setLeader, get leaderOn() { return leaderOn; }, get boxMode() { return boxMode; }, uiTick, UIs, tut, tutNext, tutSkip, tutReset, tutGet, TUT, uiHud, mySel, scr(x, y) { const r = cv.getBoundingClientRect(); return { x: r.left + OX + x * SC, y: r.top + OY + y * SC }; }, get panMode() { return panMode; }, keys }, get selId() { return selId; }, DIFFS, win, lose, useAbility, placeMig, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2, recalcSp: recalc };
+  ui: { clog: () => CLOG.slice(), get selIds() { return selIds.slice(); }, setSel, orderAt, doOrder, boxSelect, selectSpeciesVisible, setLeader, get leaderOn() { return leaderOn; }, get boxMode() { return boxMode; }, uiTick, UIs, tut, tutNext, tutSkip, tutReset, tutGet, TUT, uiHud, mySel, scr(x, y) { const r = cv.getBoundingClientRect(); return { x: r.left + OX + x * SC, y: r.top + OY + y * SC }; }, get panMode() { return panMode; }, keys }, get selId() { return selId; }, DIFFS, win, lose, useAbility, placeMig, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2, recalcSp: recalc };
 /* === AUDIO ===
    Módulo de audio (eras/audio-lofi.js). Solo ESCUCHA: se suscribe al Bus y lee G; no modifica el estado ni usa R()
    (el azar del audio es Math.random dentro del motor). Si el archivo no carga o falla algo, el juego sigue sin sonido.

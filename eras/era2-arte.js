@@ -523,7 +523,7 @@
      seleccionados; sin LOD, los propios y los seleccionados (los salvajes solo si los seleccionás). */
   const SIG = { on: true, info: new Map(), budget: 0, bub: [], seen: new Map(), lastLogG: -1e9, burstT: -1e9, wcache: new Map(), drawn: { danger: 0, starve: 0, hunger: 0, hunt: 0, rest: 0, lay: 0, rep: 0, cold: 0, evo: 0, total: 0 }, frame: 0, ms: 0 };
   const CAUSE_COL = { peligro: '#e0453a', danger: '#e0453a', huida: '#e0453a', hambre: '#e6a21b', comida: '#4aa83a', caza: '#d9534f', ataque: '#d9534f', descanso: '#3f8fd1', energia: '#3f8fd1', repro: '#e070a8', reproduccion: '#e070a8', frio: '#7ab8e8', evolucion: '#f0c33a', info: '#8aa09a' };
-  let getInfo = null, getSelSet = null, logFn = null;
+  let getInfo = null, getSelSet = null, logFn = null, LOGX = null;
   const SCRATCH = { danger: false, starve: false, hungry: false, hunt: false, rest: false, lay: false, rep: false, cold: false, hunger: 100 };
   function cheapFlags(a) { const f = SCRATCH; f.danger = a.st === 'flee'; f.starve = a.hunger <= 0; f.hungry = a.hunger < 30; f.hunt = a.st === 'hunt'; f.rest = a.st === 'rest'; f.lay = a.st === 'lay'; f.rep = false; f.cold = false; f.hunger = a.hunger; return f; }
   function mapInfo(a, I) {
@@ -609,7 +609,7 @@
     if (!a || !a.sp || !txt) return; const G = getG(); if (!G) return; const t = now(), own = a.sp.team === 'player', selSet = getSelSet ? getSelSet() : null, sel = a.id === getSel() || (selSet && selSet.has(a.id));
     txt = String(txt).slice(0, 46); const key = a.id + '|' + txt;
     if (own && logFn) {   // registro: solo animales propios y con el reloj de la simulación; el estado vive en G.x2.arte para que guardar/cargar no cambie nada
-      const X = (G.x2 = G.x2 || {}).arte || (G.x2.arte = { lg: -1e9, seen: {} });
+      const X = (LOGX && LOGX.G === G) ? LOGX : (LOGX = { G, lg: -1e9, seen: {} });
       if (G.t - X.lg >= 2 && !(X.seen[key] > G.t - 6)) { X.lg = G.t; logFn(a, txt, tipo); const ks = Object.keys(X.seen); if (ks.length > 60) for (const k of ks.slice(0, 30)) delete X.seen[k]; }
       X.seen[key] = G.t;
     }
