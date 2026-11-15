@@ -39,6 +39,7 @@ const ok = (c, m) => { assert.ok(c, m); console.log('  ok -', m); };
     // ---- 4. desobediencia por agotamiento y por herida
     { const G = fresh('O4', 'ter_cazador', 'ter'); const a = G.A[0]; a.en = 10; a.rs = false; let dis = null; E.Bus.on('disobey', (x, why) => { if (x === a) dis = dis || why; }); E.issueOrder([a.id], { k: 'move', x: 900, y: 500 }); run(120); out.exh = { dis, ord: !!a.ord };
       const G2 = fresh('O4b', 'ter_cazador', 'ter'); const b2 = G2.A[0]; b2.inj = .8; let dis2 = null; E.Bus.on('disobey', (x, why) => { if (x === b2) dis2 = dis2 || why; }); E.issueOrder([b2.id], { k: 'move', x: 900, y: 500 }); run(120); out.inj = { dis: dis2, ord: !!b2.ord };
+      const G4 = fresh('O4d', 'ter_cazador', 'ter'); const h4 = G4.A[0]; h4.hunger = 4; let dis4 = null; E.Bus.on('disobey', (x, why) => { if (x === h4) dis4 = dis4 || why; }); E.issueOrder([h4.id], { k: 'move', x: 900, y: 500 }); run(120); out.starv = { dis: dis4, ord: !!h4.ord };
       const G3 = fresh('O4c', 'ter_cazador', 'ter'); const c3 = G3.A[0]; let dis3 = null; E.Bus.on('disobey', (x, why) => { if (x === c3) dis3 = dis3 || why; }); E.issueOrder([c3.id], { k: 'move', x: 900, y: 500 }); run(120); out.healthy = { dis: dis3, moved: Math.round(c3.x) }; }
     // ---- 5. feedback causa/consecuencia con límite de frecuencia
     frases.length = 0; for (const k in tipos) delete tipos[k];
@@ -66,6 +67,7 @@ const ok = (c, m) => { assert.ok(c, m); console.log('  ok -', m); };
   ok(r.forage.hadOrd === false && r.forage.eat > 0, 'forage: la orden se borra y el animal hambriento vuelve a comer solo (' + r.forage.eat + ' bocados); antes iba a un punto lejano');
   ok(r.exh.dis === 'agotado', 'desobediencia por agotamiento (energía 10 < 15): ' + JSON.stringify(r.exh));
   ok(r.inj.dis === 'muy herido', 'desobediencia por herida (herida 80 % > 70 %): ' + JSON.stringify(r.inj));
+  ok(r.starv.dis === 'hambriento' && !r.starv.ord, 'desobediencia por hambre (hambre 4 < 8): ' + JSON.stringify(r.starv));
   ok(r.healthy.dis === null && r.healthy.moved > 500, 'un animal sano obedece y camina hasta x = ' + r.healthy.moved);
   ok(r.cz.total > 5 && r.czMine && r.czStr, 'Bus cause: ' + r.cz.total + ' frases cortas, todas de animales propios; tipos: ' + JSON.stringify(r.cz.tipos));
   ok(r.cz.maxNoSelPerSec <= 3, 'límite de frecuencia: con 300 animales, como mucho ' + r.cz.maxNoSelPerSec + ' frases por segundo de animales no seleccionados (tope 3)');

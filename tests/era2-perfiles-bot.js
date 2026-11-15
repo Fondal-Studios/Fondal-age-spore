@@ -1,6 +1,6 @@
 // Perfiles de estrategia de la Era 2 (se inyecta en la página; simula llamando __e2.step(.05), sin dibujar).
 // window.runProfile(o) -> resultado. o: {seed, diff 0|1|2, spec, profile, biome='pradera', maxT=900, abOff:[...ids de habilidades prohibidas], fast:false}
-// Perfiles: razonable (referencia), cazador, defensivo, migrador, enjambre, tactico (habilidades con criterio + órdenes por animal), pasivo.
+// Perfiles: razonable (referencia), cazador, defensivo, migrador, enjambre, habil (solo habilidades con criterio), ordenes (solo órdenes por animal), tactico (ambos), pasivo.
 // El bot usa su PROPIO azar (mulberry32), nunca R() de la simulación, y solo usa la API que tiene un jugador (doLay, placeNest, travel, useAbility,
 // issueOrder, stance, pickEvo...): no toca el estado.
 // Además mide por qué pierde: causas de muerte (Bus 'kill'), reparto de estados, hambre/energía medias, golpes, presas, colapsos.
@@ -13,6 +13,8 @@
     defensivo: { stance: 'defensivo', lay: 8, nests: 3, colPop: 12, ab: 'smart', ord: 'retreat', wEvo: { def: 2, nest: 2, stealth: 1.5, hunt: 0.5 } },
     migrador: { stance: 'forage', lay: 6, nests: 2, colPop: 8, ab: 'smart', ord: 'none', wEvo: { m: 2, cF: 2, search: 2, cold: 1.5, drought: 1.5 }, travelFirst: true },
     enjambre: { stance: 'forage', lay: 2.5, nests: 3, colPop: 8, ab: 'basic', ord: 'none', wEvo: { r: 3, nest: 2, hunt: 0.5 } },
+    habil: { stance: 'forage', lay: 6, nests: 2, colPop: 8, ab: 'smart', ord: 'none', wEvo: {} },   // solo habilidades con criterio de situación y nivel
+    ordenes: { stance: 'forage', lay: 6, nests: 2, colPop: 8, ab: 'basic', ord: 'all', wEvo: {} },   // solo órdenes por animal (fuego concentrado, retirada de heridos, ir a las plantas)
     tactico: { stance: 'forage', lay: 6, nests: 2, colPop: 8, ab: 'smart', ord: 'all', wEvo: {} },
     pasivo: { stance: 'forage', lay: 10, nests: 0, colPop: 1e9, ab: 'none', ord: 'none', wEvo: {}, passive: true }
   };
@@ -23,7 +25,7 @@
     const P = PROF[o.profile || 'razonable'];
     let br = (s => { let a = 0; for (let i = 0; i < s.length; i++) a = (Math.imul(a, 31) + s.charCodeAt(i)) >>> 0; return a || 1; })('bot' + o.seed + o.profile);
     const BR = () => { br = (br + 0x6D2B79F5) >>> 0; let t = br; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-    const H = HOOK = { dc: {}, dl: [], eat: { plant: 0, carc: 0, animal: 0, egg: 0 }, hitMade: 0, hitTaken: 0, miss: 0, kills: 0, exh: 0, rest: 0, dis: 0, ordEnd: 0, ab: {}, born: 0, lay: 0, st: {}, nS: 0, hu: 0, en: 0, hp: 0, inj: 0, tNow: () => E.G && E.G.t };
+    const H = HOOK = { dc: {}, dl: [], eat: { plant: 0, carc: 0, animal: 0, egg: 0 }, hitMade: 0, hitTaken: 0, miss: 0, kills: 0, exh: 0, rest: 0, dis: 0, disWhy: {}, ordEnd: 0, ab: {}, born: 0, lay: 0, st: {}, nS: 0, hu: 0, en: 0, hp: 0, inj: 0, tNow: () => E.G && E.G.t };
     if (!window.__hookOn) {
       window.__hookOn = 1; const B = E.Bus, mine = a => a && a.sp && a.sp.team === 'player' && !a.sp.domestic;
       B.on('kill', (b, src) => { const h = HOOK; if (!h) return; if (mine(b)) { const k = src ? (src.sp.team === 'rival' ? 'rival' : src.sp.team === 'player' ? 'x' : src.sp.boss ? 'jefe' : 'depredador:' + src.sp.key) : (b.lc || (b.hunger <= 0 ? 'hambre' : 'otro')); h.dc[k] = (h.dc[k] || 0) + 1; h.dl.push([Math.round(h.tNow()), k, b.hunger < 25 ? 1 : 0]); if (h.dl.length > 40) h.dl.shift(); } else if (src && mine(src)) h.kills++; });
@@ -32,7 +34,7 @@
       B.on('miss', a => { const h = HOOK; if (h && mine(a)) h.miss++; });
       B.on('exhausted', a => { const h = HOOK; if (h && mine(a)) h.exh++; });
       B.on('rest', a => { const h = HOOK; if (h && mine(a)) h.rest++; });
-      B.on('disobey', a => { const h = HOOK; if (h && mine(a)) h.dis++; });
+      B.on('disobey', (a, why) => { const h = HOOK; if (h && mine(a)) { h.dis++; h.disWhy[why] = (h.disWhy[why] || 0) + 1; } });
       B.on('orderEnd', a => { const h = HOOK; if (h && mine(a)) h.ordEnd++; });
       B.on('ability', (id, m) => { const h = HOOK; if (h) h.ab[id] = (h.ab[id] || 0) + 1; });
       B.on('born', a => { const h = HOOK; if (h && mine(a)) h.born++; });
@@ -74,7 +76,7 @@
       // ---- colonizar
       if (G.phase === 1 && st.pop >= P.colPop && E.colonized()[G.biomeKey] && Object.keys(E.colonized()).length < 2 && !G.nestB) {
         // el jugador elige el ecosistema con más comida para SU hábitat (agua: algas; tierra y vuelo: plantas)
-        let best = null, bs2 = -1; for (const k in E.BIOMES) { if (E.colonized()[k] || k === G.biomeKey) continue; if (k === 'oceano' && !['water', 'amph', 'fly'].includes(G.me.hab)) continue; const B = E.BIOMES[k], food = G.me.hab === 'water' ? B.alg : G.me.hab === 'amph' ? B.plants * .5 + B.alg : B.plants, sc = food * B.grow * (1 + .5 * B.help.filter(id => G.me.traits.includes(id)).length); if (sc > bs2) { bs2 = sc; best = k; } }
+        let best = null, bs2 = -1; if (o.col2 && E.colonized()[G.biomeKey] && !E.colonized()[o.col2] && o.col2 !== G.biomeKey && (o.col2 !== 'oceano' || ['water', 'amph', 'fly'].includes(G.me.hab))) best = o.col2; else for (const k in E.BIOMES) { if (E.colonized()[k] || k === G.biomeKey) continue; if (k === 'oceano' && !['water', 'amph', 'fly'].includes(G.me.hab)) continue; const B = E.BIOMES[k], food = G.me.hab === 'water' ? B.alg : G.me.hab === 'amph' ? B.plants * .5 + B.alg : B.plants, sc = food * B.grow * (1 + .5 * B.help.filter(id => G.me.traits.includes(id)).length); if (sc > bs2) { bs2 = sc; best = k; } }
         if (best && (G.N.filter(n => n.done).length >= Math.min(2, P.nests) || P.travelFirst)) { E.travel(best); M.nTravel++; G = E.G; if (G.modal) G.modal = false; continue; }
       }
       // ---- civilización
@@ -103,7 +105,7 @@
         }
       } else if (abMode === 'smart') {
         // uso con criterio de situación y de nivel: Alarma ANTES del contacto (con depredadores que se acercan), Camuflaje para emboscar o evadir, Excavar herido, Rugido con varios enemigos o jefe
-        const preds = []; for (const b of G.A) { if (b.dead || b.sp.team === 'player' || (b.sp.team === 'wild' && b.sp.diet === 'herb')) continue; let near = 0; for (const m of sample) if (Math.hypot(b.x - m.x, b.y - m.y) < 230) { near++; break; } if (near) preds.push(b); }
+        const preds = []; for (const b of G.A) { if (b.dead || b.sp.team === 'player' || (b.sp.team === 'wild' && b.sp.diet === 'herb')) continue; if (!b.sp.boss && b.st !== 'hunt') continue; let near = 0; for (const m of sample) if (Math.hypot(b.x - m.x, b.y - m.y) < 190) { near++; break; } if (near) preds.push(b); }
         const boss = preds.some(f => f.sp.boss), pw = preds.reduce((s, f) => s + (f.sp.boss ? 8 : 1) * (f.sp.atk || 1) / 6, 0);
         if (preds.length) {
           if (can('ala') && mine.length >= 4 && (pw > mine.length * .2 || boss)) E.useAbility('ala');
@@ -147,6 +149,6 @@
     let loseCause = null;
     if (end !== 'win') { const src = end === 'lose' ? H.dl.slice(-12) : H.dl; const c = {}; for (const [, k, hungry] of src) { c[k] = (c[k] || 0) + 1; } const top = Object.entries(c).sort((a, b) => b[1] - a[1])[0]; loseCause = top ? top[0] : (end === 'lose' ? 'sin registro' : 'sin muertes'); }
     const stSh = {}; let tot = 0; for (const k in H.st) tot += H.st[k]; for (const k in H.st) stSh[k] = Math.round(100 * H.st[k] / tot);
-    return Object.assign({ seed: o.seed, diff: o.diff, spec: o.spec, profile: o.profile, biome: o.biome || 'pradera', end, loseCause, t: Math.round(G.t), phase: G.phase, pop: st.pop, evos: G.evos, nests: st.nests, ncol: Object.keys(E.colonized()).length, avgPop: Math.round(M.popSum / Math.max(1, M.popN)), dc: H.dc, hungryDeaths: H.dl.filter(x => x[2]).length, kills: H.kills, eat: H.eat, hitMade: H.hitMade, hitTaken: H.hitTaken, miss: H.miss, exh: H.exh, rest: H.rest, dis: H.dis, ordEnd: H.ordEnd, abUse: H.ab, born: H.born, lay: H.lay, stSh, avgHu: Math.round(H.hu / ns), avgEn: Math.round(H.en / ns), avgHp: Math.round(100 * H.hp / ns), avgInj: Math.round(100 * H.inj / ns) / 100 }, M);
+    return Object.assign({ seed: o.seed, diff: o.diff, spec: o.spec, profile: o.profile, biome: o.col2 ? (o.biome || 'pradera') + '>' + o.col2 : (o.biome || 'pradera'), biomeEnd: G.biomeKey, end, loseCause, t: Math.round(G.t), phase: G.phase, pop: st.pop, evos: G.evos, nests: st.nests, ncol: Object.keys(E.colonized()).length, avgPop: Math.round(M.popSum / Math.max(1, M.popN)), dc: H.dc, hungryDeaths: H.dl.filter(x => x[2]).length, kills: H.kills, eat: H.eat, hitMade: H.hitMade, hitTaken: H.hitTaken, miss: H.miss, exh: H.exh, rest: H.rest, dis: H.dis, disWhy: H.disWhy, ordEnd: H.ordEnd, abUse: H.ab, born: H.born, lay: H.lay, stSh, avgHu: Math.round(H.hu / ns), avgEn: Math.round(H.en / ns), avgHp: Math.round(100 * H.hp / ns), avgInj: Math.round(100 * H.inj / ns) / 100 }, M);
   };
 })();

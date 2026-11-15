@@ -23,7 +23,7 @@ Colapso: un animal con energía 0 queda aturdido y vuelve con 6 de energía (des
 - `{k:'move', x, y}`: va al punto (14 s de plazo) **sin distraerse**: no come en el camino y **no huye de un depredador normal**; solo el pánico (vida < 30 % o energía < 10 con el depredador a < 105) la cancela. Llega y se libera (frase «Llegó al punto: vuelve a lo automático»).
 - `{k:'attack', tid}`: persigue y ataca a ese animal (30 s). Se cancela si muere, o si se aleja a > 300 (evento `orderEnd`). Rechazada (devuelve 0) si el objetivo no existe o es tuyo.
 - `{k:'forage'}` o `null`: vuelve a lo automático.
-- **Desobediencia**: con pánico (depredador cerca y vida < 30 % o energía < 10), energía < 15 o herida > 0,7, el animal cancela la orden (siempre por pánico; 60 % cada 1,5 s por agotamiento/herida) y emite `disobey(a, 'pánico'|'agotado'|'muy herido'); además pasa a descansar si tiene poca energía.
+- **Desobediencia**: con pánico (depredador cerca y vida < 30 % o energía < 10), energía < 15, herida > 0,7 o **hambre < 8**, el animal cancela la orden (siempre por pánico; 60 % cada 1,5 s por agotamiento/herida) y emite `disobey(a, 'pánico'|'agotado'|'muy herido'|'hambriento'); además pasa a descansar si tiene poca energía.
 - Un animal con orden `attack` ignora el rally, las migraciones y la construcción; huye solo por pánico.
 
 ## 3. Combate legible
@@ -64,6 +64,8 @@ Nivel = 1 + (puntos ≥ 1) + (puntos ≥ 3). Puntos: +1 si la especie es afín, 
 
 Medido en `tests/era2-calidad-sim.js` (mismo animal, misma marcha): energía tras 5 s desierto < pradera < océano; distancia tundra < pradera < océano; curación de heridas selva < pradera.
 
+- **Comida por bioma** (Ciclo 3, medido con partidas completas): `BIOMES[x].plants × grow × promedio estacional` = oferta relativa a la pradera (1): selva ≈ 4, océano (algas) ≈ 2, desierto ≈ 0,45, tundra ≈ 0,6 (con `gmin: .6`, piso de crecimiento invernal: hay liquen bajo la nieve). Antes desierto 0,19 y tundra 0,15 (la razón real de `npp`, 90 y 140 contra 600) con las mismas metas y el mismo hambre: 3-4 % de victorias como segundo ecosistema. `kw` = capacidad de los herbívoros salvajes (desierto 0,4, tundra 0,5): con 26 conejos y 26 escarabajos en 26 plantas se las comían en 60 s. Los salvajes y rivales se reproducen con hambre ≥ 75 (`REPRO_H_WILD`); el umbral de 60 es de tu especie.
+- **Océano**: sin herbívoros terrestres ni tierra. Voladores y anfibios pueden construir en cualquier lugar y, en el océano, el corral cría peces para todas las especies (antes un volador que llegaba a la fase 2 en el océano no podía construir ni domesticar: 0/24 victorias).
 - **Meta de población por nivel trófico** (`popGoal()`): los carnívoros necesitan el 70 % de la meta de población (un depredador vive de presas, que son pocas; los abisales del lago, con ≈ 22 peces, no pasaban de 15-28).
 - **Corral acuícola**: si tu especie construye en el agua (`hab: 'water'`), el corral domestica **peces** (herbívoros acuáticos, r ≥ 4) en vez de herbívoros terrestres; los domésticos acuáticos comen algas. Antes un acuático que llegaba a la fase 2 en el océano (sin herbívoros terrestres) no podía completar la meta.
 

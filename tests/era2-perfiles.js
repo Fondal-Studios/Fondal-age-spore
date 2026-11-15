@@ -1,13 +1,13 @@
 // Balance de la Era 2 por especie x dificultad x perfil x bioma, con causas de derrota. Reproducible con una sola orden:
 //   NODE_PATH=$(npm root -g) node tests/era2-perfiles.js <etiqueta> [--n 2] [--diffs 0,1,2] [--profiles razonable,cazador,...|all] [--specs ter_cazador,...|all]
-//        [--biomes pradera,selva,...] [--maxT 900] [--workers 4] [--html ruta] [--ov '{"1":{"hd":3}}'] [--abOff rug,ala] [--agg]
+//        [--biomes pradera,selva,...] [--col2 selva,desierto,...] [--maxT 900] [--workers 4] [--html ruta] [--ov '{"1":{"hd":3}}'] [--abOff rug,ala] [--agg]
 // n = repeticiones por (especie, dificultad, perfil, bioma); la semilla es 'P<dif><perfil><bioma><especie>#<i>'.
 // Con --agg solo vuelve a imprimir las tablas de tests/.balance-out/<etiqueta>.json. Los bots viven en tests/era2-perfiles-bot.js.
 const { chromium } = require('playwright'); const fs = require('fs'), path = require('path'), cp = require('child_process');
 const OUT = path.join(__dirname, '.balance-out'); fs.mkdirSync(OUT, { recursive: true });
 const ALL_SPECS = ['ter_cazador', 'ter_gigante', 'ter_ingeniero', 'ins_colmena', 'ins_enjambre', 'ins_parasito', 'acu_abisal', 'acu_arrecife', 'acu_anfibio', 'ave_rapaz', 'ave_carronera', 'ave_migratoria'];
 const HAB = { acu_abisal: 'water', acu_arrecife: 'water', acu_anfibio: 'amph', ins_colmena: 'fly', ins_enjambre: 'fly', ins_parasito: 'fly', ave_rapaz: 'fly', ave_carronera: 'fly', ave_migratoria: 'fly' };
-const ALL_PROF = ['razonable', 'cazador', 'defensivo', 'migrador', 'enjambre', 'tactico'];
+const ALL_PROF = ['razonable', 'cazador', 'defensivo', 'migrador', 'enjambre', 'habil', 'ordenes', 'tactico'];
 function parse(argv) { const o = { _: [] }; for (let i = 0; i < argv.length; i++) { const a = argv[i]; if (a.startsWith('--')) { const k = a.slice(2); if (['agg'].includes(k)) o[k] = true; else o[k] = argv[++i]; } else o._.push(a); } return o; }
 const wilson = (k, n) => { if (!n) return [0, 0]; const p = k / n, z = 1.96, d = 1 + z * z / n, c = (p + z * z / 2 / n) / d, h = z * Math.sqrt(p * (1 - p) / n + z * z / 4 / n / n) / d; return [Math.max(0, c - h), Math.min(1, c + h)]; };
 const pc = x => Math.round(100 * x) + '%';
@@ -85,7 +85,8 @@ async function worker(jobFile, i, n, tag) {
   const label = a._[0] || 'perfiles', file = path.join(OUT, label + '.json');
   if (a.agg) { aggregate(JSON.parse(fs.readFileSync(file))); return; }
   const diffs = (a.diffs || '0,1,2').split(',').map(Number), profs = !a.profiles || a.profiles === 'all' ? ALL_PROF : a.profiles.split(','), specsA = !a.specs || a.specs === 'all' ? ALL_SPECS : a.specs.split(','), biomes = (a.biomes || 'pradera').split(','), n = +(a.n || 2), maxT = +(a.maxT || 900), W = +(a.workers || 4);
-  const jobs = []; for (const bio of biomes) for (const d of diffs) for (const pr of profs) for (const sp of specsA) { if (bio === 'oceano' && !HAB[sp]) continue; for (let i = 0; i < n; i++) jobs.push({ seed: 'P' + d + pr + bio + sp + '#' + i, diff: d, spec: sp, profile: pr, biome: bio }); }
+  const col2s = a.col2 ? a.col2.split(',') : [null];   // --col2 selva,tundra...: empieza en el bioma indicado (pradera por defecto) y el 2.º ecosistema que coloniza es ESE (el camino real del jugador: Empezar siempre es en la pradera)
+  const jobs = []; for (const bio of biomes) for (const c2 of col2s) for (const d of diffs) for (const pr of profs) for (const sp of specsA) { if ((bio === 'oceano' || c2 === 'oceano') && !HAB[sp] && c2 === 'oceano') continue; if (bio === 'oceano' && !HAB[sp]) continue; for (let i = 0; i < n; i++) jobs.push({ seed: 'P' + d + pr + bio + (c2 || '') + sp + '#' + i, diff: d, spec: sp, profile: pr, biome: bio, col2: c2 }); }
   // mezcla estable para repartir las partidas largas entre los workers
   jobs.sort((x, y) => (x.seed < y.seed ? -1 : 1)); const jf = path.join(OUT, label + '-jobs.json'); fs.writeFileSync(jf, JSON.stringify({ jobs, maxT, html: a.html || null, ov: a.ov ? JSON.parse(a.ov) : null, abOff: a.abOff ? a.abOff.split(',') : [] }));
   console.log('partidas: ' + jobs.length + ', workers: ' + W); const t0 = Date.now();

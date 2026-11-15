@@ -305,11 +305,13 @@ const ap = (p, fx) => { for (const k in fx) { const [o, v] = fx[k]; p[k] = o ===
 const W = 960, H = 600;
 let LAKE = { x: 730, y: 430, rx: 175, ry: 115 };
 let FOR = [{ x: 150, y: 120, r: 110 }, { x: 290, y: 70, r: 70 }, { x: 70, y: 330, r: 70 }, { x: 420, y: 150, r: 60 }];
+/* Oferta de comida por bioma (plantas x crecimiento x promedio estacional; pradera = 1): con la productividad primaria real (npp 90 / 140 contra 600) el desierto daba 0,19 y la tundra 0,15 de la pradera
+   con las mismas metas y el mismo hambre: 3 % y 4 % de victorias como segundo ecosistema (medido). Se comprimió la razón (≈ raíz cuadrada de npp): desierto ≈ 0,4, tundra ≈ 0,45, selva ≈ 4 (ya jugable, 60 %). `npp` queda como dato científico. */
 const BIOMES = {
   pradera: { n: 'Pradera templada', col: '#b4cf86', seasonal: true, seasons: [0, 1, 2, 3], grow: 1, plants: 55, alg: 24, heat: 1, haz: ['sequia', 'incendio'], boss: true, npp: 600, temp: 'media 12 °C', rain: '600 mm', lake: { x: 730, y: 430, rx: 175, ry: 115 }, forest: [{ x: 150, y: 120, r: 110 }, { x: 290, y: 70, r: 70 }, { x: 70, y: 330, r: 70 }, { x: 420, y: 150, r: 60 }], init: { conejo: 12, ciervo: 5, escarabajo: 12, pez: 12, lobo: 1, lucio: 1 }, help: ['manada', 'garras', 'migracion'], d: 'Pastos, bosque y un lago. Cuatro estaciones y un equilibrio entre herbívoros y depredadores.' },
   selva: { n: 'Selva tropical', col: '#6aa456', seasons: [1, 1, 0, 1], grow: 1.7, plants: 80, alg: 20, heat: 1, haz: ['incendio'], boss: true, npp: 2200, temp: 'media 26 °C', rain: 'más de 2000 mm', lake: { x: 760, y: 400, rx: 120, ry: 80 }, forest: [{ x: 120, y: 100, r: 100 }, { x: 300, y: 80, r: 90 }, { x: 520, y: 110, r: 100 }, { x: 760, y: 90, r: 90 }, { x: 90, y: 330, r: 90 }, { x: 420, y: 260, r: 80 }, { x: 260, y: 480, r: 100 }, { x: 560, y: 520, r: 90 }, { x: 850, y: 250, r: 70 }], init: { conejo: 8, ciervo: 4, escarabajo: 26, pez: 12, lobo: 2, lucio: 1 }, help: ['camuflaje', 'veneno', 'vision'], d: 'La mayor productividad del planeta: muchísima vida, mucho follaje para esconderse y muchos depredadores.' },
-  desierto: { n: 'Desierto', col: '#e3c98f', seasons: [1, 1, 2, 1], grow: .4, plants: 18, alg: 6, heat: 1.18, haz: ['sequia'], boss: false, npp: 90, temp: 'calor extremo de día', rain: 'menos de 250 mm', lake: { x: 780, y: 470, rx: 60, ry: 40 }, forest: [], init: { conejo: 6, ciervo: 2, escarabajo: 14, pez: 4, lobo: 1, lucio: 0 }, help: ['reserva', 'hiber', 'madriguera'], d: 'Poca agua y poco alimento. Sobreviven los que gastan poco, almacenan agua y se refugian del calor.' },
-  tundra: { n: 'Tundra', col: '#dfe9ee', seasons: [3, 3, 0, 3, 1, 3], grow: .55, plants: 26, alg: 10, heat: 1, coldAll: true, snow: true, haz: [], boss: true, npp: 140, temp: 'media −10 °C', rain: 'menos de 300 mm', lake: { x: 700, y: 440, rx: 140, ry: 80 }, forest: [{ x: 200, y: 480, r: 60 }, { x: 480, y: 100, r: 50 }], init: { conejo: 8, ciervo: 6, escarabajo: 0, pez: 6, lobo: 2, lucio: 1 }, help: ['piel', 'sangre', 'hiber'], d: 'Inviernos larguísimos y frío casi todo el año. Resisten la grasa, el pelaje y la sangre caliente.' },
+  desierto: { n: 'Desierto', col: '#e3c98f', kw: .4, seasons: [1, 1, 2, 1], grow: .6, plants: 30, alg: 6, heat: 1.18, haz: ['sequia'], boss: false, npp: 90, temp: 'calor extremo de día', rain: 'menos de 250 mm', lake: { x: 780, y: 470, rx: 60, ry: 40 }, forest: [], init: { conejo: 6, ciervo: 2, escarabajo: 14, pez: 4, lobo: 1, lucio: 0 }, help: ['reserva', 'hiber', 'madriguera'], d: 'Poca agua y poco alimento. Sobreviven los que gastan poco, almacenan agua y se refugian del calor.' },
+  tundra: { n: 'Tundra', col: '#dfe9ee', kw: .5, gmin: .6, seasons: [3, 3, 0, 3, 1, 3], grow: 1, plants: 44, alg: 10, heat: 1, coldAll: true, snow: true, haz: [], boss: true, npp: 140, temp: 'media −10 °C', rain: 'menos de 300 mm', lake: { x: 700, y: 440, rx: 140, ry: 80 }, forest: [{ x: 200, y: 480, r: 60 }, { x: 480, y: 100, r: 50 }], init: { conejo: 8, ciervo: 6, escarabajo: 0, pez: 6, lobo: 2, lucio: 1 }, help: ['piel', 'sangre', 'hiber'], d: 'Inviernos larguísimos y frío casi todo el año. Resisten la grasa, el pelaje y la sangre caliente.' },
   oceano: { n: 'Océano y arrecife', col: '#7cc0e4', seasons: [1, 1, 2, 1], grow: 1.1, plants: 6, alg: 70, heat: 1, haz: [], boss: false, npp: 125, temp: 'media 15 °C', rain: 'no aplica', lake: { x: 480, y: 300, rx: 440, ry: 275 }, forest: [], init: { conejo: 0, ciervo: 0, escarabajo: 0, pez: 34, lobo: 0, lucio: 3 }, help: ['aletas', 'eco', 'alas'], d: 'Mar abierto con algas y cardúmenes. Solo especies acuáticas, anfibias o voladoras pueden vivir acá.' }
 };
 /* ---------- Bus de eventos de la simulación ----------
@@ -487,7 +489,7 @@ const civNear = a => G.B.some(b => b.done && b.k !== 'totem' && hyp(b.x - a.x, b
 const EN0 = 70, ENK = 1.0, enOf = a => a.en == null ? EN0 : a.en;
 /* Reproducción: hambre mínima (REPRO_H) y energía mínima (REPRO_E). Con 75 los animales de crianza lenta (terrestres, repro 20-26) casi nunca estaban listos: medido, la población a los 60 s
    bajaba de 9,8 a 7,5 y Normal pasaba de 54 % a 12 % de victorias en terrestres; con 60 (el umbral que ya tenía el botón Reproducir) vuelve a 9/24. Ver tests/era2-balance.md. */
-const REPRO_H = 60, REPRO_E = 40;
+const REPRO_H = 60, REPRO_E = 40, REPRO_H_WILD = 75;   // el umbral bajo es de TU especie; los salvajes y rivales siguen en 75 (su ritmo es parte del ecosistema que se afinó)
 /* Mecánica propia de cada bioma (multiplicadores; si falta = 1): en = gasto de energía al moverse, rg = recuperación de energía, vs = alcance de la vista,
    sp = velocidad, hl = curación de heridas, hg = hambre, gr = protección del grupo, amb = daño de emboscada en el bosque; mig = los rebaños salvajes migran por estación. */
 const BMECH = {
@@ -642,7 +644,8 @@ function layEgg(a, cost) {
   a.hunger -= cost; a.en = Math.max(0, enOf(a) - 18); a.vul = 8; G.E.push({ x: a.x + rnd(-6, 6), y: a.y + rnd(-6, 6), t: 14, sp: a.sp });
   if (a.sp.team === 'player') { a.st = 'lay'; cz(a, 'lay', 6, 'reproduccion', () => 'Pone un huevo: hambre −' + cost + ', energía −18, vulnerable 8 s'); } Bus.emit('lay', a);
 }
-function capOf(sp) { return sp.team === 'player' ? 40 + 4 * (G ? bdone('refugio').length : 0) : sp.team === 'rival' ? 18 : sp.cap; }
+/* Capacidad de los herbívoros salvajes según la comida del bioma (kw; pradera = 1): con 26 conejos y 26 escarabajos en 26 plantas (desierto) se comían todo en 60 s y tu manada se moría de hambre. */
+function capOf(sp) { return sp.team === 'player' ? 40 + 4 * (G ? bdone('refugio').length : 0) : sp.team === 'rival' ? 18 : sp.diet === 'herb' && G && G.biome && G.biome.kw ? Math.max(sp.min || 1, Math.round(sp.cap * G.biome.kw)) : sp.cap; }
 function herdCenter(sp) { let x = 0, y = 0, n = 0; for (const a of G.A) if (a.sp === sp && !a.dead) { x += a.x; y += a.y; n++; } return n ? { x: x / n, y: y / n } : null; }
 
 function think(a, dt) {
@@ -676,15 +679,15 @@ function think(a, dt) {
   if (ord) {
     ord.t -= dt;
     if (ord.t <= 0) { a.ord = null; ord = null; }
-    else if (panic || a.en < 15 || a.inj > .7) { a.dd = (a.dd || 0) - dt; if (panic || a.dd <= 0) { a.dd = 1.5; if (panic || R() < .6) { const why = panic ? 'pánico' : a.en < 15 ? 'agotado' : 'muy herido'; Bus.emit('disobey', a, why); cz(a, 'dis', 4, 'desobediencia', () => 'Desobedece: ' + (panic ? 'pánico (vida ' + pct(a.hp / a.mhp) + ', energía ' + Math.round(a.en) + ')' : why === 'agotado' ? 'agotado (energía ' + Math.round(a.en) + ' < 15)' : 'muy herido (herida ' + pct(a.inj) + ' > 70 %)')); a.ord = null; ord = null; a.rs = a.en < 40; } } }
+    else if (panic || a.en < 15 || a.inj > .7 || a.hunger < 8) { a.dd = (a.dd || 0) - dt; if (panic || a.dd <= 0) { a.dd = 1.5; if (panic || R() < .6) { const why = panic ? 'pánico' : a.en < 15 ? 'agotado' : a.inj > .7 ? 'muy herido' : 'hambriento'; Bus.emit('disobey', a, why); cz(a, 'dis', 4, 'desobediencia', () => 'Desobedece: ' + (panic ? 'pánico (vida ' + pct(a.hp / a.mhp) + ', energía ' + Math.round(a.en) + ')' : why === 'agotado' ? 'agotado (energía ' + Math.round(a.en) + ' < 15)' : why === 'hambriento' ? 'hambriento (hambre ' + Math.round(a.hunger) + ' < 8)' : 'muy herido (herida ' + pct(a.inj) + ' > 70 %)')); a.ord = null; ord = null; a.rs = a.en < 40; } } }
   }
   if (ord && ord.k === 'attack') { oa = byId(ord.tid); if (!oa || oa.dead || hyp(oa.x - a.x, oa.y - a.y) > 300) { Bus.emit('orderEnd', a, !oa || oa.dead ? 'objetivo derrotado o perdido' : 'se alejó demasiado'); cz(a, 'oe', 4, 'orden', () => !oa || oa.dead ? 'Orden cumplida: el objetivo cayó, vuelve a lo automático' : 'Pierde al objetivo: se alejó más de 300'); a.ord = null; ord = null; oa = null; } }
   const brave = a.hp > a.mhp * .35 && a.en >= 25 && (isP ? (stance === 'attack' || al >= 2 || !!oa) : (sp.diet !== 'herb' && a.hp > a.mhp * .4));
   let gx = null, gy = null, spd = spdOf(a), st = 'idle', tgt = null, tk = null, convoy = false, boost = 1;
   const alL = a.ala > 0 ? (ABD.ala.L[(a.alv || 1) - 1] || ABD.ala.L[0]) : null, ordMove = !!(ord && ord.k === 'move');
-  // Alarma: reaccionan a más distancia (vis); lo que ve uno lo saben todos los alertados del radio (red de aviso) y esos huyen aunque no vean al depredador (hasta vis × 1,6)
-  const fleeD = alL ? 105 * alL.vis * (!threat && a.pan > 0 ? 1.6 : 1) : 105;
-  if (alL && threat && td < 105 * alL.vis) { a.alw = (a.alw || 0) - dt; if (a.alw <= 0) { a.alw = .5; alertWide(a, threat, alL.r); } }
+  // Alarma: ante un depredador que caza reaccionan a más distancia (vis); lo que ve uno lo saben todos los alertados del radio (red de aviso) y esos huyen aunque no lo vean (hasta vis × 1,15)
+  const chasing = !!threat && threat.st === 'hunt', fleeD = alL ? 105 * (chasing || (!threat && a.pan > 0) ? alL.vis * (!threat ? 1.15 : 1) : 1) : 105;   // la alerta solo adelanta la huida ante un depredador que está CASANDO (uno que pasea de largo no los hace dejar de comer)
+  if (alL && chasing && td < 105 * alL.vis) { a.alw = (a.alw || 0) - dt; if (a.alw <= 0) { a.alw = .5; alertWide(a, threat, alL.r); } }
   const fleeing = thr && tdist < fleeD && !(ordMove && !panic) && (sp.flee || (isP && !brave && stance !== 'attack' && !oa) || (isP && panic) || (team === 'rival' && !brave && sp.diet === 'herb'));
   // ---- descanso de verdad: sin amenaza, sin hambre y con poca energía
   if (a.rs) { if (a.en >= 75 || (a.hunger < 40 && !(a.giv > 0)) || threat) a.rs = false; }
@@ -738,7 +741,7 @@ function think(a, dt) {
         gx = null;
       } else { gx = tgt.x; gy = tgt.y; st = tk === 'plant' ? 'forage' : 'hunt'; }
     }
-    if (!tgt && gx === null && st !== 'rest' && a.hunger >= REPRO_H && a.en >= REPRO_E && a.age >= MAT && a.rc <= 0 && a.inj <= .5 && !(a.vul > 0)) {
+    if (!tgt && gx === null && st !== 'rest' && a.hunger >= (isP ? REPRO_H : REPRO_H_WILD) && a.en >= REPRO_E && a.age >= MAT && a.rc <= 0 && a.inj <= .5 && !(a.vul > 0)) {
       if (count(sp) + eggCount(sp) < capOf(sp)) { layEgg(a, 32); a.rc = (sp.repro * 2.2 / p.r) * rnd(.8, 1.2) * (team !== 'player' ? 1 + .6 * (X2().scar || 0) : 1); }
       else a.rc = 4;
     }
@@ -806,7 +809,7 @@ function update(dt) {
   { const mg = G.x2 && G.x2.mg; if (mg) for (const k in mg) { mg[k].t -= dt; if (mg[k].t <= 0) delete mg[k]; } } updScarcity(dt);
   for (const r of G.rings) r.t -= dt; if (G.rings.length) G.rings = G.rings.filter(r => r.t > 0);
   if (!G.bossDone && G.biome.boss && G.t > 140) { G.bossDone = true; const o = G.sp.oso; const q = randPos(o, 30, 300, 20); spawn(o, q.x, q.y, false); toast('¡Llegó un oso gigante! Reuní a tu manada o evitalo.', true); logMsg('Un oso gigante entró al valle.'); }
-  const grow = SEAS[G.season].g * (G.ev && G.ev.k === 'sequia' ? 0 : 1) * DF().grow * G.biome.grow;
+  const grow = Math.max(SEAS[G.season].g, G.biome.gmin || 0) * (G.ev && G.ev.k === 'sequia' ? 0 : 1) * DF().grow * G.biome.grow;   // gmin: piso de crecimiento invernal (en la tundra hay liquen y arbustos bajo la nieve)
   for (const pl of G.plants) if (pl.v < 1) pl.v = Math.min(1, pl.v + .008 * grow * dt + .0004 * dt);
   for (const f of G.F) f.t -= dt; G.F = G.F.filter(f => f.t > 0);
   for (const c of G.C) { c.t -= dt; if (c.t <= 0) c.dead = true; } G.C = G.C.filter(c => !c.dead);
@@ -874,7 +877,7 @@ function civUpdate(dt) {
       if (b.t >= 12) {
         b.t = 0; const mine = G.A.filter(a => a.corral === b && !a.dead);
         if (mine.length < 5) {
-          const aq = G.me.hab === 'water', w = nearest(G.A, b.x, b.y, b.r + 220, a => a.sp.team === 'wild' && a.sp.diet === 'herb' && a.sp.hab === (aq ? 'water' : 'land') && a.sp.r >= (aq ? 4 : 5) && a.sp.r <= 10 && !a.sp.boss);   // los acuáticos construyen en el agua: su ganado son peces (acuicultura)
+          const aq = G.me.hab === 'water' || G.biomeKey === 'oceano', w = nearest(G.A, b.x, b.y, b.r + 220, a => a.sp.team === 'wild' && a.sp.diet === 'herb' && a.sp.hab === (aq ? 'water' : 'land') && a.sp.r >= (aq ? 4 : 5) && a.sp.r <= 10 && !a.sp.boss);   // los acuáticos (y todos en el océano, que no tiene herbívoros de tierra) crían peces (acuicultura)
           if (w) { domesticate(w, b); logMsg('Un ' + w.sp.n.toLowerCase().replace(/s$/, '') + ' fue domesticado en el corral.'); }
           else if (mine.length >= 2) { b.b = (b.b || 0) + 1; if (b.b % 2 === 0) { const q = spawn(mine[0].sp, b.x + rnd(-20, 20), b.y + rnd(-20, 20), true); q.corral = b; } }
         }
@@ -886,7 +889,7 @@ function placeBuilding(kind, w) {
   const d = BLD[kind], x = clamp(w.x, 30, W - 30), y = clamp(w.y, 30, H - 30);
   if (G.B.filter(b => b.k === kind).length >= d.max) { toast('Máximo de ' + d.n.toLowerCase() + 's alcanzado.'); setMode(null); return; }
   if (G.nestB || G.bB) { toast('Ya hay una construcción en marcha.'); setMode(null); return; }
-  if (G.me.hab === 'water' ? !isWater(x, y) : isWater(x, y)) { toast(G.me.hab === 'water' ? 'Construí dentro del agua.' : 'Construí en tierra firme.'); return; }
+  const hb = G.me.hab; if (hb === 'water' ? !isWater(x, y) : hb === 'land' ? isWater(x, y) : false) { toast(hb === 'water' ? 'Construí dentro del agua.' : 'Construí en tierra firme.'); return; }   // voladores y anfibios construyen donde quieran (en el océano no hay tierra)
   if (G.trad < d.cost) { toast('Falta Tradición: ' + d.n + ' cuesta ' + d.cost + ' (tenés ' + Math.floor(G.trad) + ').'); setMode(null); return; }
   G.trad -= d.cost; const b = { k: kind, x, y, prog: 0, work: 0, done: false, r: d.r }; G.B.push(b); G.bB = b; setMode(null);
   logMsg('Empezaron a construir: ' + d.n.toLowerCase() + '.'); toast('Construyendo ' + d.n.toLowerCase() + ': mirá el anillo de progreso.');
@@ -936,7 +939,7 @@ const ABD = {
     L: [{ cd: 35, en: 8, t: 6 }, { cd: 32, en: 8, t: 8 }, { cd: 30, en: 10, t: 10 }] },
   ala: { n: 'Alarma', d: 'Da el aviso a los aliados cercanos: ven el peligro desde más lejos, huyen más rápido y el enemigo pierde la ventaja de la sorpresa.', ring: ['230,70,70', '240,110,60', '255,200,70'],
     // t = segundos en alerta; vis = ×distancia a la que reaccionan al depredador (105 normal); fl = ×velocidad al huir; def = daño que no reciben; pw = bonus de ataque (nivel 2+)
-    L: [{ cd: 30, en: 8, r: 210, def: .15, t: 8, vis: 1.4, fl: 1.15, pw: 0 }, { cd: 28, en: 8, r: 260, def: .2, t: 10, vis: 1.5, fl: 1.25, pw: .1 }, { cd: 25, en: 10, r: 320, def: .25, t: 12, vis: 1.6, fl: 1.35, pw: .2 }] },
+    L: [{ cd: 35, en: 4, r: 210, def: .15, t: 8, vis: 1.4, fl: 1.15, pw: 0 }, { cd: 32, en: 4, r: 260, def: .2, t: 10, vis: 1.5, fl: 1.25, pw: .1 }, { cd: 28, en: 5, r: 320, def: .25, t: 12, vis: 1.6, fl: 1.35, pw: .2 }] },
   mig: { n: 'Migrar', d: 'Tocá el mapa: el grupo corre hacia ahí sin gastar energía y, si llega a un buen lugar, come y se recupera.', ring: ['63,143,209', '63,190,220', '120,230,255'],
     L: [{ cd: 30, en: 6, t: 5, v: 1.6, arr: 12 }, { cd: 28, en: 6, t: 6, v: 1.9, arr: 20 }, { cd: 26, en: 6, t: 8, v: 2.2, arr: 28 }] }
 };
