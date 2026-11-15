@@ -52,3 +52,6 @@ Las cifras científicas (productividad por bioma, tamaños de banda, etc.) son a
 
 ## Ciclo 3 (estabilización)
 Informe completo en `docs/CICLO3.md`; plan Era 3 en `docs/ERA3-PLAN.md`; CI en `docs/CI.md`; escucha humana en `docs/ESCUCHA.md`; lanzamiento/monetización en `docs/MONETIZACION.md`. Reglas nuevas: el registro de causas (`CLOG`) y cualquier estado que dependa de la selección NO va en `G` (rompe el hash); la Era 2 emite `Bus.emit('cause', animal, texto, tipo)`; el audio NO está aprobado hasta una escucha humana.
+
+## Ciclo 4 · Era 3 como juego de estrategia
+La Era 3 se **administra** (prioridades de comida/construcción/defensa/exploración/saber, oficios fijados, obras por etapas con mejoras de nivel, diplomacia con dos clanes de personalidad distinta). Contrato del Bus, datos para la interfaz (`tribeInfo`, `rivalInfo`, `buildingInfo`, `roleInfo`) y reglas: `docs/ERA3-ACCIONES.md`. Estado nuevo solo en `G.x3` (JSON, con valores por defecto en `ensureX3`); el mundo de clanes usa `mkRng` local; los suscriptores del Bus no mutan `G`. Pruebas: `tests/era3-ciclo.js` (circuito, decisiones, rivales, Bus, partida vieja `tests/fixtures/era3-save-v1-base.json`), balance con perfiles de bot `tests/era3-ciclo-run.js` (ver `tests/era3-balance.md`).
