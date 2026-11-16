@@ -61,3 +61,13 @@ Medir si un jugador nuevo comprende qué controla, qué necesita su especie o tr
 
 ## Cómo se usan los resultados
 Cada hallazgo repetido en ≥2 personas se convierte en un problema con evidencia (cita + código de participante) en `docs/DEVOLUCION_CHATGPT.md`. Los tiempos y comprensión se informan con N=5 como indicio, nunca como estadística.
+
+## Registro de pruebas reales
+
+### 2026-11-16 · Dueño del proyecto (N=1, no es jugador nuevo; dispositivo no informado)
+Comentario textual: «La era 1 está buenísima. La era 2 se vuelve algo aburrida. Los animales acuáticos están muy limitados por su entorno. La era 3 no la jugué: no me gustaron nada los gráficos ni la representación con personas, ya que no sigue a tu animal evolucionado. La idea es seguir la vida desde el inicio hasta el final».
+Respuestas a preguntas cerradas:
+- Era 3: «Tu especie es la tribu» (los habitantes son tu animal de la Era 2, viviendas según la clase).
+- Por qué aburre la Era 2: «Evolucionar no se siente» y «Mucho caos en pantalla».
+- Acuáticos: «Poder salir del agua» (de pez a anfibio a terrestre).
+Decisiones derivadas (Ciclo 4): Era 3 rehecha con la especie del jugador; Era 2 con evolución visible y menos ruido visual; acuáticos con transición a tierra. No reemplaza la sesión con 5 jugadores nuevos, que sigue pendiente.
