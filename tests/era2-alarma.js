@@ -21,6 +21,7 @@ const ok = (c, m) => { assert.ok(c, m); console.log('  ok -', m); };
       const cx = modo === 'bosque' ? 420 : 400, cy = modo === 'bosque' ? 260 : 300;   // en el centro del mapa (lejos de los bordes, donde la huida se vuelve trampa)
       G.A.forEach((a, i) => { const ang = i * 2.4 + (G.id % 7), r = 20 + (i * 37) % 70; a.x = cx + Math.cos(ang) * r; a.y = cy + Math.sin(ang) * r; a.hunger = 85; a.en = 90; a.rs = false; });
       const wolf = G.sp.lobo; wolf.traits = ['camuflaje']; E.TRAITS; if (E.recalcSp) E.recalcSp(wolf);
+      if (modo === 'nido') G.N.push({ x: cx - 100, y: cy, prog: 1, work: 0, done: true });   // Ciclo 4: con nido a 100 px los animales corren ahí y nadie puede atacarlos
       if (modo === 'oso') { const o = G.sp.oso; E.spawn(o, cx + 130, cy + 20, false).life = 1e9; }
       else for (let i = 0; i < 5; i++) { const w = E.spawn(wolf, cx + 150 + i * 10, cy + 10 + i * 14, false); w.hunger = 25; }
       G.A.forEach(a => { a.id; });
@@ -52,7 +53,7 @@ const ok = (c, m) => { assert.ok(c, m); console.log('  ok -', m); };
       return { surv: stat(dS), hp: stat(dH), casts };
     };
     // 1) por especie afín y modo (nivel por defecto de cada especie)
-    for (const [spec, cls] of [['ave_migratoria', 'ave'], ['ins_colmena', 'ins'], ['ter_cazador', 'ter'], ['ter_ingeniero', 'ter']]) for (const modo of ['bosque', 'abierto', 'oso']) out[spec + '/' + modo] = pair(spec, cls, modo, 0, 30);
+    for (const [spec, cls] of [['ave_migratoria', 'ave'], ['ins_colmena', 'ins'], ['ter_cazador', 'ter'], ['ter_ingeniero', 'ter']]) for (const modo of ['bosque', 'abierto', 'nido', 'oso']) out[spec + '/' + modo] = pair(spec, cls, modo, 0, 30);
     // 2) por componente (ave migratoria, bosque): se anula uno por vez
     const comp = {
       completa: null,
@@ -75,7 +76,7 @@ const ok = (c, m) => { assert.ok(c, m); console.log('  ok -', m); };
   console.log('Por nivel (ave_migratoria, bosque): nivel 1: ' + f(res.lv1.surv) + ' | nivel 3: ' + f(res.lv3.surv));
   const sig = k => res[k].surv.mean - res[k].surv.ci > 0 || res[k].hp.mean - res[k].hp.ci > 0;
   const sigList = Object.keys(res).filter(k => k.includes('/') && sig(k));
-  ok(sigList.length >= 4, 'Alarma tiene efecto positivo con intervalo de confianza que excluye el 0 (sobrevivientes o vida) en ' + sigList.length + ' de 12 escenarios: ' + sigList.join(', '));
+  ok(sigList.length >= 4, 'Alarma tiene efecto positivo con intervalo de confianza que excluye el 0 (sobrevivientes o vida) en ' + sigList.length + '' + ' de ' + Object.keys(res).filter(k => k.includes('/')).length + ' escenarios: ' + sigList.join(', '));
   ok(Object.keys(res).filter(k => k.includes('/')).every(k => res[k].surv.mean - res[k].surv.ci <= 0 || res[k].surv.mean > 0), 'ningún escenario donde la Alarma perjudique de forma significativa');
   ok(res.info.every(r => r[4]), 'abilityInfo describe el efecto en los 3 niveles');
   ok(errs.length === 0, '0 errores de consola');
