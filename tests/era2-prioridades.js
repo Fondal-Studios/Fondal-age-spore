@@ -28,7 +28,7 @@ function inPage(o) {
   const warm = o.warm || 40;
   const step = () => { E.step(.05); if (E.G.modal) E.G.modal = false; };
   for (let i = 0; i < warm * 20; i++) step();   // calentamiento (sin medir): la manada se acomoda
-  if (o.threat) { const m = G.A.filter(a => a.sp === G.me && !a.dead); let cx = 0, cy = 0; for (const a of m) { cx += a.x; cy += a.y; } cx /= m.length; cy /= m.length; for (let k = 0; k < o.threat; k++) { const q = E.spawn(G.sp.lobo, cx + 110 + (k % 3) * 14, cy + (k >> 1) * 12 - 10, false); q.hunger = 30; } }
+  if (o.threat && G.A.some(a => a.sp === G.me && !a.dead)) { /* si la manada ya se extinguió en el calentamiento no hay a quién amenazar */ const m = G.A.filter(a => a.sp === G.me && !a.dead); let cx = 0, cy = 0; for (const a of m) { cx += a.x; cy += a.y; } cx /= m.length; cy /= m.length; for (let k = 0; k < o.threat; k++) { const q = E.spawn(G.sp.lobo, cx + 110 + (k % 3) * 14, cy + (k >> 1) * 12 - 10, false); q.hunger = 30; } }
   const pop0 = E.stats().pop; Object.keys(H).forEach(k => H[k] = 0);
   for (let i = 0; i < o.T * 20; i++) { step(); if (i % 20 === 0) sample(); if (E.G.over) break; }
   const popEnd = E.stats().pop, ns = Math.max(1, S.n), as = Math.max(1, S.aSec);
@@ -51,7 +51,7 @@ async function worker(jobs, i, n, out) {
   const b = await chromium.launch(); const p = await b.newPage(); const errs = [];
   p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/font|ERR_|Failed to load/i.test(m.text())) errs.push(m.text()); });
   await p.goto('file://' + HTML);
-  for (let k = i; k < jobs.length; k += n) { const j = jobs[k]; out[k] = await p.evaluate(`(${inPage.toString()})(${JSON.stringify(j)})`); }
+  for (let k = i; k < jobs.length; k += n) { const j = jobs[k]; try { out[k] = await p.evaluate(`(${inPage.toString()})(${JSON.stringify(j)})`); } catch (e) { errs.push(j.key + ': ' + String(e.message).slice(0, 300)); out[k] = null; await p.goto('file://' + HTML); } }
   await b.close(); return errs;
 }
 (async () => {
@@ -61,7 +61,7 @@ async function worker(jobs, i, n, out) {
   for (const spec of SPECS) for (let s = 0; s < 3; s++) { jobs.push({ spec, cls: SPEC_CLS[spec], seed: 'COMPAT' + spec + '#' + s, prio: null, T: 60, threat: 0, warm: 20, key: [spec, 'compat', 'none', s].join('|') }); jobs.push({ spec, cls: SPEC_CLS[spec], seed: 'COMPAT' + spec + '#' + s, prio: { comida: 1, reproduccion: 1, expansion: 1, defensa: 1, exploracion: 1 }, T: 60, threat: 0, warm: 20, key: [spec, 'compat', 'unos', s].join('|') }); jobs.push({ spec, cls: SPEC_CLS[spec], seed: 'COMPAT' + spec + '#' + s, prio: { comida: 2, reproduccion: 0, expansion: 2, defensa: 0, exploracion: 2 }, T: 60, threat: 0, warm: 20, key: [spec, 'compat', 'mix1', s].join('|') }); jobs.push({ spec, cls: SPEC_CLS[spec], seed: 'COMPAT' + spec + '#' + s, prio: { comida: 2, reproduccion: 0, expansion: 2, defensa: 0, exploracion: 2 }, T: 60, threat: 0, warm: 20, key: [spec, 'compat', 'mix2', s].join('|') }); }
   const res = new Array(jobs.length), t0 = Date.now(); console.log('escenarios: ' + jobs.length + ' (N = ' + N + ' semillas por celda, ' + T + ' s de juego, especies ' + SPECS.join(',') + ')');
   const errs = (await Promise.all(Array.from({ length: WK }, (_, i) => worker(jobs, i, WK, res)))).flat();
-  const R = {}; jobs.forEach((j, k) => { R[j.key] = res[k]; });
+  const R = {}; jobs.forEach((j, k) => { R[j.key] = res[k]; }); const nErr = res.filter(x => !x).length; if (nErr) console.log('AVISO: ' + nErr + ' escenario(s) con error de página, excluidos de las tablas (con su par): ' + errs.slice(0, 3).join(' || '));
   let fail = 0; const ok = (c, t) => { console.log((c ? 'OK   ' : 'FALLA ') + t); if (!c) fail++; };
   console.log('listo en ' + Math.round((Date.now() - t0) / 1000) + ' s; errores de página: ' + errs.length);
   // compatibilidad y determinismo
@@ -73,8 +73,8 @@ async function worker(jobs, i, n, out) {
     for (const lv of [0, 2]) {
       console.log('### nivel ' + lv + ' (' + (lv ? 'alta' : 'baja') + ') contra normal (1): diferencia pareada media ± IC95 [mejora/empeora de ' + N * SPECS.length + ']');
       for (const [k, lab, sg, tipo] of METRICS[pk].m) {
-        const d = []; for (const spec of SPECS) for (let s = 0; s < N; s++) { const a = R[[spec, pk, lv, s].join('|')], b = R[[spec, pk, 1, s].join('|')]; d.push(a[k] - b[k]); }
-        const st = stat(d), base = SPECS.flatMap(spec => Array.from({ length: N }, (_, s) => R[[spec, pk, 1, s].join('|')][k])), bm = base.reduce((x, y) => x + y, 0) / base.length;
+        const d = []; for (const spec of SPECS) for (let s = 0; s < N; s++) { const a = R[[spec, pk, lv, s].join('|')], b = R[[spec, pk, 1, s].join('|')]; if (a && b) d.push(a[k] - b[k]); }
+        const st = stat(d), base = SPECS.flatMap(spec => Array.from({ length: N }, (_, s) => R[[spec, pk, 1, s].join('|')]).filter(Boolean).map(x => x[k])), bm = base.reduce((x, y) => x + y, 0) / base.length;
         const sig = Math.abs(st.mean) > st.ci; summary.push({ pk, lv, k, lab, tipo, mean: st.mean, ci: st.ci, sig, sg });
         console.log('- [' + tipo + '] ' + lab + ': normal ' + r2(bm) + ' → ' + r2(bm + st.mean) + ' (Δ ' + (st.mean >= 0 ? '+' : '') + r2(st.mean) + ' ± ' + r2(st.ci) + (sig ? (st.mean * sg > 0 ? ', MEJOR' : ', PEOR') + ' para el jugador' : ', sin efecto distinguible') + '; mejora ' + st.better + ' / empeora ' + st.worse + ')');
       }

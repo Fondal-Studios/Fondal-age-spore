@@ -1,6 +1,6 @@
 # Equilibrio de la Era 2 (medido con bots)
 
-> **Ciclo 3 (jugabilidad/simulación)**: esta sección es la vigente. Las secciones de más abajo («Cómo se midió» original, «Calidad 2.0», etc.) son el historial: sus cifras se midieron con código anterior y **ya no valen**. Todo lo de esta sección se midió con el código de la rama `worktree-agent-a10380960df1aac86` (commits `3f6bb05` y `eb51077` y siguientes); las partidas son reproducibles (semilla por celda).
+> **Vigente: §12 (Ciclo 4, módulo balance/simulación)**; las cifras de §1-§11 se midieron con código anterior. **Ciclo 3 (jugabilidad/simulación)**: esta sección era la vigente. Las secciones de más abajo («Cómo se midió» original, «Calidad 2.0», etc.) son el historial: sus cifras se midieron con código anterior y **ya no valen**. Todo lo de esta sección se midió con el código de la rama `worktree-agent-a10380960df1aac86` (commits `3f6bb05` y `eb51077` y siguientes); las partidas son reproducibles (semilla por celda).
 
 ## Cómo reproducir (una sola orden por cosa)
 ```
@@ -241,6 +241,85 @@ Con el código del Ciclo 4 **no se reproduce que sean las especies más débiles
 ### 11.4 Verificaciones del Ciclo 4
 `tests/era2-guardado.js` OK (mismo hash con la misma semilla; el guardado viejo carga), `tests/era2-ordenes.js` OK (mismo hash con y sin selección), `tests/era2-calidad-sim.js` con `CI_NO_FPS=1` OK (incluye 3.º guardado viejo; fps medido igual 43,3 con 558 animales). El cambio es solo de constantes de bioma (`plants`, `gmin`, `hsave`) y del costo de Rugido: los guardados viejos conservan sus plantas y siguen cargando; no se agregó estado nuevo.
 **NO resuelto**: perfil defensivo débil en tundra y pradera; desierto 13 %; Alarma/Excavar/Migrar siguen sin utilidad demostrada en partidas completas; todo es con bots (sin personas); Rugido y tundra se calibraron con la dificultad Normal, Difícil solo se midió para Rugido.
+
+---
+## 12. Ciclo 4, módulo balance/simulación: prioridades, identidad de clase, habilidades rediseñadas, rasgos
+Línea base = commit `34505c5` (copia `eras/_base.html`, no commiteada); después = código de esta rama. Todas las comparaciones son **pareadas por semilla** (mismas semillas `P<dif><perfil><bioma><especie>#<i>` antes y después; `tests/era2-comparar.js`), IC95 de Wilson por celda y IC95 de la diferencia pareada. Perfiles: los 8 de siempre, salvo donde se indica. Tope 700 s. Documentos: `docs/ERA2-CLASES.md`, `docs/ERA2-HABILIDADES.md`, `docs/ERA2-PRIORIDADES.md`, `docs/ERA2-RASGOS.md`.
+Reproducir: `node tests/era2-perfiles.js <etiqueta> --n 3 --diffs 1 --profiles all` (después) y lo mismo con `--html eras/_base.html` sobre una copia de `git show 34505c5:eras/era2-animales.html` (antes); `node tests/era2-comparar.js <antes> <después> --by clase,perfil,especie`; métricas de identidad: `node tests/era2-clases-agg.js <etiqueta>`.
+
+### 12.1 Dificultad (todas las clases)
+Las habilidades rediseñadas y las identidades subieron las victorias (Normal, mismo hambre: 54 % → 68 %, N = 288). Se recalibró el hambre propia: **Normal hd 3,3 → 3,8; Difícil 3,4 → 4,0** (Fácil sin cambios).
+
+| Dificultad | Antes | Después | Diferencia pareada |
+| --- | --- | --- | --- |
+| Normal (N = 288) | 155/288 = 54 % [48-60] | 61 % [55-66] | +6,6 ± 6,7 |
+| Difícil (N = 288) | 25 % [20-30] | 28 % [24-34] | +3,5 ± 6,4 |
+| Fácil (N = 96) | 97 % [91-99] | 99 % [94-100] | +2,1 ± 2,9 |
+
+Metas del Ciclo 3 (≥ 70 / 40-60 / 15-35): se cumplen las tres; Normal queda en el borde alto (61 %). **Difícil por clase** (N = 72): insectos 15 → 46 % (+31 ± 13), terrestres 24 → 18 %, acuáticos 21 → 24 %, aves 40 → 26 % (−14 ± 13): en Difícil los insectos quedan arriba y el rango entre clases es 28 puntos (antes 25): **no mejoró**. Por perfil, Normal: el **defensivo** pasa de 19 % a 56 % (+36 ± 19: la actitud Reunir ahora es Defensa alta con formación), migrador 67 → 81 %, el resto dentro del ruido.
+
+### 12.2 Clases (Normal, 8 perfiles, N = 72 por clase, pareadas)
+**Causa de la ventaja de las aves** (código base): comen plantas de tierra **y** algas, ven 200-220, vuelan a 88-95 y no pagaban el vuelo; comida por animal-segundo 10,1 contra 7,3-8,5. Ablación en el código base (razonable, 3 aves, N = 36): sin algas 22/36, vista 150 29/36, sin esquiva 30/36, base 26/36: **ninguna de las tres por separado mueve la victoria fuera del ruido** (±14). La ventaja aparecía sobre todo en perfiles «activos» (cazador, defensivo, órdenes, táctico: aves 20/36 contra insectos 6/36 y acuáticos 7/36): volar es escapar. No se encontró una causa única: se agregó un **costo de vuelo** (+8 % de hambre, +15 % de energía al moverse; con +12 %/+20 % las aves cayeron a 60 % en Normal y 18 % en Difícil y se recortó).
+
+| Clase | Antes | Después | Δ pareada | Métrica de identidad (antes → después) |
+| --- | --- | --- | --- | --- |
+| Terrestres | 58 % [47-69] | 69 % [58-79] | +11,1 ± 16,6 | carroña = 50 % de la comida; colapsos/partida 11,9 → 8,0; extinción 33 → 15 % |
+| Insectos | 47 % [36-59] | 58 % [47-69] | +11,1 ± 9,9 | nacimientos/animal-s ×100 1,8 (otros 0,6-0,9), población máxima 26,5 → 35,8, muertes/animal-s 1,7 (las más altas: frágiles); hambre/s 3,3 (otros 4,8-5,7) |
+| Acuáticos | 39 % [28-50] | 46 % [35-57] | +6,9 ± 14,1 | 71 % del tiempo en el agua; golpes recibidos/animal-s 3,1 → 2,6 |
+| Aves | 72 % [61-81] | 69 % [58-79] | −2,8 ± 12,2 | hambre/s 4,85 (terrestres 5,7 por tamaño); comida/animal-s 10,1 → 9,2 |
+| **Rango entre clases** | **33 puntos** (39-72) | **23 puntos** (46-69) | | |
+
+Por especie (N = 24, ±20 por celda): `ter_ingeniero` 38 → 92 % (+54 ± 20; omnívoro + carroña + resistencia: el mayor salto, no se separó qué parte pesa), `acu_arrecife` 50 → 88 %, `ave_rapaz` 92 → 75 %, `ter_cazador` 71 → 50 %, `acu_anfibio` 38 → 25 % (71 % de extinción), `acu_abisal` 29 → 25 % (lento: la mayoría «sin terminar» a 700 s, no extinto), `ins_colmena` 33 → 33 %.
+**Ablación de las identidades** (razonable + hábil, N = 24 por clase, código intermedio): sin ninguna identidad ter 96 / ins 92 / acu 63 / ave 96 %; con identidades 83 / 100 / 71 / 79 %: el costo de vuelo baja a las aves (−17) y la colonia y el agua suben a insectos y acuáticos; la subida general vino de las habilidades, no de las clases.
+**No resuelto**: Difícil por clase (ver 12.1); los anfibios siguen siendo la especie más débil; la cobertura del mapa de las aves (77 celdas) no supera a la de los terrestres (88): la «exploración superior» no se ve en esa métrica, solo en vista y comida por animal-segundo.
+
+### 12.3 Biomas (Normal; perfiles razonable, hábil y migrador)
+**Ablación del desierto** (empezando ahí, razonable, 12 especies x 4, N = 48, código nuevo antes de tocar el bioma, una palanca por vez): base 23/48; plantas ×2 34/48; crecimiento ×2 27/48; sin sequía 23/48; sin calor (+18 % de hambre) 29/48; sin el +30 % de energía 27/48. La comida es la palanca; el resto, ruido. **Cambio**: desierto `plants` 30 → 40 y `hsave` .08 (como la tundra: reserva, hibernación y madriguera bajan 8 % el hambre cada una, hasta 3; premia elegir rasgos de desierto); tundra `plants` 60 → 68. No se corrió la ablación de la tundra (la del §11 ya mostró que la comida es la causa).
+
+| | Antes | Después | Δ pareada |
+| --- | --- | --- | --- |
+| Pradera → desierto (camino real, N = 72) | 21 % [13-32] | 28 % [19-39] | +6,9 ± 8,0 |
+| Pradera → tundra (camino real, N = 72) | 17 % [10-27] | 31 % [21-42] | +13,9 ± 12,9 |
+| Empezar en desierto (N = 58 pareadas) | 22 % [14-35] | 47 % [34-59] | +24,1 ± 14,6 |
+| Empezar en tundra (N = 47 pareadas) | 38 % [26-53] | 53 % [39-67] | +14,9 ± 15,6 |
+| Empezar en pradera (referencia, código intermedio) | — | 79 % [68-87] | — |
+
+`tests/era2-biomas.js` (protocolo del §11: razonable, defensivo, migrador, táctico; N = 48, océano 36), código final: pradera 34/48 = 71 %, selva 20/48 = 42 %, **desierto 17/48 = 35 %** (§11: 13 %), **tundra 22/48 = 46 %** (§11: 33 %), océano 28/36 = 78 % (§11: 67 %).
+
+Las corridas «empezar en» se cortaron por un reinicio de la máquina (105 de 144 partidas). Las de bioma se midieron con hd 3,8 y el costo de vuelo/colonia anterior al último recorte (aves +12 %/+20 %, insectos 28 %): diferencia chica, no se repitió. El desierto sigue siendo el bioma más duro.
+
+### 12.4 Habilidades (perfil `habil`, Normal, 12 especies, N = 96 por condición)
+Primera medición del rediseño (Excavar 8/12/16 s y −65 % de hambre, N = 72): todas 89 %, ninguna 50 %, sin Rugido 82 %, sin Camuflaje 74 %, **sin Excavar 74 %**, sin Alarma 89 %, **sin Migrar 76 %**: Excavar y Migrar pasan de «indistinguibles de 0» a +13/+15 puntos, el bot pasaba 15 % del tiempo enterrado → Excavar se recortó a 6/9/12 s y −50 %. Con el recorte (N = 96): todas 86 % [78-92], ninguna 51 %, sin Excavar 74 % (pareado: todas solo gana 14, sin Excavar solo gana 2), sin Alarma (versión «crías y heridos al nido») 83 % (7 contra 4: ruido).
+Alarma se rediseñó otra vez: **con un peligro a la vista, todos los que tienen nido, refugio o fogata a menos de 260 corren ahí y esperan** (junto al nido nadie ataca). Escenario cerrado (`tests/era2-alarma.js 24`, nuevo modo «nido» a 100 px): sobrevivientes de 6 **+2,8 a +6,3** (cazadores +6,33 ± 0,93, 24/24 semillas mejoran); sin nido sigue el efecto anterior (+0,5 a +1,5); con oso, nada. Partida completa con el código final: todas 73/96 = 76 % [67-83], **sin Alarma 74/96 = 77 %** (pareado: todas solo gana 6, sin Alarma solo gana 7), ninguna 41/96 = 43 % [33-53] (el conjunto suma +33 puntos; todas solo 40 contra ninguna solo 8). Resultado medido medio por uso (`abilityEnd`, 96 partidas): Rugido 1264 usos, aturde 11,1 y mantiene a 6,9 enemigos fuera de la zona; Migrar 1100 usos, llegan 10,1 animales a 60 % de riqueza, +18,4 de hambre y +8,8 de energía por animal y 8,1 de energía ahorrada; Alarma 823 usos, se retiran 6,2 animales (5,3 con un enemigo a menos de 200) y siguen vivos 6,2; Camuflaje 561 usos, 10,1 golpes camuflados; Excavar 568 usos, 21,7 de hambre ahorrada por animal y 150 de daño evitado por uso.
+Resultado visible: `ability` (P + `{id, nivel, costo, duracion, afectados, resultado}`) y `abilityEnd` (lo medido); `docs/ERA2-HABILIDADES.md`.
+
+### 12.5 Prioridades (`tests/era2-prioridades.js`, escenarios cerrados, 3 especies x 16 semillas = 48 pareadas)
+Compatibilidad: sin `G.x2.prio` el estado es **idéntico** (hash) al de prio todo en 1, y misma semilla + mismas prioridades = mismo estado (3 especies x 3 semillas). Diferencia pareada contra normal (media ± IC95):
+
+| Prioridad | Alta: gana | Alta: paga | Baja: ahorra | Baja: resigna |
+| --- | --- | --- | --- | --- |
+| Comida (3 lobos) | hambre media +6,2 ± 1,7 | plantas del mapa −0,05 ± 0,02 (sobrepastoreo) | plantas +0,04 ± 0,01 | hambre −3,8 ± 1,6 |
+| Reproducción | huevos/animal-s +0,35 ± 0,11 (+23 %) | tiempo vulnerable +0,09 ± 0,01; muertes +5,7 ± 2,4 | muertes −5,8 ± 1,8 | huevos −0,33 ± 0,11 |
+| Expansión (desierto) | territorio +0,92 ± 0,48 celdas; dispersión +24 ± 17 px; plantas junto al grupo +0,03 | energía −7,8 ± 1,8 | **nada medible** | territorio −0,45 ± 0,43 |
+| Defensa (4 lobos) | muertes 20,4 → 8,3 (−12,1 ± 2,8); daño −52 ± 30 | territorio −2,8 ± 0,7 celdas | daño −47 ± 25 (pelean menos: huyen) | bocados −0,8 ± 0,65 |
+| Exploración (desierto) | **nada medible** (bocados, hambre, territorio dentro del ruido) | energía −7,8 ± 1,9 | energía +1,9 ± 1,7 | bocados −1,3 ± 0,95; territorio −0,7 ± 0,44 |
+
+La prueba marca 3 FALLAS honestas: **Exploración alta no demostró beneficio** en el escenario (la vista +25 % no se traduce en más comida: el límite es el pasto, no encontrarlo), **Expansión baja** no ahorra nada medible y **Defensa baja** «ahorra» daño huyendo pero no pierde nada medible. Exploración alta hoy es un costo sin beneficio demostrado: hay que rediseñarla o quitarla de la interfaz hasta tenerlo.
+
+### 12.6 Pruebas corridas al final
+- `tests/era2-guardado.js` OK · `tests/era2-ordenes.js` OK · `tests/determinismo.js` OK.
+- `CI_NO_FPS=1 tests/era2-calidad-sim.js` OK (incluye el guardado viejo del commit base, que carga y corre 2 min). Cambio en la prueba: Excavar se mide a 30 s (+5,5 ± 12,8 en la última corrida; a 15 s cambiaba de signo según la semilla porque los animales sin habilidad ya pelean mejor). Rugido +18,9 ± 6,5, Camuflaje +41 ± 8,5, Migrar +23,5 ± 1,7.
+- `tests/era2-alarma.js 24` OK: efecto positivo con IC que excluye 0 en 9 de 16 escenarios (nuevo modo «nido»: +2,8 a +6,3 sobrevivientes de 6); ninguno perjudica.
+- `tests/era2-biomas.js` OK (tabla en 12.3). `tests/era2-ui.js` OK y `tests/era2-bot.js` OK (con el código de esta rama, sin la interfaz nueva del otro agente).
+- `tests/era2-prioridades.js 16 --T 100`: 9/9 de compatibilidad y determinismo OK; tratos: 7 de 10 OK, 3 FALLAS (ver 12.5).
+
+### 12.7 Qué no mejoró / no se verificó
+- Normal queda en 61 % (borde alto de 40-60) y el rango entre clases bajó de 33 a 23 puntos, no a cero; terrestres arriba.
+- Anfibios (25 %) y abisales (25 %, lentos) siguen siendo las especies más flojas; `ter_ingeniero` 92 % puede ser una opción dominante dentro de su clase.
+- Alarma: utilidad fuerte en escenario con nido; en partida completa sigue **sin diferencia medible** (77 % sin ella contra 76 % con ella): las bajas por depredadores y rivales que evita pesan poco frente al hambre, igual que en el Ciclo 3.
+- Las prioridades solo se probaron en escenarios cerrados (los bots no las usan en partidas completas); Exploración alta no mostró beneficio.
+- El escenario de prioridades con colmena y Defensa alta puede extinguir la manada en los 40 s de calentamiento (semilla #3): no es un error de la simulación (lo era de la prueba, que ponía lobos en NaN).
+- Todo con bots, sin personas; los fps no se usaron (otra carga en la máquina).
 
 ---
 # Historial (Calidad 2.0 y anteriores): cifras de código anterior, ya no vigentes

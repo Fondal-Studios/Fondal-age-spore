@@ -25,7 +25,7 @@ Las prioridades se **combinan** con la identidad de clase (`docs/ERA2-CLASES.md`
 
 ## Qué se midió (`tests/era2-prioridades.js`)
 
-Escenarios cerrados, semillas pareadas (las mismas semillas con baja/normal/alta), 40 s de calentamiento y una ventana medida; para Defensa, Exploración, Comida y Expansión la ventana incluye lobos hambrientos puestos a ~110 px de la manada. Tres especies (terrestre omnívoro, ave migratoria, colmena). Resultados con IC95 en `tests/era2-balance.md` §12.
+Escenarios cerrados, semillas pareadas (las mismas semillas con baja/normal/alta), 40 s de calentamiento y una ventana medida; para Defensa, Exploración, Comida y Expansión la ventana incluye lobos hambrientos puestos a ~110 px de la manada; Expansión y Exploración se miden en el desierto (comida escasa). Tres especies (terrestre omnívoro, ave migratoria, colmena). Resultados con IC95 en `tests/era2-balance.md` §12.5. Resumen: Comida, Reproducción, Expansión alta y Defensa alta son tratos medibles (beneficio y costo significativos); **Exploración alta solo mostró el costo** (−7,8 de energía media) y ningún beneficio distinguible: queda pendiente de rediseño; Expansión baja y Defensa baja no tienen una pérdida o un ahorro medible.
 
 Reproducir: `NODE_PATH=$(npm root -g) node tests/era2-prioridades.js 24 --T 120` (la prueba falla si alguna prioridad en nivel alto no tiene a la vez un beneficio y un costo significativos).
 
