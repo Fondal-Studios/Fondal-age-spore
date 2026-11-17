@@ -34,3 +34,8 @@ Bloque `=== ESTRATEGIA ===` en `eras/era2-animales.html` (JS junto al dibujo del
 - **Grupos**: Ctrl(+Mayús)+1…9 guarda, Mayús+1…9 recupera (dos veces centra), botón «Guardar» en móvil; H/J/K hambrientos/heridos/en peligro; «Al nido» y «A comer/cazar» (órdenes `move` con destino visible).
 - **Habilidades**: barra fina de duración/enfriamiento sobre cada botón y rótulo del resultado; acepta `Bus 'ability'` con objeto `{id,nivel,costo,duracion,afectados,resultado}` o el formato posicional actual, y `'abilityEnd'`.
 - **Tutorial** de 9 pasos (qué controlás, prioridades, alertas, progreso a la Era 3); los informativos usan «Siguiente».
+
+## Ciclo 4: modo foco y menos paneles (módulo Evolución y claridad)
+- **Modo foco** (botón «Foco» en las herramientas del mapa, tecla F; prendido por defecto, se recuerda en `evo_foco2`): la fauna salvaje se dibuja atenuada (presas 28 %, depredadores 50 %; el oso no), los rivales al 62 % con aro fino y sin punto de estado; tus animales llevan un halo turquesa, aro más grueso y punto de estado más grande; no se muestran números de daño, migajas ni fantasmas de peleas ajenas; el HUD esconde energía y territorio. **Solo dibujo**: no toca `G` ni `R()` (`tests/era2-evolucion.js` compara el hash). Apagado («Ver todo») vuelve a todo lo de antes.
+- **Paneles cerrados por defecto**: «Últimos combates», «Ecosistema» y «Qué está pasando» son desplegables cerrados; quedan a la vista la población (HUD), comida y amenaza (chips), las alertas, la ficha de tu especie (dibujo, hábitat, capacidades y rasgos) y las metas.
+- Capturas: `docs/ciclo4/era2-evo/` (antes = código base; `despues-todo` = código nuevo con «Ver todo»; `despues` = mismo estado con foco).

@@ -228,6 +228,22 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
   #hud{gap:4px}#hud .chip{padding:2px 7px;gap:4px;font-size:12px}#hud .chip b{font-size:14px}
   .al{display:flex;align-items:center}
 }
+/* === EVOLUCIÓN Y CLARIDAD (Ciclo 4): pantalla de evolución antes/después, metamorfosis, capacidades, modo foco === */
+#ecoBox summary,#logBox summary{cursor:pointer;font-weight:600;color:var(--ink);list-style:none;display:flex;justify-content:space-between;font-size:13px;min-height:24px;align-items:center}
+#ecoBox summary::-webkit-details-marker,#logBox summary::-webkit-details-marker{display:none}
+#spStage{font-size:12.5px;color:var(--ink);margin-top:4px;line-height:1.35}#spStage:empty{display:none}
+#spCaps span{border-color:var(--accent);font-weight:600}#spCaps:empty{display:none}
+#metaCard{position:fixed;left:50%;top:118px;transform:translateX(-50%);display:none;width:min(92vw,460px);background:var(--panel);border:2px solid #d9a520;border-radius:14px;padding:8px 12px;z-index:7;box-shadow:0 6px 24px rgba(0,0,0,.18);cursor:pointer}
+#metaCard.show{display:block;animation:tin .25s ease-out}
+#metaCv{width:100%;height:auto;display:block;border-radius:8px;background:color-mix(in srgb,var(--bg) 55%,transparent)}
+#metaTxt{font-size:13px;line-height:1.4;color:var(--ink);margin-top:5px}#metaTxt b{font-family:'Bricolage Grotesque',sans-serif}#metaTxt div{margin-top:2px;color:var(--ink2)}
+.offer .cap{display:block;margin-top:6px;font-size:12.5px;color:var(--ink);border-left:3px solid var(--accent);padding-left:7px;line-height:1.35}
+.offer ul{margin:4px 0 0;padding-left:16px;font-size:12.5px;color:var(--ink2);line-height:1.35}.offer ul li{margin:1px 0}
+.offer .lg{color:var(--ink)}.offer .ll{color:var(--ink)}.offer .lx{color:var(--warn);font-weight:600}
+.offer .ttl{font-size:12px;font-weight:600;color:var(--ink2);margin-top:5px;display:block}
+#mutCaps{font-size:12.5px;color:var(--ink2);margin:-2px 0 4px;line-height:1.4}#mutCaps b{color:var(--ink)}
+body.foco .chip:has(#pEn),body.foco .chip:has(#pTerr){display:none}
+@media (max-width:820px){#metaCard{top:auto;bottom:96px}#ecoBox summary,#logBox summary{min-height:44px}}
 </style>
 </head>
 <body>
@@ -258,6 +274,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
         <button id="tOrd" aria-pressed="false" title="Tocá el mapa: suelo = mover, enemigo = atacar (clic derecho en la compu)">Ordenar</button>
         <button id="tStop" title="Vuelven a lo automático (Esc)">Detener</button>
         <button id="tLead" aria-pressed="false" title="Mové al animal seleccionado con WASD o flechas; la manada lo sigue">Líder</button>
+        <button id="tFoco" aria-pressed="true" title="Modo foco (F): atenúa la fauna que no es tuya y esconde lo secundario. Apagalo para ver todo">Foco</button>
       </div></div>
     <div id="side">
       <section class="box" id="bio" aria-label="Estado del animal seleccionado">
@@ -277,7 +294,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
           <div id="bioLeg"><span><i style="background:#3fa34d"></i>Vida (verde a rojo)</span><span><i style="background:#e0a21a"></i>Hambre (barra llena = comió)</span><span><i style="background:#3f8fd1"></i>Energía</span><span><i style="background:#e070a8"></i>Reproducción</span></div>
         </div>
       </section>
-      <details class="box" id="cmb" open><summary><span>Últimos combates</span><span id="cmbN"></span></summary><div id="cmbDead"></div><div id="cmbRows"><div class="cr0">Todavía no hubo peleas.</div></div></details>
+      <details class="box" id="cmb"><summary><span>Últimos combates</span><span id="cmbN"></span></summary><div id="cmbDead"></div><div id="cmbRows"><div class="cr0">Todavía no hubo peleas.</div></div></details>
       <details class="box" id="prio"><summary><span>Prioridades de la especie</span><span id="prioSum">todo normal</span></summary>
         <div id="prioRows" role="group" aria-label="Prioridades"></div><div id="prioDet" aria-live="polite"></div></details>
       <details class="box" id="grp"><summary><span>Grupos y población</span><span id="grpSum"></span></summary>
@@ -290,9 +307,9 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
         <div class="gq" role="group" aria-label="Órdenes de grupo"><button id="oNest" title="Todo el grupo elegido va al nido terminado más cercano">Al nido</button><button id="oFood" title="El grupo va hacia la comida más cercana">A comer</button></div>
         <div id="grpHelp">Mayús+1…9 recupera un grupo (dos veces: centra la cámara). Ctrl+Mayús+1…9 guarda la selección. Teclas H, J, K: hambrientos, heridos, en peligro.</div>
       </details>
-      <div class="box"><h3 id="spName">Tu especie</h3><canvas id="portrait" width="220" height="130" role="img" aria-label="Dibujo de tu especie con sus rasgos"></canvas><div class="chips" id="spTraits"></div></div>
-      <div class="box"><h3>Ecosistema: <span id="ecoName"></span></h3><div id="ecoInfo"></div><canvas id="pyr" width="230" height="104" role="img" aria-label="Pirámide trófica: productores, herbívoros y carnívoros" style="width:100%;height:auto;margin-top:6px"></canvas><div id="pyrTxt"></div></div>
-      <div class="box"><h3>Qué está pasando</h3><div id="log"></div></div>
+      <div class="box" id="spBox"><h3 id="spName">Tu especie</h3><canvas id="portrait" width="220" height="130" role="img" aria-label="Dibujo de tu especie con sus rasgos"></canvas><div id="spStage"></div><div class="chips" id="spCaps" aria-label="Capacidades de tu especie"></div><div class="chips" id="spTraits"></div></div>
+      <details class="box" id="ecoBox"><summary><span>Ecosistema: <span id="ecoName"></span></span></summary><div id="ecoInfo"></div><canvas id="pyr" width="230" height="104" role="img" aria-label="Pirámide trófica: productores, herbívoros y carnívoros" style="width:100%;height:auto;margin-top:6px"></canvas><div id="pyrTxt"></div></details>
+      <details class="box" id="logBox"><summary><span>Qué está pasando</span></summary><div id="log"></div></details>
       <details class="box" id="goal" open><summary><span>Metas de la Era 2</span><span id="goalN">0/4</span></summary><div id="goalRows"></div></details>
     </div>
   </div>
@@ -315,6 +332,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
   </div>
   <div id="toasts" role="status" aria-live="polite"></div>
   <div id="abRes" role="status" aria-live="polite"></div>
+  <div id="metaCard" role="status" aria-live="polite"><canvas id="metaCv" width="280" height="110" aria-hidden="true"></canvas><div id="metaTxt"></div></div>
 
   <div id="menu" class="ov show"><div class="card" role="dialog" aria-modal="true" aria-labelledby="menuT">
     <h1 id="menuT">Era 2: Animales</h1>
@@ -330,7 +348,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
   </div></div>
 
   <div id="mut" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="mutT">
-    <h2 id="mutT">Evolucionar</h2><p id="mutP"></p>
+    <h2 id="mutT">Evolucionar</h2><p id="mutP"></p><div id="mutCaps"></div>
     <div class="offers" id="offers"></div>
   </div></div>
 
@@ -358,9 +376,77 @@ const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { c
 const hyp = Math.hypot, TAU = Math.PI * 2;
 
 const TRAITS = [{"h": "Movimiento", "id": "alas", "n": "Alas", "e": "Cruza biomas con facilidad y escapa de lo terrestre.", "c": "Alto gasto de energía.", "fx": {"d": ["*", 1.8], "def": ["+", 0.05], "cF": ["*", 1.15]}, "A": {"n": "Alas de planeo", "e": "Planea, gasta menos y caza mejor desde arriba.", "fx": {"cF": ["*", 0.9], "hunt": ["*", 1.1]}}, "B": {"n": "Alas de vuelo batido", "e": "Más dispersión y esquiva mejor.", "fx": {"d": ["*", 1.4], "def": ["+", 0.05]}}}, {"h": "Movimiento", "id": "aletas", "n": "Aletas y branquias", "e": "Domina el agua: costa y pantano.", "c": "Pierde terreno en seco.", "fx": {"water": ["+", 0.5], "d": ["*", 1.2]}, "A": {"n": "Nado de persecución", "e": "Caza mejor en el agua.", "fx": {"hunt": ["*", 1.15]}}, "B": {"n": "Nado de resistencia", "e": "Soporta mejor la escasez.", "fx": {"m": ["*", 0.9]}}}, {"h": "Movimiento", "id": "patas", "n": "Patas largas", "e": "Recorre más terreno y persigue mejor.", "c": "Algo más de mortalidad por esfuerzo.", "fx": {"d": ["*", 1.5], "hunt": ["*", 1.1], "m": ["*", 1.05]}, "A": {"n": "Zancada de carrera", "e": "Persecución más eficaz.", "fx": {"hunt": ["*", 1.2]}}, "B": {"n": "Zancada de migración", "e": "Resiste mejor el frío y se dispersa más.", "fx": {"cold": ["*", 0.8], "d": ["*", 1.2]}}}, {"h": "Defensa", "id": "caparazon", "n": "Caparazón", "e": "Mucha defensa ante depredadores.", "c": "Más lento y come más.", "fx": {"def": ["+", 0.25], "d": ["*", 0.8], "cF": ["*", 1.1]}, "A": {"n": "Placas óseas", "e": "Aún más defensa.", "fx": {"def": ["+", 0.1]}}, "B": {"n": "Espinas", "e": "Defensa y menos mortalidad.", "fx": {"def": ["+", 0.05], "m": ["*", 0.95]}}}, {"h": "Defensa", "id": "exo", "n": "Exoesqueleto", "e": "Defensa y resistencia al fuego.", "c": "Crece más lento por las mudas.", "fx": {"def": ["+", 0.2], "fire": ["*", 0.8], "r": ["*", 0.9]}, "A": {"n": "Muda rápida", "e": "Recupera el ritmo de crecimiento.", "fx": {"r": ["*", 1.08]}}, "B": {"n": "Quitina gruesa", "e": "Más defensa.", "fx": {"def": ["+", 0.1]}}}, {"h": "Defensa", "id": "piel", "n": "Piel gruesa", "e": "Resiste el frío y suma algo de defensa.", "c": "Menor dispersión.", "fx": {"cold": ["*", 0.5], "def": ["+", 0.1], "d": ["*", 0.9]}, "A": {"n": "Capa de grasa", "e": "Resistencia extra al frío.", "fx": {"cold": ["*", 0.6]}}, "B": {"n": "Pelaje denso", "e": "Frío y un poco de sigilo.", "fx": {"cold": ["*", 0.8], "stealth": ["+", 0.05]}}}, {"h": "Ataque", "id": "garras", "n": "Colmillos y garras", "e": "Caza mucho más eficaz.", "c": "Mayor gasto de mantenimiento.", "fx": {"hunt": ["*", 1.3], "m": ["*", 1.05]}, "A": {"n": "Desgarro", "e": "Caza y aprovecha mejor.", "fx": {"hunt": ["*", 1.1], "eff": ["*", 1.05]}}, "B": {"n": "Mordida de presa", "e": "Aprovecha mucho más lo que come.", "fx": {"eff": ["*", 1.15]}}}, {"h": "Ataque", "id": "cuernos", "n": "Cuernos y embestida", "e": "Defiende y ataca de frente.", "c": "Más visible: menos sigilo.", "fx": {"def": ["+", 0.15], "hunt": ["*", 1.1], "stealth": ["+", -0.05]}, "A": {"n": "Cuernos de combate", "e": "Más defensa.", "fx": {"def": ["+", 0.1]}}, "B": {"n": "Cornamenta de exhibición", "e": "Selección sexual: se reproduce más.", "fx": {"r": ["*", 1.1]}}}, {"h": "Ataque", "id": "aguijon", "n": "Aguijón", "e": "Ataque rápido y paralizante.", "c": "Mayor mortalidad por desgaste.", "fx": {"hunt": ["*", 1.2], "m": ["*", 1.05]}, "A": {"n": "Aguijón paralizante", "e": "Aprovecha mejor las presas.", "fx": {"eff": ["*", 1.15]}}, "B": {"n": "Aguijón en cadena", "e": "Ataque coordinado en grupo.", "fx": {"coop": ["+", 0.1]}}}, {"h": "Sentidos", "id": "olfato", "n": "Olfato agudo", "e": "Halla presas y carroña aun si son escasas.", "c": "Falla con el viento en contra.", "fx": {"search": ["*", 1.4], "scav": ["+", 0.1]}, "A": {"n": "Rastro fino", "e": "Rastrea aún mejor.", "fx": {"search": ["*", 1.2]}}, "B": {"n": "Olfato de carroña", "e": "Vive mejor de la carroña.", "fx": {"scav": ["+", 0.3]}}}, {"h": "Sentidos", "id": "vision", "n": "Visión nocturna", "e": "Caza y huye mejor de noche.", "c": "Pierde la ventaja de día.", "fx": {"hunt": ["*", 1.1], "def": ["+", 0.05]}, "A": {"n": "Ojos de cazador", "e": "Caza más eficaz.", "fx": {"hunt": ["*", 1.1]}}, "B": {"n": "Ojos de presa", "e": "Detecta peligros: más defensa.", "fx": {"def": ["+", 0.1]}}}, {"h": "Sentidos", "id": "eco", "n": "Ecolocación", "e": "Se orienta en agua y oscuridad.", "c": "Consume energía y atención.", "fx": {"search": ["*", 1.3], "water": ["+", 0.1]}, "A": {"n": "Eco fino", "e": "Caza más precisa.", "fx": {"hunt": ["*", 1.1]}}, "B": {"n": "Eco de largo alcance", "e": "Se dispersa más lejos.", "fx": {"d": ["*", 1.2]}}}, {"h": "Metabolismo", "id": "sangre", "n": "Sangre caliente", "e": "Activa incluso en invierno.", "c": "Come mucho más.", "fx": {"cold": ["*", 0.4], "cF": ["*", 1.3]}, "A": {"n": "Termorregulación", "e": "Come menos.", "fx": {"cF": ["*", 0.9]}}, "B": {"n": "Hipertermia activa", "e": "Caza más eficaz.", "fx": {"hunt": ["*", 1.15]}}}, {"h": "Metabolismo", "id": "hiber", "n": "Hibernación", "e": "Sobrevive al invierno y a la sequía sin comer.", "c": "Crece más lento.", "fx": {"cold": ["*", 0.3], "drought": ["*", 0.7], "r": ["*", 0.9]}, "A": {"n": "Letargo profundo", "e": "Aguanta aún más la sequía.", "fx": {"drought": ["*", 0.6]}}, "B": {"n": "Letargo parcial", "e": "Recupera ritmo de crecimiento.", "fx": {"r": ["*", 1.08]}}}, {"h": "Metabolismo", "id": "digest", "n": "Digestión eficiente", "e": "Aprovecha mucho más cada bocado.", "c": "Menor dispersión.", "fx": {"eff": ["*", 1.25], "d": ["*", 0.9]}, "A": {"n": "Rumia", "e": "Necesita comer menos flora.", "fx": {"cF": ["*", 0.85]}}, "B": {"n": "Digestión de carroña", "e": "Aprovecha la carroña.", "fx": {"scav": ["+", 0.3]}}}, {"h": "Reproducción", "id": "camadas", "n": "Camadas numerosas (estrategia r)", "e": "Se reproduce muy rápido.", "c": "Más mortalidad y más plagas.", "fx": {"r": ["*", 1.4], "m": ["*", 1.1], "plague": ["*", 1.2]}, "A": {"n": "Puesta masiva", "e": "Reproducción aún mayor.", "fx": {"r": ["*", 1.15]}}, "B": {"n": "Crías precoces", "e": "Más crías sobreviven.", "fx": {"m": ["*", 0.9]}}}, {"h": "Reproducción", "id": "cuidado", "n": "Cuidado parental (estrategia K)", "e": "Pocas crías, casi todas sobreviven.", "c": "Crece más lento.", "fx": {"r": ["*", 0.85], "m": ["*", 0.75]}, "A": {"n": "Crianza en manada", "e": "Cooperación en la crianza.", "fx": {"coop": ["+", 0.1]}}, "B": {"n": "Crianza prolongada", "e": "Crías más protegidas.", "fx": {"def": ["+", 0.1]}}}, {"h": "Reproducción", "id": "metamorfosis", "n": "Metamorfosis", "e": "Dos etapas de vida con recursos distintos.", "c": "Etapa intermedia frágil.", "fx": {"r": ["*", 1.1], "water": ["+", 0.15], "m": ["*", 1.05]}, "A": {"n": "Larva acuática", "e": "Gana habitabilidad en agua.", "fx": {"water": ["+", 0.25]}}, "B": {"n": "Larva voraz", "e": "Aprovecha mejor el alimento.", "fx": {"eff": ["*", 1.1]}}}, {"h": "Social", "id": "manada", "n": "Manada", "e": "Caza y se defiende en grupo.", "c": "Necesita grupos grandes.", "fx": {"coop": ["+", 0.2], "def": ["+", 0.1]}, "A": {"n": "Manada de caza", "e": "Caza cooperativa más fuerte.", "fx": {"coop": ["+", 0.15]}}, "B": {"n": "Manada de defensa", "e": "Más defensa.", "fx": {"def": ["+", 0.1]}}}, {"h": "Social", "id": "colmena", "n": "Colmena", "e": "Cooperación extrema y reproducción veloz.", "c": "Frágil a las plagas.", "fx": {"coop": ["+", 0.15], "r": ["*", 1.15], "plague": ["*", 1.15]}, "A": {"n": "Casta obrera", "e": "Come menos y construye mejor.", "fx": {"cF": ["*", 0.9], "nest": ["+", 0.1]}}, "B": {"n": "Casta soldado", "e": "Mucha más defensa.", "fx": {"def": ["+", 0.15]}}}, {"h": "Social", "id": "territorio", "n": "Territorialidad", "e": "Defiende su zona y gasta menos en moverse.", "c": "Migra peor.", "fx": {"m": ["*", 0.9], "d": ["*", 0.8], "def": ["+", 0.05]}, "A": {"n": "Marcado fuerte", "e": "Menos mortalidad.", "fx": {"m": ["*", 0.9]}}, "B": {"n": "Territorio laxo", "e": "Más reproducción.", "fx": {"r": ["*", 1.08]}}}, {"h": "Química", "id": "veneno", "n": "Veneno", "e": "Daño sostenido y advertencia a los depredadores.", "c": "Gasta energía en producirlo.", "fx": {"hunt": ["*", 1.25], "def": ["+", 0.1], "cF": ["*", 1.05]}, "A": {"n": "Neurotoxina", "e": "Caza más eficaz.", "fx": {"hunt": ["*", 1.15]}}, "B": {"n": "Hemotoxina", "e": "Aprovecha mejor las presas.", "fx": {"eff": ["*", 1.1]}}}, {"h": "Química", "id": "feromonas", "n": "Feromonas", "e": "Coordina al grupo y mejora el rastreo.", "c": "Los rivales también las huelen.", "fx": {"coop": ["+", 0.1], "r": ["*", 1.05], "search": ["*", 1.1]}, "A": {"n": "Feromona de alarma", "e": "Más defensa.", "fx": {"def": ["+", 0.15]}}, "B": {"n": "Feromona de rastro", "e": "Rastrea mejor.", "fx": {"search": ["*", 1.2]}}}, {"h": "Química", "id": "defquim", "n": "Defensas químicas", "e": "Sabor y secreciones que repelen.", "c": "Gasto metabólico.", "fx": {"def": ["+", 0.15], "fire": ["*", 0.9], "cF": ["*", 1.05]}, "A": {"n": "Sabor amargo", "e": "Más defensa.", "fx": {"def": ["+", 0.1]}}, "B": {"n": "Repelente", "e": "Resiste mejor las plagas.", "fx": {"plague": ["*", 0.8]}}}, {"h": "Engaño", "id": "camuflaje", "n": "Camuflaje", "e": "Los depredadores lo ven menos.", "c": "Caza peor al moverse.", "fx": {"stealth": ["+", 0.2], "hunt": ["*", 0.95]}, "A": {"n": "Mimetismo de hoja", "e": "Más sigilo.", "fx": {"stealth": ["+", 0.1]}}, "B": {"n": "Mimetismo de roca", "e": "Defensa y menos mortalidad.", "fx": {"def": ["+", 0.05], "m": ["*", 0.95]}}}, {"h": "Engaño", "id": "senuelo", "n": "Señuelo y fuga", "e": "Engaña al atacante y escapa.", "c": "Gasta energía en cada fuga.", "fx": {"def": ["+", 0.15], "d": ["*", 1.1], "cF": ["*", 1.05]}, "A": {"n": "Fuga en zigzag", "e": "Se dispersa más.", "fx": {"d": ["*", 1.2]}}, "B": {"n": "Señuelo de cría", "e": "Protege a las crías.", "fx": {"r": ["*", 1.05], "def": ["+", 0.05]}}}, {"h": "Engaño", "id": "imitacion", "n": "Imitación de advertencia", "e": "Se hace pasar por una especie peligrosa.", "c": "Solo sirve si hay peligrosas cerca.", "fx": {"def": ["+", 0.15], "stealth": ["+", 0.05]}, "A": {"n": "Colores falsos", "e": "Más defensa.", "fx": {"def": ["+", 0.1]}}, "B": {"n": "Imitación de toxina", "e": "Resiste las plagas.", "fx": {"plague": ["*", 0.9]}}}, {"h": "Construcción", "id": "madriguera", "n": "Madriguera", "e": "Refugio contra el frío y el fuego.", "c": "Lleva tiempo excavar.", "fx": {"nest": ["+", 0.2], "cold": ["*", 0.7], "fire": ["*", 0.7]}, "A": {"n": "Red de túneles", "e": "Más refugio y defensa.", "fx": {"nest": ["+", 0.1], "def": ["+", 0.05]}}, "B": {"n": "Cámara de cría", "e": "Más reproducción.", "fx": {"r": ["*", 1.1]}}}, {"h": "Construcción", "id": "nido", "n": "Nido elevado", "e": "Protege a las crías del suelo.", "c": "Exige materiales.", "fx": {"def": ["+", 0.15], "nest": ["+", 0.1], "cF": ["*", 1.05]}, "A": {"n": "Nido colgante", "e": "Más defensa.", "fx": {"def": ["+", 0.1]}}, "B": {"n": "Nido comunal", "e": "Más cooperación.", "fx": {"coop": ["+", 0.1]}}}, {"h": "Construcción", "id": "ingenieria", "n": "Ingeniería del ecosistema", "e": "Mejora la flora donde vive.", "c": "Gasta muchos recursos.", "fx": {"fert": ["+", 0.15], "nest": ["+", 0.1], "cF": ["*", 1.1]}, "A": {"n": "Arrecife de coral", "e": "Gana habitabilidad en agua.", "fx": {"water": ["+", 0.2]}}, "B": {"n": "Termitero", "e": "Resiste mejor la sequía.", "fx": {"drought": ["*", 0.7]}}}, {"h": "Entorno", "id": "migracion", "n": "Migración", "e": "Evita el hambre y el frío de cada estación.", "c": "Rutas expuestas a depredadores.", "fx": {"cold": ["*", 0.75], "d": ["*", 1.3], "m": ["*", 1.03]}, "A": {"n": "Ruta de verano", "e": "Más reproducción.", "fx": {"r": ["*", 1.1]}}, "B": {"n": "Ruta de invierno", "e": "Resiste mejor el frío.", "fx": {"cold": ["*", 0.7]}}}, {"h": "Entorno", "id": "reserva", "n": "Reserva de agua", "e": "Aguanta la sequía.", "c": "Carga extra que limita la dispersión.", "fx": {"drought": ["*", 0.4], "d": ["*", 0.95]}, "A": {"n": "Reserva de grasa", "e": "Sequía casi inofensiva.", "fx": {"drought": ["*", 0.3]}}, "B": {"n": "Pozos excavados", "e": "Sequía y algo de refugio.", "fx": {"drought": ["*", 0.5], "nest": ["+", 0.05]}}}, {"h": "Entorno", "id": "pirofila", "n": "Adaptación al fuego", "e": "Sobrevive a los incendios y se beneficia después.", "c": "Solo rinde si hay incendios.", "fx": {"fire": ["*", 0.3], "scav": ["+", 0.1], "r": ["*", 1.05]}, "A": {"n": "Carroña de incendio", "e": "Se alimenta de lo que deja el fuego.", "fx": {"scav": ["+", 0.3]}}, "B": {"n": "Refugio subterráneo", "e": "Casi inmune al fuego.", "fx": {"fire": ["*", 0.2]}}}, {"h": "Mente", "id": "herramientas", "n": "Herramientas", "e": "Caza y recolecta mejor.", "c": "Cerebro grande: más hambre.", "fx": {"hunt": ["*", 1.15], "eff": ["*", 1.1], "cF": ["*", 1.1], "mind": ["+", 1]}, "A": {"n": "Piedra tallada", "e": "Caza más eficaz.", "fx": {"hunt": ["*", 1.1]}}, "B": {"n": "Herramienta de excavación", "e": "Aprovecha mejor el alimento.", "fx": {"eff": ["*", 1.1]}}}, {"h": "Mente", "id": "fuego", "n": "Dominio del fuego", "e": "Resiste el frío y cocina el alimento.", "c": "Atrae rivales y causa accidentes.", "fx": {"cold": ["*", 0.4], "m": ["*", 0.95], "fire": ["*", 1.1], "mind": ["+", 1]}, "A": {"n": "Fuego de cocina", "e": "Aprovecha mejor el alimento.", "fx": {"eff": ["*", 1.15]}}, "B": {"n": "Fuego de defensa", "e": "Más defensa.", "fx": {"def": ["+", 0.15]}}}, {"h": "Mente", "id": "lenguaje", "n": "Lenguaje y gestos", "e": "Coordina al grupo y enseña.", "c": "Cerebro grande: más hambre.", "fx": {"coop": ["+", 0.2], "inst": ["*", 1.3], "mind": ["+", 1], "cF": ["*", 1.1]}, "A": {"n": "Gestos de alarma", "e": "Más defensa.", "fx": {"def": ["+", 0.1]}}, "B": {"n": "Enseñanza", "e": "Más Instinto.", "fx": {"inst": ["*", 1.2]}}}];
+/* ---------- Ciclo 4 · Evolución y claridad: salir del agua (solo la clase Acuáticos) ----------
+   Cuatro rasgos de transición (tx). Las etapas siguen el orden de la evolución real de los tetrápodos (peces de aletas lobuladas → anfibios que respiran aire
+   pero crían en el agua → amniotas con piel que no se seca y huevo con cáscara); NO se afirman fechas ni cifras. «radiadas» es la otra rama: quedarse en el agua.
+   La etapa (sp.lst: 0 agua, 1 orilla, 2 anfibio, 3 tierra) sale de los rasgos (no hay estado nuevo que guardar). Los anfibios pioneros nacen en la etapa 2. */
+TRAITS.push(
+  { h: 'Transición', id: 'lobuladas', tx: 1, stage: 1, n: 'Aletas lobuladas', e: 'Aletas carnosas con hueso: se arrastra por la orilla (hasta 70 del agua), come plantas y bichos de la costa.', c: 'Nada 10 % más lento; en la orilla lo alcanzan los depredadores de tierra.', fx: { search: ['*', 1.1] } },
+  { h: 'Transición', id: 'pulmones', tx: 1, stage: 2, req: 'lobuladas', n: 'Pulmones y patas', e: 'Respira aire y camina: sale a TODA la tierra, come plantas de tierra y escapa del agua por tierra.', c: 'Piel que se seca: lejos del agua (más de 160) gasta más hambre y a más de 300 se deshidrata; solo pone huevos cerca del agua; nada 20 % más lento.', fx: { cF: ['*', 1.05] } },
+  { h: 'Transición', id: 'amniota', tx: 1, stage: 3, req: 'pulmones', n: 'Piel seca y huevo con cáscara', e: 'Escamas que no se secan y huevos que no necesitan agua: ya es un animal de tierra (cría en cualquier lado).', c: 'Nada 35 % más lento: el agua deja de ser su refugio.', fx: { def: ['+', 0.05] } },
+  { h: 'Transición', id: 'radiadas', tx: 1, stage: 0, n: 'Aletas radiadas (mar abierto)', e: 'Se queda en el agua y la domina: nada más rápido y, en cardumen (3 o más cerca), los peces grandes fallan.', c: 'Cierra para siempre la salida del agua.', fx: { water: ['+', 0.3] } }
+);
 const TR = {}; TRAITS.forEach(t => TR[t.id] = t);
+/* Capacidades (Ciclo 4): cada rasgo da UNA capacidad nueva que cambia cómo se juega (terreno, presas, defensas, cría), no solo un porcentaje.
+   Nivel 1 = el rasgo; 2 = con su variante A o B; 3 = con la maestría de su hilo. Los híbridos dan (o suben un nivel) la capacidad de HYBCAP.
+   L = parámetro por nivel (lo lee la simulación con capL). d = qué hace (texto de la interfaz, sale de los mismos números). */
+const CAPS = {
+  alas: { n: 'Vuelo', t: 'terreno', L: [.7, .6, .5], d: 'Vuela: cruza el lago y el bosque, come plantas y algas, y lo que camina le pega peor (falla 20 %).', dF: 'Vuelo alto: los depredadores que no vuelan lo ven desde ×{L} de distancia.', dW: 'Pez volador: al huir dentro del agua los peces grandes fallan 25 % más.' },
+  aletas: { n: 'Nado', t: 'terreno', L: [1, 1.1, 1.2], d: 'Nada: entra al lago (refugio y algas); los depredadores de tierra no lo siguen. Velocidad nadando ×{L}.', dF: 'Pesca: las algas le rinden 25 % más por bocado.', dW: 'Nado de persecución: dentro del agua las presas que huyen no le esquivan.' },
+  patas: { n: 'Carrera', t: 'defensa', L: [1.5, 2, 2.5], d: 'Corredor: quien lo persigue mientras huye pierde {L} de energía extra por segundo y desiste antes.' },
+  caparazon: { n: 'Coraza', t: 'defensa', L: [1, 1.15, 1.3], d: 'Coraza: los atacantes más chicos que ×{L} su tamaño hacen solo 35 % del daño. Con Espinas, el atacante recibe 20 % del golpe.' },
+  exo: { n: 'Quitina', t: 'defensa', L: [.3, .15, 0], d: 'Quitina: casi no queda herido (herida ×{L}), así no pierde velocidad ni fuerza al pelear.' },
+  piel: { n: 'Abrigo', t: 'clima', L: [1, 1, 1], d: 'Abrigo: inmune al daño por frío (invierno y tundra) aunque no tenga nido ni fogata.' },
+  garras: { n: 'Cazador', t: 'presa', L: [1.45, 1.6, 1.75], d: 'Nuevas presas: caza animales hasta ×{L} su tamaño (antes ×1,3); un herbívoro con garras también caza.' },
+  cuernos: { n: 'Embestida', t: 'presa', L: [.3, .45, .6], d: 'Embestida: cada golpe tiene {P} de asustar al blanco 3 s (pega 30 % menos) y empujarlo.' },
+  aguijon: { n: 'Parálisis', t: 'presa', L: [.25, .35, .45], d: 'Aguijón: cada golpe tiene {P} de paralizar al blanco 1 s (no se mueve ni pega).' },
+  olfato: { n: 'Rastreo', t: 'comida', L: [2, 2.5, 3], d: 'Rastreo: encuentra carroña y huevos desde ×{L} de distancia.' },
+  vision: { n: 'Ojo avizor', t: 'defensa', L: [1.2, 1.3, 1.4], d: 'Ojo avizor: nadie lo embosca entre los árboles y huye del peligro a ×{L} de distancia.' },
+  eco: { n: 'Ecolocación', t: 'presa', L: [1.4, 1.6, 1.8], d: 'Ecolocación: encuentra presas a ×{L} de distancia.' },
+  sangre: { n: 'Sangre caliente', t: 'clima', L: [1, 1, 1], d: 'Sangre caliente: el invierno no lo frena ni le da más hambre (nivel 2: tampoco la tundra).' },
+  hiber: { n: 'Letargo', t: 'clima', L: [.6, .5, .4], d: 'Letargo: en invierno, sequía o tundra, quieto o descansando gasta ×{L} de hambre.' },
+  digest: { n: 'Estómago fuerte', t: 'comida', L: [1, 1, 1], d: 'Comida nueva: un carnívoro también come plantas y un herbívoro también carroña.' },
+  camadas: { n: 'Camada', t: 'cria', L: [2, 2, 3], d: 'Camada: de cada huevo nacen {L} crías (si hay lugar en la población).' },
+  cuidado: { n: 'Crianza', t: 'cria', L: [1.6, 1.8, 2], d: 'Crianza: las crías crecen ×{L} más rápido y reciben 40 % menos daño.' },
+  metamorfosis: { n: 'Larvas', t: 'cria', L: [1.5, 1.75, 2], d: 'Larvas acuáticas: los huevos puestos a menos de 40 del agua eclosionan ×{L} más rápido.' },
+  manada: { n: 'Caza en manada', t: 'presa', L: [1.7, 1.9, 2.1], d: 'Caza en manada: pueden con presas hasta ×{L} su tamaño (ciervos, rivales grandes).' },
+  colmena: { n: 'Castas', t: 'cria', L: [15, 20, 25], d: 'Castas: la colonia llega a {L} animales más (población máxima).' },
+  territorio: { n: 'Territorio', t: 'defensa', L: [100, 120, 140], d: 'Territorio: los rivales no entran a menos de {L} de tus nidos terminados (zona marcada).' },
+  veneno: { n: 'Aposematismo', t: 'defensa', L: [1, 1, 1], d: 'Colores de advertencia: los depredadores salvajes no cazan a tus adultos (nivel 2: tampoco a las crías).' },
+  feromonas: { n: 'Alarma química', t: 'defensa', L: [150, 200, 250], d: 'Alarma química: cuando atacan a uno, los aliados a menos de {L} huyen del atacante.' },
+  defquim: { n: 'Repelente', t: 'defensa', L: [4, 6, 8], d: 'Repelente: quien lo muerde se asusta y deja de perseguir durante {L} s.' },
+  camuflaje: { n: 'Cripsis', t: 'defensa', L: [1, 1, 1], d: 'Cripsis: quieto (comiendo o descansando) es invisible para depredadores y rivales.' },
+  senuelo: { n: 'Señuelo', t: 'defensa', L: [12, 10, 8], d: 'Señuelo: esquiva por completo un golpe cada {L} s y sale corriendo.' },
+  imitacion: { n: 'Falsa advertencia', t: 'defensa', L: [1.2, 1.4, 1.6], d: 'Falsa advertencia: los depredadores salvajes más chicos que ×{L} su tamaño no lo atacan.' },
+  madriguera: { n: 'Madriguera', t: 'cria', L: [80, 90, 100], d: 'Madriguera: el refugio del nido llega a {L} (antes 58) y ahí no los toca el fuego.' },
+  nido: { n: 'Nido elevado', t: 'cria', L: [1, 1, 1], d: 'Nido elevado: nadie se come tus huevos, estén donde estén.' },
+  ingenieria: { n: 'Jardín', t: 'comida', L: [3, 4, 5], d: 'Jardín: cada nido terminado hace brotar {L} plantas nuevas a su alrededor.' },
+  migracion: { n: 'Rutas', t: 'terreno', L: [4, 4, 3], d: 'Rutas migratorias: para colonizar otro ecosistema alcanzan {L} animales (antes 8) y viajan hasta 8.' },
+  reserva: { n: 'Reserva', t: 'clima', L: [1, 1, 1], d: 'Reserva de agua: la sequía y el calor del desierto no le dan más hambre.' },
+  pirofila: { n: 'Pirófila', t: 'clima', L: [1, 1, 1], d: 'Pirófila: inmune a los incendios.' },
+  herramientas: { n: 'Herramientas', t: 'presa', L: [.5, .75, 1], d: 'Herramientas: sus golpes ignoran {P} de la defensa del blanco (caparazones, pieles).' },
+  fuego: { n: 'Fuego', t: 'defensa', L: [110, 130, 150], d: 'Fuego: los depredadores salvajes no se acercan a menos de {L} de tus nidos terminados.' },
+  lenguaje: { n: 'Lenguaje', t: 'mente', L: [1, 1, 1], d: 'Lenguaje: obedecen las órdenes aunque estén cansados, heridos o con hambre (salvo pánico).' },
+  radiadas: { n: 'Cardumen veloz', t: 'terreno', L: [.3, .3, .3], d: 'Cardumen veloz: en el agua, con 3 o más aliados cerca, los depredadores fallan 30 % más.' },
+  lobuladas: { n: 'Orilla', t: 'terreno', L: [70, 70, 70], d: 'Orilla: sale del agua hasta {L} de la costa: plantas y bichos de la orilla. Ahí es vulnerable a los depredadores de tierra.' },
+  pulmones: { n: 'Tierra firme', t: 'terreno', L: [1, 1, 1], d: 'Tierra firme: camina por toda la tierra. Cría cerca del agua y se seca lejos de ella.' },
+  amniota: { n: 'Huevo con cáscara', t: 'terreno', L: [1, 1, 1], d: 'Animal de tierra: sin deshidratación y pone huevos en cualquier lado; nada mucho peor.' }
+};
+/* Capacidades que los RIVALES no usan (medido con bots: con todas, los carnívoros del jugador pasaban hambre porque los rivales esquivaban, se escondían
+   o repelían cada mordida; ver tests/era2-balance.md §13). Los rivales sí ganan los porcentajes de esos rasgos. */
+let RIVNO = { defquim: 1, senuelo: 1, camuflaje: 1, aguijon: 1, cuernos: 1, patas: 1 };
+const HYBCAP = { 'Emboscador tóxico': 'camuflaje', 'Cazador de rastros': 'olfato', 'Muro viviente': 'caparazon', 'Hibernador': 'hiber', 'Colmena expansiva': 'camadas', 'Cultura temprana': 'lenguaje', 'Táctico': 'herramientas', 'Simbionte digestivo': 'digest', 'Migrador': 'migracion', 'Fortaleza natural': 'madriguera', 'Herborista': 'defquim', 'Estratega': 'senuelo' };
+/* Ramas que se excluyen (como en la Era 1): elegir una cierra la otra para siempre. Cada par tiene un fundamento biológico simple. */
+const EXCL = [['camadas', 'cuidado', 'estrategia r (muchas crías) contra K (pocas y cuidadas)'], ['veneno', 'camuflaje', 'advertir con colores contra esconderse'], ['imitacion', 'camuflaje', 'advertir con colores contra esconderse'], ['alas', 'caparazon', 'una coraza pesa demasiado para volar'], ['exo', 'piel', 'esqueleto por fuera o piel por fuera'], ['territorio', 'migracion', 'defender un lugar o recorrer el mundo'], ['radiadas', 'lobuladas', 'quedarse en el agua o salir de ella']];
+const exclOf = id => { const o = []; for (const [a, b, why] of EXCL) { if (a === id) o.push([b, why]); else if (b === id) o.push([a, why]); } return o; };
+const closedBy = sp => { const s = new Set(); for (const id of sp.traits) for (const [o] of exclOf(id)) s.add(o); return s; };
+const capL = (sp, id) => { const v = sp.cap && sp.cap[id]; return v ? CAPS[id].L[v - 1] : 0; };
+/* Etapa de la transición a tierra: base por especie (anfibios = 2) y la que dan los rasgos. LST: × velocidad nadando (w) y en tierra (d) RELATIVOS a la base. */
+const LST = [null, { w: .9, d: .75, n: 'en la orilla' }, { w: .8, d: .92, n: 'anfibio' }, { w: .65, d: 1.05, n: 'de tierra' }];
+const LST_N = ['acuático', 'de orilla', 'anfibio', 'de tierra'];
+const SHORE = 70;
 const HILOS = ['Movimiento', 'Defensa', 'Ataque', 'Sentidos', 'Metabolismo', 'Reproducción', 'Social', 'Química', 'Engaño', 'Construcción', 'Entorno', 'Mente'];
-const HCOL = { Movimiento: '#2f7fd1', Defensa: '#7a8a90', Ataque: '#d1495b', Sentidos: '#e0a526', Metabolismo: '#e08a1e', 'Reproducción': '#c9406f', Social: '#12958f', 'Química': '#8a5cd0', 'Engaño': '#8c6a3b', 'Construcción': '#8c5a2b', Entorno: '#4f9d3a', Mente: '#3f56d9' };
+const HCOL = { Movimiento: '#2f7fd1', Defensa: '#7a8a90', Ataque: '#d1495b', Sentidos: '#e0a526', Metabolismo: '#e08a1e', 'Reproducción': '#c9406f', Social: '#12958f', 'Química': '#8a5cd0', 'Engaño': '#8c6a3b', 'Construcción': '#8c5a2b', Entorno: '#4f9d3a', Mente: '#3f56d9', 'Transición': '#1f8ab0' };
 const MAES = { Movimiento: { d: ['*', 1.2] }, Defensa: { def: ['+', .1] }, Ataque: { hunt: ['*', 1.2] }, Sentidos: { search: ['*', 1.3] }, Metabolismo: { eff: ['*', 1.15] }, 'Reproducción': { r: ['*', 1.15] }, Social: { coop: ['+', .15] }, 'Química': { hunt: ['*', 1.1], def: ['+', .05] }, 'Engaño': { stealth: ['+', .1] }, 'Construcción': { nest: ['+', .15] }, Entorno: { drought: ['*', .7], fire: ['*', .7], cold: ['*', .8] }, Mente: { inst: ['*', 1.5] } };
 const HYB = [
   ['Química', 'Engaño', 'Emboscador tóxico', { stealth: ['+', .1], hunt: ['*', 1.1] }], ['Movimiento', 'Sentidos', 'Cazador de rastros', { search: ['*', 1.2], hunt: ['*', 1.1] }],
@@ -397,9 +483,16 @@ let colonized = {};
 const compat = (me, k) => k !== 'oceano' || ['water', 'amph', 'fly'].includes(me.hab);
 const isWater = (x, y) => { const dx = (x - LAKE.x) / LAKE.rx, dy = (y - LAKE.y) / LAKE.ry; return dx * dx + dy * dy < 1; };
 const inForest = (x, y) => FOR.some(f => hyp(x - f.x, y - f.y) < f.r);
-function okPos(sp, x, y) { if (x < 8 || y < 8 || x > W - 8 || y > H - 8) return false; const w = isWater(x, y); if (sp.hab === 'fly' || sp.hab === 'amph') return true; if (sp.hab === 'water') return w; return !w; }
+function okPos(sp, x, y) { if (x < 8 || y < 8 || x > W - 8 || y > H - 8) return false; const w = isWater(x, y); if (sp.hab === 'fly' || sp.hab === 'amph') return true; if (sp.hab === 'water') return w || (sp.lst === 1 && nearWaterPt(x, y, SHORE)); return !w; }
+/* Zonas del lago (Ciclo 4: más para hacer en el agua antes de salir): praderas de algas (rebrotan el doble), bajío de desove (los huevos de tu especie
+   eclosionan 60 % antes y nadie se los come) y fosa (los cazadores del agua pegan 25 % más: peligro para los chicos, ventaja para los abisales). Fijas por bioma: no usan R(). */
+const KELP = () => { const m = Math.min(LAKE.rx, LAKE.ry); return [{ x: LAKE.x + LAKE.rx * .45, y: LAKE.y - LAKE.ry * .35, r: m * .38 }, { x: LAKE.x - LAKE.rx * .15, y: LAKE.y + LAKE.ry * .52, r: m * .32 }]; };
+const BAJIO = () => ({ x: LAKE.x - LAKE.rx * .76, y: LAKE.y + LAKE.ry * .08, r: Math.max(24, Math.min(LAKE.rx, LAKE.ry) * .3) });
+const FOSA = () => ({ x: LAKE.x + LAKE.rx * .12, y: LAKE.y + LAKE.ry * .02, r: Math.min(LAKE.rx, LAKE.ry) * .36 });
+const inZ = (z, x, y) => hyp(z.x - x, z.y - y) < z.r;
+const nearWaterPt = (x, y, r) => { const dx = (x - LAKE.x) / (LAKE.rx + r), dy = (y - LAKE.y) / (LAKE.ry + r); return dx * dx + dy * dy < 1; };   // a menos de ~r del agua (orilla)
 const SEAS = [{ n: 'Primavera', g: 1.2, c: '#b4cf86' }, { n: 'Verano', g: 1.5, c: '#a3c26a' }, { n: 'Otoño', g: .8, c: '#cdb572' }, { n: 'Invierno', g: .1, c: '#e3edf2' }];
-const SLEN = 40, MAT = 20;
+const SLEN = 40, MAT = 20; let INST_STEP = 6;   // INST_STEP: cuánto más Instinto pide cada evolución siguiente (Ciclo 4: 5 → 6, ritmo de decisiones; 8 castigaba a los carnívoros, ver tests/era2-balance.md §13)
 const BLD = {
   fogata: { n: 'Fogata', cost: 4, max: 2, r: 85, d: 'Da calor, espanta depredadores, cocina y genera Tradición.' },
   refugio: { n: 'Refugio', cost: 3, max: 6, r: 45, d: 'Cura, protege y suma 4 de población máxima. Tres forman una aldea.' },
@@ -431,12 +524,12 @@ const WILD = {
   oso: { n: 'Oso gigante', g: 'ter', diet: 'carn', r: 16, spd: 52, hp: 260, atk: 15, def: .1, repro: 9999, vis: 240, col: '#4a3a2f', hab: 'land', cap: 1, boss: 1 }
 };
 const RCOL = ['#c9406f', '#c47fd1'];
-/* Dificultades (medidas con bots, ver tests/era2-balance.md). Ciclo 4: hd Normal 3,3 → 3,8 y Difícil 3,4 → 4,0 porque las habilidades rediseñadas (Excavar, Migrar) y las identidades de clase subieron las victorias ~15 puntos (§12). pop: población pedida; riv: cantidad de especies rivales; wolf: multiplicador de lobos y peces grandes al inicio;
+/* Dificultades (medidas con bots, ver tests/era2-balance.md). Ciclo 4 · evolución: las capacidades subieron Difícil de 27 % a 49 % (pareado, N = 192): hd Normal 3,8 → 4,5 y Difícil 4,0 → 5,0 (§13). Ciclo 4: hd Normal 3,3 → 3,8 y Difícil 3,4 → 4,0 porque las habilidades rediseñadas (Excavar, Migrar) y las identidades de clase subieron las victorias ~15 puntos (§12). pop: población pedida; riv: cantidad de especies rivales; wolf: multiplicador de lobos y peces grandes al inicio;
    grow: crecimiento de plantas; hd: hambre de tus animales; dmg: daño que reciben tus animales; rv: segundos entre rasgos nuevos de los rivales (multiplicador); tr: Tradición generada. */
 const DIFFS = [
   { n: 'Fácil', pop: 20, riv: 1, wolf: 1, grow: 1.35, hd: .9, dmg: .8, rv: 1.5, tr: 1 },
-  { n: 'Normal', pop: 36, riv: 2, wolf: 3, grow: .8, hd: 3.8, dmg: 1.5, rv: .55, tr: 1 },
-  { n: 'Difícil', pop: 38, riv: 2, wolf: 4, grow: .7, hd: 4.0, dmg: 2.3, rv: .5, tr: 1 }
+  { n: 'Normal', pop: 36, riv: 2, wolf: 3, grow: .8, hd: 4.5, dmg: 1.5, rv: .55, tr: 1 },
+  { n: 'Difícil', pop: 38, riv: 2, wolf: 4, grow: .7, hd: 5.0, dmg: 2.3, rv: .5, tr: 1 }
 ];
 const DF = () => DIFFS[diffI] || DIFFS[1];
 
@@ -446,6 +539,7 @@ let G = null, started = false, cls = 'ter', specKey = 'ter_cazador', diffI = 0, 
 let VW = 0, VH = 0, DPR = 1, SC = 1, OX = 0, OY = 0, selId = null, panMode = false, camX = W / 2, camY = H / 2, panHold = 0;
 /* Estado de interfaz (no se guarda): selección múltiple, modos táctiles, líder, marcadores. */
 let selIds = [], boxMode = false, leaderOn = false;
+let FOCUS = true; try { FOCUS = localStorage.getItem('evo_foco2') !== 'off'; } catch (e) {}   // modo foco: prendido por defecto (el dueño pidió menos caos)
 const UIs = { box: null, marks: [], pulses: [], cmb: [], dead: [], byId: new Map(), lastDmg: new Map(), lat: [], hov: null };
 const ptr = { x: 0, y: 0, in: false };
 const cv = $('cv'), ctx = cv.getContext('2d');
@@ -470,6 +564,16 @@ const SPX = {
 };
 const ALO = { e: .25 };   // alometría: el consumo de hambre de las especies jugables crece con tamaño^e (r = radio): insectos ≈ −16 %, gigantes ≈ +12 %
 const cxv = (sp, k, d) => { const s = SPX[sp.key], c = sp.cls && CLSX[sp.cls]; return s && s[k] != null ? s[k] : c && c[k] != null ? c[k] : d; };
+/* Hábitat efectivo (Ciclo 4): la base de la especie (hab0) cambia con las capacidades: Vuelo (alas) hace volar a lo que camina o nada en tierra,
+   Nado (aletas) hace anfibio a lo que camina, y la transición a tierra de los acuáticos pasa de 'water' (etapas 0 y 1: la orilla la habilita okPos) a 'amph' (2 y 3). */
+function landStage(sp) { if (sp.cls !== 'acu') return null; let s = sp.hab0 === 'amph' ? 2 : 0; for (const id of sp.traits) { const t = TR[id]; if (t && t.tx && t.stage > s) s = t.stage; } return s; }
+function habOf(sp) {
+  const h = sp.hab0 || sp.hab, c = sp.cap || {};
+  if (sp.cls === 'acu') return sp.lst >= 2 ? 'amph' : h;
+  if (c.alas && (h === 'land' || h === 'amph')) return 'fly';
+  if (c.aletas && h === 'land') return 'amph';
+  return h;
+}
 function recalc(sp) {
   const p = defP();
   for (const id of sp.traits) { const t = TR[id]; ap(p, t.fx); const v = sp.vars[id]; if (v) ap(p, t[v].fx); }
@@ -478,9 +582,14 @@ function recalc(sp) {
   for (const h of HILOS) if (cnt[h] === 3) { ap(p, MAES[h]); sp.mast.push(h); }
   for (const [a, b, n, fx] of HYB) if ((cnt[a] || 0) >= 2 && (cnt[b] || 0) >= 2) { ap(p, fx); sp.hyb.push(n); }
   if (sp.cls && CLSX[sp.cls] && CLSX[sp.cls].scav) p.scav += CLSX[sp.cls].scav;
+  // capacidades: rasgo = 1, con variante = 2, con la maestría de su hilo = 3; los híbridos suman un nivel (o la dan)
+  const cap = {}, rv = sp.team === 'rival'; for (const id of sp.traits) if (CAPS[id] && !(rv && RIVNO[id])) cap[id] = sp.vars[id] ? 2 : 1;
+  for (const h of sp.mast) for (const id of sp.traits) if (TR[id].h === h && CAPS[id]) cap[id] = 3;
+  for (const n of sp.hyb) { const c = HYBCAP[n]; if (c && !(rv && RIVNO[c])) cap[c] = Math.min(3, (cap[c] || 0) + 1); }
+  sp.cap = cap; sp.lst = landStage(sp); sp.hab = habOf(sp);
   sp.p = p; sp._sk = null; sp._vs = Math.min(170, sp.vis * p.search);
 }
-function mkSp(key, d, team, col) { const sp = Object.assign({ key, team, traits: [], vars: {}, aff: {}, mast: [], hyb: [] }, d); if (col) sp.ring = col; recalc(sp); return sp; }
+function mkSp(key, d, team, col) { const sp = Object.assign({ key, team, traits: [], vars: {}, aff: {}, mast: [], hyb: [] }, d); sp.hab0 = d.hab; if (col) sp.ring = col; recalc(sp); return sp; }
 function toast(txt, warn) { const d = document.createElement('div'); d.className = 'toast' + (warn ? ' warn' : ''); d.textContent = txt; $('toasts').appendChild(d); setTimeout(() => d.remove(), 4800); while ($('toasts').children.length > 3) $('toasts').firstChild.remove(); }
 /* Registro SOLO de interfaz (frases de causa): fuera de G para no entrar en el guardado ni en el hash (dependen de qué animal está seleccionado). */
 const CLOG = [];
@@ -518,7 +627,7 @@ function newGame(bk, carry, seedStr) { CLOG.length = 0;
   for (let i = 0; i < 260; i++) G.grass.push({ x: rnd(0, W), y: rnd(0, H), a: rnd(0, 1) });
   G.patch = []; for (let i = 0; i < 46; i++) G.patch.push({ x: rnd(0, W), y: rnd(0, H), r: rnd(40, 120), l: R() < .5 });
   G.deco = []; for (let i = 0; i < 130; i++) { const q = { x: rnd(10, W - 10), y: rnd(10, H - 10), k: Math.floor(R() * 4), h: R() }; if (!isWater(q.x, q.y)) G.deco.push(q); }
-  const start = me.hab === 'water' ? { x: LAKE.x, y: LAKE.y, r: 90 } : { x: 170, y: 330, r: 80 };
+  const start = me.hab === 'water' ? { x: LAKE.x, y: LAKE.y, r: 90 } : me.lst === 2 ? { x: Math.max(60, LAKE.x - LAKE.rx * .95), y: LAKE.y, r: 70 } : { x: 170, y: 330, r: 80 };   // etapa anfibia: empieza en la orilla (cría junto al agua)
   for (let i = 0; i < (carry ? carry.colonists : 6); i++) { const q = randPos(me, start.x, start.y, start.r); spawn(me, q.x, q.y, false); }
   const init = Object.assign({}, B.init); { const wm = DF().wolf; init.lobo = Math.round((init.lobo || 0) * wm); init.lucio = Math.round((init.lucio || 0) * wm); }
   for (const k in init) for (let i = 0; i < init[k]; i++) { const q = randPos(G.sp[k]); spawn(G.sp[k], q.x, q.y, false); }
@@ -529,26 +638,31 @@ function newGame(bk, carry, seedStr) { CLOG.length = 0;
 
 /* ---------- Reglas de comportamiento ---------- */
 function canEat(pred, prey) {
-  const ps = pred.sp, qs = prey.sp;
-  if (ps.diet === 'herb' || ps === qs) return false;
+  const ps = pred.sp, qs = prey.sp, pc = ps.cap, qc = qs.cap;
+  if ((ps.diet === 'herb' && !(pc && pc.garras)) || ps === qs) return false;   // Cazador (garras): un herbívoro también caza
   if (qs.team === 'player' && (G.camT > 0 || G.digT > 0)) return false;
   if (ps.team === qs.team && ps.team !== 'wild') return false;
   if (ps.team === 'wild' && qs.team === 'wild' && qs.diet === 'carn') return false;
-  if (prey.rr > pred.rr * 1.3) return false;
+  let lim = 1.3; if (pc) { if (pc.garras) lim = Math.max(lim, capL(ps, 'garras')); if (pc.manada) lim = Math.max(lim, capL(ps, 'manada')); }   // Cazador y Caza en manada: presas más grandes
+  if (prey.rr > pred.rr * lim) return false;
   if (qs.team === 'player' && safeNear(prey.x, prey.y)) return false;
+  if (qc && ps.team !== qs.team) {   // defensas de la presa (capacidades)
+    if (qc.camuflaje && !prey.mv) return false;   // Cripsis: quieto es invisible
+    if (ps.team === 'wild') { if (qc.veneno && (prey.age >= MAT || qc.veneno >= 2)) return false; if (qc.imitacion && pred.rr < prey.rr * capL(qs, 'imitacion')) return false; }   // Aposematismo y Falsa advertencia
+  }
   const pw = ps.hab === 'water', qw = qs.hab === 'water';
-  if (pw && !qw) return false;
-  if (qw && ps.hab === 'land') return false;
+  if (pw && !qw && !(ps.lst === 1 && nearWaterPt(prey.x, prey.y, SHORE))) return false;   // Orilla: un pez de aletas lobuladas caza en la costa
+  if (qw && ps.hab === 'land' && !(qs.lst === 1 && !isWater(prey.x, prey.y))) return false;   // ...pero en la costa lo cazan los de tierra
   return true;
 }
-function plantOk(a, pl) { const h = a.sp.hab; if (h === 'fly' || h === 'amph') return true; return h === 'water' ? pl.w : !pl.w; }
+function plantOk(a, pl) { const h = a.sp.hab; if (h === 'fly' || h === 'amph') return true; return h === 'water' ? pl.w || (a.sp.lst === 1 && nearWaterPt(pl.x, pl.y, SHORE)) : !pl.w; }
 /* Rejilla espacial de animales: se reconstruye en cada tick antes de que piensen y solo vale mientras piensan (useGrid).
    Los resultados son idénticos a recorrer toda la lista (los empates se resuelven por orden en G.A); el margen GPAD cubre lo que se mueven en un tick. */
 const CS = 80, GPAD = 26; let GRID = [], GRIDP = [], GW = 0, GH = 0, useGrid = false;
 function buildGrid() {
   GW = Math.ceil(W / CS) + 1; GH = Math.ceil(H / CS) + 1;
   if (GRID.length !== GW * GH) { GRID = Array.from({ length: GW * GH }, () => []); GRIDP = Array.from({ length: GW * GH }, () => []); } else { for (const c of GRID) c.length = 0; for (const c of GRIDP) c.length = 0; }
-  IDX.clear(); const A = G.A; for (let i = 0; i < A.length; i++) { const a = A[i]; a._i = i; IDX.set(a.id, a); if (a.dead) continue; const ci = clamp(Math.floor(a.y / CS), 0, GH - 1) * GW + clamp(Math.floor(a.x / CS), 0, GW - 1); GRID[ci].push(a); if (a.sp.diet !== 'herb') GRIDP[ci].push(a); }
+  IDX.clear(); const A = G.A; for (let i = 0; i < A.length; i++) { const a = A[i]; a._i = i; IDX.set(a.id, a); if (a.dead) continue; const ci = clamp(Math.floor(a.y / CS), 0, GH - 1) * GW + clamp(Math.floor(a.x / CS), 0, GW - 1); GRID[ci].push(a); if (a.sp.diet !== 'herb' || (a.sp.cap && a.sp.cap.garras)) GRIDP[ci].push(a); }
 }
 function nearestA(x, y, range, fn) {
   let best = null, bd = range; const rr = range + GPAD, x0 = Math.max(0, Math.floor((x - rr) / CS)), x1 = Math.min(GW - 1, Math.floor((x + rr) / CS)), y0 = Math.max(0, Math.floor((y - rr) / CS)), y1 = Math.min(GH - 1, Math.floor((y + rr) / CS));
@@ -557,8 +671,9 @@ function nearestA(x, y, range, fn) {
 }
 function threatOf(a, stealthK) {
   if (!useGrid) buildGrid();
+  const fa = a.sp.cap && a.sp.cap.alas && a.sp.hab0 === 'fly' ? capL(a.sp, 'alas') : 1;   // Vuelo alto: lo que no vuela lo ve desde menos lejos
   let best = null, td = 1e9; const VK = BM('vs'), x = a.x, y = a.y, rr = 170 + GPAD, x0 = Math.max(0, Math.floor((x - rr) / CS)), x1 = Math.min(GW - 1, Math.floor((x + rr) / CS)), y0 = Math.max(0, Math.floor((y - rr) / CS)), y1 = Math.min(GH - 1, Math.floor((y + rr) / CS));
-  for (let cy = y0; cy <= y1; cy++) for (let cx = x0; cx <= x1; cx++) { const c = GRIDP[cy * GW + cx]; for (let k = 0; k < c.length; k++) { const b = c[k], dx = b.x - x, dy = b.y - y, seen = b.sp._vs * stealthK * VK; if (dx * dx + dy * dy > seen * seen * 1.001 || b === a || b.dead) continue; const d = hyp(dx, dy); if (d < seen && (d < td || (d === td && best && b._i < best._i)) && canEat(b, a)) { td = d; best = b; } } }
+  for (let cy = y0; cy <= y1; cy++) for (let cx = x0; cx <= x1; cx++) { const c = GRIDP[cy * GW + cx]; for (let k = 0; k < c.length; k++) { const b = c[k], dx = b.x - x, dy = b.y - y, seen = b.sp._vs * stealthK * VK * (fa < 1 && b.sp.hab !== 'fly' ? fa : 1); if (dx * dx + dy * dy > seen * seen * 1.001 || b === a || b.dead) continue; const d = hyp(dx, dy); if (d < seen && (d < td || (d === td && best && b._i < best._i)) && canEat(b, a)) { td = d; best = b; } } }
   return best;
 }
 function alliesNear(a, r) {
@@ -575,7 +690,8 @@ const safePts = () => { const o = []; for (const n of G.N) if (n.done) o.push(n)
 const nearWater = (a, r) => { const dx = (a.x - LAKE.x) / (LAKE.rx + r), dy = (a.y - LAKE.y) / (LAKE.ry + r); return dx * dx + dy * dy < 1; };
 const nearHome = (a, r) => { for (const n of G.N) if (n.done && hyp(n.x - a.x, n.y - a.y) < r) return true; for (const b of G.B) if (b.done && (b.k === 'fogata' || b.k === 'refugio') && hyp(b.x - a.x, b.y - a.y) < r) return true; return false; };   // territorio propio
 const zoneAt = a => { const z = X2().zones; if (!z) return null; for (const q of z) if (q.t > 0 && hyp(q.x - a.x, q.y - a.y) < q.r) return q; return null; };
-const nestNear = (x, y) => { for (const n of G.N) if (n.done && hyp(n.x - x, n.y - y) < 58) return n; return null; };
+const NESTR = () => G.me && G.me.cap && G.me.cap.madriguera ? capL(G.me, 'madriguera') : 58;   // Madriguera: el refugio del nido es más grande
+const nestNear = (x, y) => { if (!G.N.length) return null; const R0 = NESTR(); for (const n of G.N) if (n.done && hyp(n.x - x, n.y - y) < R0) return n; return null; };
 const bdone = k => G.B.filter(b => b.k === k && b.done);
 const warmNear = (x, y) => { for (const b of G.B) if (b.done && ((b.k === 'fogata' && hyp(b.x - x, b.y - y) < 85) || (b.k === 'refugio' && hyp(b.x - x, b.y - y) < 45))) return b; return null; };
 const safeNear = (x, y) => nestNear(x, y) || warmNear(x, y);
@@ -642,8 +758,10 @@ function matchup(a, b, al) {
   const ab = alliesNear(b, 70); if (ab >= 3) f(1 - Math.min(cxv(sb, 'gcap', .2), cxv(sb, 'gper', .05) * ab) * BM('gr') * cxv(sb, 'gr', 1), 'El blanco anda en grupo');
   if (sa.cls === 'ter' && sa.team === 'player' && cxv(sa, 'home', 0) && nearHome(a, 130)) f(1 + cxv(sa, 'home', 0), 'En su territorio (cerca del nido)');
   let sup = false;   // Alarma: el blanco está alerta y no hay sorpresa
-  if (pa.stealth > 0 && inForest(a.x, a.y)) { if (b.ala > 0) sup = true; else f(BM('amb') > 1 ? BM('amb') : 1.1, 'Emboscada entre árboles'); }
+  if (pa.stealth > 0 && inForest(a.x, a.y) && !(sb.cap && sb.cap.vision)) {   // Ojo avizor: no lo emboscan
+    if (b.ala > 0) sup = true; else f(BM('amb') > 1 ? BM('amb') : 1.1, 'Emboscada entre árboles'); }
   if (sb.hab === 'amph' && sa.hab !== 'amph' && isWater(b.x, b.y)) f(.8, 'La presa está en el agua');
+  if (sa.hab === 'water' && sa.diet !== 'herb' && (sa.team !== 'wild' || sb.team !== 'wild') && isWater(a.x, a.y) && inZ(FOSA(), a.x, a.y)) f(1.25, 'Emboscada en la fosa');   // (entre salvajes no cambia: el ecosistema del lago queda como estaba)
   if (G.biomeKey === 'desierto' && pa.drought > .8) f(.9, 'Calor del desierto');
   if (G.biome.coldAll && pa.cold > .6) f(.9, 'Frío de la tundra');
   const en = enOf(a); if (en < 30) f(.7 + .3 * en / 30, 'Cansado');
@@ -656,7 +774,8 @@ function matchup(a, b, al) {
   // probabilidad de que el golpe falle: blanco chico, presa voladora para un terrestre, presa que huye más rápido
   let miss = clamp((rt - 1.3) * .25, 0, .6), mw = rt > 1.5 ? 'blanco chico' : '';
   if (sb.hab === 'fly' && sa.hab !== 'fly') { miss += .2; mw = 'la presa vuela'; }
-  if (b.st === 'flee' && !(b.stun > 0)) { miss += clamp(.08 + (spdOf(b) - spdOf(a)) / 160, 0, .5); mw = mw || 'la presa huye'; }
+  if (b.st === 'flee' && !(b.stun > 0) && !(sa.cap && sa.cap.aletas && sa.cls === 'acu' && isWater(b.x, b.y))) { miss += clamp(.08 + (spdOf(b) - spdOf(a)) / 160, 0, .5); mw = mw || 'la presa huye'; }   // Nado de persecución: en el agua no le esquivan
+  if (sb.cap && isWater(b.x, b.y) && sa.hab === 'water') { if (sb.cap.alas && sb.cls === 'acu' && b.st === 'flee') { miss += .25; mw = 'pez volador'; } if (sb.cap.radiadas && alliesNear(b, 70) >= 3) { miss += .3; mw = 'cardumen veloz'; } }
   if (b.stun > 0 || b.vul > 0) miss *= .3; miss = Math.min(.75, miss);
   const top = parts.slice().sort((x, y) => Math.abs(Math.log(y[0])) - Math.abs(Math.log(x[0]))).slice(0, 3).map(([v, t]) => t + ' ' + (v > 1 ? '+' : '−') + Math.round(Math.abs(v - 1) * 100) + ' %');
   if (sup) top.push('sin sorpresa: el blanco está en alarma');
@@ -679,20 +798,31 @@ function alertWide(a, th, r) {
   for (let cy = y0; cy <= y1; cy++) for (let cx = x0; cx <= x1; cx++) { const c = GRID[cy * GW + cx]; for (let k = 0; k < c.length; k++) { const o = c[k]; if (o !== a && !o.dead && o.sp === a.sp && o.ala > 0 && !(o.pan > 1.2) && hyp(o.x - a.x, o.y - a.y) < r) { o.pan = 2.5; o.px = th.x; o.py = th.y; } } }
 }
 function spdOf(a) {
-  const sp = a.sp, p = sp.p; let s = sp.spd * (1 + (p.d - 1) * .35) * (a.age < MAT ? .75 : 1); if (G.season === 3) s *= .88;
+  const sp = a.sp, p = sp.p, c = sp.cap || {}; let s = sp.spd * (1 + (p.d - 1) * .35) * (a.age < MAT ? .75 : 1); if (G.season === 3 && !c.sangre) s *= .88;   // Sangre caliente: el invierno no lo frena
   const en = enOf(a); if (en < 30) s *= .7 + .3 * en / 30;
   if (a.inj > 0) s *= 1 - .45 * a.inj; if (a.vul > 0) s *= .85;
   if (sp.p.water > 0 && isWater(a.x, a.y)) s *= 1 + .5 * sp.p.water;
-  if (sp.hab === 'water' && sp.cls === 'acu') s *= cxv(sp, 'sw', 1); else if (sp.hab === 'amph') s *= isWater(a.x, a.y) ? cxv(sp, 'wetSp', 1) : cxv(sp, 'drySp', 1);   // aletas, eco, metamorfosis: más rápido nadando (antes el atributo no hacía nada)
+  if (sp.hab === 'water' && sp.cls === 'acu') s *= cxv(sp, 'sw', 1); else if (sp.hab === 'amph') s *= isWater(a.x, a.y) ? cxv(sp, 'wetSp', 1) : cxv(sp, 'drySp', 1);
+  if (sp.lst && sp.lst > (sp.hab0 === 'amph' ? 2 : 0)) s *= isWater(a.x, a.y) ? LST[sp.lst].w : LST[sp.lst].d;   // transición a tierra: cada etapa nada peor y camina mejor
+  else if (c.aletas && sp.hab0 === 'land' && isWater(a.x, a.y)) s *= capL(sp, 'aletas');   // aletas, eco, metamorfosis: más rápido nadando (antes el atributo no hacía nada)
   return s * BM('sp');
 }
 /* Heridas: un golpe que quita >= 5 % de la vida máxima deja herida (a.inj). Cura lento (más en nido o descansando). */
 function dmg(b, amt, src, why) {
   const sp = b.sp; if (sp.team === 'player' && G.digT > 0) { const x = X2(); x.avd = (x.avd || 0) + amt; return; }   // avd: daño evitado bajo tierra (resultado de Excavar)
   let red = clamp((sp.def || 0) + sp.p.def + (sp.team === 'player' && nestNear(b.x, b.y) ? .15 : 0) + (b.ala > 0 ? (ABD.ala.L[(b.alv || 1) - 1] || ABD.ala.L[0]).def : 0) + (sp.team === 'player' && G.migT > 0 && abl('mig') >= 3 ? .2 : 0) + (src && sp.team === 'player' && !sp.domestic && PL.defensa === 2 && alliesNear(b, 90) >= 2 ? PRIO.defensa.form[2] : 0) + (src && sp.cls === 'ter' && sp.team === 'player' && cxv(sp, 'home', 0) && nearHome(b, 130) ? cxv(sp, 'home', 0) : 0) + (src && sp.hab === 'amph' && isWater(b.x, b.y) ? cxv(sp, 'wetDef', 0) : 0), 0, .8);
+  const qc = sp.cap, ac = src && src.sp.cap;
+  if (ac && ac.herramientas) red = Math.max(0, red - ((sp.def || 0) + sp.p.def) * capL(src.sp, 'herramientas'));   // Herramientas: ignoran parte de la defensa
+  if (src && qc) { if (qc.caparazon && src.rr < b.rr * capL(sp, 'caparazon')) amt *= .35; if (qc.cuidado && b.age < MAT) amt *= .6; }   // Coraza contra los más chicos; Crianza protege a las crías
   amt *= (1 - red) * sp.p.m * (sp.team === 'player' ? DF().dmg : 1) * (b.vul > 0 ? 1.35 : 1); if (src && sp.team === 'player') { const x = X2(); x.dm = (x.dm || 0) + amt; } b.hp -= amt; b.flash = .14; Bus.emit('dmg', b, amt, src);
   if (!src && why) b.lc = why;
-  if (src && b.hp > 0 && amt > 0 && b.mhp > 0) { const f = amt / b.mhp; if (f >= .05) { const was = b.inj || 0; b.inj = Math.min(1, was + f * 1.5); if (was < .3 && b.inj >= .3) Bus.emit('injured', b, b.inj); cz(b, 'inj', 6, 'herida', () => 'Herida de ' + src.sp.n.toLowerCase() + ': vida −' + f1(amt) + ', herida ' + pct(b.inj) + ' (velocidad −' + pct(.45 * b.inj) + ', fuerza −' + pct(.35 * b.inj) + ')'); } }
+  if (src && b.hp > 0 && amt > 0 && b.mhp > 0) { const f = amt / b.mhp; if (f >= .05 && !(qc && qc.exo === 3)) { const was = b.inj || 0; b.inj = Math.min(1, was + f * 1.5 * (qc && qc.exo ? capL(sp, 'exo') : 1)); if (was < .3 && b.inj >= .3) Bus.emit('injured', b, b.inj); cz(b, 'inj', 6, 'herida', () => 'Herida de ' + src.sp.n.toLowerCase() + ': vida −' + f1(amt) + ', herida ' + pct(b.inj) + ' (velocidad −' + pct(.45 * b.inj) + ', fuerza −' + pct(.35 * b.inj) + ')'); } }
+  if (src && qc && !src.dead && src.sp.team !== sp.team) {
+    if (qc.caparazon && sp.vars.caparazon === 'B' && amt > 0) dmg(src, amt * .2, null, 'espinas');   // Espinas: el que muerde se pincha
+    if (qc.defquim) { src.giv = Math.max(src.giv || 0, capL(sp, 'defquim')); src.dbf = Math.max(src.dbf || 0, 2); }   // Repelente: deja de perseguir
+    if (qc.feromonas && useGrid && !(b.fph > 0) && !b.dead) { b.fph = 2; const r = capL(sp, 'feromonas'), x0 = Math.max(0, Math.floor((b.x - r) / CS)), x1 = Math.min(GW - 1, Math.floor((b.x + r) / CS)), y0 = Math.max(0, Math.floor((b.y - r) / CS)), y1 = Math.min(GH - 1, Math.floor((b.y + r) / CS));
+      for (let cy = y0; cy <= y1; cy++) for (let cx = x0; cx <= x1; cx++) for (const o of GRID[cy * GW + cx]) if (o !== b && !o.dead && o.sp === sp && hyp(o.x - b.x, o.y - b.y) < r) { o.pan = 2.5; o.px = src.x; o.py = src.y; } }   // Alarma química
+  }
   if (b.hp <= 0 && !b.dead) kill(b, src);
 }
 function kill(b, src) {
@@ -700,7 +830,7 @@ function kill(b, src) {
   for (let i = 0; i < 8; i++) G.fx.push({ x: b.x, y: b.y, vx: rnd(-40, 40), vy: rnd(-40, 40), l: .6, c: '#b33' });
   if (b.sp.team === 'player') {
     const kind = src ? (src.sp.team === 'rival' ? 'rival' : 'depredador') : (b.lc || (b.hunger <= 0 ? 'hambre' : 'otro'));
-    const cause = src ? (src.sp.team === 'rival' ? 'rival: ' : 'depredador: ') + src.sp.n.toLowerCase() + ((b.inj || 0) > .4 ? ' (estaba herido)' : '') : kind === 'frio' ? 'frío' : kind === 'plaga' ? 'enfermedad (brote)' : kind === 'fuego' ? 'incendio' : kind === 'hambre' ? 'hambre' : 'causas naturales';
+    const cause = src ? (src.sp.team === 'rival' ? 'rival: ' : 'depredador: ') + src.sp.n.toLowerCase() + ((b.inj || 0) > .4 ? ' (estaba herido)' : '') : kind === 'frio' ? 'frío' : kind === 'plaga' ? 'enfermedad (brote)' : kind === 'fuego' ? 'incendio' : kind === 'seco' ? 'deshidratación (lejos del agua)' : kind === 'hambre' ? 'hambre' : 'causas naturales';
     const x = X2(), cs = x.casualties || (x.casualties = []), cn = x.casN || (x.casN = {}); cn[kind] = (cn[kind] || 0) + 1; x.kl = (x.kl || 0) + 1;
     cs.push({ t: Math.round(G.t * 10) / 10, id: b.id, sp: b.sp.n, cause, kind }); if (cs.length > 40) cs.shift();
     logMsg('Murió un ejemplar de ' + b.sp.n.toLowerCase() + ' (' + cause + ').');
@@ -713,10 +843,15 @@ function hit(a, b) {
   const sp = a.sp; const al = useGrid ? alliesNear(a, 70) : (() => { let n = 0; for (const o of G.A) if (!o.dead && o !== a && o.sp === sp && hyp(o.x - a.x, o.y - a.y) < 70) n++; return n; })();
   const mu = matchup(a, b, al); let d = sp.atk * (.8 + R() * .4) * mu.mult; a.cd = .9; a.en = enOf(a) - 1.2;
   if (mu.miss > 0 && R() < mu.miss) { a.en -= 3; a.cd = 1.1; Bus.emit('miss', a, b); return; }
+  if (b.sp.cap && b.sp.cap.senuelo && !(b.snT > 0) && b.sp.team !== sp.team) { b.snT = capL(b.sp, 'senuelo'); b.pan = 2.5; b.px = a.x; b.py = a.y; a.cd = 1.1; Bus.emit('miss', a, b); cz(b, 'snu', 4, 'huida', () => 'Señuelo: esquivó el golpe de ' + a.sp.n.toLowerCase() + ' y escapa'); return; }   // Señuelo: esquiva un golpe entero
   G.fx.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, vx: rnd(-30, 30), vy: rnd(-30, 30), l: .35, c: '#fff' });
   if (G.camT > 0 && sp.team === 'player') { const x = X2(); x.cmh = (x.cmh || 0) + 1; }   // golpes dados con Camuflaje activo (resultado de Camuflaje)
   Bus.emit('hit', a, b, d, { mult: mu.mult, why: mu.why });
   const h0 = b.hp; dmg(b, d, a); recordCombat(a, b, Math.min(h0, h0 - b.hp), mu);
+  const acp = sp.cap; if (acp && !b.dead && !b.sp.boss && b.sp.team !== sp.team) {
+    if (acp.cuernos && R() < capL(sp, 'cuernos')) { b.dbf = Math.max(b.dbf || 0, 3); const dx = b.x - a.x, dy = b.y - a.y, L0 = hyp(dx, dy) || 1, nx = b.x + dx / L0 * 10, ny = b.y + dy / L0 * 10; if (okPos(b.sp, nx, ny)) { b.x = nx; b.y = ny; } }   // Embestida: asusta y empuja
+    if (acp.aguijon && R() < capL(sp, 'aguijon')) b.stun = Math.max(b.stun || 0, 1);   // Parálisis
+  }
   if (!b.dead && !a.dead && b.sp.atk > 0 && !(b.stun > 0)) {
     const pw = b.sp.atk * b.rr, aw = sp.atk * a.rr + .01; let q = clamp(.1 + .5 * pw / (pw + aw), .08, .55); if (b.st === 'flee') q *= .4;
     if (R() < q) { const d2 = b.sp.atk * b.sp.p.hunt * .7 * (.8 + R() * .4), mu2 = { mult: .7, why: 'Contragolpe de la presa' }; Bus.emit('hit', b, a, d2, mu2); const h1 = a.hp; dmg(a, d2, b); recordCombat(b, a, Math.min(h1, h1 - a.hp), mu2); }
@@ -738,7 +873,8 @@ function bioInfo(a) {
   prioRefresh(); const sp = a.sp, isP = sp.team === 'player', juv = a.age < MAT, effects = [], threats = [], abilities = [], en = enOf(a), inj = a.inj || 0;
   if (a.stun > 0) effects.push({ id: 'stun', label: en <= 8 && a.st === 'stun' ? 'Agotado (colapsó)' : 'Aturdido', t: a.stun });
   if (isP) { if (G.camT > 0) effects.push({ id: 'cam', label: 'Camuflado', t: G.camT }); if (G.digT > 0) effects.push({ id: 'dig', label: 'Bajo tierra', t: G.digT }); if (a.ala > 0) effects.push({ id: 'ala', label: 'Alerta (−daño)', t: a.ala }); else if (G.alT > 0 && a.ala == null) effects.push({ id: 'ala', label: 'Alerta (−daño)', t: G.alT }); if (G.migT > 0) effects.push({ id: 'mig', label: 'Migrando', t: G.migT }); if (a.alr) effects.push({ id: 'alr', label: 'Se retira al nido', t: a.ala > 0 ? a.ala : 0 }); }
-  if ((G.season === 3 || G.biome.coldAll) && !(isP && nestNear(a.x, a.y))) effects.push({ id: 'cold', label: 'Pasa frío', t: 0 });
+  if ((G.season === 3 || G.biome.coldAll) && !(isP && nestNear(a.x, a.y)) && !(sp.cap && sp.cap.piel)) effects.push({ id: 'cold', label: 'Pasa frío', t: 0 });
+  if (sp.lst === 2 && !nearWater(a, 160)) effects.push({ id: 'dry', label: nearWater(a, 340) ? 'Piel seca (más hambre)' : 'Deshidratándose', t: 0 });
   if (a.hunger <= 0) effects.push({ id: 'starve', label: 'Muriendo de hambre', t: 0 });
   if (en < 30 && !(a.stun > 0)) effects.push({ id: 'tired', label: 'Cansado (más lento)', t: 0 });
   if (inj > .1) effects.push({ id: 'injured', label: inj > .6 ? 'Muy herido' : 'Herido', t: 0 });
@@ -746,10 +882,10 @@ function bioInfo(a) {
   if (a.rs) effects.push({ id: 'rest', label: 'Descansando', t: 0 });
   const th = threatOf(a, 1); if (th) { const mu = matchup(th, a); threats.push({ id: th.id, label: th.sp.n, d: Math.round(hyp(th.x - a.x, th.y - a.y)), mult: Math.round(mu.mult * 100) / 100, why: mu.why }); }
   if (isP) for (const id in ABD) { const ai = abilityInfo(id); abilities.push({ id, n: ABD[id].n, cd: G.ab[id] || 0, ready: !(G.ab[id] > 0), nivel: ai.nivel, costo: ai.costo, cdMax: ai.cd, efecto: ai.efecto, proximo: ai.proximo }); }
-  const rep = { ready: !juv && a.hunger >= REPRO_H && en >= REPRO_E && inj <= .5 && !(a.vul > 0) && a.rc <= 0, pct: juv ? clamp(a.age / MAT, 0, 1) : clamp(1 - a.rc / (sp.repro * 2.2), 0, 1), note: juv ? 'cría: todavía crece' : a.hunger < REPRO_H ? 'necesita comer más (hambre ' + REPRO_H + ' %)' : en < REPRO_E ? 'necesita energía (' + REPRO_E + ' %)' : inj > .5 ? 'demasiado herido' : a.vul > 0 ? 'se está recuperando' : a.rc > 0 ? 'recuperándose' : 'lista para reproducirse' };
+  const rep = { ready: !juv && a.hunger >= REPRO_H && en >= REPRO_E && inj <= .5 && !(a.vul > 0) && a.rc <= 0 && layOk(a), pct: juv ? clamp(a.age / MAT, 0, 1) : clamp(1 - a.rc / (sp.repro * 2.2), 0, 1), note: juv ? 'cría: todavía crece' : !layOk(a) ? 'tiene que volver al agua para criar' : a.hunger < REPRO_H ? 'necesita comer más (hambre ' + REPRO_H + ' %)' : en < REPRO_E ? 'necesita energía (' + REPRO_E + ' %)' : inj > .5 ? 'demasiado herido' : a.vul > 0 ? 'se está recuperando' : a.rc > 0 ? 'recuperándose' : 'lista para reproducirse' };
   const ot = a.ord && a.ord.k === 'attack' ? byIdSlow(a.ord.tid) : null;
   const ordLabel = !a.ord ? null : a.ord.k === 'move' ? 'Ir al punto marcado' : a.ord.k === 'attack' ? 'Atacar a ' + (ot ? ot.sp.n.toLowerCase() : 'el objetivo') : a.ord.k;
-  return { hp: a.hp, mhp: a.mhp, hunger: a.hunger, en, inj, rep, st: a.st, stLabel: ST_LABEL[a.st] || 'vagando', ord: a.ord || null, ordLabel, threats, effects, abilities, juv, age: a.age, species: speciesInfo(sp), biome: { adv: BMECH[G.biomeKey].adv, dis: BMECH[G.biomeKey].dis }, lin: isP && G.me.lin ? G.me.lin : null };
+  return { hp: a.hp, mhp: a.mhp, hunger: a.hunger, en, inj, rep, st: a.st, stLabel: ST_LABEL[a.st] || 'vagando', ord: a.ord || null, ordLabel, threats, effects, abilities, juv, age: a.age, species: speciesInfo(sp), biome: { adv: BMECH[G.biomeKey].adv, dis: BMECH[G.biomeKey].dis }, lin: isP && G.me.lin ? G.me.lin : null, caps: capList(sp), etapa: sp.lst == null ? null : { n: sp.lst, nombre: LST_N[sp.lst] } };
 }
 const byIdSlow = id => G.A.find(q => q.id === id && !q.dead) || null;
 /* ---------- Causa y consecuencia (etapa 3) ----------
@@ -772,19 +908,21 @@ function layEgg(a, cost) {
   if (a.sp.team === 'player') { a.st = 'lay'; cz(a, 'lay', 6, 'reproduccion', () => 'Pone un huevo: hambre −' + cost + ', energía −18, vulnerable ' + vul + ' s'); } Bus.emit('lay', a);
 }
 /* Capacidad de los herbívoros salvajes según la comida del bioma (kw; pradera = 1): con 26 conejos y 26 escarabajos en 26 plantas (desierto) se comían todo en 60 s y tu manada se moría de hambre. */
-function capOf(sp) { return sp.team === 'player' ? cxv(sp, 'cap', 40) + 4 * (G ? bdone('refugio').length : 0) : sp.team === 'rival' ? 18 : sp.diet === 'herb' && G && G.biome && G.biome.kw ? Math.max(sp.min || 1, Math.round(sp.cap * G.biome.kw)) : sp.cap; }
+const layOk = a => a.sp.lst !== 2 || a.sp.team !== 'player' || nearWater(a, 70);   // (los rivales conservan su ritmo afinado)   // etapa anfibia: cría en el agua o en la orilla
+function capOf(sp) { return sp.team === 'player' ? cxv(sp, 'cap', 40) + 4 * (G ? bdone('refugio').length : 0) + capL(sp, 'colmena') : sp.team === 'rival' ? 18 : sp.diet === 'herb' && G && G.biome && G.biome.kw ? Math.max(sp.min || 1, Math.round(sp.cap * G.biome.kw)) : sp.cap; }
 function herdCenter(sp) { let x = 0, y = 0, n = 0; for (const a of G.A) if (a.sp === sp && !a.dead) { x += a.x; y += a.y; n++; } return n ? { x: x / n, y: y / n } : null; }
 
 function think(a, dt) {
-  const sp = a.sp, p = sp.p, team = sp.team, isP = team === 'player';
+  const sp = a.sp, p = sp.p, team = sp.team, isP = team === 'player', c = sp.cap || {};
   if (sp.domestic) { thinkDomestic(a, dt); return; }
-  a.age += dt; a.cd -= dt; a.rc -= dt; a.flash -= dt; a.life -= dt;
+  a.age += dt * (c.cuidado && a.age < MAT ? capL(sp, 'cuidado') : 1); a.cd -= dt; if (a.snT > 0) a.snT -= dt; if (a.fph > 0) a.fph -= dt; a.rc -= dt; a.flash -= dt; a.life -= dt;
   if (a.en == null) a.en = EN0; if (a.inj == null) a.inj = 0;
   if (a.vul > 0) a.vul -= dt; if (a.giv > 0) a.giv -= dt; if (a.ala > 0) a.ala -= dt; else if (a.alr) a.alr = null; if (a.dbf > 0) a.dbf -= dt; if (a.pan > 0) a.pan -= dt;
   const juv = a.age < MAT; a.rr = sp.r * (juv ? .55 + .45 * a.age / MAT : 1); a.mhp = sp.hp * (juv ? .6 + .4 * a.age / MAT : 1);
   if (a.life <= 0) { a.dead = true; if (sp.boss) logMsg('El oso gigante se fue de la zona.'); return; }
   if (a.stun > 0) { a.stun -= dt; a.mv = 0; a.st = 'stun'; a.en = Math.min(100, a.en + 1.5 * dt); return; }
-  let hr = (.85 + .1 * Math.sqrt(sp.r)) * p.cF * (juv ? .7 : 1); if (G.season === 3) hr *= 1.15; if (isP) hr *= DF().hd; if (G.ev && G.ev.k === 'sequia') hr *= Math.min(1.4, p.drought); hr *= 1 + (G.biome.heat - 1) * Math.min(1, p.drought); hr *= BM('hg'); if (sp.cls) { hr *= Math.pow(sp.r / 8, ALO.e) * cxv(sp, 'hg', 1); if (sp.hab === 'amph' && !nearWater(a, SPX.acu_anfibio.dryR)) hr *= SPX.acu_anfibio.dry; }   // tamaño (consumo ∝ r^0,3), vuelo/gigantismo y piel seca de los anfibios
+  let hr = (.85 + .1 * Math.sqrt(sp.r)) * p.cF * (juv ? .7 : 1); if (G.season === 3 && !c.sangre) hr *= 1.15; if (isP) hr *= DF().hd; if (G.ev && G.ev.k === 'sequia' && !c.reserva) hr *= Math.min(1.4, p.drought); if (!c.reserva) hr *= 1 + (G.biome.heat - 1) * Math.min(1, p.drought); hr *= c.sangre >= 2 ? 1 : BM('hg'); if (sp.cls) { hr *= Math.pow(sp.r / 8, ALO.e) * cxv(sp, 'hg', 1); if (sp.lst === 2 && !nearWater(a, SPX.acu_anfibio.dryR)) hr *= cxv(sp, 'dry', 1.15); }   // Sangre caliente y Reserva: sin el hambre del invierno, la sequía y el calor; piel que se seca (etapa anfibia)
+  if (c.hiber && (G.season === 3 || G.biome.coldAll || (G.ev && G.ev.k === 'sequia')) && (a.st === 'rest' || a.st === 'idle' || a.rs)) hr *= capL(sp, 'hiber');   // Letargo   // tamaño (consumo ∝ r^0,3), vuelo/gigantismo y piel seca de los anfibios
   if (isP && G.biome.hsave) hr *= 1 - G.biome.hsave * Math.min(3, G.biome.help.filter(id => sp.traits.includes(id)).length);
   a._hr = hr;   // (solo medición: hambre por segundo; no se guarda)
   if (isP && G.digT > 0) { const x = X2(); x.sv = (x.sv || 0) + hr * .5 * dt; hr *= .5; }   // Excavar = hibernar: −50 % de hambre bajo tierra
@@ -796,15 +934,18 @@ function think(a, dt) {
   if (nest && a.hp < a.mhp) a.hp = Math.min(a.mhp, a.hp + (2 + p.nest * 3) * dt);
   if (!nest && warm && a.hp < a.mhp) a.hp = Math.min(a.mhp, a.hp + 1.5 * dt);
   if (a.inj > 0) a.inj = Math.max(0, a.inj - dt * .004 * BM('hl') * (nest ? 4 : warm ? 2 : 1) * (a.st === 'rest' ? 2 : 1) * (a.hunger > 30 ? 1 : .3));
-  if (isP && (G.season === 3 || G.biome.coldAll) && !nest && !warm) cz(a, 'cold', 12, 'clima', () => 'Pasa frío: ' + f1(.35 * p.cold * (G.season === 3 ? 1 : .45) * (inForest(a.x, a.y) ? .7 : 1)) + ' de vida por s sin nido ni fogata', true);
+  if (isP && (G.season === 3 || G.biome.coldAll) && !nest && !warm && !c.piel) cz(a, 'cold', 12, 'clima', () => 'Pasa frío: ' + f1(.35 * p.cold * (G.season === 3 ? 1 : .45) * (inForest(a.x, a.y) ? .7 : 1)) + ' de vida por s sin nido ni fogata', true);
   if (isP && a.hunger <= 0) cz(a, 'starve', 8, 'hambre', () => 'Muere de hambre: −2,2 de vida por s', true);
-  if ((G.season === 3 || G.biome.coldAll) && !nest && !warm) { dmg(a, .35 * p.cold * dt * (G.season === 3 ? 1 : .45) * (inForest(a.x, a.y) ? .7 : 1), null, 'frio'); if (a.dead) return; }
+  if (isP && sp.lst === 2 && !nearWater(a, 340) && !isWater(a.x, a.y)) { if (isP) cz(a, 'seco', 8, 'clima', () => 'Se deshidrata: está a más de 340 del agua (−0,4 de vida por s)', true); dmg(a, .4 * dt, null, 'seco'); if (a.dead) return; }   // etapa anfibia: lejos del agua se seca
+  if ((G.season === 3 || G.biome.coldAll) && !nest && !warm && !c.piel) { dmg(a, .35 * p.cold * dt * (G.season === 3 ? 1 : .45) * (inForest(a.x, a.y) ? .7 : 1), null, 'frio'); if (a.dead) return; }
   const vis = sp.vis * p.search * BM('vs') * (isP ? PRIO.exploracion.vis[PL.exploracion] : 1);
   const threat = threatOf(a, 1 - clamp(p.stealth * (inForest(a.x, a.y) ? 1.4 : 1), 0, .8)), td = threat ? hyp(threat.x - a.x, threat.y - a.y) : 1e9;
   let thr = threat, tdist = td; if (!thr && a.pan > 0) { thr = { x: a.px, y: a.py }; tdist = hyp(a.px - a.x, a.py - a.y); }
   // Rugido (zona de dominio): los rivales y depredadores salvajes que están dentro de la zona huyen de ella mientras dure
   const zs = !isP && X2().zones, zn = zs && (team === 'rival' || (team === 'wild' && sp.diet !== 'herb' && !sp.boss)) ? zoneAt(a) : null;
   if (zn) { thr = { x: zn.x, y: zn.y }; tdist = hyp(zn.x - a.x, zn.y - a.y); const c = X2().zex || (X2().zex = {}); c[a.id] = 1; }
+  let zn2 = null; if (!isP && !zn && G.N.length && G.me && G.me.cap) { const mc = G.me.cap, R0 = team === 'rival' && mc.territorio ? capL(G.me, 'territorio') : team === 'wild' && sp.diet !== 'herb' && !sp.boss && mc.fuego ? capL(G.me, 'fuego') : 0; if (R0) for (const n of G.N) if (n.done && hyp(n.x - a.x, n.y - a.y) < R0) { zn2 = n; break; } }   // Territorio (rivales) y Fuego (depredadores salvajes): no se acercan a tus nidos
+  if (zn2) { thr = { x: zn2.x, y: zn2.y }; tdist = hyp(zn2.x - a.x, zn2.y - a.y); }
   const al = alliesNear(a, 90);
   if (isP && X2().brote > 0 && al >= 5) { dmg(a, .01 * a.mhp * p.plague * Math.min(1.6, al / 6) * dt, null, 'plaga'); if (a.dead) return; }   // brote: daño por amontonamiento (rasgos con plague modulan)
   const panic = threat && td < 105 && (a.hp < a.mhp * .3 || a.en < 10);
@@ -813,16 +954,16 @@ function think(a, dt) {
   if (ord) {
     ord.t -= dt;
     if (ord.t <= 0) { a.ord = null; ord = null; }
-    else if (panic || a.en < 15 || a.inj > .7 || a.hunger < 8) { a.dd = (a.dd || 0) - dt; if (panic || a.dd <= 0) { a.dd = 1.5; if (panic || R() < .6) { const why = panic ? 'pánico' : a.en < 15 ? 'agotado' : a.inj > .7 ? 'muy herido' : 'hambriento'; Bus.emit('disobey', a, why); cz(a, 'dis', 4, 'desobediencia', () => 'Desobedece: ' + (panic ? 'pánico (vida ' + pct(a.hp / a.mhp) + ', energía ' + Math.round(a.en) + ')' : why === 'agotado' ? 'agotado (energía ' + Math.round(a.en) + ' < 15)' : why === 'hambriento' ? 'hambriento (hambre ' + Math.round(a.hunger) + ' < 8)' : 'muy herido (herida ' + pct(a.inj) + ' > 70 %)')); a.ord = null; ord = null; a.rs = a.en < 40; } } }
+    else if (panic || (!c.lenguaje && (a.en < 15 || a.inj > .7 || a.hunger < 8))) { /* Lenguaje: solo el pánico los hace desobedecer */ a.dd = (a.dd || 0) - dt; if (panic || a.dd <= 0) { a.dd = 1.5; if (panic || R() < .6) { const why = panic ? 'pánico' : a.en < 15 ? 'agotado' : a.inj > .7 ? 'muy herido' : 'hambriento'; Bus.emit('disobey', a, why); cz(a, 'dis', 4, 'desobediencia', () => 'Desobedece: ' + (panic ? 'pánico (vida ' + pct(a.hp / a.mhp) + ', energía ' + Math.round(a.en) + ')' : why === 'agotado' ? 'agotado (energía ' + Math.round(a.en) + ' < 15)' : why === 'hambriento' ? 'hambriento (hambre ' + Math.round(a.hunger) + ' < 8)' : 'muy herido (herida ' + pct(a.inj) + ' > 70 %)')); a.ord = null; ord = null; a.rs = a.en < 40; } } }
   }
   if (ord && ord.k === 'attack') { oa = byId(ord.tid); if (!oa || oa.dead || hyp(oa.x - a.x, oa.y - a.y) > 300) { Bus.emit('orderEnd', a, !oa || oa.dead ? 'objetivo derrotado o perdido' : 'se alejó demasiado'); cz(a, 'oe', 4, 'orden', () => !oa || oa.dead ? 'Orden cumplida: el objetivo cayó, vuelve a lo automático' : 'Pierde al objetivo: se alejó más de 300'); a.ord = null; ord = null; oa = null; } }
   const brave = a.hp > a.mhp * .35 && a.en >= 25 && (isP ? (stance === 'attack' || al >= BRAL[PL.defensa] || !!oa) : (sp.diet !== 'herb' && a.hp > a.mhp * .4));
   let gx = null, gy = null, spd = spdOf(a), st = 'idle', tgt = null, tk = null, convoy = false, boost = 1;
   const alL = a.ala > 0 ? (ABD.ala.L[(a.alv || 1) - 1] || ABD.ala.L[0]) : null, ordMove = !!(ord && ord.k === 'move');
   // Alarma: ante un depredador que caza reaccionan a más distancia (vis); lo que ve uno lo saben todos los alertados del radio (red de aviso) y esos huyen aunque no lo vean (hasta vis × 1,15)
-  const chasing = !!threat && threat.st === 'hunt', fleeD = (alL ? 105 * (chasing || (!threat && a.pan > 0) ? alL.vis * (!threat ? 1.15 : 1) : 1) : 105) * (isP ? pFlee(a) : 1);   // la alerta solo adelanta la huida ante un depredador que está CASANDO (uno que pasea de largo no los hace dejar de comer)
+  const chasing = !!threat && threat.st === 'hunt', fleeD = (c.vision ? capL(sp, 'vision') : 1) * (alL ? 105 * (chasing || (!threat && a.pan > 0) ? alL.vis * (!threat ? 1.15 : 1) : 1) : 105) * (isP ? pFlee(a) : 1);   // la alerta solo adelanta la huida ante un depredador que está CASANDO (uno que pasea de largo no los hace dejar de comer)
   if (alL && chasing && td < 105 * alL.vis) { a.alw = (a.alw || 0) - dt; if (a.alw <= 0) { a.alw = .5; alertWide(a, threat, alL.r); } }
-  const fleeing = !!zn || thr && tdist < fleeD && !(ordMove && !panic) && (sp.flee || (isP && !brave && stance !== 'attack' && !oa) || (isP && panic) || (team === 'rival' && !brave && sp.diet === 'herb'));
+  const fleeing = !!zn || !!zn2 || thr && tdist < fleeD && !(ordMove && !panic) && (sp.flee || (isP && !brave && stance !== 'attack' && !oa) || (isP && panic) || (team === 'rival' && !brave && sp.diet === 'herb'));
   // ---- descanso de verdad: sin amenaza, sin hambre y con poca energía
   if (a.rs) { if (a.en >= 75 || (a.hunger < 40 && !(a.giv > 0)) || threat) a.rs = false; }
   else if (a.en < 40 && !threat && (a.hunger >= 55 || a.giv > 0) && !(isP && stance === 'attack' && a.en >= 20)) { a.rs = true; Bus.emit('rest', a); cz(a, 'rest', 10, 'descanso', () => 'Descansa: energía ' + Math.round(a.en) + (a.hunger < 55 ? '' : ', sin amenazas y con hambre ' + Math.round(a.hunger))); }
@@ -842,7 +983,7 @@ function think(a, dt) {
   else if (isP && stance !== 'attack' && !oa && (G.nestB || G.bB)) { const n = G.nestB || G.bB; gx = n.x + Math.cos(a.id) * 28; gy = n.y + Math.sin(a.id) * 28; st = 'build'; if (hyp(a.x - n.x, a.y - n.y) < 62) n.work += dt; }
   else if (a.rs && !oa) { st = 'rest'; }
   else {
-    const pl = sp.diet !== 'carn', mt = sp.diet !== 'herb' || p.scav >= .3;   // un herbívoro con rasgos de carroñero (scav ≥ 0,3) también aprovecha la carroña (antes lo ignoraba)
+    const pl = sp.diet !== 'carn' || !!c.digest, mt = sp.diet !== 'herb' || p.scav >= .3 || !!c.garras || !!c.digest;   // Estómago fuerte y Cazador: comida nueva   // un herbívoro con rasgos de carroñero (scav ≥ 0,3) también aprovecha la carroña (antes lo ignoraba)
     if (oa) { tk = 'animal'; tgt = oa; }
     else if (isP && stance === 'attack') { tk = 'animal'; tgt = nearest(G.A, a.x, a.y, 300, b => b.sp.team !== 'player' && (canEat(b, a) || canEat(a, b) || b.sp.team === 'rival')); }
     else if (isP && stance === 'gather') { if (threat && td < 90 && brave) { tk = 'animal'; tgt = threat; } else { const n = G.N.find(q => q.done); const c = n || herdCenter(sp); if (c) { gx = c.x + Math.cos(a.id * 1.7) * 38; gy = c.y + Math.sin(a.id * 1.7) * 38; if (hyp(a.x - gx, a.y - gy) < 14) { gx = null; st = 'rest'; } } } }
@@ -850,12 +991,13 @@ function think(a, dt) {
     if (!tgt && gx === null && st !== 'rest') {
       const hungry = a.hunger < (isP ? pGo() : 68);
       if (hungry) {
-        let best = null, bd = vis, bk = null;
+        const vE = vis * (c.eco ? capL(sp, 'eco') : 1), vO = vis * (c.olfato ? capL(sp, 'olfato') : 1);   // Ecolocación (presas) y Rastreo (carroña y huevos)
+        let best = null, bd = Math.max(vE, vO), bk = null;
         if (pl) { let o; if (isP && HC) { let bs = 1e9; o = null; const w = PRIO.expansion.bias[PL.expansion]; for (const q of G.plants) { if (q.v <= .3 || !plantOk(a, q)) continue; const d0 = hyp(q.x - a.x, q.y - a.y); if (d0 >= vis) continue; const sc = d0 + w * hyp(q.x - HC.x, q.y - HC.y); if (sc < bs) { bs = sc; o = q; } } } else o = nearest(G.plants, a.x, a.y, vis, q => q.v > .3 && plantOk(a, q)); /* Expansión alta: prefieren plantas lejos del centro de la manada (ocupan territorio nuevo); baja: plantas cerca del centro */ if (o) { const d = hyp(o.x - a.x, o.y - a.y); if (d < bd) { bd = d; best = o; bk = 'plant'; } } }
         if (mt) {
-          const o = a.giv > 0 ? null : nearest(G.A, a.x, a.y, vis, b => canEat(a, b)); if (o) { const d = hyp(o.x - a.x, o.y - a.y) * .85; if (d < bd) { bd = d; best = o; bk = 'animal'; } }
-          if (sp.diet === 'carn' || p.scav > 0) { const c = nearest(G.C, a.x, a.y, vis, q => q.food > 0); if (c) { const d = hyp(c.x - a.x, c.y - a.y) * .7; if (d < bd) { bd = d; best = c; bk = 'carc'; } } }
-          if (sp.diet === 'carn' && (!isP || sp.g === 'ins')) { const e = nearest(G.E, a.x, a.y, vis * .8, q => q.sp !== sp && !(isP && q.sp.team === 'player') && !(q.sp.team === 'player' && nestNear(q.x, q.y)) && (q.sp.hab !== 'water' || sp.hab !== 'land')); if (e) { const d = hyp(e.x - a.x, e.y - a.y); if (d < bd) { bd = d; best = e; bk = 'egg'; } } }
+          const o = a.giv > 0 ? null : nearest(G.A, a.x, a.y, vE, b => canEat(a, b)); if (o) { const d = hyp(o.x - a.x, o.y - a.y) * .85; if (d < bd) { bd = d; best = o; bk = 'animal'; } }
+          if (sp.diet === 'carn' || p.scav > 0) { const c = nearest(G.C, a.x, a.y, vO, q => q.food > 0); if (c) { const d = hyp(c.x - a.x, c.y - a.y) * .7; if (d < bd) { bd = d; best = c; bk = 'carc'; } } }
+          if (sp.diet === 'carn' && (!isP || sp.g === 'ins')) { const e = nearest(G.E, a.x, a.y, vO * .8, q => q.sp !== sp && !(isP && q.sp.team === 'player') && !(q.sp.team === 'player' && (nestNear(q.x, q.y) || inZ(BAJIO(), q.x, q.y))) && !(q.sp.cap && q.sp.cap.nido) && (q.sp.hab !== 'water' || sp.hab !== 'land')); if (e) { const d = hyp(e.x - a.x, e.y - a.y); if (d < bd) { bd = d; best = e; bk = 'egg'; } } }
         }
         tgt = best; tk = bk;
       }
@@ -866,12 +1008,12 @@ function think(a, dt) {
         const reach = a.rr + (tgt.rr || 4) + 3;
         if (d <= reach) { gx = null; st = 'hunt'; if (a.cd <= 0) hit(a, tgt); a.mv = 0; a.a = Math.atan2(tgt.y - a.y, tgt.x - a.x); }
         else if (a.en < 20 && !oa && !(isP && stance === 'attack')) { a.giv = 8; cz(a, 'giv', 10, 'caza', () => 'Desiste de cazar: energía ' + Math.round(a.en) + ' < 20, va a descansar'); tgt = null; tk = null; }   // persecución: se cansó y desiste
-        else { gx = tgt.x; gy = tgt.y; st = 'hunt'; spd *= 1 + (p.hunt - 1) * .3; }
+        else { gx = tgt.x; gy = tgt.y; st = 'hunt'; spd *= 1 + (p.hunt - 1) * .3; if (tgt.sp.cap && tgt.sp.cap.patas && tgt.st === 'flee') a.en -= capL(tgt.sp, 'patas') * dt; }   // Carrera: perseguir a un corredor cansa
       } else if (d < 9 + a.rr * .4) {
         st = 'eat'; a.mv = 0; a.eatT += dt; a.a = Math.atan2(tgt.y - a.y, tgt.x - a.x);
         if (a.eatT >= 1.1) {
           a.eatT = 0; Bus.emit('eat', a, tgt, tk); if (isP) { const h0 = a.hunger, e0 = a.en; cz(a, 'eat', 8, 'comida', () => 'Come ' + (tk === 'plant' ? 'planta' : tk === 'carc' ? 'carroña' : 'huevo') + ': hambre ' + Math.round(h0) + ' → +' + Math.round((tk === 'plant' ? 24 : tk === 'carc' ? 22 : sp.g === 'ins' ? 26 : 15) * p.eff) + ', energía +' + (tk === 'plant' ? 5 : tk === 'carc' ? 8 : 4)); }
-          if (tk === 'plant') { tgt.v = Math.max(0, tgt.v - .25 * clamp(a.rr / 9, .7, 1.25) * (isP ? PRIO.comida.bite[PL.comida] : 1)); a.hunger = Math.min(100, a.hunger + 24 * p.eff * (isP && warmNear(a.x, a.y) ? 1.25 : 1) * (tgt.w ? cxv(sp, 'alg', 1) : 1)); a.en = Math.min(100, a.en + 5); if (isP) G.inst += .05 * p.inst; }
+          if (tk === 'plant') { tgt.v = Math.max(0, tgt.v - .25 * clamp(a.rr / 9, .7, 1.25) * (isP ? PRIO.comida.bite[PL.comida] : 1)); a.hunger = Math.min(100, a.hunger + 24 * p.eff * (isP && warmNear(a.x, a.y) ? 1.25 : 1) * (tgt.w ? (c.aletas && sp.hab0 === 'fly' ? 1.25 : cxv(sp, 'alg', 1)) : 1)); a.en = Math.min(100, a.en + 5); if (isP) G.inst += .05 * p.inst; }
           else if (tk === 'carc') { tgt.food -= 18; a.hunger = Math.min(100, a.hunger + 22 * p.eff * (isP && warmNear(a.x, a.y) ? 1.25 : 1)); a.en = Math.min(100, a.en + 8); if (tgt.food <= 0) tgt.dead = true; if (isP) G.inst += .05 * p.inst; }
           else if (tk === 'egg') { G.E.splice(G.E.indexOf(tgt), 1); a.hunger = Math.min(100, a.hunger + (sp.g === 'ins' ? 26 : 15)); a.en = Math.min(100, a.en + 4); }
           for (let i = 0; i < 3; i++) G.fx.push({ x: tgt.x, y: tgt.y, vx: rnd(-20, 20), vy: rnd(-30, -5), l: .5, c: tk === 'plant' ? '#4a9a3a' : '#b33' });
@@ -879,7 +1021,7 @@ function think(a, dt) {
         gx = null;
       } else { gx = tgt.x; gy = tgt.y; st = tk === 'plant' ? 'forage' : 'hunt'; }
     }
-    if (!tgt && gx === null && st !== 'rest' && a.hunger >= (isP ? REPRO_H : REPRO_H_WILD) && a.en >= REPRO_E && a.age >= MAT && a.rc <= 0 && a.inj <= .5 && !(a.vul > 0)) {
+    if (!tgt && gx === null && st !== 'rest' && a.hunger >= (isP ? REPRO_H : REPRO_H_WILD) && a.en >= REPRO_E && a.age >= MAT && a.rc <= 0 && a.inj <= .5 && !(a.vul > 0) && layOk(a)) {
       if (count(sp) + eggCount(sp) < capOf(sp)) { layEgg(a, 32); a.rc = (sp.repro * 2.2 / p.r) * rnd(.8, 1.2) * (team !== 'player' ? 1 + .6 * (X2().scar || 0) : PRIO.reproduccion.rc[PL.reproduccion]) * cxv(sp, 'rc', 1); }
       else a.rc = 4;
     }
@@ -888,7 +1030,8 @@ function think(a, dt) {
   if (gx === null && !(tgt && st === 'eat') && st !== 'hunt' && st !== 'rest') {
     a.wt -= dt;
     const mg = team === 'wild' && X2().mg && X2().mg[sp.key];
-    if (a.wt <= 0) { a.wt = rnd(2, 5); const c = (isP || team === 'rival') ? herdCenter(sp) : mg || null; const q = randPos(sp, c ? c.x : a.x, c ? c.y : a.y, (c ? (mg ? 60 : 80) : 60) * (isP ? pRad() : 1) * cxv(sp, 'wr', 1)); a.tx = q.x; a.ty = q.y; }
+    if (a.wt <= 0) { a.wt = rnd(2, 5); const c = (isP || team === 'rival') ? herdCenter(sp) : mg || null; const q = randPos(sp, c ? c.x : a.x, c ? c.y : a.y, (c ? (mg ? 60 : 80) : 60) * (isP ? pRad() : 1) * cxv(sp, 'wr', 1)); a.tx = q.x; a.ty = q.y;
+      if (isP && sp.lst === 2 && !nearWaterPt(q.x, q.y, 220)) { const dx = a.x - LAKE.x, dy = a.y - LAKE.y, d0 = hyp(dx / LAKE.rx, dy / LAKE.ry) || 1; a.tx = LAKE.x + dx / d0 * 1.1; a.ty = LAKE.y + dy / d0 * 1.1; } }   // etapa anfibia: no se aleja a secarse, vuelve hacia el agua
     gx = a.tx; gy = a.ty; spd *= mg ? .75 : (isP ? PRIO.expansion.ws[PL.expansion] : .45); if (st === 'idle' && a.hunger < 62) st = 'forage';
   }
   if (a.st !== st) { if (st === 'hunt' && tk === 'animal' && tgt && isP) cz(a, 'hunt', 10, 'caza', () => (oa ? 'Ataca por orden a ' : 'Persigue a ') + tgt.sp.n.toLowerCase() + ': ×' + f1(matchup(a, tgt).mult) + ' de ventaja'); Bus.emit('state', a, a.st, st); }
@@ -917,7 +1060,7 @@ function evStart() {
   else {
     const c = randPos({ hab: 'land' }), RAD = 90; G.ev = { k, t: 8 }; G.F.push({ x: c.x, y: c.y, r: RAD, t: 8 });
     for (const pl of G.plants) if (hyp(pl.x - c.x, pl.y - c.y) < RAD) pl.v = 0;
-    for (const a of G.A) if (hyp(a.x - c.x, a.y - c.y) < RAD) dmg(a, 14 * a.sp.p.fire, null, 'fuego');
+    for (const a of G.A) if (hyp(a.x - c.x, a.y - c.y) < RAD && !(a.sp.cap && a.sp.cap.pirofila) && !(a.sp.team === 'player' && G.me.cap.madriguera && nestNear(a.x, a.y))) dmg(a, 14 * a.sp.p.fire, null, 'fuego');   // Pirófila y Madriguera: a salvo del fuego
     toast('Incendio: quemó plantas y dañó animales cerca. Resisten las que tienen refugio o resistencia al fuego.', true); logMsg('Hay un incendio en el mapa.');
   }
 }
@@ -952,25 +1095,26 @@ function update(dt) {
   if (!G.bossDone && G.biome.boss && G.t > 140) { G.bossDone = true; const o = G.sp.oso; const q = randPos(o, 30, 300, 20); spawn(o, q.x, q.y, false); toast('¡Llegó un oso gigante! Reuní a tu manada o evitalo.', true); logMsg('Un oso gigante entró al valle.'); }
   const grow = Math.max(SEAS[G.season].g, G.biome.gmin || 0) * (G.ev && G.ev.k === 'sequia' ? 0 : 1) * DF().grow * G.biome.grow;   // gmin: piso de crecimiento invernal (en la tundra hay liquen y arbustos bajo la nieve)
   { const fk = G.me.p.fert || 0, pts = fk > 0 ? safePts() : null;   // ingeniería (fert): las plantas a menos de 90 de un nido, refugio o fogata rebrotan (1 + 4·fert) veces más rápido
-    for (const pl of G.plants) if (pl.v < 1) { let m = 1; if (pts) for (const q of pts) if (hyp(pl.x - q.x, pl.y - q.y) < 90) { m = 1 + 4 * fk; break; } pl.v = Math.min(1, pl.v + (.008 * grow * dt) * m + .0004 * dt); } }
+    const kp = KELP(); for (const pl of G.plants) if (pl.v < 1) { let m = pl.w && (inZ(kp[0], pl.x, pl.y) || inZ(kp[1], pl.x, pl.y)) ? 2 : 1; if (pts) for (const q of pts) if (hyp(pl.x - q.x, pl.y - q.y) < 90) { m *= 1 + 4 * fk; break; } pl.v = Math.min(1, pl.v + (.008 * grow * dt) * m + .0004 * dt); } }
   for (const f of G.F) f.t -= dt; G.F = G.F.filter(f => f.t > 0);
   for (const c of G.C) { c.t -= dt; if (c.t <= 0) c.dead = true; } G.C = G.C.filter(c => !c.dead);
   buildGrid(); useGrid = true;
   try { for (const a of G.A) if (!a.dead) think(a, dt); } finally { useGrid = false; }
   separate();
   G.A = G.A.filter(a => !a.dead);
-  for (let i = G.E.length - 1; i >= 0; i--) {
-    const e = G.E[i], inN = e.sp.team === 'player' && nestNear(e.x, e.y);
-    e.t -= dt * (inN ? 2 * (1 + e.sp.p.nest) : 1);
-    if (e.t <= 0) { G.E.splice(i, 1); Bus.emit('born', spawn(e.sp, e.x, e.y, true)); if (e.sp.team === 'player') { G.inst += .6 * e.sp.p.inst; logMsg('Nació una cría de ' + e.sp.n.toLowerCase() + '.'); for (let k = 0; k < 6; k++) G.fx.push({ x: e.x, y: e.y, vx: rnd(-30, 30), vy: rnd(-40, -5), l: .6, c: '#ffe08a' }); } }
+  const BJ = BAJIO(); for (let i = G.E.length - 1; i >= 0; i--) {
+    const e = G.E[i], inN = e.sp.team === 'player' && nestNear(e.x, e.y), inB = e.sp.team === 'player' && inZ(BJ, e.x, e.y);
+    e.t -= dt * (inN ? 2 * (1 + e.sp.p.nest) : 1) * (inB ? 1.6 : 1) * (e.sp.cap && e.sp.cap.metamorfosis && nearWaterPt(e.x, e.y, 40) ? capL(e.sp, 'metamorfosis') : 1);   // Larvas: los huevos junto al agua eclosionan antes
+    if (e.t <= 0) { G.E.splice(i, 1); Bus.emit('born', spawn(e.sp, e.x, e.y, true)); if (e.sp.cap && e.sp.cap.camadas) for (let k = 1; k < capL(e.sp, 'camadas'); k++) if (count(e.sp) + eggCount(e.sp) < capOf(e.sp)) { const q = { x: clamp(e.x + k * 5, 8, W - 8), y: e.y }; if (okPos(e.sp, q.x, q.y)) Bus.emit('born', spawn(e.sp, q.x, q.y, true)); } /* Camada: más de una cría por huevo */ if (e.sp.team === 'player') { G.inst += .6 * e.sp.p.inst; logMsg('Nació una cría de ' + e.sp.n.toLowerCase() + '.'); for (let k = 0; k < 6; k++) G.fx.push({ x: e.x, y: e.y, vx: rnd(-30, 30), vy: rnd(-40, -5), l: .6, c: '#ffe08a' }); } }
   }
+  if (G.me.cap.ingenieria) for (const n of G.N) if (n.done && !n.gard) { n.gard = 1; for (let k = 0; k < capL(G.me, 'ingenieria'); k++) { const ang = rnd(0, TAU), rr = rnd(25, 70), q = { x: clamp(n.x + Math.cos(ang) * rr, 20, W - 20), y: clamp(n.y + Math.sin(ang) * rr, 20, H - 20) }; if (!isWater(q.x, q.y)) G.plants.push({ x: q.x, y: q.y, v: .6, w: false, s: 1 }); } logMsg('Jardín: brotaron plantas nuevas junto al nido.'); }   // Jardín (ingeniería del ecosistema)
   if (G.nestB) { const n = G.nestB; n.prog = Math.min(1, n.prog + Math.min(n.work, 6 * dt) * .045); n.work = 0; if (n.prog >= 1) { n.done = true; G.nestB = null; G.inst += 3; logMsg('¡El nido está terminado! Los huevos nacen más rápido y las crías están a salvo.'); toast('Nido terminado.'); } }
   if (G.bB) { const n = G.bB; n.prog = Math.min(1, n.prog + Math.min(n.work, 6 * dt) * .05); n.work = 0; if (n.prog >= 1) { n.done = true; G.bB = null; onBuilt(n); } }
   G.immT += dt; civUpdate(dt);
   if (G.immT > 7) { G.immT = 0; for (const k in WILD) { const sp = G.sp[k]; if (sp.boss) continue; if (count(sp) < sp.min && (G.biome.init[k] || 0) > 0 && (sp.diet !== 'carn' || G.t > 50)) { const q = randPos(sp); spawn(sp, q.x, q.y, false); } } for (const r of G.riv) if (count(r) + eggCount(r) < 3) { const q = randPos(r); spawn(r, q.x, q.y, false); } }
-  for (const r of G.riv) { r.evT -= dt; if (r.evT <= 0) { r.evT = rnd(45, 65) * DF().rv; const pool = TRAITS.filter(t => !r.traits.includes(t.id)); if (pool.length) { r.traits.push(shuffle(pool)[0].id); recalc(r); } } }
+  for (const r of G.riv) { r.evT -= dt; if (r.evT <= 0) { r.evT = rnd(45, 65) * DF().rv; const cl = closedBy(r), pool = TRAITS.filter(t => !t.tx && !r.traits.includes(t.id) && !cl.has(t.id)); if (pool.length) { r.traits.push(shuffle(pool)[0].id); recalc(r); } } }
   for (const f of G.fx) { f.l -= dt; f.x += f.vx * dt; f.y += f.vy * dt; } G.fx = G.fx.filter(f => f.l > 0);
-  G.inst += dt * (.04 + .004 * stats().pop) * G.me.p.inst; while (G.inst >= G.nextInst) { G.inst -= G.nextInst; G.nextInst += 5; G.pending++; }
+  G.inst += dt * (.04 + .004 * stats().pop) * G.me.p.inst; while (G.inst >= G.nextInst) { G.inst -= G.nextInst; G.nextInst += INST_STEP; G.pending++; }   // Ciclo 4: +6 por evolución (antes +5; con +8 los carnívoros perdían 12-31 puntos): la primera llega en ≈ 20-30 s y las siguientes cada ≈ 1-2 min (medido con bots, docs/ERA2-EVOLUCION.md)
   G.goalT += dt; if (G.goalT >= 1) { G.goalT = 0; goals(); }
 }
 
@@ -1061,8 +1205,8 @@ function win() {
   G.over = true; const me = G.me, mind = me.p.mind;
   const path = G.kills >= 10 ? ['Ápice', 'Tu manada dominó la cadena alimenticia cazando.', 'Tribu de cazadores'] : mind >= 2 ? ['Mente', 'Tus animales dieron el salto a las herramientas y el lenguaje.', 'Tribu de sabios y chamanes'] : ['Especie clave', 'Tu especie sostuvo el ecosistema.', 'Tribu de pastores y agricultores'];
   clearSave();
-  writeLineage({ species: me.key, name: me.n, cls: me.cls, traits: me.traits.slice(), vars: Object.assign({}, me.vars), evos: G.evos, kills: G.kills, minutes: Math.round(G.t / 6) / 10, biomes: Object.keys(colonized), path: path[0], seed: G.seed, abil: Object.fromEntries(ABK.map(k => [k, abLevel(k)])), tags: me.lin ? me.lin.tags : [] });
-  dialog('Era 2 completada: camino ' + path[0], '<p>' + path[1] + '</p><p>Camino a la Era 3: <b>' + path[2] + '</b>. Tu linaje (rama, nivel, mutaciones y la especie que jugaste) queda guardado y viaja a la Era 3: <a href="era3-tribus.html">abrila acá</a>.</p><p>Tiempo: ' + Math.floor(G.t / 60) + ' min ' + Math.floor(G.t % 60) + ' s · Presas cazadas: ' + G.kills + ' · Rasgos: ' + me.traits.length + '</p>', [{ t: 'Volver al inicio', fn: toMenu }]);
+  writeLineage({ species: me.key, name: me.n, cls: me.cls, traits: me.traits.slice(), vars: Object.assign({}, me.vars), evos: G.evos, kills: G.kills, minutes: Math.round(G.t / 6) / 10, biomes: Object.keys(colonized), path: path[0], seed: G.seed, abil: Object.fromEntries(ABK.map(k => [k, abLevel(k)])), tags: me.lin ? me.lin.tags : [], tierra: me.cls === 'acu' && me.lst >= 3, etapa: me.lst, capacidades: Object.keys(me.cap || {}) });   // Ciclo 4: tierra = el acuático completó la transición (contrato con la Era 3: ciudad anfibia)
+  dialog('Era 2 completada: camino ' + path[0], '<p>' + path[1] + '</p><p>Camino a la Era 3: <b>' + path[2] + '</b>. Tu linaje (rama, nivel, mutaciones y la especie que jugaste) queda guardado y viaja a la Era 3: <a href="era3-tribus.html">abrila acá</a>.</p><p>Tiempo: ' + Math.floor(G.t / 60) + ' min ' + Math.floor(G.t % 60) + ' s · Presas cazadas: ' + G.kills + ' · Rasgos: ' + me.traits.length + '</p>' + (me.cls === 'acu' && me.lst >= 3 ? '<p><b>Tu especie salió del agua.</b> En la Era 3 fundará una ciudad anfibia de costa.</p>' : me.cls === 'acu' ? '<p>Tu especie siguió siendo acuática: en la Era 3 su ciudad será submarina.</p>' : ''), [{ t: 'Volver al inicio', fn: toMenu }]);
 }
 function lose() { G.over = true; clearSave(); dialog('Tu manada se extinguió', '<p>Sin animales ni huevos, la especie desapareció. Probá anidar antes, reproducirte seguido y evitar a los depredadores grandes.</p>', [{ t: 'Volver al inicio', fn: toMenu }]); }
 function toMenu() { refreshContinue(); LIN = readLineage(); showLineage(); $('menu').classList.add('show'); started = false; }
@@ -1276,8 +1420,9 @@ function classLines(k) {
   } else if (d.cls === 'acu') {
     adv.push('Clase Acuáticos, agua: nadan ' + P(m('sw', 1)) + ' % más rápido (el agua es suya) y el cardumen los protege ' + P(m('gr', 1)) + ' % más que a otros', 'Pastorean algas: cada bocado rinde ' + P(m('alg', 1)) + ' % más', 'Los depredadores de tierra no los alcanzan dentro del agua');
     dis.push('Dependen del agua: el lago de la pradera es chico y tiene pocas algas');
+    adv.push('Zonas del lago: praderas de algas (rebrotan el doble), bajío de desove (tus huevos eclosionan 60 % antes y nadie se los come) y fosa (los cazadores del agua pegan 25 % más)', 'Pueden salir del agua evolucionando (aletas lobuladas → pulmones y patas → piel seca y huevo con cáscara) o quedarse y dominarla (aletas radiadas)');
   }
-  if (k === 'acu_anfibio') { adv.push('Refugio en el lago: ante un depredador huyen hacia el agua, ahí reciben ' + P(1 + x.wetDef) + ' % menos daño y nadan ' + P(x.wetSp) + ' % más rápido'); dis.push('Piel seca: a más de ' + x.dryR + ' del agua gastan ' + P(x.dry) + ' % más de hambre y van ' + P(x.drySp) + ' % más lento'); }
+  if (k === 'acu_anfibio') { adv.push('Refugio en el lago: ante un depredador huyen hacia el agua, ahí reciben ' + P(1 + x.wetDef) + ' % menos daño y nadan ' + P(x.wetSp) + ' % más rápido'); dis.push('Piel seca: a más de ' + x.dryR + ' del agua gastan ' + P(x.dry) + ' % más de hambre y van ' + P(x.drySp) + ' % más lento; a más de 300 se deshidratan', 'Crían en el agua: solo ponen huevos a menos de 40 del agua (hasta evolucionar el huevo con cáscara)'); }
   if (k === 'ter_gigante') { dis.push('Gigantismo: ' + P(x.hg) + ' % más de hambre, cada huevo cuesta ' + P(x.egg) + ' % más y la espera entre puestas es ' + P(x.rc) + ' % más larga'); adv.push('Los depredadores chicos (radio < 10) no pueden con un adulto: solo las crías y los rivales grandes son un riesgo'); }
   return { adv, dis };
 }
@@ -1420,6 +1565,10 @@ function drawStatic(ctx, S, sea) {
   ctx.fillStyle = S.season === 3 ? 'rgba(235,245,250,.95)' : 'rgba(225,208,150,.95)'; ctx.beginPath(); ctx.ellipse(LAKE.x, LAKE.y, LAKE.rx + 9, LAKE.ry + 8, 0, 0, TAU); ctx.fill();
   const lg = ctx.createRadialGradient(LAKE.x, LAKE.y, 10, LAKE.x, LAKE.y, LAKE.rx); lg.addColorStop(0, S.season === 3 ? '#9fc4dd' : '#4a98cc'); lg.addColorStop(1, S.season === 3 ? '#c4dbe8' : '#7cc0e4');
   ctx.fillStyle = lg; ctx.beginPath(); ctx.ellipse(LAKE.x, LAKE.y, LAKE.rx, LAKE.ry, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 2; ctx.stroke();
+  { const fo = FOSA(), fg = ctx.createRadialGradient(fo.x, fo.y, 2, fo.x, fo.y, fo.r); fg.addColorStop(0, 'rgba(10,40,90,.55)'); fg.addColorStop(1, 'rgba(10,40,90,0)'); ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(fo.x, fo.y, fo.r, 0, TAU); ctx.fill();   // fosa: agua profunda
+    const bj = BAJIO(); ctx.fillStyle = 'rgba(240,226,170,.45)'; ctx.beginPath(); ctx.arc(bj.x, bj.y, bj.r, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.setLineDash([3, 4]); ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);   // bajío de desove: arena clara
+    ctx.fillStyle = 'rgba(255,250,230,.8)'; for (let i = 0; i < 6; i++) { const q = i * 1.05; ctx.beginPath(); ctx.arc(bj.x + Math.cos(q) * bj.r * .5, bj.y + Math.sin(q) * bj.r * .45, 1.8, 0, TAU); ctx.fill(); }
+    for (const k of KELP()) { ctx.fillStyle = 'rgba(20,90,50,.28)'; ctx.beginPath(); ctx.arc(k.x, k.y, k.r, 0, TAU); ctx.fill(); ctx.strokeStyle = 'rgba(20,110,60,.55)'; ctx.lineWidth = 2; for (let i = 0; i < 7; i++) { const q = i * 2.4, rr = k.r * .7 * Math.sqrt((i + .5) / 7), px = k.x + Math.cos(q) * rr, py = k.y + Math.sin(q) * rr; ctx.beginPath(); ctx.moveTo(px, py + 5); ctx.quadraticCurveTo(px + 3, py, px - 1, py - 6); ctx.stroke(); } } }   // praderas de algas
   ART.topDetail(ctx, S, sea);
 }
 /* Con muchos animales (más de LOD_N) se dibujan desde un sprite precalculado en vez de trazar cada cuerpo con sus degradados: mismo aspecto, sin el aleteo. */
@@ -1459,7 +1608,8 @@ function render() {
   for (const f of S.F) { const u = f.t / 8; const g = ctx.createRadialGradient(f.x, f.y, 5, f.x, f.y, f.r); g.addColorStop(0, 'rgba(255,200,60,' + .8 * u + ')'); g.addColorStop(1, 'rgba(220,60,20,' + .1 * u + ')'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, TAU); ctx.fill(); }
   for (const n of S.N) {
     ctx.strokeStyle = '#6b4a2a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(n.x, n.y, 18, 0, TAU); ctx.stroke(); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(n.x, n.y, 12, 0, TAU); ctx.stroke();
-    if (n.done) { ctx.strokeStyle = 'rgba(18,149,143,.45)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(n.x, n.y, 58, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
+    if (n.done) { ctx.strokeStyle = 'rgba(18,149,143,.45)'; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(n.x, n.y, NESTR(), 0, TAU); ctx.stroke();
+      const mc = S.me.cap || {}; if (mc.territorio) { ctx.strokeStyle = 'rgba(201,64,111,.5)'; ctx.beginPath(); ctx.arc(n.x, n.y, capL(S.me, 'territorio'), 0, TAU); ctx.stroke(); } if (mc.fuego) { ctx.strokeStyle = 'rgba(240,130,40,.55)'; ctx.beginPath(); ctx.arc(n.x, n.y, capL(S.me, 'fuego'), 0, TAU); ctx.stroke(); } ctx.setLineDash([]); }
     else { ctx.strokeStyle = '#e8c21b'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(n.x, n.y, 25, -Math.PI / 2, -Math.PI / 2 + TAU * n.prog); ctx.stroke(); ctx.fillStyle = '#000'; ctx.font = '600 ' + 12 / SC + 'px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('construyendo…', n.x, n.y - 32); }
   }
   for (const b of S.B) {
@@ -1491,17 +1641,23 @@ function render() {
   for (const c of S.C) { ctx.fillStyle = 'rgba(150,40,40,.85)'; ctx.beginPath(); ctx.ellipse(c.x, c.y, 8, 5, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = '#eee'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(c.x - 6, c.y); ctx.lineTo(c.x + 6, c.y); ctx.stroke(); }
   if (S.rally) { ctx.strokeStyle = '#3f8fd1'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(S.rally.x, S.rally.y, 16 + 3 * Math.sin(tt * 5), 0, TAU); ctx.stroke(); ctx.fillStyle = '#3f8fd1'; ctx.fillRect(S.rally.x - 1, S.rally.y - 24, 2, 24); ctx.fillRect(S.rally.x, S.rally.y - 24, 12, 8); }
   const order = S.A.slice().sort((a, b) => a.y - b.y), lodOn = S.A.length > LOD_N;
+  const mu = META ? tt - META.t0 : 9, metaOn = mu >= 0 && mu < META_T;   // metamorfosis en el mapa: forma vieja → destello → forma nueva
   for (const a of order) {
-    const sp = a.sp, r = a.rr * 1.4;
-    if (!lodOn || sp.team !== 'wild') { ctx.fillStyle = 'rgba(10,25,10,.24)'; ctx.beginPath(); ctx.ellipse(a.x + r * .25, a.y + r * .35, r * (sp.g === 'ave' ? 1.1 : 1.35), r * .75, 0, 0, TAU); ctx.fill(); }
-    if (sp.team === 'player' || sp.team === 'rival') { ctx.strokeStyle = sp.team === 'player' ? '#12e0d6' : sp.ring; ctx.lineWidth = 2.4; ctx.beginPath(); ctx.ellipse(a.x, a.y + r * .3, r * 1.5, r * 1.1, 0, 0, TAU); ctx.stroke(); }
+    const sp = a.sp; let r = a.rr * 1.4;
+    // modo foco: la fauna salvaje se atenúa (los depredadores menos que las presas) y los rivales un poco; tus animales, el oso y lo seleccionado quedan enteros. Solo dibujo.
+    const dim = FOCUS && a.id !== selId && !sp.boss ? (sp.team === 'wild' ? (sp.diet === 'herb' ? .28 : .5) : sp.team === 'rival' ? .62 : 1) : 1;
+    if (!(lodOn || dim < 1) || sp.team === 'player') { ctx.fillStyle = 'rgba(10,25,10,.24)'; ctx.beginPath(); ctx.ellipse(a.x + r * .25, a.y + r * .35, r * (sp.g === 'ave' ? 1.1 : 1.35), r * .75, 0, 0, TAU); ctx.fill(); }
+    if (sp.team === 'player' && FOCUS && !sp.domestic) { ctx.fillStyle = 'rgba(18,224,214,.16)'; ctx.beginPath(); ctx.ellipse(a.x, a.y + r * .3, r * 1.65, r * 1.25, 0, 0, TAU); ctx.fill(); }
+    if (sp.team === 'player' || sp.team === 'rival') { ctx.globalAlpha = dim; ctx.strokeStyle = sp.team === 'player' ? '#12e0d6' : sp.ring; ctx.lineWidth = sp.team === 'player' && FOCUS ? 3.2 : FOCUS ? 1.6 : 2.4; ctx.beginPath(); ctx.ellipse(a.x, a.y + r * .3, r * 1.5, r * 1.1, 0, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
+    let mx = null; if (metaOn && sp === S.me) { const k = mu / META_T; if (k < .4) { mx = { traits: META.before.traits, vars: META.before.vars }; r *= 1 - .25 * k / .4; } else r *= 1 + .35 * (1 - (k - .4) / .6); ctx.strokeStyle = 'rgba(255,216,74,' + (1 - k) + ')'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(a.x, a.y, a.rr * 1.4 * (1.3 + 2.2 * k), 0, TAU); ctx.stroke(); if (k > .35 && k < .5) { ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.beginPath(); ctx.arc(a.x, a.y, a.rr * 2.2, 0, TAU); ctx.fill(); } }
+    if (dim < 1) ctx.globalAlpha = dim;
     if (a.id === selId) { ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.arc(a.x, a.y, r * 2.2, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
     if (sp.team === 'player' && S.camT > 0) ctx.globalAlpha = .42;
     if (sp.team === 'player' && a.st === 'dig' && S.digT > 0) { ctx.fillStyle = '#6b4a2a'; ctx.beginPath(); ctx.ellipse(a.x, a.y + r * .35, r * 1.5, r * .8, 0, 0, TAU); ctx.fill(); ctx.fillStyle = '#4a3220'; ctx.beginPath(); ctx.ellipse(a.x, a.y + r * .3, r * .9, r * .42, 0, 0, TAU); ctx.fill(); ctx.fillStyle = '#8a6a43'; for (let q = 0; q < 4; q++) { ctx.beginPath(); ctx.arc(a.x + Math.cos(q * 1.6 + a.id) * r * 1.2, a.y + r * .35 + Math.sin(q * 1.6 + a.id) * r * .6, 1.6, 0, TAU); ctx.fill(); } }
-    else if (lodOn && a.id !== selId && !sp.boss && !(a.flash > 0)) { const wf = a.mv ? ((tt * 7 + (a.ph || 0)) % 1) : .3, e = getSprite(sp, r / sp.r, S.phase === 2 && sp === S.me, a.a, wf < .25 ? 1 : wf > .5 && wf < .75 ? 2 : 0); ctx.drawImage(e.cn, a.x - e.hs, a.y - e.hs + ART.lodBob(a, tt), e.hs * 2, e.hs * 2); }
-    else drawAnimal(ctx, sp, ART.opts(a, S, tt, r, lodOn ? { lite: true } : null));
+    else if (lodOn && a.id !== selId && !sp.boss && !(a.flash > 0) && !mx && !(metaOn && sp === S.me)) { const wf = a.mv ? ((tt * 7 + (a.ph || 0)) % 1) : .3, e = getSprite(sp, r / sp.r, S.phase === 2 && sp === S.me, a.a, wf < .25 ? 1 : wf > .5 && wf < .75 ? 2 : 0); ctx.drawImage(e.cn, a.x - e.hs, a.y - e.hs + ART.lodBob(a, tt), e.hs * 2, e.hs * 2); }
+    else drawAnimal(ctx, sp, ART.opts(a, S, tt, r, mx ? Object.assign({ lite: lodOn }, mx) : lodOn || dim < 1 ? { lite: true } : null));
     if (S.biomeKey === 'tundra' && !lodOn && sp.g !== 'acu' && sp.g !== 'ins' && a.mv) ART.breath(ctx, a, r, tt);
-    if (!lodOn || sp.team !== 'wild') ART.status(ctx, a, r, tt, SC);
+    if ((!lodOn || sp.team !== 'wild') && dim >= 1) ART.status(ctx, a, r, tt, SC);
     ctx.globalAlpha = 1;
     if (a.stun > 0) { ctx.fillStyle = '#ffd23a'; for (let q = 0; q < 3; q++) { const an = tt * 5 + q * 2.09; ctx.beginPath(); ctx.arc(a.x + Math.cos(an) * r * .9, a.y - r * 1.5 + Math.sin(an) * r * .3, 2.4, 0, TAU); ctx.fill(); } }
     if (sp.domestic) { ctx.fillStyle = '#d33'; ctx.beginPath(); ctx.arc(a.x + Math.cos(a.a) * r * .95, a.y + Math.sin(a.a) * r * .95, 2.6, 0, TAU); ctx.fill(); }
@@ -1510,7 +1666,7 @@ function render() {
       ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(a.x - bw / 2, by, bw, 3); ctx.fillStyle = a.hp / a.mhp > .4 ? '#3fbf6a' : '#e0453a'; ctx.fillRect(a.x - bw / 2, by, bw * clamp(a.hp / a.mhp, 0, 1), 3);
       if (UIs.selSet.has(a.id) || UIs.hov === a.id) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(a.x - bw / 2, by + 4, bw, 3); ctx.fillStyle = a.hunger > 35 ? '#e6c23a' : '#e08a1b'; ctx.fillRect(a.x - bw / 2, by + 4, bw * a.hunger / 100, 3); }
     }
-    if ((sp.team === 'player' || sp.team === 'rival') && STC[a.st]) { ctx.fillStyle = STC[a.st]; ctx.beginPath(); ctx.arc(a.x + bw / 2 + 3, by + 3, 3.4, 0, TAU); ctx.fill(); }
+    if ((sp.team === 'player' || (sp.team === 'rival' && !FOCUS)) && STC[a.st]) { const pr = sp.team === 'player' && FOCUS ? 4.4 : 3.4; ctx.fillStyle = STC[a.st]; ctx.beginPath(); ctx.arc(a.x + bw / 2 + 3, by + 3, pr, 0, TAU); ctx.fill(); if (pr > 4) { ctx.strokeStyle = '#2b2233'; ctx.lineWidth = 1.2; ctx.stroke(); } }
     if (sp.boss) { ctx.fillStyle = '#a00'; ctx.font = '700 ' + 12 / SC + 'px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('¡Oso gigante!', a.x, a.y - r * 2.4 - 8); }
   }
   ART.signals(ctx, S, tt, SC, lodOn);
@@ -1525,7 +1681,7 @@ function render() {
 function drawPortrait() {
   if (!G) return; const cn = $('portrait'), x = cn.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, cn.width, cn.height);
   const sp = G.me, tt = performance.now() / 1000; x.save(); x.fillStyle = 'rgba(120,170,110,.35)'; x.fillRect(0, 0, cn.width, cn.height);
-  drawAnimal(x, sp, { px: 110, py: 72, a: 0, s: Math.min(5, 32 / sp.r * 1.35), tt, ph: 0, mv: 1, cloth: G.phase === 2, traits: sp.traits, vars: sp.vars }); x.restore();
+  const mk = ART.morphOf(sp, sp.traits, sp.vars).k; drawAnimal(x, sp, { px: 120, py: 68, a: 0, s: Math.min(3.4, 22 / sp.r) / Math.sqrt(mk), tt, ph: 0, mv: 1, cloth: G.phase === 2, traits: sp.traits, vars: sp.vars }); x.restore();
 }
 
 /* ---------- Entrada y botones ---------- */
@@ -1591,7 +1747,7 @@ $('bNest').onclick = () => { if (!ready()) return; setMode(mode === 'nest' ? nul
 $('bGo').onclick = () => { if (!ready()) return; setMode(mode === 'go' ? null : 'go'); };
 function doLay() {
   if (!ready()) return; prioRefresh(); const me = G.me; let n = 0;
-  for (const a of G.A) { if (a.sp !== me || a.age < MAT || a.hunger < REPRO_H || enOf(a) < REPRO_E || (a.inj || 0) > .5 || a.vul > 0 || n >= 4 || a.rc > 8) continue; if (count(me) + eggCount(me) >= capOf(me)) break; layEgg(a, 25); a.rc = me.repro * 2.2 / me.p.r * PRIO.reproduccion.rc[PL.reproduccion] * cxv(me, 'rc', 1); n++; }
+  for (const a of G.A) { if (a.sp !== me || !layOk(a) || a.age < MAT || a.hunger < REPRO_H || enOf(a) < REPRO_E || (a.inj || 0) > .5 || a.vul > 0 || n >= 4 || a.rc > 8) continue; if (count(me) + eggCount(me) >= capOf(me)) break; layEgg(a, 25); a.rc = me.repro * 2.2 / me.p.r * PRIO.reproduccion.rc[PL.reproduccion] * cxv(me, 'rc', 1); n++; }
   if (n) { logMsg('Pusieron ' + n + ' huevos. Si están cerca de un nido nacen más rápido y están a salvo.'); toast(n + ' huevos puestos.'); } else toast('Ningún animal adulto está listo: necesitan hambre sobre ' + REPRO_H + ' %, energía sobre ' + REPRO_E + ' % y no estar muy heridos. Dejalos comer y descansar.');
 }
 $('bLay').onclick = doLay;
@@ -1615,11 +1771,12 @@ function planetCards() {
     b.disabled = here || !ok; b.onclick = () => travel(k); g.appendChild(b);
   });
 }
-function openPlanet() { if (!ready()) return; G.modal = true; $('planetP').textContent = 'Tu especie puede colonizar otros ecosistemas. Lo que evolucionaste viaja con ella, pero cada ecosistema pone a prueba rasgos distintos. Necesitás 8 animales para viajar y llevás a la mitad (hasta 6). Valores de productividad: aproximados de manual (biomasa por m² por año).'; drawGlobe(); planetCards(); $('planet').classList.add('show'); }
+function openPlanet() { if (!ready()) return; G.modal = true; $('planetP').textContent = 'Tu especie puede colonizar otros ecosistemas. Lo que evolucionaste viaja con ella, pero cada ecosistema pone a prueba rasgos distintos. Necesitás ' + travelNeed() + ' animales para viajar y llevás a la mitad (hasta ' + (G.me.cap.migracion ? 8 : 6) + '). Valores de productividad: aproximados de manual (biomasa por m² por año).'; drawGlobe(); planetCards(); $('planet').classList.add('show'); }
+const travelNeed = () => G.me.cap && G.me.cap.migracion ? capL(G.me, 'migracion') : 8;   // Rutas migratorias: colonizar con menos animales
 function travel(k) {
-  const pop = stats().pop; if (pop < 8) { toast('Necesitás al menos 8 animales para colonizar otro ecosistema.'); return; }
+  const pop = stats().pop, need = travelNeed(); if (pop < need) { toast('Necesitás al menos ' + need + ' animales para colonizar otro ecosistema.'); return; }
   $('planet').classList.remove('show'); Bus.emit('travel', k);
-  const carry = { me: G.me, inst: G.inst, nextInst: G.nextInst, pending: G.pending, evos: G.evos, kills: G.kills, trad: G.trad, phase: G.phase, colonists: Math.min(6, Math.floor(pop / 2)) };
+  const carry = { me: G.me, inst: G.inst, nextInst: G.nextInst, pending: G.pending, evos: G.evos, kills: G.kills, trad: G.trad, phase: G.phase, colonists: Math.min(G.me.cap.migracion ? 8 : 6, Math.max(Math.floor(pop / 2), G.me.cap.migracion ? Math.min(pop, 4) : 0)) };
   newGame(k, carry); G.modal = false; toast('Viajaron ' + carry.colonists + ' animales a ' + BIOMES[k].n.toLowerCase() + '. Lo que evolucionaste viaja con ellos.'); logMsg('Colonizadores llegaron a ' + BIOMES[k].n.toLowerCase() + '.');
 }
 $('bPlanet').onclick = openPlanet;
@@ -1646,30 +1803,60 @@ addEventListener('keydown', e => { if (!started || !G || e.ctrlKey || e.metaKey 
 const ready = () => G && started && !G.over && !G.modal;
 
 /* ---------- Evolución ---------- */
+/* Ciclo 4: un rasgo está disponible si no lo tenés, no lo cerró una rama excluyente y (transición) es la etapa siguiente de un acuático. */
+function traitAvail(sp, t, closed) {
+  if (sp.traits.includes(t.id) || closed.has(t.id)) return false;
+  if (!t.tx) return true;
+  if (sp.cls !== 'acu') return false;
+  return t.id === 'radiadas' ? sp.lst === 0 : t.stage === sp.lst + 1;
+}
 function offers() {
-  const me = G.me, free = TRAITS.filter(t => !me.traits.includes(t.id)), wv = me.traits.filter(id => !me.vars[id]);
-  if (wv.length >= 2 && R() < .5) { const id = wv[Math.floor(R() * wv.length)]; const o = [{ id, v: 'A' }, { id, v: 'B' }]; const f = shuffle(free)[0]; if (f) o.push({ id: f.id }); return o; }
-  return shuffle(free).slice(0, 3).map(t => ({ id: t.id }));
+  const me = G.me, closed = closedBy(me), free = TRAITS.filter(t => traitAvail(me, t, closed)), wv = me.traits.filter(id => !me.vars[id] && TR[id].A);
+  const tx = free.filter(t => t.tx), nat = free.filter(t => !t.tx);
+  // acuáticos: la siguiente etapa de la transición siempre está en la mesa (en la etapa 0, contra «quedarse en el agua»: una decisión que cierra la otra)
+  if (tx.length) { const o = tx.sort((a, b) => a.stage - b.stage).slice(0, 2).map(t => ({ id: t.id })); for (const t of shuffle(nat)) { if (o.length >= 3) break; o.push({ id: t.id }); } return o; }
+  // ramas excluyentes: a veces se ofrecen juntas (elegir una cierra la otra)
+  const pairs = EXCL.filter(([a, b]) => nat.some(t => t.id === a) && nat.some(t => t.id === b));
+  if (pairs.length && R() < .4) { const [a, b] = pairs[Math.floor(R() * pairs.length)]; const o = [{ id: a }, { id: b }]; const f = shuffle(nat.filter(t => t.id !== a && t.id !== b))[0]; if (f) o.push({ id: f.id }); return o; }
+  if (wv.length >= 2 && R() < .5) { const id = wv[Math.floor(R() * wv.length)]; const o = [{ id, v: 'A' }, { id, v: 'B' }]; const f = shuffle(nat)[0]; if (f) o.push({ id: f.id }); return o; }
+  return shuffle(nat).slice(0, 3).map(t => ({ id: t.id }));
 }
 let evoPrev = [];
+const esc = t => String(t).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const habLine = sp => (sp.lst != null ? 'es ' + LST_N[sp.lst] : HABN[sp.hab]);
 function openEvo() {
   if (!ready()) return;
   if (G.pending <= 0) { toast('Todavía no tenés Instinto suficiente. Se gana comiendo, cazando, anidando y con las crías.'); return; }
   G.modal = true;
-  const me = G.me, list = offers(), isV = !!list[0].v;
-  $('mutT').textContent = isV ? 'Bifurcación evolutiva' : 'Elegí cómo evoluciona tu animal';
-  $('mutP').textContent = isV ? 'Un rasgo que ya tenés se divide en dos caminos excluyentes. Mirá cómo cambia cada uno.' : 'Cada opción muestra cómo se vería tu animal. Tres rasgos del mismo hilo dan una maestría.';
+  const me = G.me, list = offers(), isV = !!list[0].v, isT = list.some(o => TR[o.id].tx), pair = !isV && list.length >= 2 && exclOf(list[0].id).some(([x]) => x === list[1].id);
+  $('mutT').textContent = isT ? (me.lst === 0 ? 'Decisión: ¿salir del agua o dominarla?' : 'Transición a tierra: siguiente etapa') : isV ? 'Bifurcación evolutiva' : pair ? 'Decisión: dos caminos que se excluyen' : 'Elegí cómo evoluciona tu animal';
+  $('mutP').textContent = isT ? 'Tu especie puede seguir el camino de los tetrápodos (aletas lobuladas → pulmones y patas → piel seca y huevo con cáscara) o quedarse en el agua. Cada etapa cambia dónde puede ir, qué come y qué riesgos corre.' : isV ? 'Un rasgo que ya tenés se divide en dos caminos excluyentes. Mirá cómo cambia cada uno.' : pair ? 'Elegir uno de los dos primeros cierra el otro para siempre.' : 'Cada opción muestra tu animal antes (izquierda) y después (derecha), la capacidad nueva y lo que pierde.';
+  const cl = capList(me); $('mutCaps').innerHTML = 'Tu especie hoy: <b>' + esc(habLine(me)) + '</b>' + (cl.length ? ' · capacidades: ' + cl.map(c => '<b>' + esc(c.n) + '</b>' + (c.nivel > 1 ? ' ' + c.nivel : '')).join(', ') : ' · sin capacidades todavía');
   const bx = $('offers'); bx.innerHTML = ''; evoPrev = [];
   list.forEach(o => {
-    const t = TR[o.id], v = o.v ? t[o.v] : null, b = document.createElement('button'); b.className = 'offer';
-    b.innerHTML = '<canvas width="220" height="130"></canvas><b></b><span></span><em></em>';
-    b.children[1].textContent = v ? 'Variante ' + o.v + ': ' + v.n : t.n; b.children[2].textContent = v ? v.e : t.e;
-    b.children[3].innerHTML = '<i class="tag" style="background:' + HCOL[t.h] + '"></i>' + t.h + (v ? ' · mejora de ' + t.n : ' · costo: ' + t.c);
+    const t = TR[o.id], v = o.v ? t[o.v] : null, inf = traitInfo(o.id, o.v), q = previewSp(me, o), b = document.createElement('button'); b.className = 'offer';
+    const gana = inf.efectos.filter(e => e.bueno).slice(0, 3).map(e => e.texto), pierde = inf.limita.slice(0, 3);
+    let h = '<canvas width="260" height="120" aria-hidden="true"></canvas><b>' + esc(v ? 'Variante ' + o.v + ': ' + v.n : t.n) + '</b><span>' + esc(v ? v.e : t.e) + '</span>';
+    if (inf.capacidad) h += '<span class="cap"><b>' + (inf.capacidad.nivel > 1 ? 'Mejora a nivel ' + inf.capacidad.nivel : 'Nueva capacidad') + '</b> · ' + esc(inf.capacidad.texto) + '</span>';
+    if (inf.terreno) h += '<span class="cap"><b>Terreno:</b> ' + esc(inf.terreno.antes) + ' → ' + esc(inf.terreno.despues) + '</span>';
+    const extra = inf.nuevas.filter(c => c.id !== o.id); if (extra.length) h += '<span class="cap"><b>Además:</b> ' + extra.map(c => esc(c.n) + (c.nivel > 1 ? ' ' + c.nivel : '')).join(', ') + ' (maestría o híbrido)</span>';
+    h += '<span class="ttl">Gana</span><ul>' + (gana.length ? gana.map(g => '<li class="lg">' + esc(g) + '</li>').join('') : '<li>la capacidad de arriba</li>') + '</ul>';
+    h += '<span class="ttl">Pierde</span><ul>' + (pierde.length ? pierde.map(g => '<li class="ll">' + esc(g) + '</li>').join('') : '<li>nada medible</li>') + inf.cierra.map(c => '<li class="lx">Cierra: ' + esc(c.n) + ' (' + esc(c.por) + ')</li>').join('') + '</ul>';
+    h += '<em><i class="tag" style="background:' + (HCOL[t.h] || '#888') + '"></i>' + esc(t.h) + (v ? ' · mejora de ' + esc(t.n) : '') + '</em>';
+    b.innerHTML = h; b.setAttribute('aria-label', (v ? v.n : t.n) + '. ' + (inf.capacidad ? inf.capacidad.n + ': ' + inf.capacidad.texto : ''));
     b.onclick = () => pickEvo(o);
     bx.appendChild(b);
-    evoPrev.push({ cn: b.children[0], traits: o.v ? me.traits.slice() : me.traits.concat([o.id]), vars: Object.assign({}, me.vars, o.v ? { [o.id]: o.v } : {}) });
+    evoPrev.push({ cn: b.children[0], sp: me, q, before: { traits: me.traits.slice(), vars: Object.assign({}, me.vars) }, after: { traits: q.traits, vars: q.vars } });
   });
   $('mut').classList.add('show');
+}
+/* Antes (izquierda, más chico y apagado) → después (derecha). Sin texto dentro del dibujo. */
+function drawCmp(x, w, hgt, spA, A, spB, B, tt, glow) {
+  x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, w, hgt); x.fillStyle = 'rgba(120,170,110,.30)'; x.fillRect(0, 0, w, hgt);
+  const s0 = Math.min(2.6, hgt * .13 / spA.r); x.globalAlpha = .62; drawAnimal(x, spA, { px: w * .23, py: hgt * .55, a: 0, s: s0 * .82, tt, ph: 0, mv: 0, traits: A.traits, vars: A.vars }); x.globalAlpha = 1;
+  x.fillStyle = '#2b2233'; x.beginPath(); x.moveTo(w * .44, hgt * .47); x.lineTo(w * .52, hgt * .47); x.lineTo(w * .52, hgt * .4); x.lineTo(w * .58, hgt * .55); x.lineTo(w * .52, hgt * .7); x.lineTo(w * .52, hgt * .63); x.lineTo(w * .44, hgt * .63); x.closePath(); x.fill();
+  if (glow) { x.strokeStyle = 'rgba(240,195,58,' + glow + ')'; x.lineWidth = 3; x.beginPath(); x.arc(w * .77, hgt * .55, hgt * .42, 0, TAU); x.stroke(); }
+  drawAnimal(x, spB, { px: w * .77, py: hgt * .55, a: 0, s: s0, tt, ph: 0, mv: 1, traits: B.traits, vars: B.vars });
 }
 /* Efectos REALES de un rasgo, leídos de su tabla fx (la misma que usa recalc): [{k, etiqueta, pct (cambio del atributo en %), bueno, texto}].
    `abre` = prioridades y habilidades a las que ayuda; `limita` = lo que empeora. Lo usa Bus 'evolve' y la interfaz (traitInfo). */
@@ -1686,27 +1873,59 @@ function traitEffects(fx) {
   }
   return out;
 }
+/* Capacidades: texto desde la tabla y los mismos parámetros que lee la simulación (CAPS[id].L). */
+function capText(sp, id, lv) {
+  const C = CAPS[id]; if (!C) return ''; lv = lv || (sp && sp.cap && sp.cap[id]) || 1;
+  const h0 = sp ? sp.hab0 || sp.hab : 'land', t = sp && sp.cls === 'acu' && C.dW ? C.dW : h0 === 'fly' && C.dF ? C.dF : C.d, L = C.L[lv - 1];
+  return t.replace('{L}', String(L).replace('.', ',')).replace('{P}', Math.round(L * 100) + ' %');
+}
+const capList = sp => Object.keys(sp.cap || {}).map(id => ({ id, n: CAPS[id].n, nivel: sp.cap[id], tipo: CAPS[id].t, texto: capText(sp, id) }));
+/* Simula la elección sobre una copia de la especie (sin tocar G): para comparar antes y después en la pantalla de evolución. */
+function previewSp(sp, o) { const q = Object.assign({}, sp, { traits: o.v ? sp.traits.slice() : sp.traits.concat([o.id]), vars: Object.assign({}, sp.vars, o.v ? { [o.id]: o.v } : {}) }); recalc(q); return q; }
+const HABN = { land: 'camina', fly: 'vuela', water: 'nada (solo agua)', amph: 'camina y nada' };
 function traitInfo(id, v) {
   const t = TR[id]; if (!t) return null; const fx = v && t[v] ? t[v].fx : t.fx, ef = traitEffects(fx), abre = [], lim = ef.filter(e => !e.bueno).map(e => e.texto);
   for (const e of ef) if (e.bueno && FXP[e.k] && abre.indexOf('prioridad ' + PRIO[FXP[e.k]].n) < 0) abre.push('prioridad ' + PRIO[FXP[e.k]].n);
   for (const a of ABK) if (ABL[a].tr.includes(id)) abre.push(ABD[a].n + ' (+1 punto de nivel)');
   if (BMECH && Object.keys(BIOMES).some(k => BIOMES[k].help.includes(id))) abre.push('ayuda en: ' + Object.keys(BIOMES).filter(k => BIOMES[k].help.includes(id)).map(k => BIOMES[k].n).join(', '));
-  return { id, variante: v || null, nombre: v && t[v] ? t[v].n : t.n, hilo: t.h, efectos: ef, abre, limita: lim, costo: v ? '' : t.c, efecto: v && t[v] ? t[v].e : t.e };
+  // Ciclo 4: capacidad nueva (o su nivel), ramas que cierra y cambio de terreno, calculados sobre una copia de tu especie
+  const me = G && G.me, q = me ? previewSp(me, { id, v }) : null, lv = q && q.cap[id] ? q.cap[id] : v ? 2 : 1;
+  const capacidad = CAPS[id] ? { id, n: CAPS[id].n, nivel: lv, tipo: CAPS[id].t, texto: capText(q || me, id, lv) } : null;
+  const cierra = v ? [] : exclOf(id).filter(([o]) => !(me && me.traits.includes(o))).map(([o, why]) => ({ id: o, n: TR[o].n, por: why }));
+  const terreno = me && q && (q.hab !== me.hab || q.lst !== me.lst) ? { antes: me.lst != null ? LST_N[me.lst] : HABN[me.hab], despues: q.lst != null ? LST_N[q.lst] : HABN[q.hab], hab: q.hab, etapa: q.lst } : null;
+  if (terreno) abre.unshift('terreno: ahora ' + (q.lst != null ? 'es ' + terreno.despues : terreno.despues));
+  if (t.tx && t.c) lim.push(t.c);
+  const nuevas = q ? Object.keys(q.cap).filter(k => !(me.cap && me.cap[k]) || me.cap[k] < q.cap[k]).map(k => ({ id: k, n: CAPS[k].n, nivel: q.cap[k] })) : [];
+  return { id, variante: v || null, nombre: v && t[v] ? t[v].n : t.n, hilo: t.h, efectos: ef, abre, limita: lim, costo: v ? '' : t.c, efecto: v && t[v] ? t[v].e : t.e, capacidad, cierra, terreno, nuevas, transicion: t.tx ? t.stage : null };
 }
+let META = null;   // momento de metamorfosis (solo interfaz: antes → después; no se guarda ni toca G)
 function pickEvo(o) {
   const me = G.me, t = TR[o.id], had = me.hyb.length, hm = me.mast.length;
+  META = { t0: performance.now() / 1000, before: { traits: me.traits.slice(), vars: Object.assign({}, me.vars), hab: me.hab, lst: me.lst, cap: Object.assign({}, me.cap) }, o, drawn: false, info: traitInfo(o.id, o.v) };
   if (o.v) me.vars[o.id] = o.v; else me.traits.push(o.id);
   recalc(me); G.pending--; G.evos++; evoPrev = [];
   logMsg('Evolucionaste: ' + (o.v ? t[o.v].n : t.n) + '. Mirá el cambio en tu animal.'); toast('Evolucionaste: ' + (o.v ? t[o.v].n : t.n));
   if (me.hyb.length > had) toast('Híbrido desbloqueado: ' + me.hyb[me.hyb.length - 1]);
   if (me.mast.length > hm) toast('Maestría de ' + me.mast[me.mast.length - 1]);
-  { const inf = traitInfo(o.id, o.v); inf.hibrido = me.hyb.length > had ? me.hyb[me.hyb.length - 1] : null; inf.maestria = me.mast.length > hm ? me.mast[me.mast.length - 1] : null; inf.habilidades = ABK.map(k => ({ id: k, nivel: abLevel(k) })); Bus.emit('evolve', o, inf); }   // (opción, info con efectos reales, qué abre y qué limita)
+  if (t.tx && me.lst != null && me.lst !== META.before.lst) { const ms = ['', 'Tu especie se arrastra a la orilla: plantas y bichos de la costa, pero ahí la alcanzan los de tierra.', 'Tu especie sale a la tierra: camina por todo el mapa, pero se seca lejos del agua y cría junto a ella.', '¡Tu especie conquistó la tierra! Ya no depende del agua. En la Era 3 fundará una ciudad anfibia de costa.'][me.lst]; if (ms) { toast(ms); logMsg(ms); } }
+  { const inf = META.info; inf.hibrido = me.hyb.length > had ? me.hyb[me.hyb.length - 1] : null; inf.maestria = me.mast.length > hm ? me.mast[me.mast.length - 1] : null; inf.habilidades = ABK.map(k => ({ id: k, nivel: abLevel(k) })); Bus.emit('evolve', o, inf); }   // (opción, info con efectos reales, qué abre y qué limita)
   $('mut').classList.remove('show'); G.modal = false;
 }
 function renderPrev() {
   const tt = performance.now() / 1000;
-  for (const p of evoPrev) { const x = p.cn.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, 220, 130); x.fillStyle = 'rgba(120,170,110,.35)'; x.fillRect(0, 0, 220, 130); drawAnimal(x, G.me, { px: 110, py: 72, a: 0, s: Math.min(5, 32 / G.me.r * 1.35), tt, ph: 0, mv: 1, traits: p.traits, vars: p.vars }); }
+  for (const p of evoPrev) drawCmp(p.cn.getContext('2d'), 260, 120, p.sp, p.before, p.q, p.after, tt, 0);
 }
+/* Metamorfosis: tarjeta «antes → después» con la capacidad nueva (4,5 s; un clic la cierra). En el mapa, tus animales cambian con un destello (render). */
+const META_T = 1.8, META_CARD = 4.5;
+function metaTick(tt) {
+  const c = $('metaCard'); if (!META || !G || G.over) { if (c.classList.contains('show')) c.classList.remove('show'); return; }
+  const u = tt - META.t0; if (u > META_CARD) { c.classList.remove('show'); return; }
+  if (!META.drawn) { META.drawn = true; const inf = META.info || {}, o = META.o, t = TR[o.id];
+    $('metaTxt').innerHTML = '<b>Metamorfosis: ' + esc(o.v ? t[o.v].n : t.n) + '</b>' + (inf.capacidad ? '<div><b>' + (inf.capacidad.nivel > 1 ? 'Mejora a nivel ' + inf.capacidad.nivel : 'Nueva capacidad') + '</b> · ' + esc(inf.capacidad.texto) + '</div>' : '') + (inf.terreno ? '<div>Terreno: ' + esc(inf.terreno.antes) + ' → <b>' + esc(inf.terreno.despues) + '</b></div>' : '') + (inf.limita && inf.limita.length ? '<div>Paga: ' + esc(inf.limita.slice(0, 2).join(' · ')) + '</div>' : '') + (inf.cierra && inf.cierra.length ? '<div>Cerró: ' + esc(inf.cierra.map(x => x.n).join(', ')) + '</div>' : '');
+    c.classList.add('show'); }
+  drawCmp($('metaCv').getContext('2d'), 280, 110, G.me, META.before, G.me, { traits: G.me.traits, vars: G.me.vars }, tt, Math.max(0, 1 - u / 1.5));
+}
+$('metaCard').onclick = () => { if (META) META.t0 = -1e9; $('metaCard').classList.remove('show'); };
 
 /* ---------- Menú y panel ---------- */
 function buildMenu() {
@@ -1740,7 +1959,7 @@ function hintText() {
   if (G.phase === 1 && Object.keys(colonized).length >= 1 && Object.keys(colonized).length < 2 && s.pop >= 8) return 'Abrí Planeta y colonizá otro ecosistema: cada uno pone a prueba rasgos distintos.';
   const g = (G.g || []).find(x => !x.ok); return g ? 'Próxima meta: ' + g.t + '.' : '';
 }
-let hudN = 0;
+let hudN = 0, hudCap = '';
 function hud() {
   if (!G || !started) return; const s = stats(), me = G.me;
   $('vSeason').textContent = SEAS[G.season].n; $('vYear').textContent = 'año ' + (1 + Math.floor(G.t / (SLEN * G.biome.seasons.length)));
@@ -1751,6 +1970,9 @@ function hud() {
   $('bPause').classList.toggle('on', G.paused);
   $('hint').textContent = hintText(); $('hint').style.display = $('hint').textContent && !$('tut').classList.contains('show') ? 'block' : 'none';
   $('spName').textContent = me.n + ' (' + CLSN[me.cls].n.toLowerCase() + ')';
+  { const cl = capList(me), h1 = cl.map(c => '<span title="' + esc(c.texto) + '">' + esc(c.n) + (c.nivel > 1 ? ' ' + c.nivel : '') + '</span>').join(''), rad = me.traits.includes('radiadas');
+    const h2 = me.lst != null ? 'Hábitat: <b>' + LST_N[me.lst] + '</b>' + (rad ? ' · se queda en el agua' : me.lst < 3 ? ' · próxima etapa: ' + ['aletas lobuladas', 'pulmones y patas', 'piel seca y huevo con cáscara'][me.lst] : ' · salió del agua ✓') : 'Hábitat: <b>' + HABN[me.hab] + '</b>';
+    if (hudCap !== h1 + h2) { hudCap = h1 + h2; $('spCaps').innerHTML = h1; $('spStage').innerHTML = h2; } }
   $('spTraits').innerHTML = me.traits.length || Object.keys(me.vars).length ? me.traits.map(id => { const t = TR[id], v = me.vars[id]; return '<span><i class="tag" style="background:' + HCOL[t.h] + '"></i>' + t.n + (v ? ' · ' + t[v].n : '') + '</span>'; }).join('') : '<span>Sin rasgos: evolucioná para cambiar su aspecto</span>';
   uiHud();
   $('log').innerHTML = CLOG.slice(0, 2).concat(G.log).slice(0, 6).map(t => '<div>' + t + '</div>').join('');
@@ -1842,6 +2064,11 @@ $('tSel').onclick = () => { boxMode = !boxMode; $('tSel').setAttribute('aria-pre
 $('tOrd').onclick = () => { if (!ready()) return; if (!mySel().length && mode !== 'ord') { toast('Primero elegí uno de tus animales.'); return; } setMode(mode === 'ord' ? null : 'ord'); };
 $('tStop').onclick = () => { if (!ready()) return; if (!mySel().length) { toast('Elegí uno de tus animales primero.'); return; } stopOrders(); toast('Vuelven a lo automático.'); };
 $('tLead').onclick = () => { if (!ready()) return; setLeader(!leaderOn); };
+/* Modo foco (Ciclo 4): SOLO dibujo e interfaz. Atenúa la fauna salvaje y a los rivales, agranda los indicadores de tus animales, quita los efectos de peleas ajenas
+   y esconde dos datos secundarios del HUD (energía y territorio). No toca G ni R(): el hash de la simulación es el mismo (tests/era2-evolucion.js). Se recuerda en evo_foco2. */
+function setFocus(on) { FOCUS = !!on; ART.VIEW.focus = FOCUS; document.body.classList.toggle('foco', FOCUS); const b = $('tFoco'); b.setAttribute('aria-pressed', String(FOCUS)); b.textContent = FOCUS ? 'Foco' : 'Ver todo'; b.title = FOCUS ? 'Modo foco (F): la fauna que no es tuya está atenuada. Tocá para ver todo' : 'Viendo todo (F): tocá para volver al modo foco'; try { localStorage.setItem('evo_foco2', FOCUS ? 'on' : 'off'); } catch (e) {} }
+$('tFoco').onclick = () => setFocus(!FOCUS);
+addEventListener('keydown', e => { if (!started || !G || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return; const tag = (e.target && e.target.tagName) || ''; if (tag === 'INPUT' || tag === 'TEXTAREA') return; if ((e.key || '').toLowerCase() === 'f' && !G.modal) setFocus(!FOCUS); });
 (function joystick() {
   const j = $('joy'), k = j.firstElementChild; let id = null;
   const mv = e => { const r = j.getBoundingClientRect(), R = r.width / 2; let x = (e.clientX - r.left - R) / R, y = (e.clientY - r.top - R) / R; const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; } joyV = { x, y }; k.style.transform = 'translate(' + x * R * .6 + 'px,' + y * R * .6 + 'px)'; };
@@ -2309,7 +2536,7 @@ function loop(now) {
   if (panMode && G) { panHold = Math.max(0, panHold - dt); if (panHold <= 0 && started) { const c = herdCenter(G.me); if (c) { camX += (c.x - camX) * Math.min(1, dt * 2.5); camY += (c.y - camY) * Math.min(1, dt * 2.5); } } placeCam(); }
   if (started && G && !G.over && G.t - lastSaveT >= 20) saveGame(true);
   if ((hudN++ & 7) === 0) { hud(); if ((hudN & 63) === 1) pal(); }
-  render(); if (started && G) drawPortrait(); if (evoPrev.length && G && G.modal) renderPrev();
+  render(); if (started && G) drawPortrait(); if (evoPrev.length && G && G.modal) renderPrev(); metaTick(performance.now() / 1000);
   requestAnimationFrame(loop);
 }
 LIN = readLineage();
@@ -2321,11 +2548,14 @@ $('bSave').onclick = () => { if (started && G && !G.over) saveGame(); };
 const autosave = () => { if (started && G && !G.over) saveGame(true); };
 document.addEventListener('visibilitychange', () => { if (document.hidden) autosave(); });
 addEventListener('pagehide', autosave);
-pal(); buildMenu(); layout(); requestAnimationFrame(loop);
+pal(); buildMenu(); setFocus(FOCUS); layout(); requestAnimationFrame(loop);
 window.__e2 = { drawAnimal, ART, bioInfo, Bus, issueOrder, spawn, matchup, speciesInfo, abilityInfo, abLevel, biomeInfo, BMECH, ABL, EN0, select(id) { selId = id; },
   ui: { clog: () => CLOG.slice(), get selIds() { return selIds.slice(); }, setSel, orderAt, doOrder, boxSelect, selectSpeciesVisible, setLeader, get leaderOn() { return leaderOn; }, get boxMode() { return boxMode; }, uiTick, UIs, tut, tutNext, tutSkip, tutReset, tutGet, TUT, uiHud, mySel, setPrio, getPrio: prioGet, PRIO_TXT, PRIO_KEYS, strat: { ST, sample: stratSample, get pop() { return ST.pop; }, alerts: alertList, alertGo, selectQuick, cgSave, cgRecall, groupGoNest, groupGoFood, focusAt, uiStrat, tick() { ST.t = 0; uiStrat(); } }, tutAt, scr(x, y) { const r = cv.getBoundingClientRect(); return { x: r.left + OX + x * SC, y: r.top + OY + y * SC }; }, get panMode() { return panMode; }, keys }, get selId() { return selId; }, DIFFS, win, lose, useAbility, placeMig, ABD, step: stepSim, snapshot, stateHash, seedRng, hashStr, saveGame, readSave, restoreGame, clearSave, readLineage, writeLineage, get LIN() { return LIN; }, travel, BIOMES, colonized: () => colonized, openPlanet, doLay, placeNest, placeBuilding, bdone, civGoalsList, awaken, get G() { return G; }, newGame, update, think, goals, offers, pickEvo, openEvo, hud, render, drawPortrait, count, stats, set cls(v) { cls = v; }, set specKey(v) { specKey = v; }, set diffI(v) { diffI = v; }, set stance(v) { stance = v; }, setStarted(v) { started = v; }, TRAITS, SP2, recalcSp: recalc };
 /* Ciclo 4 (simulación): datos y ganchos que consumen la interfaz y las pruebas. Sentencia aparte para no tocar la línea de window.__e2. */
 Object.assign(window.__e2, { CLSX, SPX, ALO, PRIO, PRK, prioInfo: () => PRK.map(k => ({ id: k, n: PRIO[k].n, niveles: PRIO[k].d.slice(), actual: PL[k] })), prioLevels: () => { prioRefresh(); return Object.assign({}, PL); }, traitInfo, traitEffects, prioRefresh, abEnd, safePts, zoneAt });
+/* Ciclo 4 · Evolución y claridad: capacidades, ramas excluyentes, transición a tierra y modo foco (para tests/era2-evolucion.js). */
+Object.assign(window.__e2, { CAPS, EXCL, HYBCAP, LST, capL, capList, capText, closedBy, exclOf, previewSp, landStage, traitAvail, canEat, okPos, dmg, capOf, nestNear, layOk, travelNeed, spdOf, KELP, BAJIO, FOSA, setFocus, metaTick, INST_STEP, setRivNo(o) { RIVNO = o; }, setInstStep(v) { INST_STEP = v; } });
+Object.defineProperties(window.__e2, { FOCUS: { get: () => FOCUS }, META: { get: () => META } });   // (Object.assign copiaría el valor, no el getter)
 /* === AUDIO ===
    Módulo de audio (eras/audio-lofi.js). Solo ESCUCHA: se suscribe al Bus y lee G; no modifica el estado ni usa R()
    (el azar del audio es Math.random dentro del motor). Si el archivo no carga o falla algo, el juego sigue sin sonido.

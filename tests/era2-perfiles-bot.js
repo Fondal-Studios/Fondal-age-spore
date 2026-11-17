@@ -47,10 +47,11 @@
     const abOff = new Set(o.abOff || []), abMode = P.ab, orders = P.ord;
     const BADK = { cF: 1, m: 1, cold: 1, drought: 1, fire: 1, plague: 1 }, W0 = { r: 3, hunt: 2, d: 1, def: 6, stealth: 5, nest: 4, inst: 2, eff: 3, search: 1, coop: 3, scav: 2, cF: 3, m: 3, cold: 1.5, drought: 1.5, fire: 1, water: 0, fert: 1, mind: 2, plague: 0.5 };
     const fxScore = fx => { let s = 0; for (const k in fx) { const [op, v] = fx[k], w = (W0[k] || 0.5) * (P.wEvo[k] || 1), bad = BADK[k] ? -1 : 1; s += op === '*' ? bad * w * Math.log(v) * 4 : w * v * 10; } return s; };
-    const offerScore = of => { const t = TR[of.id]; return of.v ? fxScore(t[of.v].fx) + 0.3 : fxScore(t.fx); };
+    const TIERRA = { lobuladas: 1, pulmones: 1, amniota: 1 };
+    const offerScore = of => { const t = TR[of.id]; if (o.tierra === 'si' && TIERRA[of.id]) return 1e6; if (o.tierra === 'no') { if (TIERRA[of.id]) return -1e6; if (of.id === 'radiadas') return 1e6; } return of.v ? fxScore(t[of.v].fx) + 0.3 : fxScore(t.fx); };
     const mineL = () => E.G.A.filter(a => a.sp === E.G.me && !a.dead);
     const herd = m => { let x = 0, y = 0; for (const a of m) { x += a.x; y += a.y; } return { x: x / m.length, y: y / m.length }; };
-    const M = { tNest1: null, tNest2: null, tEvo4: null, tPop: null, tCol2: null, tPhase2: null, minPop: 1e9, maxPop: 0, popSum: 0, popN: 0, nTravel: 0, ordN: 0, popAt: {} };
+    const M = { evoT: [], tNest1: null, tNest2: null, tEvo4: null, tPop: null, tCol2: null, tPhase2: null, minPop: 1e9, maxPop: 0, popSum: 0, popN: 0, nTravel: 0, ordN: 0, popAt: {} };
     let tick = 0, lastLay = -99, lastNestTry = -99, lastOrd = -99, gatherUntil = 0;
     const maxT = o.maxT || 900, isHerb = SPEC2CLS && E.SP2[o.spec].diet === 'herb';
     const reach = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -71,7 +72,7 @@
         const cells = new Set(); let cx = 0, cy = 0; for (const a of mine) { cells.add(Math.floor(a.x / 80) * 100 + Math.floor(a.y / 80)); H.seen.add(Math.floor(a.x / 80) * 100 + Math.floor(a.y / 80)); cx += a.x; cy += a.y; } cx /= mine.length; cy /= mine.length;
         let sd = 0; for (const a of mine) sd += Math.hypot(a.x - cx, a.y - cy); sd /= mine.length; { const L = G.biome.lake; for (const a of mine) { H.hrS += a._hr || 0; const dx = (a.x - L.x) / L.rx, dy = (a.y - L.y) / L.ry; if (dx * dx + dy * dy < 1) H.wat++; } } H.terr += cells.size; H.spr += sd; H.aSec += mine.length; for (const T of [60, 120, 240]) if (G.t >= T && H.sprAt[T] == null) H.sprAt[T] = Math.round(sd); }
       // ---- evolución
-      while (G.pending > 0) { const offs = E.offers(); let b = offs[0]; if (!P.passive) for (const x of offs) if (offerScore(x) > offerScore(b)) b = x; E.pickEvo(b); }
+      while (G.pending > 0) { const offs = E.offers(); let b = offs[0]; if (!P.passive) for (const x of offs) if (offerScore(x) > offerScore(b)) b = x; E.pickEvo(b); M.evoT.push(Math.round(G.t)); }
       if (!mine.length) continue;
       if (t - lastLay >= P.lay) { lastLay = t; E.doLay(); }
       if (P.passive) continue;

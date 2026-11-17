@@ -43,3 +43,6 @@ La interfaz y el evento `evolve` reciben, **calculados de la misma tabla `fx` qu
 ## Efecto visual (lo hace el módulo de arte)
 
 Los 36 rasgos aparecen en `eras/era2-arte.js` (tabla `TV`: un trazo por rasgo) y la variante A/B se le pasa al trazo. **No tienen dibujo propio** las 12 maestrías, los 12 híbridos ni los efectos de las prioridades. Esos datos están en `me.mast`, `me.hyb` y el evento `evolve`.
+
+## Ciclo 4 · módulo Evolución y claridad: capacidades
+Además de su tabla `fx` (porcentajes), **cada rasgo da una capacidad** (`CAPS` en `eras/era2-animales.html`; nivel 1 con el rasgo, 2 con su variante, 3 con la maestría del hilo; los híbridos dan o suben una, `HYBCAP`) que cambia cómo se juega: terreno (vuelo, nado, orilla), presas (cazar más grande, un herbívoro que caza, embestida, parálisis), defensas (coraza, cripsis, colores de advertencia, señuelo, repelente), cría (camada, crianza, larvas, castas) y clima (abrigo, sangre caliente, letargo, reserva, pirófila). Ramas que se excluyen (`EXCL`), transición a tierra de los acuáticos (`lobuladas` → `pulmones` → `amniota`, o `radiadas`) y el dibujo de cada cambio: ver `docs/ERA2-EVOLUCION.md`. `traitInfo` suma `capacidad`, `cierra`, `terreno`, `nuevas` y `transicion`.
