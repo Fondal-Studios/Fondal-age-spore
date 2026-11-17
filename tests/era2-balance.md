@@ -1,6 +1,6 @@
 # Equilibrio de la Era 2 (medido con bots)
 
-> **Vigente: §12 (Ciclo 4, módulo balance/simulación)**; las cifras de §1-§11 se midieron con código anterior. **Ciclo 3 (jugabilidad/simulación)**: esta sección era la vigente. Las secciones de más abajo («Cómo se midió» original, «Calidad 2.0», etc.) son el historial: sus cifras se midieron con código anterior y **ya no valen**. Todo lo de esta sección se midió con el código de la rama `worktree-agent-a10380960df1aac86` (commits `3f6bb05` y `eb51077` y siguientes); las partidas son reproducibles (semilla por celda).
+> **Vigente: §13 (Ciclo 4, módulo Evolución y claridad) para dificultad y transición; §12 para lo demás**; las cifras de §1-§11 se midieron con código anterior. **Ciclo 3 (jugabilidad/simulación)**: esta sección era la vigente. Las secciones de más abajo («Cómo se midió» original, «Calidad 2.0», etc.) son el historial: sus cifras se midieron con código anterior y **ya no valen**. Todo lo de esta sección se midió con el código de la rama `worktree-agent-a10380960df1aac86` (commits `3f6bb05` y `eb51077` y siguientes); las partidas son reproducibles (semilla por celda).
 
 ## Cómo reproducir (una sola orden por cosa)
 ```
@@ -320,6 +320,49 @@ La prueba marca 3 FALLAS honestas: **Exploración alta no demostró beneficio** 
 - Las prioridades solo se probaron en escenarios cerrados (los bots no las usan en partidas completas); Exploración alta no mostró beneficio.
 - El escenario de prioridades con colmena y Defensa alta puede extinguir la manada en los 40 s de calentamiento (semilla #3): no es un error de la simulación (lo era de la prueba, que ponía lobos en NaN).
 - Todo con bots, sin personas; los fps no se usaron (otra carga en la máquina).
+
+## 13. Ciclo 4, módulo Evolución y claridad: capacidades, transición a tierra, ritmo, dificultad
+Línea base = `claude/ciclo4-estrategia-evolutiva` en `245b102` (copia del HTML y del arte en una carpeta temporal); después = esta rama. Todo pareado por semilla (`tests/era2-comparar.js`), 12 especies × 8 perfiles × n = 2, tope 700 s, IC95 de Wilson y de la diferencia pareada. Diseño: `docs/ERA2-EVOLUCION.md`.
+Reproducir: `node tests/era2-perfiles.js <etiqueta> --n 2 --diffs 0,1,2 --profiles all --maxT 700` (después) y lo mismo con `--html <copia de 245b102>` (antes); transición: `--specs acu_abisal,acu_arrecife,acu_anfibio --tierra si|no` (opción nueva del bot: `si` toma cada etapa de la transición apenas aparece, `no` nunca y prefiere «radiadas»).
+
+### 13.1 Qué se movió y por qué (causas medidas)
+- **Primera corrida con todas las capacidades** (hd sin cambiar): Fácil 97 %, Normal 66 %, **Difícil 27 → 49 % (+21,9 ± 7,3 pareado, N = 192)**: las capacidades hacen más fuerte al jugador. Se recalibró el hambre propia: **Normal hd 3,8 → 4,5 y Difícil 4,0 → 5,0** (con 4,1/4,7: 64 % / 32 %; 4,2/5,1: 63 % / 27 %; Normal 4,6: 52 %; 4,4 + daño 1,8: 51 %).
+- **Rivales con capacidades**: los carnívoros del jugador pasaban hambre (cazadores de manada Normal 50 → 19 %, rapaces 75 → 44 %, N = 16) porque los rivales esquivaban, se escondían o repelían cada mordida. Los rivales no usan `defquim, senuelo, camuflaje, aguijon, cuernos, patas` (`RIVNO`): rapaces 44 → 63 %, cazadores 19 → 31 %.
+- **Ritmo** (`INST_STEP` 8 → 6): con 8 los carnívoros seguían abajo; con 5 (ablación) cazadores 38 %, rapaces 75 %. Se dejó 6.
+- **Fosa**: el +25 % de los cazadores del agua no se aplica entre salvajes (con él, más extinciones de abisales por falta de peces).
+- **Etapa anfibia**: con la salida en (170, 330) los anfibios pioneros nacían a ~400 del agua (se deshidrataban y no podían criar): Fácil 5/16. Ahora empiezan en la orilla, crían a ≤ 70 del agua y se deshidratan a > 340.
+
+### 13.2 Final (código de esta rama)
+| Dificultad | Antes | Después | Diferencia pareada | Meta |
+| --- | --- | --- | --- | --- |
+| Fácil (N = 192) | 98 % [96-99] | 97 % [94-99] | −1,0 ± 2,0 | ≥ 70 ✓ |
+| Normal (N = 192) | 61 % [54-68] | **56 % [49-63]** | −5,2 ± 7,5 | 40-60 ✓ |
+| Difícil (N = 192) | 27 % [21-34] | **27 % [21-33]** | −0,5 ± 6,8 | 15-35 ✓ |
+| Total (N = 576) | 62 % | 60 % | −2,3 ± 3,4 | |
+
+Por clase (3 dificultades, N = 144): terrestres 62 → 60 %, insectos 66 → 68 %, acuáticos 56 → 51 %, aves 65 → 60 % (todas dentro del ruido; rango entre clases 17 puntos, antes 10). Por especie (N = 48, ±12-15): `acu_anfibio` 48 → 35 % (−12,5 ± 11,0, **peor**: medido antes del último ajuste de la etapa anfibia, ver 13.3), `ter_cazador` 54 → 44 % (−10,4 ± 13,2), `ave_rapaz` 67 → 56 % (−10,4 ± 15,5), el resto ±8.
+
+### 13.3 Transición a tierra (Normal, 8 perfiles, n = 3: N = 24 por especie, pareadas)
+| Especie | Se queda en el agua (`--tierra no`) | Sale del agua (`--tierra si`) | Δ pareada |
+| --- | --- | --- | --- |
+| Abisales | 0 % [0-14] | 21 % [9-40] | +20,8 ± 16,2 |
+| Anfibios pioneros | 13 % [4-31] | 46 % [28-65] | +33,3 ± 18,9 |
+| Arrecife | 96 % [80-99] | 63 % [43-79] | −33,3 ± 18,9 |
+| Las tres | 36 % | 43 % | |
+
+Salir del agua **no es dominante** (el arrecife, que pastorea algas, gana más quedándose; los abisales y los anfibios ganan más saliendo) **ni inviable** (21-63 %). Fracción del tiempo en el agua: los que salen 27-48 % (anfibios, abisales, arrecife), los que se quedan 35-100 %. Después del último ajuste de la etapa anfibia (crían a ≤ 70, deshidratación a > 340, sin limitar las plantas): anfibios que no completan la transición 17 % [7-36] y que la completan 46 % [28-65] (N = 24). Un anfibio que se queda en la etapa 2 **paga** (cría junto al agua, piel seca): es la etapa de paso, a propósito, pero 17 % es bajo; queda como pendiente.
+
+### 13.4 Ritmo de decisiones (Normal, final, N = 190 partidas con evolución)
+Primera evolución: mediana 23 s, p90 34 s, máximo 77 s (≤ 90 s ✓). Intervalos (mediana / p75): 1.ª→2.ª 34/45 s, 2.ª→3.ª 36/62 s, 3.ª→4.ª 54/84 s, 4.ª→5.ª 61/83 s, luego 59-65 s (p75 85-95 s). Una decisión cada ≈ 1 min; no «cada 2 min».
+
+### 13.5 Pruebas corridas al final (código final)
+`tests/era2-evolucion.js` OK (132 dibujos comparados por hash de píxeles; capacidades; transición; linaje; foco con el mismo hash) · `era2-guardado` OK · `era2-ordenes` OK · `era2-ui` OK · `era2-arte --sinfps` OK · `era2-audio` OK · `era2-bot` OK · `CI_NO_FPS=1 era2-calidad-sim` OK · `determinismo` OK · `acciones` OK · `era2-prioridades 16 --T 100`: 8 de 10 tratos OK, 2 FALLAS (defensa baja y exploración baja no muestran ahorro/pérdida medible con N = 48); la línea base con la misma orden da 3 FALLAS (expansión baja, defensa baja, exploración alta): es ruido de N chico, no una regresión.
+
+### 13.6 Qué no se verificó
+- Todo con bots; nadie jugó la versión nueva. No se midió si una persona **siente** la evolución (la prueba solo verifica que el dibujo y la mecánica cambian).
+- Los bots eligen rasgos por puntaje de `fx`: no buscan capacidades ni ramas a propósito. El valor de cada capacidad suelta no se aisló (solo Abrigo y Nado en escenarios cerrados de `tests/era2-evolucion.js`).
+- El ajuste final de la etapa anfibia se midió solo con anfibios pioneros en Normal (N = 24 × 2), no en la corrida completa.
+- Modo foco: legibilidad juzgada mirando capturas (`docs/ciclo4/era2-evo/`), sin medición con personas; fps no medidos (máquina compartida).
 
 ---
 # Historial (Calidad 2.0 y anteriores): cifras de código anterior, ya no vigentes

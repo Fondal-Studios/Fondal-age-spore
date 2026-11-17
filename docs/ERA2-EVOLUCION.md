@@ -28,7 +28,7 @@ Elegir una cierra la otra para siempre (como en la Era 1): camadas ⟂ cuidado (
 - Ficha de tu especie: hábitat (o etapa de la transición), capacidades como chips y rasgos.
 
 ### 1.5 Ritmo
-`INST_STEP` 5 → 8 (cuánto más Instinto pide cada evolución). Medido con bots (razonable y hábil, Normal, 12 especies, N = 48): primera evolución a los **22 s** de mediana (p90 32 s, máx. 46 s: ≤ 90 s); intervalos de mediana 30 s (1.ª→2.ª), 49 s, 58 s, 70 s, 67 s y luego > 2 min: las decisiones caen cada ≈ 1 min desde la tercera. Con el paso viejo (5) la mediana de los intervalos era 43 s.
+`INST_STEP` 5 → 6 (cuánto más Instinto pide cada evolución). Medido con bots (8 perfiles, 12 especies, Normal, N = 190 partidas con evolución): primera evolución a los **23 s** de mediana (p90 34 s, máx. 77 s: siempre ≤ 90 s); intervalos de mediana 34 s (1.ª→2.ª), 36 s, 54 s, 61 s, 59 s, 61 s, 65 s, 60 s (p75 83-95 s). Es decir: dos decisiones rápidas al empezar y después **una cada ≈ 1 min (hasta 1,5 min)**; no llega a «cada 2 min». Con `INST_STEP` 8 los intervalos eran 30/49/58/70 s, pero los carnívoros perdían 12-31 puntos de victoria (evolucionan menos y dependen de los multiplicadores de caza): se dejó en 6.
 
 ## 2. Los acuáticos salen del agua
 Sigue el orden real de los tetrápodos (sin cifras ni fechas): peces de aletas lobuladas → anfibios que respiran aire pero crían en el agua → amniotas con piel que no se seca y huevo con cáscara. Etapa `sp.lst` derivada de los rasgos (no hay estado nuevo que guardar); los anfibios pioneros nacen en la etapa 2.
@@ -37,7 +37,7 @@ Sigue el orden real de los tetrápodos (sin cifras ni fechas): peces de aletas l
 | --- | --- | --- | --- |
 | 0 · agua | — | lago (y las zonas del §2.1) | — |
 | 1 · orilla | Aletas lobuladas | sale hasta 70 de la costa: plantas y presas de la orilla | nada ×0,9; en tierra ×0,75; en la orilla lo cazan los de tierra |
-| 2 · anfibio | Pulmones y patas | toda la tierra (hábitat `amph`), plantas de tierra a ≤ 260 del agua | nada ×0,8; a > 160 del agua +15 % de hambre (anfibios: +10 %, como antes), a > 300 se deshidrata (−0,5 vida/s); **pone huevos solo a ≤ 40 del agua**; vuelve solo hacia el agua al merodear |
+| 2 · anfibio | Pulmones y patas | toda la tierra (hábitat `amph`) y sus plantas | nada ×0,8; a > 160 del agua +15 % de hambre (anfibios: +10 %, como antes), a > 340 se deshidrata (−0,4 vida/s); **pone huevos solo a ≤ 70 del agua**; al merodear vuelve hacia el agua. Empieza en la orilla. (Los costos nuevos de esta etapa valen para tu especie; los rivales anfibios conservan su ritmo afinado.) |
 | 3 · tierra | Piel seca y huevo con cáscara | cría en cualquier lado, sin deshidratación, tierra ×1,05 | nada ×0,65: el agua deja de ser refugio |
 | rama | Aletas radiadas | +15 % nadando; en cardumen (≥ 3) los depredadores fallan 30 % más | cierra la salida del agua |
 
@@ -51,3 +51,9 @@ Modo foco (por defecto; botón «Foco», tecla F) y paneles cerrados: `docs/ERA2
 
 ## 4. Balance
 Ver `tests/era2-balance.md` §13.
+Resumen (pareado contra `245b102`, N = 192 por dificultad): Fácil 97 %, Normal 56 % [49-63], Difícil 27 % [21-33] (metas ≥ 70 / 40-60 / 15-35), con hambre recalibrada (Normal hd 4,5; Difícil 5,0) porque las capacidades subían Difícil a 49 %. Salir del agua: abisales 0 → 21 %, anfibios 13 → 46 %, arrecife 96 → 63 % (quedarse vs salir, N = 24): ni dominante ni inviable. Los rivales no usan 6 capacidades que dejaban sin comida a los carnívoros (`RIVNO`).
+
+## 5. Pendiente
+- Anfibios que no completan la transición: 17 % en Normal (la etapa 2 es de paso, pero es bajo).
+- Las capacidades sueltas no se midieron una por una en partidas completas; el bot no las busca a propósito.
+- Escucha y juego humano: nadie jugó esta versión.

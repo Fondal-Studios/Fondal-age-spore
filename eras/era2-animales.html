@@ -492,7 +492,7 @@ const FOSA = () => ({ x: LAKE.x + LAKE.rx * .12, y: LAKE.y + LAKE.ry * .02, r: M
 const inZ = (z, x, y) => hyp(z.x - x, z.y - y) < z.r;
 const nearWaterPt = (x, y, r) => { const dx = (x - LAKE.x) / (LAKE.rx + r), dy = (y - LAKE.y) / (LAKE.ry + r); return dx * dx + dy * dy < 1; };   // a menos de ~r del agua (orilla)
 const SEAS = [{ n: 'Primavera', g: 1.2, c: '#b4cf86' }, { n: 'Verano', g: 1.5, c: '#a3c26a' }, { n: 'Otoño', g: .8, c: '#cdb572' }, { n: 'Invierno', g: .1, c: '#e3edf2' }];
-const SLEN = 40, MAT = 20, INST_STEP = 8;   // INST_STEP: cuánto más Instinto pide cada evolución siguiente (Ciclo 4: 5 → 8, ritmo de decisiones)
+const SLEN = 40, MAT = 20; let INST_STEP = 6;   // INST_STEP: cuánto más Instinto pide cada evolución siguiente (Ciclo 4: 5 → 6, ritmo de decisiones; 8 castigaba a los carnívoros, ver tests/era2-balance.md §13)
 const BLD = {
   fogata: { n: 'Fogata', cost: 4, max: 2, r: 85, d: 'Da calor, espanta depredadores, cocina y genera Tradición.' },
   refugio: { n: 'Refugio', cost: 3, max: 6, r: 45, d: 'Cura, protege y suma 4 de población máxima. Tres forman una aldea.' },
@@ -524,12 +524,12 @@ const WILD = {
   oso: { n: 'Oso gigante', g: 'ter', diet: 'carn', r: 16, spd: 52, hp: 260, atk: 15, def: .1, repro: 9999, vis: 240, col: '#4a3a2f', hab: 'land', cap: 1, boss: 1 }
 };
 const RCOL = ['#c9406f', '#c47fd1'];
-/* Dificultades (medidas con bots, ver tests/era2-balance.md). Ciclo 4: hd Normal 3,3 → 3,8 y Difícil 3,4 → 4,0 porque las habilidades rediseñadas (Excavar, Migrar) y las identidades de clase subieron las victorias ~15 puntos (§12). pop: población pedida; riv: cantidad de especies rivales; wolf: multiplicador de lobos y peces grandes al inicio;
+/* Dificultades (medidas con bots, ver tests/era2-balance.md). Ciclo 4 · evolución: las capacidades subieron Difícil de 27 % a 49 % (pareado, N = 192): hd Normal 3,8 → 4,5 y Difícil 4,0 → 5,0 (§13). Ciclo 4: hd Normal 3,3 → 3,8 y Difícil 3,4 → 4,0 porque las habilidades rediseñadas (Excavar, Migrar) y las identidades de clase subieron las victorias ~15 puntos (§12). pop: población pedida; riv: cantidad de especies rivales; wolf: multiplicador de lobos y peces grandes al inicio;
    grow: crecimiento de plantas; hd: hambre de tus animales; dmg: daño que reciben tus animales; rv: segundos entre rasgos nuevos de los rivales (multiplicador); tr: Tradición generada. */
 const DIFFS = [
   { n: 'Fácil', pop: 20, riv: 1, wolf: 1, grow: 1.35, hd: .9, dmg: .8, rv: 1.5, tr: 1 },
-  { n: 'Normal', pop: 36, riv: 2, wolf: 3, grow: .8, hd: 3.8, dmg: 1.5, rv: .55, tr: 1 },
-  { n: 'Difícil', pop: 38, riv: 2, wolf: 4, grow: .7, hd: 4.0, dmg: 2.3, rv: .5, tr: 1 }
+  { n: 'Normal', pop: 36, riv: 2, wolf: 3, grow: .8, hd: 4.5, dmg: 1.5, rv: .55, tr: 1 },
+  { n: 'Difícil', pop: 38, riv: 2, wolf: 4, grow: .7, hd: 5.0, dmg: 2.3, rv: .5, tr: 1 }
 ];
 const DF = () => DIFFS[diffI] || DIFFS[1];
 
@@ -655,7 +655,7 @@ function canEat(pred, prey) {
   if (qw && ps.hab === 'land' && !(qs.lst === 1 && !isWater(prey.x, prey.y))) return false;   // ...pero en la costa lo cazan los de tierra
   return true;
 }
-function plantOk(a, pl) { const h = a.sp.hab; if (a.sp.lst === 2 && a.sp.team === 'player') return pl.w || nearWaterPt(pl.x, pl.y, 260); /* etapa anfibia: come cerca del agua (se seca lejos) */ if (h === 'fly' || h === 'amph') return true; return h === 'water' ? pl.w || (a.sp.lst === 1 && nearWaterPt(pl.x, pl.y, SHORE)) : !pl.w; }
+function plantOk(a, pl) { const h = a.sp.hab; if (h === 'fly' || h === 'amph') return true; return h === 'water' ? pl.w || (a.sp.lst === 1 && nearWaterPt(pl.x, pl.y, SHORE)) : !pl.w; }
 /* Rejilla espacial de animales: se reconstruye en cada tick antes de que piensen y solo vale mientras piensan (useGrid).
    Los resultados son idénticos a recorrer toda la lista (los empates se resuelven por orden en G.A); el margen GPAD cubre lo que se mueven en un tick. */
 const CS = 80, GPAD = 26; let GRID = [], GRIDP = [], GW = 0, GH = 0, useGrid = false;
@@ -761,7 +761,7 @@ function matchup(a, b, al) {
   if (pa.stealth > 0 && inForest(a.x, a.y) && !(sb.cap && sb.cap.vision)) {   // Ojo avizor: no lo emboscan
     if (b.ala > 0) sup = true; else f(BM('amb') > 1 ? BM('amb') : 1.1, 'Emboscada entre árboles'); }
   if (sb.hab === 'amph' && sa.hab !== 'amph' && isWater(b.x, b.y)) f(.8, 'La presa está en el agua');
-  if (sa.hab === 'water' && sa.diet !== 'herb' && isWater(a.x, a.y) && inZ(FOSA(), a.x, a.y)) f(1.25, 'Emboscada en la fosa');
+  if (sa.hab === 'water' && sa.diet !== 'herb' && (sa.team !== 'wild' || sb.team !== 'wild') && isWater(a.x, a.y) && inZ(FOSA(), a.x, a.y)) f(1.25, 'Emboscada en la fosa');   // (entre salvajes no cambia: el ecosistema del lago queda como estaba)
   if (G.biomeKey === 'desierto' && pa.drought > .8) f(.9, 'Calor del desierto');
   if (G.biome.coldAll && pa.cold > .6) f(.9, 'Frío de la tundra');
   const en = enOf(a); if (en < 30) f(.7 + .3 * en / 30, 'Cansado');
@@ -874,7 +874,7 @@ function bioInfo(a) {
   if (a.stun > 0) effects.push({ id: 'stun', label: en <= 8 && a.st === 'stun' ? 'Agotado (colapsó)' : 'Aturdido', t: a.stun });
   if (isP) { if (G.camT > 0) effects.push({ id: 'cam', label: 'Camuflado', t: G.camT }); if (G.digT > 0) effects.push({ id: 'dig', label: 'Bajo tierra', t: G.digT }); if (a.ala > 0) effects.push({ id: 'ala', label: 'Alerta (−daño)', t: a.ala }); else if (G.alT > 0 && a.ala == null) effects.push({ id: 'ala', label: 'Alerta (−daño)', t: G.alT }); if (G.migT > 0) effects.push({ id: 'mig', label: 'Migrando', t: G.migT }); if (a.alr) effects.push({ id: 'alr', label: 'Se retira al nido', t: a.ala > 0 ? a.ala : 0 }); }
   if ((G.season === 3 || G.biome.coldAll) && !(isP && nestNear(a.x, a.y)) && !(sp.cap && sp.cap.piel)) effects.push({ id: 'cold', label: 'Pasa frío', t: 0 });
-  if (sp.lst === 2 && !nearWater(a, 160)) effects.push({ id: 'dry', label: nearWater(a, 300) ? 'Piel seca (más hambre)' : 'Deshidratándose', t: 0 });
+  if (sp.lst === 2 && !nearWater(a, 160)) effects.push({ id: 'dry', label: nearWater(a, 340) ? 'Piel seca (más hambre)' : 'Deshidratándose', t: 0 });
   if (a.hunger <= 0) effects.push({ id: 'starve', label: 'Muriendo de hambre', t: 0 });
   if (en < 30 && !(a.stun > 0)) effects.push({ id: 'tired', label: 'Cansado (más lento)', t: 0 });
   if (inj > .1) effects.push({ id: 'injured', label: inj > .6 ? 'Muy herido' : 'Herido', t: 0 });
@@ -908,7 +908,7 @@ function layEgg(a, cost) {
   if (a.sp.team === 'player') { a.st = 'lay'; cz(a, 'lay', 6, 'reproduccion', () => 'Pone un huevo: hambre −' + cost + ', energía −18, vulnerable ' + vul + ' s'); } Bus.emit('lay', a);
 }
 /* Capacidad de los herbívoros salvajes según la comida del bioma (kw; pradera = 1): con 26 conejos y 26 escarabajos en 26 plantas (desierto) se comían todo en 60 s y tu manada se moría de hambre. */
-const layOk = a => a.sp.lst !== 2 || a.sp.team !== 'player' || nearWater(a, 40);   // (los rivales conservan su ritmo afinado)   // etapa anfibia: cría en el agua o en la orilla
+const layOk = a => a.sp.lst !== 2 || a.sp.team !== 'player' || nearWater(a, 70);   // (los rivales conservan su ritmo afinado)   // etapa anfibia: cría en el agua o en la orilla
 function capOf(sp) { return sp.team === 'player' ? cxv(sp, 'cap', 40) + 4 * (G ? bdone('refugio').length : 0) + capL(sp, 'colmena') : sp.team === 'rival' ? 18 : sp.diet === 'herb' && G && G.biome && G.biome.kw ? Math.max(sp.min || 1, Math.round(sp.cap * G.biome.kw)) : sp.cap; }
 function herdCenter(sp) { let x = 0, y = 0, n = 0; for (const a of G.A) if (a.sp === sp && !a.dead) { x += a.x; y += a.y; n++; } return n ? { x: x / n, y: y / n } : null; }
 
@@ -936,7 +936,7 @@ function think(a, dt) {
   if (a.inj > 0) a.inj = Math.max(0, a.inj - dt * .004 * BM('hl') * (nest ? 4 : warm ? 2 : 1) * (a.st === 'rest' ? 2 : 1) * (a.hunger > 30 ? 1 : .3));
   if (isP && (G.season === 3 || G.biome.coldAll) && !nest && !warm && !c.piel) cz(a, 'cold', 12, 'clima', () => 'Pasa frío: ' + f1(.35 * p.cold * (G.season === 3 ? 1 : .45) * (inForest(a.x, a.y) ? .7 : 1)) + ' de vida por s sin nido ni fogata', true);
   if (isP && a.hunger <= 0) cz(a, 'starve', 8, 'hambre', () => 'Muere de hambre: −2,2 de vida por s', true);
-  if (isP && sp.lst === 2 && !nearWater(a, 300) && !isWater(a.x, a.y)) { if (isP) cz(a, 'seco', 8, 'clima', () => 'Se deshidrata: está a más de 300 del agua (−0,5 de vida por s)', true); dmg(a, .5 * dt, null, 'seco'); if (a.dead) return; }   // etapa anfibia: lejos del agua se seca
+  if (isP && sp.lst === 2 && !nearWater(a, 340) && !isWater(a.x, a.y)) { if (isP) cz(a, 'seco', 8, 'clima', () => 'Se deshidrata: está a más de 340 del agua (−0,4 de vida por s)', true); dmg(a, .4 * dt, null, 'seco'); if (a.dead) return; }   // etapa anfibia: lejos del agua se seca
   if ((G.season === 3 || G.biome.coldAll) && !nest && !warm && !c.piel) { dmg(a, .35 * p.cold * dt * (G.season === 3 ? 1 : .45) * (inForest(a.x, a.y) ? .7 : 1), null, 'frio'); if (a.dead) return; }
   const vis = sp.vis * p.search * BM('vs') * (isP ? PRIO.exploracion.vis[PL.exploracion] : 1);
   const threat = threatOf(a, 1 - clamp(p.stealth * (inForest(a.x, a.y) ? 1.4 : 1), 0, .8)), td = threat ? hyp(threat.x - a.x, threat.y - a.y) : 1e9;
@@ -1114,7 +1114,7 @@ function update(dt) {
   if (G.immT > 7) { G.immT = 0; for (const k in WILD) { const sp = G.sp[k]; if (sp.boss) continue; if (count(sp) < sp.min && (G.biome.init[k] || 0) > 0 && (sp.diet !== 'carn' || G.t > 50)) { const q = randPos(sp); spawn(sp, q.x, q.y, false); } } for (const r of G.riv) if (count(r) + eggCount(r) < 3) { const q = randPos(r); spawn(r, q.x, q.y, false); } }
   for (const r of G.riv) { r.evT -= dt; if (r.evT <= 0) { r.evT = rnd(45, 65) * DF().rv; const cl = closedBy(r), pool = TRAITS.filter(t => !t.tx && !r.traits.includes(t.id) && !cl.has(t.id)); if (pool.length) { r.traits.push(shuffle(pool)[0].id); recalc(r); } } }
   for (const f of G.fx) { f.l -= dt; f.x += f.vx * dt; f.y += f.vy * dt; } G.fx = G.fx.filter(f => f.l > 0);
-  G.inst += dt * (.04 + .004 * stats().pop) * G.me.p.inst; while (G.inst >= G.nextInst) { G.inst -= G.nextInst; G.nextInst += INST_STEP; G.pending++; }   // Ciclo 4: +8 por evolución (antes +5): la primera llega en ≈ 20-30 s y las siguientes cada ≈ 1-2 min (medido con bots, docs/ERA2-EVOLUCION.md)
+  G.inst += dt * (.04 + .004 * stats().pop) * G.me.p.inst; while (G.inst >= G.nextInst) { G.inst -= G.nextInst; G.nextInst += INST_STEP; G.pending++; }   // Ciclo 4: +6 por evolución (antes +5; con +8 los carnívoros perdían 12-31 puntos): la primera llega en ≈ 20-30 s y las siguientes cada ≈ 1-2 min (medido con bots, docs/ERA2-EVOLUCION.md)
   G.goalT += dt; if (G.goalT >= 1) { G.goalT = 0; goals(); }
 }
 
@@ -2554,7 +2554,7 @@ window.__e2 = { drawAnimal, ART, bioInfo, Bus, issueOrder, spawn, matchup, speci
 /* Ciclo 4 (simulación): datos y ganchos que consumen la interfaz y las pruebas. Sentencia aparte para no tocar la línea de window.__e2. */
 Object.assign(window.__e2, { CLSX, SPX, ALO, PRIO, PRK, prioInfo: () => PRK.map(k => ({ id: k, n: PRIO[k].n, niveles: PRIO[k].d.slice(), actual: PL[k] })), prioLevels: () => { prioRefresh(); return Object.assign({}, PL); }, traitInfo, traitEffects, prioRefresh, abEnd, safePts, zoneAt });
 /* Ciclo 4 · Evolución y claridad: capacidades, ramas excluyentes, transición a tierra y modo foco (para tests/era2-evolucion.js). */
-Object.assign(window.__e2, { CAPS, EXCL, HYBCAP, LST, capL, capList, capText, closedBy, exclOf, previewSp, landStage, traitAvail, canEat, okPos, dmg, capOf, nestNear, layOk, travelNeed, spdOf, KELP, BAJIO, FOSA, setFocus, metaTick, INST_STEP, setRivNo(o) { RIVNO = o; } });
+Object.assign(window.__e2, { CAPS, EXCL, HYBCAP, LST, capL, capList, capText, closedBy, exclOf, previewSp, landStage, traitAvail, canEat, okPos, dmg, capOf, nestNear, layOk, travelNeed, spdOf, KELP, BAJIO, FOSA, setFocus, metaTick, INST_STEP, setRivNo(o) { RIVNO = o; }, setInstStep(v) { INST_STEP = v; } });
 Object.defineProperties(window.__e2, { FOCUS: { get: () => FOCUS }, META: { get: () => META } });   // (Object.assign copiaría el valor, no el getter)
 /* === AUDIO ===
    Módulo de audio (eras/audio-lofi.js). Solo ESCUCHA: se suscribe al Bus y lee G; no modifica el estado ni usa R()
