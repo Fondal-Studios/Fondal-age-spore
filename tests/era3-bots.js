@@ -1,60 +1,69 @@
-// Bots de la Era 3 (Ciclo 4), para inyectar en la página: window.runBot3(seed, diff, maxT, perfil, opts) -> resultado.
-// Perfiles: economico, defensivo, comerciante, agresivo (+ 'idle' que no toca nada). Todos juegan solo por la API pública de __e3
-// (setPrio, placeBuilding, upgradeBuilding, research, deal, choosePath): nada de modificar G a mano.
+// Bots de la Era 3 (Ciclo 4 · civilizaciones), para inyectar en la página: window.runBot3(seed, diff, maxT, perfil, opts) -> resultado.
+// Perfiles: economico, defensivo, militar (expediciones), clash (construye y mejora todo) + 'idle' (no toca nada).
+// Juegan SOLO por la API pública de __e3 (placeBuilding/findSpot, upgradeBuilding, research, train, sendExpedition, deal, setPrio, found): nada de modificar G a mano.
+// opts: { species, tierra, traits, world: {pers:[a,b]} }
 window.BOTS3 = {
-  economico: { adapt: true, tech: ['fuego', 'piedra', 'cesta', 'ceram', 'agri', 'lanza', 'marcas', 'domes'], prio: { comida: 2, construccion: 2, defensa: 1, exploracion: 0, saber: 1 }, gifts: 25, trade: false, empal: false, expand: false, path: null },
-  defensivo: { tech: ['fuego', 'piedra', 'lanza', 'cesta', 'ceram', 'agri', 'marcas', 'arco'], prio: { comida: 1, construccion: 1, defensa: 2, exploracion: 0, saber: 1 }, gifts: 0, trade: false, empal: true, expand: false, path: 'jefatura' },
-  comerciante: { adapt: true, tech: ['fuego', 'piedra', 'cesta', 'ceram', 'agri', 'marcas', 'lanza', 'domes'], prio: { comida: 1, construccion: 1, defensa: 1, exploracion: 2, saber: 2 }, gifts: 40, trade: true, empal: false, expand: false, path: 'mercado' },
-  auto: { adapt: false, tech: ['fuego', 'piedra', 'cesta', 'lanza', 'ceram', 'agri', 'marcas', 'arco', 'domes'], prio: { comida: 1, construccion: 1, defensa: 1, exploracion: 1, saber: 1 }, gifts: 45, trade: false, empal: false, expand: false, path: null },   // equivalente al bot «auto» de la Era 3 original (referencia de comparación)
-  ingenuo: { adapt: false, tech: ['fuego', 'piedra', 'cesta', 'ceram', 'agri', 'lanza', 'marcas', 'domes'], prio: { comida: 1, construccion: 1, defensa: 0, exploracion: 0, saber: 1 }, gifts: 0, trade: false, empal: false, expand: false, path: null },
-  agresivo: { tech: ['fuego', 'piedra', 'lanza', 'arco', 'cesta', 'ceram', 'agri', 'marcas'], prio: { comida: 1, construccion: 1, defensa: 2, exploracion: 2, saber: 0 }, gifts: -1, trade: false, empal: true, expand: true, path: 'jefatura' }
+  economico: { w: { food: 3, farm: 3, cria: 2, mat1: 2, mat2: 2, cap: 2, build: 2, kn: 2, carry: 2, spoil: 1, birth: 1, cook: 1, def: .5, tower: .5 }, towers: 1, walls: 0, units: { gue: 1 }, upgrade: ['granja', 'ext1', 'almacen', 'vivienda', 'ext2', 'saber', 'cria'], maxWorks: 2, prio: { comida: 2, construccion: 2, defensa: 1, exploracion: 0, saber: 1 }, exp: 'caravana', gifts: 25 },
+  defensivo: { w: { def: 3, tower: 3, wallhp: 2, loss: 2, hp: 2, food: 2, farm: 2, mat1: 1, mat2: 1, cap: 1, kn: 1, build: 1 }, towers: 3, walls: 8, units: { gue: 2, tir: 1 }, upgrade: ['torre', 'muro', 'granja', 'vivienda', 'almacen', 'ext1', 'ext2'], maxWorks: 2, prio: { comida: 1, construccion: 1, defensa: 2, exploracion: 0, saber: 1 }, exp: 'nodos', gifts: 0 },
+  militar: { w: { atk: 3, hp: 2, ucost: 2, def: 2, tower: 1, spd: 1, food: 2, farm: 2, mat1: 1, mat2: 1, node: 2, kn: 1 }, towers: 1, walls: 0, units: { gue: 4, tir: 2, cam: 1 }, upgrade: ['cuartel', 'granja', 'vivienda', 'ext1', 'almacen', 'ext2'], maxWorks: 2, prio: { comida: 1, construccion: 1, defensa: 1, exploracion: 1, saber: 1 }, exp: 'ataque', gifts: -1 },
+  clash: { w: { build: 3, cap: 3, mat1: 2, mat2: 2, food: 2, farm: 2, kn: 1, def: 1, tower: 1 }, towers: 2, walls: 4, units: { gue: 2, tir: 1 }, upgrade: ['vivienda', 'granja', 'almacen', 'ext1', 'ext2', 'saber', 'torre', 'cuartel', 'cria', 'muro'], maxWorks: 3, prio: { comida: 1, construccion: 2, defensa: 1, exploracion: 1, saber: 1 }, exp: 'nodos', gifts: 20 }
 };
 window.runBot3 = function (seed, diff, maxT, perfil, opts) {
-  opts = opts || {}; const E = window.__e3; E.diffI = diff; E.newGame(seed, opts.world); E.setStarted(true);
-  const B = window.BOTS3[perfil] ? Object.assign({}, window.BOTS3[perfil]) : null, has = E.has; let slot = 0, tick = 0; const tt = {}, ev = { raid: 0, raidEnd: 0, alert: 0, born: 0, built: 0, trade: 0, gift: 0, discover: 0 }, alerts = {}, dead = {};
-  ['raid', 'raidEnd', 'born', 'built', 'trade', 'gift', 'discover'].forEach(k => E.Bus.on(k, () => ev[k]++));
-  E.Bus.on('alert', a => { if (a.level !== 'ok') alerts[a.kind] = (alerts[a.kind] || 0) + 1; });
+  opts = opts || {}; const E = window.__e3; E.diffI = diff; E.newGame(seed, Object.assign({}, opts.world || {}, opts.species ? { species: opts.species, tierra: !!opts.tierra, traits: opts.traits || [] } : {})); E.setStarted(true);
+  const B = window.BOTS3[perfil] || null; let tick = 0; const ev = { raid: 0, raidEnd: 0, built: 0, tech: 0, train: 0, node: 0, exped: 0, wonder: 0 }, dead = {};
+  ['raid', 'raidEnd', 'built', 'tech', 'node', 'wonder'].forEach(k => E.Bus.on(k, () => ev[k]++)); E.Bus.on('train', (k, fin) => { if (fin) ev.train++; }); E.Bus.on('expedition', (m, t, n, okk) => { if (okk === null) ev.exped++; });
   E.Bus.on('death', (p, why) => { dead[why] = (dead[why] || 0) + 1; });
-  const spots = () => { const k = slot++; const a = k * 2.4, r = 55 + (k % 5) * 16; return B && B.expand && k % 3 === 0 ? { x: 560 + Math.cos(a) * 40, y: 90 + Math.sin(a) * 30 } : { x: 300 + Math.cos(a) * r, y: 330 + Math.sin(a) * r }; };
-  const place = kind => { const G = E.G; for (let i = 0; i < 14; i++) { const n0 = G.B.length; E.placeBuilding(kind, spots()); if (G.B.length > n0) return true; } return false; };
-  let setP = false;
+  const cnt = k => E.G.B.filter(b => b.k === k).length, cntDone = k => E.done(k).length;
+  const place = k => { const s = E.findSpot(k); return s ? E.placeBuilding(k, s) : false; };
+  let setP = false, wallN = 0;
   while (E.G.t < maxT && !E.G.over) {
     E.step(.05); tick++; if (tick % 20) continue;
-    const G = E.G; for (const k in E.TECH) if (has(k) && !tt[k]) tt[k] = Math.round(G.t);
-    if (!B) continue;
-    if (!setP) { for (const k in B.prio) E.setPrio(k, B.prio[k]); setP = true; if (B.path) E.choosePath(B.path); }
+    const G = E.G; if (!B) continue;
+    if (!setP) { for (const k in B.prio) E.setPrio(k, B.prio[k]); setP = true; }
+    if (E.canFound()) { E.found(); break; }
     const ad = E.adults(); if (!ad.length) continue;
-    for (const k of B.tech) { const t = E.TECH[k]; if (!has(k) && t.req.every(has) && !(t.excl || []).some(has) && G.know >= E.techCost(k)) { E.research(k); break; } }
-    // adaptación mínima del jugador: si hay hambruna sube Comida; si pasó, la baja
-    // adaptación: si te saquearon y no repeliste, defensa alta (y empalizada); cuando hay calma vuelve a normal
-    if (B.adapt) { const hit = G.x3.clans.reduce((a, c) => a + c.sent, 0) - G.raidsOk, hot = hit >= 2 || (G.dc.saqueo || 0) >= 1; if (hot && G.x3.prio.defensa < 2) E.setPrio('defensa', 2); B.empal = B.empal || hot; }
+    const age = E.age(), core = E.core(), ti = null; void ti;
+    // 1. tecnología: la de mejor puntaje del perfil entre las disponibles
+    const C = E.CIVS[G.x3.civ]; let best = null, bs = -1; for (const id in C.tech) { const t = C.tech[id]; if (E.techCheck(id).ok) { let sc = 0; for (const k in t.fx) sc += (B.w[k] || .2) * Math.abs(t.fx[k] > 3 ? t.fx[k] / 100 : t.fx[k]); sc += (4 - t.age) * .01; if (sc > bs) { bs = sc; best = id; } } } if (best) E.research(best);
+    // 2. Edad: si se puede avanzar, se avanza; si solo falta el costo, se ahorra
+    let saving = false;
+    if (age < 3 && !core.upg) { const ch = E.upgradeCheck(core); if (ch.ok) E.upgradeBuilding(core); else { const rq = E.ageReq(age + 1); saving = rq.every(r => r.ok || r.id === 'cost'); } }
+    const works = E.workItems().length, pop = G.P.length;
+    // 3. qué construir (requisitos de la Edad primero, luego necesidades, luego el perfil)
+    if (works < B.maxWorks) {
+      const want = [];
+      const rq = age < 3 ? E.ageReq(age + 1) : []; for (const r of rq) if (!r.ok && E.SL[r.id] && cnt(r.id) < (E.AGE_REQ[age].slots[r.id] || 0)) want.push(r.id);
+      if (E.shelterCap() < pop + 3) want.push('vivienda');
+      if (E.farmSlots() < Math.max(2, Math.round(pop * .3))) want.push(age >= 2 && cnt('cria') < 1 ? 'cria' : 'granja');
+      if (cnt('ext1') < 1 + age) want.push('ext1');
+      if (age >= 2 && cnt('ext2') < age) want.push('ext2');
+      if (cnt('almacen') < age) want.push('almacen');
+      if (cnt('saber') < Math.min(2, age)) want.push('saber');
+      if (age >= 2 && cnt('torre') < B.towers) want.push('torre');
+      if (age >= 2 && cnt('cuartel') < 1 && (B.units.gue || 0) > 0) want.push('cuartel');
+      if (age >= 2 && cnt('unico') < 1) want.push('unico');
+      if (age >= 2 && wallN < B.walls) want.push('muro');
+      if (age >= 3 && cnt('maravilla') < 1) want.unshift('maravilla');
+      let done = false;
+      for (const k of want) { if (saving && k !== 'maravilla' && !(rq.find(r => r.id === k))) continue; if (k === 'muro') { const c = E.core(), a = wallN * .8, s = { x: c.x + Math.cos(a) * 90, y: c.y + Math.sin(a) * 90 }; if (E.placeBuilding('muro', s) || place('muro')) { wallN++; done = true; break; } continue; } if (place(k)) { done = true; break; } }
+      // 4. mejoras (perfil «clash» y economía): el primero que se pueda
+      if (!done && !saving) for (const k of B.upgrade) { const b = G.B.find(x => x.k === k && x.done && !x.upg && E.upgradeCheck(x).ok); if (b) { E.upgradeBuilding(b); break; } }
+    }
+    // 5. unidades
+    if (age >= 2 && E.done('cuartel').length && !saving) for (const k of E.UKEYS) { const want = B.units[k] || 0; const have = G.P.filter(p => p.role === k).length + G.x3.q.filter(q => q.k === k).length; if (have < want && E.trainCheck(k).ok) { E.train(k); break; } }
+    // 6. expediciones (Edad III)
+    if (age >= 3 && tick % 100 === 0) {
+      const idle = E.idleUnits().length;
+      if ((B.exp === 'nodos' || B.exp === 'ataque') && idle >= 2) { const nd = G.x3.nodes.filter(n => n.own !== 2 && E.expCheck('node', n.i, 'tomar').ok).sort((a, b) => a.ghp - b.ghp)[0]; if (nd) E.sendExpedition('node', nd.i, 'tomar', Math.max(2, idle - 1)); }
+      if (B.exp === 'ataque' && idle >= 4) { const c = G.x3.clans.filter(c => !c.allied && E.expCheck('clan', c.id, 'atacar').ok).sort((a, b) => a.rel - b.rel)[0]; if (c && c.rel < 10) E.sendExpedition('clan', c.id, 'atacar', idle); }
+      if (B.exp === 'caravana' && idle >= 1 && G.food > 40) { const c = G.x3.clans.filter(c => E.expCheck('clan', c.id, 'comerciar').ok).sort((a, b) => b.rel - a.rel)[0]; if (c) E.sendExpedition('clan', c.id, 'comerciar', 1); }
+    }
+    // 7. diplomacia: regalos si el motivo del ataque es la relación; alianza si se puede
+    for (const c of G.x3.clans) { const gate = E.raidGate(c), byRel = gate.go && /relación|odia/.test(gate.why); if (B.gifts > 0 && c.rel < B.gifts && G.food > pop * 1.5 + 12 && byRel) E.deal(c.id, 'gift'); if (B.gifts >= 0 && c.rel >= 50 && !c.allied) E.deal(c.id, 'ally'); }
     const al = G.x3.al; if (al.hambruna && al.hambruna.l === 'crit' && G.x3.prio.comida < 2) E.setPrio('comida', 2);
-    const works = E.workItems().length, ref = E.done('refugio').length + G.sites.filter(s => s.k === 'refugio').length;
-    if (works < 2) {
-      const need = k => !E.done(k).length && !G.B.some(b => b.k === k && !b.done), cap = E.shelterCap();
-      if (ref < 3 && G.wood >= 2) place('refugio');
-      else if (need('almacen') && G.wood >= 3 && G.stone >= 1) place('almacen');
-      else if (need('totem') && G.wood >= 2.5 && G.stone >= 1) place('totem');
-      else if (has('agri') && E.done('huerto').length + G.sites.filter(s => s.k === 'huerto').length < 2 && G.wood >= 1) place('huerto');
-      else if (B.empal && has('lanza') && need('empalizada') && G.wood >= 3.5) place('empalizada');
-      else if (cap < G.P.length + 3 && ref < 8 && G.wood >= 2) place('refugio');
-      else { // mejoras: las que se puedan, en orden de utilidad
-        const ups = G.B.map((b, i) => [b, i]).filter(([b]) => b.done && !b.upg && E.upgradeCheck(b).ok && (b.k === 'refugio' || b.k === 'almacen' || b.k === 'huerto' || b.k === 'fogata' || b.k === 'totem' || (b.k === 'empalizada' && B.empal)));
-        const pr = { refugio: 0, huerto: 1, almacen: 2, fogata: 3, totem: 4, empalizada: 5 }; ups.sort((a, b) => pr[a[0].k] - pr[b[0].k]); if (ups.length) E.upgradeBuilding(ups[0][1]);
-        else if (has('piedra') && need('taller') && G.wood >= 2 && G.stone >= 2) place('taller');
-      }
-    }
-    // diplomacia por perfil
-    for (const c of G.x3.clans) {
-      // lee el motivo visible: un regalo sirve si el motivo del ataque es la relación; si es «te ve débil» no sirve, hay que defenderse
-      const surplus = G.food >= G.P.length * 1.5 + 10, gate = E.raidGate(c), byRel = gate.go && /relación|odia/.test(gate.why);
-      if (B.gifts > 0 && c.rel < B.gifts && (surplus || (byRel && G.food >= 9))) E.deal(c.id, 'gift');
-      if (B.gifts >= 0 && c.rel >= 50 && !c.allied) E.deal(c.id, 'ally');
-      if (B.trade && G.food >= G.P.length * 2 + 12 && tick % 2000 === 0 && c.rel > -10) E.deal(c.id, G.wood < 8 ? 'f2w' : 'f2s');   // un trato cada 100 s, solo con comida de sobra
-    }
   }
   const G = E.G, ad = E.adults(), cl = G.x3.clans;
-  return { seed, diff, perfil, end: G.over ? (ad.length ? 'win' : 'lose') : (ad.length ? 'timeout' : 'lose'), t: Math.round(G.t), pop: G.P.length, know: +G.know.toFixed(1), techs: Object.keys(G.techs).length, deaths: G.deaths, dc: dead, winters: G.winters, tt, ev, alerts,
-    goals: (G.g || []).filter(x => x.ok).length, path: G.x3.path || null, pers: cl.map(c => c.pers).join('/'), rel: cl.map(c => Math.round(c.rel)).join('/'), sent: cl.map(c => c.sent).join('/'), repelled: cl.map(c => c.repelled).join('/'), allied: cl.map(c => c.allied ? 1 : 0).join('/'),
-    blds: G.B.filter(b => b.done).map(b => b.k + (b.lvl || 1)).join(','), roles: JSON.stringify(E.tribeInfo().roles), raidsOk: G.raidsOk, trades: G.trades, busErr: E.Bus.err };
+  return { seed, diff, perfil, civ: G.x3.civ, sp: G.x3.sp, amph: G.x3.amph, end: G.over ? (G.x3.found ? 'win' : 'lose') : (ad.length ? 'timeout' : 'lose'), t: Math.round(G.t), age: E.age(), ages: Object.assign({}, G.x3.ages), wonder: G.x3.wonder || null,
+    pop: G.P.length, techs: Object.keys(G.techs).length, deaths: G.deaths, dc: dead, ev, units: G.P.filter(p => ['gue', 'tir', 'cam'].includes(p.role)).length, nodes: G.x3.nodes.filter(n => n.own === 2).length, loot: G.x3.loot, exps: G.x3.exps,
+    lost: { m1: Math.round(G.x3.lost.mat1), m2: Math.round(G.x3.lost.mat2) }, blds: G.B.filter(b => b.done).length, pers: cl.map(c => c.pers).join('/'), sent: cl.map(c => c.sent).join('/'), repelled: cl.map(c => c.repelled).join('/'), busErr: E.Bus.err };
 };
