@@ -69,6 +69,9 @@ jobs:
       - name: Órdenes y frases de causa
         if: ${{ !cancelled() }}
         run: node tests/era2-ordenes.js 2>&1 | tee ci-logs/era2-ordenes.log
+      - name: Evolución con capacidades y acuáticos a tierra
+        if: ${{ !cancelled() }}
+        run: node tests/era2-evolucion.js 2>&1 | tee ci-logs/era2-evolucion.log
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
@@ -104,6 +107,9 @@ jobs:
       - name: Arte y animaciones
         if: ${{ !cancelled() }}
         run: node tests/era3-arte.js 2>&1 | tee ci-logs/era3-arte.log
+      - name: Civilizaciones, Edades y linaje
+        if: ${{ !cancelled() }}
+        run: node tests/era3-civs.js 2>&1 | tee ci-logs/era3-civs.log
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
