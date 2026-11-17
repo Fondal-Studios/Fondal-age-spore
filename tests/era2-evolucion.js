@@ -108,14 +108,17 @@ let fails = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLA') + ' ' 
     const E = window.__e2, out = {};
     const run = (spec, seed, ids, steps, setup) => { E.cls = spec.slice(0, 3); E.specKey = spec; E.diffI = 1; E.newGame(E.BIOMES[setup && setup.biome] ? setup.biome : 'pradera', null, seed); E.setStarted(true); E.G.modal = false; const me = E.G.me; for (const id of ids) me.traits.push(id); E.recalcSp(me); if (setup && setup.fn) setup.fn(E.G); let acc = { coldDmg: 0, algae: 0, water: 0, n: 0 }; E.Bus.on('dmg', () => {}); for (let i = 0; i < steps; i++) { E.G.pending = 0; E.step(.05); if (i % 20 === 0) { for (const a of E.G.A) if (a.sp === E.G.me) { acc.n++; const L = E.G.biome.lake, dx = (a.x - L.x) / L.rx, dy = (a.y - L.y) / L.ry; if (dx * dx + dy * dy < 1) acc.water++; } } } acc.pop = E.stats().pop; acc.hash = E.stateHash(); return acc; };
     // Abrigo (piel) en la tundra: sin nido ni fogata, menos muertos por frío
-    let cA = 0, cB = 0; for (let s = 0; s < 4; s++) { const k = 'FRIO' + s, a = run('ter_ingeniero', k, [], 900, { biome: 'tundra' }), b2 = run('ter_ingeniero', k, ['piel'], 900, { biome: 'tundra' }); cA += a.pop; cB += b2.pop; }
+    const cold = (ids, seed) => { E.cls = 'ter'; E.specKey = 'ter_ingeniero'; E.diffI = 1; E.newGame('tundra', null, seed); E.setStarted(true); E.G.modal = false; const me = E.G.me; for (const id of ids) me.traits.push(id); E.recalcSp(me);
+      E.G.A = E.G.A.filter(a => a.sp === me || a.sp.diet === 'herb' && a.sp.team === 'wild'); E.G.riv.length = 0; let lost = 0;
+      for (let i = 0; i < 600; i++) { E.G.pending = 0; for (const a of E.G.A) if (a.sp === me) { a.hunger = 100; a.hp = a.mhp; } E.G.ev = null; E.step(.05); for (const a of E.G.A) if (a.sp === me) lost += a.mhp - a.hp; } return Math.round(lost); };
+    let cA = 0, cB = 0; for (let s = 0; s < 3; s++) { cA += cold([], 'FRIO' + s); cB += cold(['piel'], 'FRIO' + s); }
     out.piel = [cA, cB];
     // Nado: un terrestre con aletas pasa tiempo en el agua; sin aletas, nunca
     let w0 = 0, w1 = 0; for (let s = 0; s < 3; s++) { const near = { fn: G => { for (const a of G.A) if (a.sp === G.me) { a.x = 520 + (a.id % 3) * 4; a.y = 420 + (a.id % 4) * 6; } } }, a = run('ter_ingeniero', 'NADO' + s, [], 1200, near), b2 = run('ter_ingeniero', 'NADO' + s, ['aletas'], 1200, near); w0 += a.water; w1 += b2.water; }
     out.nado = [w0, w1];
     return out;
   });
-  ok(live.piel[1] > live.piel[0], 'Abrigo en partida: tras 45 s de tundra sobreviven más (' + live.piel.join(' → ') + ', 4 semillas)');
+  ok(live.piel[0] > 0 && live.piel[1] < live.piel[0] * .25, 'Abrigo en partida: 30 s de tundra sin nido, vida perdida ' + live.piel.join(' → ') + ' (3 semillas, hambre llena, sin depredadores; lo que queda son contragolpes al cazar)');
   ok(live.nado[0] === 0 && live.nado[1] > 0, 'Nado en partida: un terrestre con aletas usa el lago (muestras en el agua ' + live.nado.join(' → ') + ')');
 
   // ---------- 4. transición a tierra ----------
