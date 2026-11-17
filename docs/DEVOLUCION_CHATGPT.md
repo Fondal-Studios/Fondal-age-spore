@@ -143,3 +143,16 @@ Recomendación: la equilibrada. Sin datos de personas, la Era 2 y la Era 3 son a
 - Run #27 (`032ae83`): cancelado por un push posterior (concurrencia).
 - Run #28 (`6b99849`): Era 1, Era 2 (con `era2-evolucion`), Era 4 y Audio en verde; **Era 3 falló**. `era3-bot.js` se colgó hasta el límite de 30 min: el CI le pasa las rutas de captura como primer argumento y la versión nueva leía ahí los segundos (`T = NaN`, espera infinita). Se corrigió en el test, que ahora acepta ambas formas; corrido en local con los mismos argumentos que el CI: OK en 4 min.
 - **Run #29 (`7b51ccb`): verde en los 5 jobs** (Era 1, 2, 3, 4 y Audio Eras 3-4). https://github.com/Fondal-Studios/Fondal-age-spore/actions/runs/44086582335. Los commits posteriores solo tocan este documento.
+
+## Actualización 2026-11-17: decisiones aprobadas por el dueño
+El dueño respondió «sí a todo». Hecho:
+- **PR #1 mergeado a `main`** (`348e9b7`). El PR #2 apunta ahora a `main`.
+- **Era 3 Normal más difícil:** 94 % → 86 % fundaron (N=192, IC 81–90; detalle en `tests/era3-civs-balance.md`). Ajuste chico a propósito para no pisar a Difícil (≈ 70 %).
+- **Volumen de la Era 1:** maestro .5 → .27 (≈ −5,4 dB) para igualar las Eras 2-4. Falta confirmarlo con escucha humana.
+- **Runway, Fase 0:** había 7 créditos, no 24. Se gastaron 4 en 2 imágenes. Resultado:
+  - la hoja de caminata 2×2 sale **inconsistente** (dos cuadros miran a cada lado), así que hace falta el plan B;
+  - el ancla `ter.corazon.1` falla en Runway (sin costo);
+  - el fondo sale magenta claro.
+  
+  Detalle en `docs/ARTE-RUNWAY-ERA3.md` §9. **Para seguir con el arte hay que cargar créditos.**
+- **GitHub Pages:** workflow `.github/workflows/pages.yml` que publica en cada push a `main`. Requiere un paso manual del dueño si GitHub no lo habilita solo: Settings → Pages → Source = «GitHub Actions».

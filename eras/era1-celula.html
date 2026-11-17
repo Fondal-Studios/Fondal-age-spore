@@ -786,6 +786,8 @@ const Snd = (() => {
   const saveShared = () => { try { const d = JSON.parse(localStorage.getItem('evo_audio_v1') || 'null') || { master: .8, music: .7, sfx: .85, amb: .7, bm: { music: false, sfx: false, amb: false } }; d.mute = muted; if (typeof d.master !== 'number') d.master = .8; localStorage.setItem('evo_audio_v1', JSON.stringify(d)); localStorage.setItem('evo_snd', muted ? '0' : '1'); } catch (e) {} };
   const midi = (semi, oct) => mode.root * Math.pow(2, semi / 12 + (oct || 0));
   const note = (semis, i) => mode.sc[((i % mode.sc.length) + mode.sc.length) % mode.sc.length] + 12 * Math.floor(i / mode.sc.length);
+  /* Maestro de la Era 1: .5 → .27 (≈ −5,4 dB) para igualarla con las Eras 2-4 (medido en docs/AUDIO.md: +5 a +6 dB). Falta confirmarlo con escucha humana. */
+  const MASTER_E1 = .27;
   function gainNode(v, dest) { const g = ctx.createGain(); g.gain.value = v; g.connect(dest || master); return g; }
   function target(g, v, tc) { g.gain.setTargetAtTime(v, ctx.currentTime, tc || 1.2); }
   function noise() {
@@ -793,7 +795,7 @@ const Snd = (() => {
     for (let i = 0; i < n; i++) { last = (last + .02 * (Math.sin(i * 12.9898) * 43758.5453 % 1)) / 1.02; d[i] = last * 3.2; } return noiseBuf = b;
   }
   function attach(c) {
-    ctx = c; nextT = 0; step = 0; noiseBuf = null; master = c.createGain(); master.gain.value = muted ? 0 : .5 * mvol; master.connect(c.destination);
+    ctx = c; nextT = 0; step = 0; noiseBuf = null; master = c.createGain(); master.gain.value = muted ? 0 : MASTER_E1 * mvol; master.connect(c.destination);
     const sea = c.createBufferSource(); sea.buffer = noise(); sea.loop = true; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420;
     L.sea = gainNode(.5); sea.connect(lp); lp.connect(L.sea); sea.start();
     const lfo = c.createOscillator(); lfo.frequency.value = .07; const lg = c.createGain(); lg.gain.value = 160; lfo.connect(lg); lg.connect(lp.frequency); lfo.start();
@@ -826,7 +828,7 @@ const Snd = (() => {
     if (!ctx) return;
     target(L.pad, tier >= 1 ? .18 : 0); target(L.arp, tier >= 2 ? .3 : 0); target(L.lead, tier >= 3 ? .22 : 0); target(L.kick, tens > .1 || (tier >= 2 && brKey === 'pred') ? .7 : 0, .3);
     target(L.sea, .5 - tier * .06); target(L.drone, .22 + tier * .02);
-    master.gain.setTargetAtTime(muted ? 0 : (duck ? .12 : .5) * mvol, ctx.currentTime, .4);
+    master.gain.setTargetAtTime(muted ? 0 : (duck ? .065 : MASTER_E1) * mvol, ctx.currentTime, .4);
   }
   const api = {
     attach, schedule, kick, get ctx() { return ctx; }, get _L() { return L; },

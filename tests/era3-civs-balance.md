@@ -43,3 +43,9 @@ Civilización × perfil (todas las dificultades, % que fundaron, IC 95 %): ter e
 - Ritmo: Edad II ≈ 6-7 min en todas las dificultades; Edad III ≈ 14-16 min (Fácil), 18-23 (Normal), 22-29 (Difícil); fundación ≈ 19-22 / 24-30 / 29-37 min.
 - El perfil militar es el más débil en Difícil (13 %): gasta adultos en unidades que mueren en expediciones y en la disputa de nodos (≈ 96 muertes por partida). Es la estrategia del bot, no un bloqueo del juego (100 % en Fácil, 79 % en Normal).
 - `busErr` 0 en las 576 partidas; 0 errores de consola.
+
+
+## Ajuste de Normal (2026-11-17, a pedido del dueño)
+Normal estaba casi imposible de perder (94 % fundaron, 181/192). `DIFFS[1]`: raid0 130→115, raidMul .9→.8, raidAdd 1→2, rg 110→95, rdmg 6→7, hd 1.36→1.42.
+Comando: `node tests/era3-civs-run.js 1 todos todas 12 3000 normal-v2 4` (N=192, 12 por perfil × civilización).
+Resultado: **166/192 fundaron (86 %, IC 81–90)**; por perfil: económico 47/48, defensivo 46/48, militar 26/48, clash 47/48; derrotas 3. Aves sigue siendo la más floja (36/48; militar 3/12). Fundación más lenta (económico ≈ 26–33 min). Queda entre Fácil (100 %) y Difícil (≈ 70 %); endurecer más la acercaría a Difícil. Los bots juegan mejor que un jugador nuevo: confirmar con la prueba humana.
