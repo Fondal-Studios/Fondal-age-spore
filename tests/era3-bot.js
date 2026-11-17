@@ -3,7 +3,9 @@
 // Uso: NODE_PATH=$(npm root -g) node tests/era3-bot.js [segundos de juego=480] [captura-escritorio.png] [captura-movil.png]
 const { chromium } = require('playwright'); const assert = require('assert'); const path = require('path');
 const url = 'file://' + path.resolve(__dirname, '../eras/era3-tribus.html');
-const T = +(process.argv[2] || 480);
+/* Acepta [segundos] [capturas…] o solo [capturas…] (así lo llama el CI): un argumento no numérico no puede ser T (NaN colgaba la espera). */
+const ARGS = process.argv.slice(2); const T = ARGS.length && isFinite(+ARGS[0]) ? +ARGS.shift() : 480;
+if (!(T > 0)) throw new Error('segundos inválidos: ' + T);
 const BOT = () => {
   const E = window.__e3;
   window.__act = () => { const G = E.G; if (!G || G.over || G.modal) return; if (!E.adults().length) return;
@@ -15,7 +17,7 @@ const BOT = () => {
 };
 (async () => {
   const b = await chromium.launch(); const errs = [];
-  for (const [w, h, mob, sp, shot] of [[1280, 800, false, 'ter_cazador', process.argv[3]], [390, 800, true, 'acu_anfibio', process.argv[4]]]) {
+  for (const [w, h, mob, sp, shot] of [[1280, 800, false, 'ter_cazador', ARGS[0]], [390, 800, true, 'acu_anfibio', ARGS[1]]]) {
     const ctx = await b.newContext({ viewport: { width: w, height: h }, hasTouch: mob, isMobile: mob }); const p = await ctx.newPage();
     p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/font|ERR_|Failed to load/i.test(m.text())) errs.push(m.text()); });
     await ctx.addInitScript(sp => { try { localStorage.setItem('evo_tut3', 'done'); localStorage.setItem('evo_lineage', JSON.stringify({ v: 1, from: 2, branch: 'foto', tier: 1, mutCount: 4, owned: [], seed: 'bot', era2: { species: sp, name: sp, cls: sp.slice(0, 3), traits: ['garras', 'aletas'], vars: {}, tierra: sp === 'acu_anfibio' } })); } catch (_) { } }, sp);

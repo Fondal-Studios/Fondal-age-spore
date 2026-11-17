@@ -140,4 +140,6 @@ Limitación general: los bots no miden diversión ni comprensión.
 Recomendación: la equilibrada. Sin datos de personas, la Era 2 y la Era 3 son apuestas de diseño razonables, pero no validadas.
 
 ## Registro de CI
-- Run #27 (`032ae83`): pendiente al momento de escribir; ver el enlace en §1.1.
+- Run #27 (`032ae83`): cancelado por un push posterior (concurrencia).
+- Run #28 (`6b99849`): Era 1, Era 2 (con `era2-evolucion`), Era 4 y Audio en verde; **Era 3 falló**. `era3-bot.js` se colgó hasta el límite de 30 min: el CI le pasa las rutas de captura como primer argumento y la versión nueva leía ahí los segundos (`T = NaN`, espera infinita). Se corrigió en el test, que ahora acepta ambas formas; corrido en local con los mismos argumentos que el CI: OK en 4 min.
+- Run siguiente: ver https://github.com/Fondal-Studios/Fondal-age-spore/pull/2 (checks).
