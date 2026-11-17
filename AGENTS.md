@@ -49,3 +49,6 @@ Códice de diseño (Claude Doc): https://claude.ai/artifact/NNpLeumePBsvZRQsqb71
 7. Traspasar rasgos de la Era 1 a la Era 2 (hoy solo viaja la clase por el hash de la URL) y de la Era 2 a la 3.
 8. Sonido y música; Eras 4 a 6; auditoría de assets de La Horda.
 Las cifras científicas (productividad por bioma, tamaños de banda, etc.) son aproximaciones de manual de fuentes secundarias: verificar en fuentes primarias antes de afirmarlas dentro del juego.
+
+## Ciclo 3 (estabilización)
+Informe completo en `docs/CICLO3.md`; plan Era 3 en `docs/ERA3-PLAN.md`; CI en `docs/CI.md`; escucha humana en `docs/ESCUCHA.md`; lanzamiento/monetización en `docs/MONETIZACION.md`. Reglas nuevas: el registro de causas (`CLOG`) y cualquier estado que dependa de la selección NO va en `G` (rompe el hash); la Era 2 emite `Bus.emit('cause', animal, texto, tipo)`; el audio NO está aprobado hasta una escucha humana.

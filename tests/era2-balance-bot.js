@@ -6,6 +6,7 @@ window.runBot2 = function (o) {
   const bs = (s => { let a = 0; for (let i = 0; i < s.length; i++) a = (Math.imul(a, 31) + s.charCodeAt(i)) >>> 0; return a || 1; })('bot' + o.seed);
   let br = bs; const BR = () => { br = (br + 0x6D2B79F5) >>> 0; let t = br; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const SPEC2CLS = { ter_cazador: 'ter', ter_gigante: 'ter', ter_ingeniero: 'ter', ins_colmena: 'ins', ins_enjambre: 'ins', ins_parasito: 'ins', acu_abisal: 'acu', acu_arrecife: 'acu', acu_anfibio: 'acu', ave_rapaz: 'ave', ave_carronera: 'ave', ave_migratoria: 'ave' };
+  const dc = {}; window.__dcCur = dc; if (!window.__dcHook) { window.__dcHook = 1; E.Bus.on('kill', (b, src) => { const d = window.__dcCur; if (!d || !b.sp || b.sp.team !== 'player' || b.sp.domestic) return; const k = src ? (src.sp.team === 'rival' ? 'rival' : src.sp.team === 'player' ? 'x' : 'depredador:' + src.sp.key) : (b.lc || (b.hunger <= 0 ? 'hambre' : 'otro')); d[k] = (d[k] || 0) + 1; }); }
   const col = E.colonized(); for (const k in col) delete col[k];
   E.cls = SPEC2CLS[o.spec]; E.specKey = o.spec; E.diffI = o.diff; E.stance = 'forage';
   E.newGame('pradera', null, o.seed); E.setStarted(true);
@@ -52,7 +53,7 @@ window.runBot2 = function (o) {
     for (const m of sample) for (const b of G.A) { if (b.dead || b.sp.team === 'player' || seen.has(b.id) || (b.sp.team === 'wild' && b.sp.diet === 'herb')) continue; if (Math.hypot(b.x - m.x, b.y - m.y) < 130) { seen.add(b.id); foes.push(b); } }
     const avgHp = mine.reduce((s, a) => s + a.hp / a.mhp, 0) / mine.length, avgHu = mine.reduce((s, a) => s + a.hunger, 0) / mine.length;
     const nearPl = c => { let v = 0; for (const p of G.plants) if (p.v > .5 && Math.hypot(p.x - c.x, p.y - c.y) < 100 && (G.me.hab === 'water' ? p.w : !p.w)) v++; return v; };
-    const ENERGY = { rug: 1, exc: 1, mig: 1 }; const can = id => abOn.has(id) && !(G.ab[id] > 0) && !(ENERGY[id] && avgHu < 40); // v2: no gasta energía si la manada ya tiene hambre
+    const avgEn = mine.reduce((s, a) => s + (a.en == null ? 70 : a.en), 0) / mine.length; const can = id => abOn.has(id) && !(G.ab[id] > 0) && avgEn > 35; // v3 (Calidad 2.0): las habilidades cuestan energía real; no se usan si la manada está cansada
     if (foes.length) {
       const boss = foes.some(f => f.sp.boss), pow = foes.reduce((s, f) => s + (f.sp.boss ? 8 : 1) * (f.sp.atk || 1) / 6, 0);
       if (can('rug') && (foes.length >= 2 || boss || avgHp < .7)) E.useAbility('rug');
@@ -68,5 +69,5 @@ window.runBot2 = function (o) {
   }
   const G = E.G, st = E.stats();
   const end = G.over ? (G.phase === 2 && st.pop > 0 ? 'win' : 'lose') : 'timeout';
-  return Object.assign({ seed: o.seed, diff: o.diff, spec: o.spec, bot: o.bot, end, t: Math.round(G.t), phase: G.phase, pop: st.pop, evos: G.evos, nests: st.nests, ncol: Object.keys(E.colonized()).length, avgPop: Math.round(M.popSum / Math.max(1, M.popN)), dc: G.dc || {}, kills: G.kills, ab: [...abOn].join('') }, M);
+  return Object.assign({ seed: o.seed, diff: o.diff, spec: o.spec, bot: o.bot, end, t: Math.round(G.t), phase: G.phase, pop: st.pop, evos: G.evos, nests: st.nests, ncol: Object.keys(E.colonized()).length, avgPop: Math.round(M.popSum / Math.max(1, M.popN)), dc, kills: G.kills, ab: [...abOn].join('') }, M);
 };
