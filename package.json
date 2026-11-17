@@ -7,8 +7,8 @@
     "test": "node tests/determinismo.js && node tests/acciones.js && node tests/sonido.js && node tests/online.js && cd server && node test.js",
     "test:era2": "NODE_PATH=$(npm root -g) node tests/era2-guardado.js && NODE_PATH=$(npm root -g) node tests/era2-calidad-sim.js && NODE_PATH=$(npm root -g) node tests/era2-ordenes.js && NODE_PATH=$(npm root -g) node tests/era2-alarma.js 48",
     "test:era2:balance": "NODE_PATH=$(npm root -g) node tests/era2-perfiles.js balance --n 2 --diffs 0,1,2 --profiles all --maxT 700",
-    "test:era3": "NODE_PATH=$(npm root -g) node tests/era3-guardado.js && NODE_PATH=$(npm root -g) node tests/era3-ciclo.js",
-    "test:era3:balance": "NODE_PATH=$(npm root -g) node tests/era3-ciclo-run.js 0,1,2 todos 32 2400 ciclo4",
+    "test:era3": "NODE_PATH=$(npm root -g) node tests/era3-guardado.js && NODE_PATH=$(npm root -g) node tests/era3-ciclo.js && NODE_PATH=$(npm root -g) node tests/era3-civs.js && NODE_PATH=$(npm root -g) node tests/era3-ui.js && NODE_PATH=$(npm root -g) node tests/era3-arte.js",
+    "test:era3:balance": "NODE_PATH=$(npm root -g) node tests/era3-civs-run.js 0,1,2 todos todas 12 3000 final 4",
     "test:era2:biomas": "NODE_PATH=$(npm root -g) node tests/era2-biomas.js biomas"
   },
   "devDependencies": {
