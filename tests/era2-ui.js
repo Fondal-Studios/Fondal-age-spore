@@ -10,22 +10,23 @@ const errs = [];
 const hook = p => { p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/fonts|ERR_(INTERNET|NAME|FAILED|CONNECTION)|Failed to load resource/i.test(m.text())) errs.push(m.text()); }); };
 const ok = (c, msg) => { assert.ok(c, msg); console.log('  ok -', msg); };
 
-async function open(browser, opt, tutDone) {
+async function open(browser, opt, tutDone, al) {
   const ctx = await browser.newContext(opt); if (tutDone) await ctx.addInitScript(() => { try { localStorage.setItem('evo_tut2', 'done'); } catch (_) {} });
   const p = await ctx.newPage(); hook(p); await p.goto(URL); await wait(250); await p.click('#startBtn'); await wait(600);
+  if (al !== 'al') await p.addStyleTag({ content: '#alerts,#alerts>*{pointer-events:none!important}' });   // las alertas (Ciclo 4) pueden tapar puntos del mapa en las pruebas de selección/órdenes viejas; se prueban aparte
   await p.evaluate(() => { window.__e2.G.paused = true; });
   return { ctx, p };
 }
 /* Posición en pantalla de un animal propio (visible dentro del mapa y sin otro animal encima). */
 const pickMine = (p, n) => p.evaluate(n => {
-  const E = window.__e2, U = E.ui, r = document.getElementById('cv').getBoundingClientRect(), out = [];
-  for (const a of E.G.A) { if (a.dead || a.sp.team !== 'player') continue; const s = U.scr(a.x, a.y); if (s.x > r.left + 20 && s.x < r.right - 20 && s.y > r.top + 20 && s.y < r.bottom - 70) out.push({ id: a.id, x: s.x, y: s.y }); }
+  const E = window.__e2, U = E.ui, r = document.getElementById('cv').getBoundingClientRect(), out = [], al = [...document.querySelectorAll('#alerts button')].map(b => b.getBoundingClientRect()), under = (x, y) => al.some(q => x > q.left - 12 && x < q.right + 12 && y > q.top - 12 && y < q.bottom + 12);
+  for (const a of E.G.A) { if (a.dead || a.sp.team !== 'player') continue; const s = U.scr(a.x, a.y); if (s.x > r.left + 20 && s.x < r.right - 20 && s.y > r.top + 20 && s.y < r.bottom - 70 && !under(s.x, s.y)) out.push({ id: a.id, x: s.x, y: s.y }); }
   return out.slice(0, n || 99);
 }, n);
 const emptySpot = p => p.evaluate(() => {
   const E = window.__e2, U = E.ui, r = document.getElementById('cv').getBoundingClientRect();
   for (let k = 0; k < 400; k++) { const x = r.left + 40 + (k * 97) % (r.width - 80), y = r.top + 40 + (k * 61) % (r.height - 130); const w = { x: (x - r.left - U.scr(0, 0).x + r.left) / 1, y: 0 };
-    const sx = x, sy = y; let free = true; for (const a of E.G.A) { const s = U.scr(a.x, a.y); if (Math.hypot(s.x - sx, s.y - sy) < 45) { free = false; break; } } if (free) return { x: sx, y: sy }; }
+    const sx = x, sy = y; let free = !([...document.querySelectorAll('#alerts button')].some(b => { const q = b.getBoundingClientRect(); return x > q.left - 12 && x < q.right + 12 && y > q.top - 12 && y < q.bottom + 12; })); for (const a of E.G.A) { const s = U.scr(a.x, a.y); if (Math.hypot(s.x - sx, s.y - sy) < 45) { free = false; break; } } if (free) return { x: sx, y: sy }; }
   return null;
 });
 const hudNow = p => p.evaluate(() => window.__e2.hud());
@@ -115,7 +116,8 @@ async function desktop(browser) {
 
 async function metrics(p, tag) {
   const m = await p.evaluate(() => {
-    const bad = [], small = [], vis = e => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && !e.closest('.ov:not(.show)'); };
+    const clo = e => { for (let n = e; n; n = n.parentElement) if (n.tagName === 'DETAILS' && !n.open && !(e.tagName === 'SUMMARY' && e.parentElement === n)) return true; return false; }; 
+    const bad = [], small = [], vis = e => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && !e.closest('.ov:not(.show)') && !clo(e); };
     for (const b of document.querySelectorAll('button')) { if (!vis(b)) continue; const r = b.getBoundingClientRect(); if (r.height < 43.5 || r.width < 43.5) bad.push((b.id || b.textContent.slice(0, 20)) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height)); }
     const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     while (w.nextNode()) { const n = w.currentNode; if (!n.textContent.trim()) continue; const e = n.parentElement; if (!e || e.tagName === 'SCRIPT' || e.tagName === 'STYLE' || !vis(e)) continue; const fs = parseFloat(getComputedStyle(e).fontSize); if (fs < 11.99) small.push(e.tagName + '.' + e.className + ' ' + fs + ' "' + n.textContent.trim().slice(0, 20) + '"'); }
@@ -178,7 +180,7 @@ async function touch(browser) {
 /* Etapa 1.4: a 360, 390 y 430 px nada solapado (rectángulos intersectados), objetivos táctiles >= 44 px y sin scroll horizontal.
    Se miden botones, resúmenes, chips del HUD, pista, tutorial y el botón de sonido; con evento activo, Tradición, selección y panel de sonido abierto. */
 const overlapsIn = p => p.evaluate(() => {
-  const vis = e => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && !e.closest('.ov:not(.show)') && !e.closest('[hidden]'); };
+  const clo = e => { for (let n = e; n; n = n.parentElement) if (n.tagName === 'DETAILS' && !n.open && !(e.tagName === 'SUMMARY' && e.parentElement === n)) return true; return false; }; const vis = e => { const r = e.getBoundingClientRect(), s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none' && !e.closest('.ov:not(.show)') && !e.closest('[hidden]') && !clo(e); };
   const els = [...document.querySelectorAll('button, summary, .chip, #hint, #tut, #audioBtn, #audioPanel, #mapTools')].filter(vis);
   const out = [];
   for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
@@ -210,28 +212,153 @@ async function anchos(browser) {
 async function tutorial(browser) {
   console.log('Tutorial interactivo');
   const { ctx, p } = await open(browser, { viewport: { width: 1280, height: 800 } }, false);
-  const st = () => p.evaluate(() => ({ i: window.__e2.ui.tut.i, shown: document.getElementById('tut').classList.contains('show'), t: document.getElementById('tutT').textContent, ls: localStorage.getItem('evo_tut2') }));
-  let s = await st(); ok(s.shown && s.i === 0, 'arranca solo, sin bloquear (paso 1: ' + s.t + ')'); ok(await p.evaluate(() => !document.querySelector('.ov.show')), 'no hay diálogo modal por encima');
+  const st = () => p.evaluate(() => ({ i: window.__e2.ui.tut.i, id: (window.__e2.ui.TUT[window.__e2.ui.tut.i] || {}).id, n: window.__e2.ui.TUT.length, shown: document.getElementById('tut').classList.contains('show'), t: document.getElementById('tutT').textContent, ls: localStorage.getItem('evo_tut2') }));
+  let s = await st(); ok(s.shown && s.i === 0 && s.id === 'what', 'arranca solo, sin bloquear (paso 1: ' + s.t + ')'); ok(/ESPECIE/.test(await p.evaluate(() => document.getElementById('tutB').textContent)), 'el primer paso explica que controlás una especie, no un animal');
+  ok(await p.evaluate(() => !document.querySelector('.ov.show')), 'no hay diálogo modal por encima');
   await p.evaluate(() => { window.__e2.G.paused = false; });
-  const mine = await pickMine(p); await p.mouse.click(mine[0].x, mine[0].y); await wait(1300); s = await st(); ok(s.i === 1, 'paso 1 → 2 al seleccionar un animal');
+  await p.click('#tutSkipStep'); s = await st(); ok(s.id === 'select', '«Siguiente» pasa del paso informativo al siguiente');
+  const mine = await pickMine(p); await p.mouse.click(mine[0].x, mine[0].y); await wait(1300); s = await st(); ok(s.id === 'order', 'seleccionar un animal completa el paso');
   if (SHOTS) await p.screenshot({ path: SHOTS + '/ui-d-tutorial.png' });
-  const e1 = await emptySpot(p); await p.mouse.click(e1.x, e1.y, { button: 'right' }); await wait(1300); s = await st(); ok(s.i === 2, 'paso 2 → 3 al ordenar mover');
-  await p.evaluate(() => { const E = window.__e2, a = E.G.A.find(q => q.sp.team === 'player'); E.Bus.emit('eat', a, null, 'plant'); }); await wait(1300); s = await st(); ok(s.i === 3, 'paso 3 → 4 al ver comer (evento eat)');
-  await p.evaluate(() => { window.__e2.G.inst = 60; window.__e2.G.ab = {}; }); await p.keyboard.press('2'); await wait(1300); s = await st(); ok(s.i === 4, 'paso 4 → 5 al usar una habilidad (tecla 2)');
-  await p.click('#bNest'); const sp = await emptySpot(p); await p.mouse.click(sp.x, sp.y); await wait(1500); s = await st(); ok(s.i === 5, 'paso 5 → 6 al empezar un nido');
+  const e1 = await emptySpot(p); await p.mouse.click(e1.x, e1.y, { button: 'right' }); await wait(1300); s = await st(); ok(s.id === 'prio', 'ordenar mover completa el paso');
+  ok(await p.evaluate(() => document.getElementById('prio').open), 'el paso de prioridades abre el panel');
+  await p.click('#prioRows [data-k="comida"] [data-l="2"]'); await wait(1300); s = await st(); ok(s.id === 'alert', 'cambiar una prioridad completa el paso');
+  await p.click('#tutSkipStep'); s = await st(); ok(s.id === 'eat', 'el paso de alertas se pasa con «Siguiente»');
+  await p.evaluate(() => { const E = window.__e2, a = E.G.A.find(q => q.sp.team === 'player'); E.Bus.emit('eat', a, null, 'plant'); }); await wait(1300); s = await st(); ok(s.id === 'abil', 'ver comer (evento eat) completa el paso');
+  await p.evaluate(() => { window.__e2.G.inst = 60; window.__e2.G.ab = {}; }); await p.keyboard.press('2'); await wait(1300); s = await st(); ok(s.id === 'nest', 'usar una habilidad (tecla 2) completa el paso');
+  await p.click('#bNest'); const sp = await emptySpot(p); await p.mouse.click(sp.x, sp.y); await wait(1500); s = await st(); ok(s.id === 'next' && s.i === s.n - 1, 'empezar un nido lleva al último paso (progreso a la siguiente era)');
+  ok(/Era 3/.test(await p.evaluate(() => document.getElementById('tutB').textContent)), 'el último paso explica cómo se pasa a la Era 3');
   ok(s.ls === 'done', 'queda recordado en localStorage (evo_tut2=done)');
   await p.click('#tutSkip'); s = await st(); ok(!s.shown, 'se puede cerrar al final');
   await p.reload(); await wait(250); await p.click('#startBtn'); await wait(500); s = await st(); ok(!s.shown, 'tras recargar no vuelve a aparecer'); await ctx.close();
   const b = await open(browser, { viewport: { width: 390, height: 800 }, hasTouch: true, isMobile: true }, false);
   ok(await b.p.evaluate(() => document.getElementById('tut').classList.contains('show')), 'el tutorial también aparece en el móvil');
-  await b.p.tap('#tutSkipStep'); await wait(100); ok(await b.p.evaluate(() => window.__e2.ui.tut.i === 1), '«Saltar paso» funciona con toque');
+  await b.p.tap('#tutSkipStep'); await wait(100); ok(await b.p.evaluate(() => window.__e2.ui.tut.i === 1), '«Siguiente» funciona con toque');
   if (SHOTS) await b.p.screenshot({ path: SHOTS + '/ui-m-tutorial.png' });
   await b.p.tap('#tutSkip'); ok(await b.p.evaluate(() => localStorage.getItem('evo_tut2') === 'skip' && !document.getElementById('tut').classList.contains('show')), '«Saltar tutorial» lo cierra y lo recuerda (skip)'); await b.ctx.close();
 }
 
+/* ---- Ciclo 4: interfaz estratégica ---- */
+// ST.t = 0 fuerza un muestreo nuevo: la capa estratégica guarda el muestreo 0,5 s de reloj real y, con la CPU cargada, devolvía el anterior al cambio.
+const tickS = p => p.evaluate(() => { const S = window.__e2.ui.strat; S.ST.t = 0; S.tick(); });
+async function estrategia(browser) {
+  console.log('Estrategia: prioridades, resumen, alertas, grupos, habilidades');
+  const { ctx, p } = await open(browser, { viewport: { width: 1280, height: 800 } }, true, 'al');
+  // 1. prioridades
+  let pr = await p.evaluate(() => window.__e2.G.x2.prio); ok(JSON.stringify(pr) === JSON.stringify({ comida: 1, reproduccion: 1, expansion: 1, defensa: 1, exploracion: 1 }), 'por defecto las 5 prioridades están en 1 (normal)');
+  const bad = await p.evaluate(() => { const U = window.__e2.ui; return [U.setPrio('nada', 1), U.setPrio('comida', 3), U.setPrio('comida', 'x'), U.setPrio('comida', 1.5)]; }); ok(bad.every(v => v === false) && (await p.evaluate(() => window.__e2.G.x2.prio.comida)) === 1, 'setPrio rechaza claves y niveles inválidos');
+  const snap0 = await p.evaluate(() => { const E = window.__e2; const h0 = E.stateHash(); E.ui.setPrio('defensa', 2); E.ui.setPrio('defensa', 1); return h0 === E.stateHash(); }); ok(snap0, 'setPrio no toca nada más que G.x2.prio (el hash vuelve al original)');
+  await p.click('#prio summary'); ok(await p.evaluate(() => document.getElementById('prio').open), 'el panel de prioridades se despliega');
+  await p.click('#prioRows [data-k="defensa"] [data-l="2"]'); await p.click('#prioRows [data-k="expansion"] [data-l="0"]');
+  pr = await p.evaluate(() => window.__e2.G.x2.prio); ok(pr.defensa === 2 && pr.expansion === 0 && pr.comida === 1, 'los botones escriben G.x2.prio (' + JSON.stringify(pr) + ')');
+  ok(await p.evaluate(() => /Expansión baja/.test(document.getElementById('prioSum').textContent) && /Defensa alta/.test(document.getElementById('prioSum').textContent)), 'el resumen plegado muestra lo que no está en normal');
+  const det = await p.evaluate(() => document.getElementById('prioDet').textContent); ok(/Baja \(elegida\)/.test(det) && /Normal/.test(det) && /Alta/.test(det), 'el detalle muestra costo/beneficio de los 3 niveles');
+  const txtOk = await p.evaluate(() => { const U = window.__e2.ui; return U.PRIO_KEYS.every(k => [0, 1, 2].every(l => typeof U.PRIO_TXT[k][l] === 'string' && U.PRIO_TXT[k][l].length > 10)); }); ok(txtOk, 'PRIO_TXT tiene texto para 5 claves x 3 niveles');
+  await p.keyboard.press('z'); ok(await p.evaluate(() => window.__e2.G.x2.prio.comida) === 2, 'tecla Z sube Comida a alta'); await p.keyboard.press('Shift+z'); ok(await p.evaluate(() => window.__e2.G.x2.prio.comida) === 1, 'Mayús+Z la baja');
+  await p.keyboard.press('p'); ok(await p.evaluate(() => !document.getElementById('prio').open), 'P pliega el panel');
+  await p.keyboard.press('p');
+  // guardar / cargar
+  await p.evaluate(() => { window.__e2.ui.setPrio('exploracion', 2); window.__e2.saveGame(true); });
+  const saved = await p.evaluate(() => { const d = window.__e2.readSave(); return d && d.x2 && d.x2.prio; }); ok(saved && saved.defensa === 2 && saved.exploracion === 2 && saved.expansion === 0, 'las prioridades están en el guardado');
+  await p.evaluate(() => { const E = window.__e2; E.newGame('pradera'); }); ok(await p.evaluate(() => window.__e2.G.x2.prio.defensa) === 1, 'una partida nueva vuelve a 1');
+  const rest = await p.evaluate(() => { const E = window.__e2; const ok1 = E.restoreGame(E.readSave()); return { ok1, pr: E.G.x2.prio }; }); ok(rest.ok1 && rest.pr.defensa === 2 && rest.pr.exploracion === 2 && rest.pr.expansion === 0, 'al cargar sobreviven las prioridades');
+  const old = await p.evaluate(() => { const E = window.__e2, d = JSON.parse(JSON.stringify(E.readSave())); delete d.x2.prio; const ok1 = E.restoreGame(d); return { ok1, pr: E.G.x2.prio }; }); ok(old.ok1 && Object.values(old.pr).length === 5 && Object.values(old.pr).every(v => v === 1), 'una partida vieja sin prioridades carga con todo en 1');
+  // 2. resumen de población
+  await p.evaluate(() => { const E = window.__e2, G = E.G; G.paused = true; const m = G.A.filter(a => a.sp.team === 'player'); m.forEach(a => { a.hunger = 80; a.hp = a.mhp; a.inj = 0; }); m[0].hunger = 10; m[1].hunger = 20; m[2].hp = m[2].mhp * .3; });
+  await tickS(p); const pop = await p.evaluate(() => { const E = window.__e2, P = E.ui.strat.pop, m = E.G.A.filter(a => a.sp.team === 'player' && !a.dead); return { P: { n: P.n, hungry: P.hungry, hurt: P.hurt, pct: P.hungryPct, en: P.en, terr: P.terr }, real: { n: m.length, hungry: m.filter(a => a.hunger < 35).length, hurt: m.filter(a => a.hp < a.mhp * .7 || (a.inj || 0) > .3).length }, dom: ['pHun', 'pEn', 'pHurt', 'pTerr', 'pThr'].map(i => document.getElementById(i).textContent), enAvg: Math.round(m.reduce((q, a) => q + (a.en == null ? 70 : a.en), 0) / m.length) }; });
+  ok(pop.P.n === pop.real.n && pop.P.hungry === pop.real.hungry && pop.P.hurt === pop.real.hurt && pop.P.en === pop.enAvg, 'el resumen coincide con el estado (' + JSON.stringify(pop.P) + ')');
+  ok(pop.dom[0] === pop.P.pct + ' %' && pop.dom[2] === String(pop.P.hurt) && pop.dom[3] === pop.P.terr + ' %' && pop.P.terr > 0, 'la barra muestra hambrientos, heridos y territorio (' + pop.dom.join(' | ') + ')');
+  // 3. alertas
+  await p.evaluate(() => { const E = window.__e2, G = E.G; G.A.filter(a => a.sp.team === 'player').forEach(a => { a.hunger = 80; a.hp = a.mhp; }); for (const w of G.A.filter(a => a.sp.team !== 'player' && a.sp.diet !== 'herb')) { w.dead = true; } G.A = G.A.filter(a => !a.dead); G.ev = null; E.G.x2.scar = 0; E.ui.strat.ST.cool = {}; E.ui.strat.ST.al.clear(); });   // sin enfriamientos de alertas anteriores de la partida (si hubo un «Lobos cerca» antes, su enfriamiento bloqueaba el de esta prueba)
+  await tickS(p); await tickS(p); ok(await p.evaluate(() => window.__e2.ui.strat.alerts().length) === 0, 'sin amenazas no hay alertas');
+  const wid = await p.evaluate(() => { const E = window.__e2, G = E.G, m = G.A.filter(a => a.sp.team === 'player'), w = E.spawn(G.sp.lobo, m[0].x + 40, m[0].y, false); G.A.filter(a => a.sp.team === 'player').slice(0, 3).forEach(a => { a.x = m[0].x + (a.id % 3) * 8; a.y = m[0].y; }); E.ui.setSel([]); E.step(1 / 60); return w.id; });   // un paso: la rejilla espacial (FG) incluye al lobo recién creado sin depender de que corra un cuadro
+  await tickS(p); let al = await p.evaluate(() => window.__e2.ui.strat.alerts().map(a => ({ k: a.key, n: a.ids.length }))); ok(al.some(a => /^pred:/.test(a.k) && a.n >= 2), 'un depredador cerca de un grupo levanta una alerta (' + JSON.stringify(al) + ')');
+  await p.evaluate(() => window.__e2.hud()); ok(await p.evaluate(() => document.querySelectorAll('#alerts .al').length) === 1 && await p.evaluate(() => /cerca de/.test(document.querySelector('#alerts .al').textContent)), 'la alerta aparece en el mapa con su texto');
+  if (SHOTS) await p.screenshot({ path: SHOTS + '/ui-d-alerta.png' });
+  await p.click('#alerts .al'); const go = await p.evaluate(() => { const U = window.__e2.ui, a = U.strat.alerts()[0]; return { sel: U.selIds.length, same: a.ids.every(i => U.selIds.indexOf(i) >= 0), ping: !!U.strat.ST.ping }; }); ok(go.sel >= 2 && go.same && go.ping, 'tocar la alerta selecciona el grupo afectado y marca el lugar (' + go.sel + ' animales)');
+  await p.evaluate(id => { const G = window.__e2.G, w = G.A.find(a => a.id === id); w.dead = true; G.A = G.A.filter(a => !a.dead); }, wid); await tickS(p);
+  ok(await p.evaluate(() => window.__e2.ui.strat.alerts().length) === 1, 'histéresis: la alerta no desaparece en la primera muestra sin amenaza'); await tickS(p);
+  ok(await p.evaluate(() => window.__e2.ui.strat.alerts().length) === 0, 'la alerta desaparece cuando se resuelve');
+  const cool = await p.evaluate(() => { const E = window.__e2, G = E.G, m = G.A.filter(a => a.sp.team === 'player'); E.spawn(G.sp.lobo, m[0].x + 40, m[0].y, false); E.ui.strat.tick(); return E.ui.strat.alerts().length; }); ok(cool === 0, 'enfriamiento: no vuelve a sonar durante 10 s de juego');
+  await p.evaluate(() => { window.__e2.G.t += 11; window.__e2.ui.strat.tick(); }); ok(await p.evaluate(() => window.__e2.ui.strat.alerts().some(a => /^pred:/.test(a.key))), 'pasado el enfriamiento vuelve a sonar si la amenaza sigue');
+  // varias alertas: máx. 3 visibles + colapsadas
+  await p.evaluate(() => { const E = window.__e2, G = E.G; G.A.filter(a => a.sp.team === 'player').slice(0, 4).forEach(a => { a.hunger = 5; }); G.ev = { k: 'sequia', t: 30 }; G.x2.scar = 2; G.x2.av = .1; G.t += 11; E.ui.strat.tick(); E.hud(); });
+  const many = await p.evaluate(() => ({ vis: document.querySelectorAll('#alerts .al').length, more: !!document.querySelector('#alerts .alMore'), tot: window.__e2.ui.strat.alerts().length, first: window.__e2.ui.strat.alerts()[0].key }));
+  ok(many.tot >= 4 && many.vis === 3 && many.more, 'con ' + many.tot + ' alertas se ven 3 y el resto queda colapsado');
+  await p.click('#alerts .alMore'); ok(await p.evaluate(t => document.querySelectorAll('#alerts .al').length === t, many.tot), '«+N más» despliega el resto');
+  await p.evaluate(() => { window.__e2.G.x2.scar = 0; window.__e2.G.ev = null; window.__e2.G.A.filter(a => a.sp.team === 'player').forEach(a => { a.hunger = 80; }); });
+  // escasez y hambre derivan de G
+  const sc = await p.evaluate(() => { const E = window.__e2, G = E.G; G.A = G.A.filter(a => a.sp.team === 'player' || !(a.sp.diet !== 'herb')); G.t += 20; G.x2.scar = 1; E.ui.strat.tick(); const a = E.ui.strat.alerts().find(q => q.key === 'scar'); G.x2.scar = 0; E.ui.strat.tick(); E.ui.strat.tick(); return { raised: !!a, gone: !E.ui.strat.alerts().some(q => q.key === 'scar') }; });
+  ok(sc.raised && sc.gone, 'la escasez de plantas se levanta y se resuelve');
+  // 4. grupos de control
+  await p.evaluate(() => { document.getElementById('grp').open = true; });
+  await p.evaluate(() => { const E = window.__e2; E.G.A.filter(a => a.sp.team === 'player').forEach(a => { a.hunger = 80; }); E.ui.strat.tick(); E.ui.setSel([]); });
+  const mine = await pickMine(p); await p.mouse.click(mine[0].x, mine[0].y); await p.keyboard.down('Shift'); await p.mouse.click(mine[1].x, mine[1].y); await p.keyboard.up('Shift');
+  const ids2 = await p.evaluate(() => window.__e2.ui.selIds); ok(ids2.length === 2, 'selección de 2 para guardar como grupo');
+  await p.keyboard.press('Control+Shift+Digit1'); await p.evaluate(() => window.__e2.ui.setSel([])); await p.keyboard.press('Shift+Digit1');
+  ok(JSON.stringify(await p.evaluate(() => window.__e2.ui.selIds.slice().sort())) === JSON.stringify(ids2.slice().sort()), 'Ctrl+Mayús+1 guarda y Mayús+1 recupera el grupo');
+  await p.evaluate(() => window.__e2.hud()); ok(await p.evaluate(() => document.querySelector('#cgSlots [data-n="1"]').classList.contains('on') && /2/.test(document.querySelector('#cgSlots [data-n="1"]').textContent)), 'el botón del grupo 1 indica 2 animales y que está elegido');
+  ok(await p.evaluate(() => window.__e2.ui.strat.ST.cgAct) === 1, 'indicador de grupo activo (también dibujado en el mapa)'); if (SHOTS) await p.screenshot({ path: SHOTS + '/ui-d-grupos.png' });
+  await p.evaluate(() => { window.__e2.G.paused = false; }); await p.evaluate(() => { const E = window.__e2; E.G.paused = true; const a = E.G.A.find(q => q.id === E.ui.selIds[0]); a.dead = true; E.G.A = E.G.A.filter(q => !q.dead); E.ui.setSel([]); });
+  await p.keyboard.press('Shift+Digit1'); ok((await p.evaluate(() => window.__e2.ui.selIds.length)) === 1, 'el grupo descarta a los animales muertos');
+  await p.evaluate(() => { const E = window.__e2, m = E.G.A.filter(a => a.sp.team === 'player'); m[0].hunger = 10; m[1].hunger = 12; m[2].hp = m[2].mhp * .2; E.ui.setSel([]); E.ui.strat.tick(); });
+  await p.keyboard.press('h'); const hs = await p.evaluate(() => { const U = window.__e2.ui; return { n: U.selIds.length, ok: U.selIds.every(i => window.__e2.G.A.find(a => a.id === i).hunger < 35) }; }); ok(hs.n >= 2 && hs.ok, 'H selecciona a los hambrientos (' + hs.n + ')');
+  await p.click('#qHurt'); ok(await p.evaluate(() => { const U = window.__e2.ui; return U.selIds.length >= 1 && U.selIds.every(i => { const a = window.__e2.G.A.find(q => q.id === i); return a.hp < a.mhp * .7 || (a.inj || 0) > .3; }); }), '«Heridos» selecciona a los heridos');
+  // orden de grupo con destino visible
+  await p.evaluate(() => { const E = window.__e2; E.ui.setSel(E.G.A.filter(a => a.sp.team === 'player').slice(0, 3).map(a => a.id)); E.hud(); });
+  await p.click('#oFood'); const og = await p.evaluate(() => { const U = window.__e2.ui; return { mv: U.mySel().filter(a => a.ord && a.ord.k === 'move').length, marks: U.UIs.marks.length }; }); ok(og.mv >= 1 && og.marks === 1, 'la orden de grupo «A comer/cazar» deja destino visible (' + og.mv + ' animales)');
+  await p.click('#oNest'); ok(await p.evaluate(() => window.__e2.ui.UIs.marks.length) >= 0, '«Al nido» sin nido avisa y no rompe');
+  await p.evaluate(() => { const E = window.__e2; E.G.N.push({ x: 300, y: 300, prog: 1, work: 0, done: true }); E.hud(); }); await p.click('#oNest'); ok(await p.evaluate(() => window.__e2.ui.mySel().every(a => a.ord && a.ord.k === 'move' && a.ord.x === 300)), '«Al nido» manda al grupo al nido terminado');
+  // 5. habilidades
+  await p.evaluate(() => { const E = window.__e2; E.G.N.pop(); E.G.ab = {}; E.G.paused = false; });
+  await p.evaluate(() => { const E = window.__e2; E.Bus.emit('ability', { id: 'cam', nivel: 2, costo: 12, duracion: 14, afectados: 6, resultado: 'sin ser objetivo' }); E.hud(); });
+  const pill = await p.evaluate(() => { const e = document.getElementById('abRes'); return { shown: e.classList.contains('show'), txt: e.textContent }; }); ok(pill.shown && /Camuflaje/.test(pill.txt) && /sin ser objetivo/.test(pill.txt) && /12/.test(pill.txt), 'rótulo con el resultado de la habilidad: ' + pill.txt);
+  await p.evaluate(() => { window.__e2.Bus.emit('abilityEnd', { id: 'cam' }); }); ok(await p.evaluate(() => /terminó/.test(document.getElementById('abRes').textContent)), 'abilityEnd muestra que terminó');
+  await p.evaluate(() => { const E = window.__e2; E.G.inst = 80; E.useAbility('cam'); E.hud(); });
+  const ab = await p.evaluate(() => { const b = document.querySelector('#bar button.ab:nth-of-type(2)'); const all = [...document.querySelectorAll('#bar button.ab')]; const c = all[1]; return { act: c.classList.contains('act'), p: getComputedStyle(c).getPropertyValue('--p'), txt: c.textContent }; });
+  ok(ab.act && parseFloat(ab.p) > 0, 'el botón de la habilidad activa muestra barra de duración (' + ab.p + ') y texto «' + ab.txt + '»');
+  const degr = await p.evaluate(() => { const E = window.__e2; try { E.Bus.emit('ability', 'rug', [1, 2], 1, { en: 6, t: 0 }); E.Bus.emit('ability', 'nada'); E.Bus.emit('abilityEnd', 'zzz'); return /Rugido/.test(document.getElementById('abRes').textContent); } catch (e) { return false; } }); ok(degr, 'degrada con gracia: formato viejo posicional y eventos sin campos');
+  if (SHOTS) await p.screenshot({ path: SHOTS + '/ui-d-habilidad.png' });
+  // 6. costo de rendimiento (A/B con 600+ animales)
+  // Se mide hasta 3 veces y se toma la mejor: con la CPU compartida (CI) una sola medición da falsos positivos.
+  const measure = () => p.evaluate(() => {
+    const E = window.__e2, G = E.G, S = E.ui.strat; G.paused = true; if (!window.__perfPop) for (let i = 0; i < 700; i++) { const sp = i % 3 === 0 ? G.me : G.sp.conejo, q = { x: 30 + (i * 37) % 900, y: 30 + (i * 53) % 540 }; E.spawn(sp, q.x, q.y, false); }
+    window.__perfPop = true;
+    for (const a of G.A) if (a.sp === G.me && a.id % 2) a.hunger = 20;
+    const n = G.A.length, T = f => { const t0 = performance.now(); f(); return performance.now() - t0; };
+    S.sample(); const R = 400; let tS = 0; for (let k = 0; k < 60; k++) tS += T(() => S.sample()); tS /= 60;
+    S.ST.off = false; let tU = 0; for (let k = 0; k < R; k++) tU += T(() => { S.ST.t = performance.now(); E.ui.uiHud(); }); tU = tU / R;   // uiHud sin muestreo (la caché vale 0,5 s)
+    S.ST.off = true; let tU0 = 0; for (let k = 0; k < R; k++) tU0 += T(() => E.ui.uiHud()); tU0 /= R; S.ST.off = false;
+    let tR = 1e9, tR0 = 1e9; for (let round = 0; round < 6; round++) { S.ST.off = false; S.ST.t = performance.now(); let x = 0; for (let k = 0; k < 8; k++) x += T(() => E.render()); tR = Math.min(tR, x / 8); S.ST.off = true; x = 0; for (let k = 0; k < 8; k++) x += T(() => E.render()); tR0 = Math.min(tR0, x / 8); } S.ST.off = false;   // A/B intercalado, mínimo de 6 rondas (hay carga de CPU)
+    return { n, tS, tU: Math.max(0, tU - tU0), tR, tR0 };
+  });
+  const costOf = q => (q.tS * 2 + q.tU * 7.5) / 60 + Math.max(0, q.tR - q.tR0);
+  let perf = await measure(); for (let k = 0; k < 2 && costOf(perf) >= .5; k++) { const q = await measure(); if (costOf(q) < costOf(perf)) perf = q; }
+  const perFrame = costOf(perf);
+  console.log('  costo con ' + perf.n + ' animales: muestreo ' + perf.tS.toFixed(3) + ' ms (2 por s), DOM/hud ' + perf.tU.toFixed(3) + ' ms (7,5 por s), render A/B ' + perf.tR.toFixed(2) + ' vs ' + perf.tR0.toFixed(2) + ' ms -> ' + perFrame.toFixed(3) + ' ms/cuadro');
+  ok(perf.n >= 500 && perFrame < .5, 'costo amortizado de la capa estratégica < 0,5 ms/cuadro con 500+ animales (' + perFrame.toFixed(3) + ')');
+  await ctx.close();
+  // 7. sin solapes con paneles abiertos y alertas (360/390/430)
+  for (const w of [360, 390, 430]) {
+    const { ctx: c2, p: q } = await open(browser, { viewport: { width: w, height: 800 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1 }, true, 'al');
+    await q.evaluate(() => { const E = window.__e2, G = E.G, m = G.A.filter(a => a.sp.team === 'player'); m.slice(0, 3).forEach(a => { a.hunger = 5; }); E.spawn(G.sp.lobo, m[1].x + 40, m[1].y, false); G.ev = { k: 'sequia', t: 20 }; G.x2.scar = 1; G.t += 1;
+      document.getElementById('prio').open = true; document.getElementById('grp').open = true; E.ui.setSel(m.slice(0, 3).map(a => a.id)); E.ui.strat.cgSave(1); E.ui.strat.tick(); E.hud(); });
+    await wait(150); const m = await overlapsIn(q); ok(m.out.length === 0, w + ' px con prioridades, grupos y alertas: ningún control solapado (' + m.n + ' elementos)' + (m.out.length ? ' SOLAPAN: ' + m.out.join('; ') : ''));
+    ok(m.small.length === 0, w + ' px estratégico: objetivos táctiles >= 44 px' + (m.small.length ? ' FALLAN: ' + m.small.join('; ') : '')); ok(m.sw <= m.iw, w + ' px estratégico: sin scroll horizontal (' + m.sw + '/' + m.iw + ')');
+    const al = await q.evaluate(() => { const a = document.getElementById('alerts').getBoundingClientRect(), c = document.getElementById('cvWrap').getBoundingClientRect(); return { inside: a.left >= c.left - 1 && a.right <= c.right + 1 && a.top >= c.top - 1, w: a.width, cw: c.width, ab: a.bottom - c.top, ch: c.height }; });
+    ok(al.inside, w + ' px: las alertas quedan dentro del mapa (cubren ' + Math.round(al.ab) + ' de ' + Math.round(al.ch) + ' px de alto)');
+    const tgt = await q.evaluate(() => [...document.querySelectorAll('#prio button, #grp button')].filter(b => !b.closest('details:not([open])') && b.getBoundingClientRect().width > 0).filter(b => { const r = b.getBoundingClientRect(); return r.height < 43.5 || r.width < 43.5; }).map(b => b.textContent.slice(0, 10)));
+    ok(tgt.length === 0, w + ' px: botones de prioridades y grupos >= 44 px');
+    if (SHOTS && w === 390) await q.screenshot({ path: SHOTS + '/ui-m-estrategia.png', fullPage: true });
+    await q.tap('#alerts .al'); ok(await q.evaluate(() => window.__e2.ui.selIds.length > 0 && !!window.__e2.ui.strat.ST.ping), w + ' px: tocar una alerta selecciona y marca el grupo');
+    await q.tap('#cgSave'); await q.evaluate(() => { window.__e2.ui.setSel(window.__e2.G.A.filter(a => a.sp.team === 'player').slice(0, 2).map(a => a.id)); window.__e2.hud(); });
+    await q.tap('#cgSlots [data-n="2"]'); ok(await q.evaluate(() => (window.__e2.ui.strat.ST.cg[2] || []).length === 2), w + ' px: «Guardar» + número guarda un grupo con toques');
+    await c2.close();
+  }
+}
+
 (async () => {
   const browser = await chromium.launch();
-  try { await desktop(browser); await touch(browser); await tutorial(browser); await anchos(browser); } finally { await browser.close(); }
+  try { await desktop(browser); await touch(browser); await tutorial(browser); await anchos(browser); await estrategia(browser); } finally { await browser.close(); }
   console.log('errores de consola:', errs.slice(0, 5)); assert.strictEqual(errs.length, 0, '0 errores de consola');
   console.log('UI ERA 2 OK');
 })().catch(e => { console.error(e); process.exit(1); });

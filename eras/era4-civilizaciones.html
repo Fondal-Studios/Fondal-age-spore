@@ -167,6 +167,7 @@ button:focus-visible,summary:focus-visible,a.btn:focus-visible{outline:3px solid
   <div id="dlg" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="dT"><h2 id="dT"></h2><div id="dB"></div><div id="dBtns"></div></div></div>
 </div>
 
+<script src="audio-lofi.js"></script>
 <script>
 (() => {
 "use strict";
@@ -862,6 +863,47 @@ addEventListener('pagehide', () => saveGame(false));
 diffI = 0; newGame('portada'); started = false;
 refreshCont(); renderLin(); pal(); layout(); centerCam(); requestAnimationFrame(loop);
 window.__e4 = { get G() { return G; }, get cam() { return cam; }, step(dt) { const n = Math.max(1, Math.round((dt || FIX) / FIX)); for (let i = 0; i < n && G && !G.over; i++) update(FIX); }, setStarted(v) { started = !!v; }, setDiff(i) { diffI = i; DF = DIFFS[i]; }, seedRng, hashStr, snapshot, stateHash, saveGame, readSave, restoreGame, clearSave, readLineage, linBonus, newGame, update, recruit, build, research, spy, setWorker, formArmy, splitArmy, orderMove, setAmbush, retreat, resolveDlg, findPath, lanch, coef, mkArmy, nearestTerr, terrAt, compStr, garr, armyById, tot, units, wkTotal, popCap, rates, hud, render, win, lose, select(id) { selId = id; }, UN, MU, BLD, DOC, EVS, DIFFS };
+/* === AUDIO ===
+   Bloque MÍNIMO de audio de la Era 4 (eras/audio-lofi.js). Esta era no tiene Bus: el módulo LEE G cada 250 ms (nunca lo modifica ni usa R()) y suena por cambios:
+   combate (hay un choque en el que participa tu civilización) > amenaza (ejército rival cerca de tus ejércitos o de tu ciudad) > calma; tecnología, edificio, espía,
+   choque ganado/perdido, decisión pendiente, victoria y derrota tienen su efecto. Mismos controles y volúmenes que las otras eras (esquina superior derecha, evo_audio_v1).
+   Si el archivo no carga, la era sigue sin sonido. No está escuchado por una persona: ver docs/ESCUCHA.md. */
+(function audioModule4() {
+  const FA = window.FondalAudio; if (!FA) return;
+  let warned = false;
+  const safe = f => (a, b) => { try { f(a, b); } catch (e) { if (!warned) { warned = true; console.warn('[audio]', e); } } };
+  FA.wire(); FA.setBiome('pradera'); FA.modulate(5);
+  const prev = { tech: 0, bld: 0, wins: 0, losses: 0, spy: 0, caps: 0, battles: 0, dlg: false, over: false, seed: '' };
+  const dir = { mood: 'explorar', since: 0, why: 'calma' };
+  const RANK = { explorar: 0, amenaza: 1, combate: 2 };
+  let nowMs = () => performance.now();
+  function direct(tms) {
+    const now = tms === undefined ? nowMs() : tms;
+    if (!started || !G) { FA.setMood('explorar'); FA.setDuck(false); dir.mood = 'explorar'; prev.seed = ''; return dir; }
+    FA.setDuck(!!(G.paused || G.modal));
+    const me = G.civs[0], bld = me ? Object.keys(me.bld).reduce((s, k) => s + me.bld[k], 0) : 0, tech = me ? me.tech.length : 0, st = G.stats;
+    if (prev.seed !== G.seed) { Object.assign(prev, { tech, bld, wins: st.wins, losses: st.losses, spy: st.spy, caps: st.caps, battles: G.battles.length, dlg: !!G.dlg, over: G.over, seed: G.seed }); }
+    if (tech > prev.tech) { FA.sfx('tech', { own: true }); FA.modulate(); FA.setMood('evolucion', { hold: 7 }); }
+    if (bld > prev.bld) FA.sfx('built', { own: true });
+    if (st.spy > prev.spy) FA.sfx('discover', { own: true });
+    if (st.caps > prev.caps) FA.sfx('upgrade', { own: true });
+    if (st.wins > prev.wins) FA.sfx('path', { own: true }); if (st.losses > prev.losses) FA.sfx('scarcity', { own: true });
+    if (G.battles.length > prev.battles) { FA.sfx('raid', { own: true }); FA.duckFor(1.6, .4); }
+    if (!!G.dlg && !prev.dlg) FA.sfx('alert', { own: true });
+    if (G.over && !prev.over) { if (G.win) { FA.stinger(14); FA.sfx('win', { own: true }); } else { FA.sfx('lose', { own: true }); FA.setMood('supervivencia', { hold: 12 }); } }
+    Object.assign(prev, { tech, bld, wins: st.wins, losses: st.losses, spy: st.spy, caps: st.caps, battles: G.battles.length, dlg: !!G.dlg, over: G.over });
+    // ánimo: choque propio > rival cerca > calma (sube ya, baja tras 6 s)
+    let m = 'explorar', why = 'calma'; const mine = G.armies.filter(a => a.team === 0 && !a.dead);
+    if (G.battles.some(b => { const x = G.armies.find(a => a.id === b.a), y = G.armies.find(a => a.id === b.d); return (x && x.team === 0) || (y && y.team === 0); })) { m = 'combate'; why = 'choque en curso'; }
+    else if (me && G.armies.some(a => a.team !== 0 && !a.dead && !a.home && (Math.hypot(a.x - me.x, a.y - me.y) < 170 || mine.some(o => Math.hypot(a.x - o.x, a.y - o.y) < 140)))) { m = 'amenaza'; why = 'ejército rival cerca'; }
+    if (RANK[m] >= RANK[dir.mood]) { dir.mood = m; dir.why = why; dir.since = now; } else if (now - dir.since >= 6000) { dir.mood = m; dir.why = why; dir.since = now; }
+    FA.setMood(dir.mood); return dir;
+  }
+  setInterval(safe(() => direct()), 250);
+  document.addEventListener('click', e => { const t = e.target; if (t && t.closest && t.closest('button') && !t.closest('#audioUI')) FA.sfx('ui', { vol: .7 }); }, true);
+  const audUI = FA.mountUI({ corner: 'tr', reserve: '52px', css: '#hud{padding-right:var(--audio-reserve,0px)}@media (min-width:821px){#hint{margin-right:var(--audio-reserve,0px)}}' });
+  window.__e4.audio = FA; window.__e4.audioDir = { direct, get info() { return dir; }, ui: audUI, clock(f) { nowMs = f || (() => performance.now()); } };
+})();
 })();
 </script>
 </body>

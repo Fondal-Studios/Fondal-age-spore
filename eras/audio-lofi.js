@@ -27,13 +27,20 @@
     combate:       { bpm: 100, swing: .04, lp: 5200, minor: .9,  drums: 1,   hat: 1,  bass: 1,   rhodes: .6,   mel: .25, drone: .35, pulse: 0, hum: .4, crackle: .35 },
     evolucion:     { bpm: 84,  swing: .2,  lp: 6000, minor: 0,   drums: .45, hat: .6, bass: .55, rhodes: 1.15, mel: .95, drone: 0,  pulse: 0, hum: 0,  crackle: .6 }
   };
+  // Ánimos extra (Era 3: estrategia tribal). No figuran en `moods` (lista de la Era 2) sino en `moodsAll`.
+  const MOODS_X = {
+    amenaza:      { bpm: 64,  swing: .1,  lp: 1500, minor: 1,   drums: .2,  hat: 0,  bass: .3,  rhodes: .7,  mel: .08, drone: 1,  pulse: .85, hum: 1,  crackle: .6 },
+    construccion: { bpm: 84,  swing: .16, lp: 2900, minor: 0,   drums: .72, hat: .72, bass: .62, rhodes: .95, mel: .3, drone: 0,  pulse: 0, hum: 0,  crackle: .8 }
+  };
+  const ALLM = Object.assign({}, MOODS, MOODS_X);
   const NUMS = ['bpm', 'swing', 'lp', 'minor', 'drums', 'hat', 'bass', 'rhodes', 'mel', 'drone', 'pulse', 'hum', 'crackle'];
-  const MOOD_PROG = { explorar: 'calm', supervivencia: 'minor', combate: 'drive', evolucion: 'bright' };
+  const MOOD_PROG = { explorar: 'calm', supervivencia: 'minor', combate: 'drive', evolucion: 'bright', amenaza: 'minor', construccion: 'work' };
   const QUAL = { maj9: [0, 4, 7, 11, 14], m9: [0, 3, 7, 10, 14], m7: [0, 3, 7, 10], maj7: [0, 4, 7, 11], dom: [0, 4, 7, 10], sus: [0, 5, 7, 10], dim: [0, 3, 6, 9] };
   const PROGS = {
     calm:   [[[0, 'maj9'], [9, 'm9'], [5, 'maj9'], [7, 'sus']], [[2, 'm9'], [7, 'sus'], [0, 'maj9'], [9, 'm7']], [[0, 'maj9'], [4, 'm7'], [5, 'maj9'], [7, 'sus']]],
     minor:  [[[0, 'm9'], [8, 'maj7'], [5, 'm7'], [7, 'dom']], [[0, 'm7'], [10, 'maj7'], [8, 'maj7'], [7, 'dom']], [[0, 'm9'], [3, 'maj7'], [5, 'm7'], [0, 'dim']]],
     drive:  [[[0, 'm7'], [0, 'm7'], [8, 'maj7'], [10, 'dom']], [[0, 'm7'], [5, 'm7'], [8, 'maj7'], [7, 'dom']]],
+    work:   [[[0, 'maj7'], [5, 'maj9'], [9, 'm7'], [7, 'sus']], [[0, 'maj9'], [7, 'sus'], [9, 'm7'], [5, 'maj7']]],
     bright: [[[0, 'maj9'], [5, 'maj9'], [7, 'sus'], [0, 'maj9']], [[0, 'maj7'], [9, 'm7'], [5, 'maj9'], [7, 'dom']]]
   };
   const PENT_MAJ = [0, 2, 4, 7, 9], PENT_MIN = [0, 3, 5, 7, 10];
@@ -48,7 +55,16 @@
     desierto: { wind: [.12, 1000, 3.2, .05], water: [0, 400], rain: [0, 4800],  low: [0, 52],  ev: { gust: .07, buzz: .05 }, trim: 1.5 },
     tundra:   { wind: [.17, 520, 1.6, .08], water: [0, 400],  rain: [0, 4800],   low: [0, 52],  ev: { chime: .16 }, trim: 1 },
     oceano:   { wind: [0, 600, .7, .1],     water: [.11, 380], rain: [0, 4800],  low: [.1, 52],  ev: { bubble: .9, whale: .035 }, trim: .3 }
-  };   // trim: nivela el ambiente (medido con tests/era2-audio.js: rms de pradera .019, selva .041, desierto .012, océano .069 sin trim; con trim queda en ~.02 ±3 dB)
+  };
+  // Ambientes extra (Era 3): el campamento tiene fuego continuo (fire) además del viento y los pájaros
+  const BIOMES_X = {
+    campamento:      { wind: [.09, 560, .8, .1], water: [0, 400], rain: [0, 4800], low: [0, 52], fire: .1, ev: { bird: .16, cricket: .22 }, trim: 1.3 },
+    campamento_frio: { wind: [.2, 480, 1.4, .08], water: [0, 400], rain: [0, 4800], low: [0, 52], fire: .13, ev: { chime: .08, gust: .05 }, trim: .85 }
+  };
+  const ALLB = Object.assign({}, BIOMES, BIOMES_X);
+  // Ruido de trabajo suave (Era 3): cada oficio activo suma eventos al azar al ambiente; la intensidad la fija la era (0..1) según cuánta gente trabaja
+  const WORK_RATE = { chop: 1.3, mine: 1, build: 1.5, farm: .6, gather: .9 };   // eventos por segundo con intensidad 1
+  // trim: nivela el ambiente (medido con tests/era2-audio.js: rms de pradera .019, selva .041, desierto .012, océano .069 sin trim; con trim queda en ~.02 ±3 dB)
 
   function create(opts) {
     opts = opts || {};
@@ -62,7 +78,7 @@
     let mel = 4, moodName = 'explorar', pendingMood = 'explorar', holdUntil = 0, biome = 'pradera', lastBiome = null;
     const cur = Object.assign({}, MOODS.explorar);
     let T = MOODS.explorar, chordNow = null;
-    const lastFx = {}, ends = [], stats = { schedMs: 0, schedCalls: 0, dropped: 0, played: 0 };
+    let duckEnd = 0, duckDepth = 1, duckOn = false; const work = {}, lastFx = {}, ends = [], stats = { schedMs: 0, schedCalls: 0, dropped: 0, played: 0 };
 
     const now = () => (ctx ? ctx.currentTime : 0);
     function ramp(p, v, tc, t) { // transición suave: la misma en vivo que en offline (antes en offline era instantánea y los tests no medían el crossfade real). Para saltar al valor, quien llama pasa tc = .001
@@ -78,6 +94,11 @@
       return b;
     }
 
+    function fireBuf(len) { // chisporroteo de fogata: estallidos cortos con caída rápida y amplitud al azar
+      const b = ctx.createBuffer(1, Math.floor(ctx.sampleRate * len), ctx.sampleRate), d = b.getChannelData(0), sr = ctx.sampleRate;
+      for (let i = 0; i < d.length; i++) if (rnd() < 9 / sr * 3) { const a = (.25 + rnd() * .75) * (rnd() < .15 ? 1 : .5), L = Math.floor(sr * (.002 + rnd() * .012)); for (let k = 0; k < L && i + k < d.length; k++) d[i + k] += (rnd() * 2 - 1) * a * Math.exp(-k / (L * .35)); }
+      return b;
+    }
     /* ---------- grafo ---------- */
     function g(v, to) { const n = ctx.createGain(); n.gain.value = v; if (to) n.connect(to); return n; }
     function filt(type, f, q, to) { const n = ctx.createBiquadFilter(); n.type = type; n.frequency.value = f; if (q !== undefined) n.Q.value = q; if (to) n.connect(to); return n; }
@@ -127,17 +148,24 @@
       return api;
     }
 
-    function ambGain() { const B = BIOMES[biome]; return bm.amb ? 0 : vol.amb * 1.6 * (duck ? .6 : 1) * (B && B.trim || 1); }
-    function applyVolumes(inst) {
-      if (!ctx) return; const m = vol.mute ? 0 : 1, tc = inst ? .001 : .08;
-      ramp(N.master.gain, vol.master * m, tc); ramp(N.musicVol.gain, bm.music ? 0 : vol.music * .9 * (duck ? .5 : 1), tc); ramp(N.sfxVol.gain, bm.sfx ? 0 : vol.sfx * 1.9, tc); ramp(N.ambVol.gain, ambGain(), tc);
+    function ambGain() { const B = ALLB[biome]; return bm.amb ? 0 : vol.amb * 1.6 * (duck ? .6 : 1) * (duckOn ? Math.sqrt(duckDepth) : 1) * (B && B.trim || 1); }
+    function applyVolumes(inst, slow) {
+      if (!ctx) return; const m = vol.mute ? 0 : 1, tc = inst ? .001 : slow ? .7 : .08;
+      ramp(N.master.gain, vol.master * m, tc); ramp(N.musicVol.gain, bm.music ? 0 : vol.music * .9 * (duck ? .5 : 1) * (duckOn ? duckDepth : 1), tc); ramp(N.sfxVol.gain, bm.sfx ? 0 : vol.sfx * 1.9, tc); ramp(N.ambVol.gain, ambGain(), tc);
     }
     function applyKey(inst) {
       if (!ctx) return; const r = 55 * Math.pow(2, keySemi / 12), tc = inst ? .001 : 1.4;
       ramp(N.drone.frequency, r, tc); ramp(N.hum1.frequency, r * 2, tc); ramp(N.hum2.frequency, r * 2 * 1.0595, tc);
     }
+    function ensureFire() { // fogata continua: se crea la primera vez que un ambiente la pide (no cuesta nada en las demás eras)
+      if (N.fireG || !ctx) return;
+      N.fireG = g(0, N.ambVol); const fs = loopSrc(fireBuf(3)); const fh = filt('highpass', 1400, .6, N.fireG); fs.connect(fh); fs.start(0);
+      N.roarG = g(0, N.ambVol); const rl = filt('lowpass', 230, .6, N.roarG); const rs = loopSrc(N.noise); rs.connect(rl); rs.start(0);
+      N.fireLfo = osc('sine', .31, null); N.fireLfoG = g(0, N.roarG.gain); N.fireLfo.connect(N.fireLfoG); N.fireLfo.start(0);
+    }
     function applyBiome(inst) {
-      if (!ctx) return; const B = BIOMES[biome] || BIOMES.pradera, tc = inst ? .001 : 2.2;
+      if (!ctx) return; const B = ALLB[biome] || BIOMES.pradera, tc = inst ? .001 : 2.2;
+      if (B.fire) ensureFire(); if (N.fireG) { ramp(N.fireG.gain, (B.fire || 0) * 1.5, tc); ramp(N.roarG.gain, (B.fire || 0) * .9, tc); ramp(N.fireLfoG.gain, (B.fire || 0) * .3, tc); }
       ramp(N.windG.gain, B.wind[0], tc); ramp(N.windBP.frequency, B.wind[1], tc); N.windBP.Q.value = B.wind[2]; ramp(N.lfoW.frequency, B.wind[3], tc);
       ramp(N.lfoWf.gain, B.wind[1] * .3, tc); ramp(N.lfoWa.gain, B.wind[0] * .55, tc);
       ramp(N.waterG.gain, B.water[0], tc); ramp(N.waterLP.frequency, B.water[1], tc); ramp(N.lfoSw.gain, B.water[0] * .5, tc);
@@ -227,13 +255,15 @@
       }
     }
     function ambAt(t0) {
-      const B = BIOMES[biome]; if (!B) return;
+      const B = ALLB[biome]; if (!B) return;
       for (const kind in B.ev) if (rnd() < B.ev[kind] * .2) AMBFX[kind](t0 + rnd() * .2);
+      for (const kind in work) if (work[kind] > .01 && rnd() < WORK_RATE[kind] * work[kind] * .2) AMBWORK[kind](t0 + rnd() * .2);
     }
     function schedule(until) {
       if (!ctx) return; const p0 = (typeof performance !== 'undefined' ? performance.now() : 0);
       if (!offline && nextT < ctx.currentTime) { nextT = ctx.currentTime + .03; ambT = Math.max(ambT, nextT); }
       if (lastBiome !== biome) { lastBiome = biome; }
+      if (duckOn && ctx.currentTime >= duckEnd) { duckOn = false; applyVolumes(false, true); }
       let guard = 0;
       while (nextT < until && guard++ < 400) { stepAt(nextT); nextT += 60 / cur.bpm / 4; step++; }
       guard = 0; while (ambT < until && guard++ < 400) { ambAt(ambT); ambT += .2; }
@@ -270,6 +300,15 @@
       }
     };
 
+
+    /* ---------- ruido de trabajo (ambiente de la tribu, Era 3): suave, siempre por debajo de los efectos ---------- */
+    const AMBWORK = {
+      chop(t) { const o = ambOut(); tone(o, t, 190 + rnd() * 40, 110, .08, 'triangle', .15, .002); noise(o, t, .04, 'bandpass', 1300, 0, 1.3, .1, .001); },
+      mine(t) { const o = ambOut(), f = 1700 + rnd() * 500; tone(o, t, f, f * .93, .1, 'triangle', .15, .001); noise(o, t, .03, 'highpass', 3500, 0, .6, .1, .001); tone(o, t, 150, 90, .08, 'sine', .08, .001); },
+      build(t) { const o = ambOut(); tone(o, t, 240 + rnd() * 30, 120, .07, 'triangle', .15, .002); noise(o, t, .035, 'bandpass', 1700, 0, 1.4, .1, .001); if (rnd() < .5) { tone(o, t + .16, 250, 125, .07, 'triangle', .1, .002); } },
+      farm(t) { const o = ambOut(); noise(o, t, .3, 'lowpass', 1000, 600, .5, .08, .08); },
+      gather(t) { const o = ambOut(); noise(o, t, .16, 'bandpass', 2600, 1700, .8, .09, .03); }
+    };
     /* ---------- efectos de juego ---------- */
     const FX = {
       eat:   { p: 1, cd: .12, max: 2, fn(o, t, v) { noise(o, t, .05, 'lowpass', 2200, 0, .6, .5 * v); noise(o, t + .075, .05, 'lowpass', 1800, 0, .6, .4 * v); tone(o, t, 320, 210, .09, 'sine', .22 * v); } },
@@ -307,11 +346,55 @@
       migration:{ p: 2, cd: 4, max: 1, fn(o, t, v) { tone(o, t, 220, 330, .8, 'triangle', .26 * v, .08); noise(o, t, .8, 'bandpass', 300, 1400, 1, .12 * v, .3); } },
       disobey:{ p: 1, cd: .6, max: 1, fn(o, t, v) { tone(o, t, 300, 150, .35, 'triangle', .3 * v, .005); tone(o, t, 280, 130, .35, 'triangle', .22 * v, .005); } }
     };
+
+    /* ---------- efectos extra (Era 3: tribus). No figuran en `effects` (lista de la Era 2) sino en `effectsAll` ---------- */
+    const FXX = {
+      gather:{ p: 1, cd: .14, max: 2, fn(o, t, v) { noise(o, t, .18, 'bandpass', 2800, 1600, .8, .3 * v, .03); tone(o, t + .02, 520, 380, .07, 'sine', .08 * v, .005); } },
+      carry: { p: 1, cd: .25, max: 1, fn(o, t, v) { tone(o, t, 420, 640, .07, 'triangle', .12 * v, .004); } },
+      drop:  { p: 1, cd: .2, max: 2, fn(o, t, v, x) {
+        if (x === 1) { tone(o, t, 150, 90, .1, 'sine', .38 * v, .002); noise(o, t, .05, 'bandpass', 900, 0, 1.2, .24 * v, .002); }
+        else if (x === 2) { tone(o, t, 1100, 900, .08, 'triangle', .16 * v, .001); tone(o, t, 180, 100, .09, 'sine', .3 * v, .002); }
+        else { noise(o, t, .07, 'lowpass', 1200, 0, .6, .26 * v, .004); tone(o, t, 260, 200, .08, 'sine', .2 * v, .003); } } },
+      chop:  { p: 1, cd: .16, max: 2, fn(o, t, v) { tone(o, t, 210, 120, .09, 'triangle', .5 * v, .002); noise(o, t, .05, 'bandpass', 1400, 0, 1.4, .45 * v, .001); tone(o, t, 430, 300, .05, 'sine', .12 * v, .001); } },
+      mine:  { p: 1, cd: .16, max: 2, fn(o, t, v) { noise(o, t, .03, 'highpass', 3500, 0, .6, .35 * v, .001); tone(o, t, 1850, 1700, .14, 'triangle', .2 * v, .001); tone(o, t, 2760, 0, .09, 'sine', .07 * v, .001); tone(o, t, 140, 80, .08, 'sine', .25 * v, .001); } },
+      hammer:{ p: 2, cd: .22, max: 2, fn(o, t, v) { [0, .17].forEach(d => { tone(o, t + d, 260, 130, .07, 'triangle', .45 * v, .002); noise(o, t + d, .04, 'bandpass', 1800, 0, 1.5, .35 * v, .001); }); } },
+      farm:  { p: 1, cd: .3, max: 1, fn(o, t, v) { noise(o, t, .4, 'lowpass', 900, 500, .6, .2 * v, .1); tone(o, t + .05, 300, 220, .12, 'sine', .1 * v, .02); } },
+      hunt:  { p: 2, cd: .4, max: 1, fn(o, t, v) { noise(o, t, .22, 'bandpass', 900, 3200, 1.4, .3 * v, .04); tone(o, t + .2, 110, 60, .15, 'sine', .42 * v, .003); } },
+      pray:  { p: 1, cd: 5, max: 1, fn(o, t, v) { tone(o, t, 330, 0, 1.4, 'sine', .08 * v, .3); tone(o, t, 495, 0, 1.4, 'sine', .055 * v, .3); } },
+      death: { p: 2, cd: 1.2, max: 1, fn(o, t, v, x) { tone(o, t, x === 1 ? 392 : 330, x === 1 ? 220 : 150, .9, 'sine', .3 * v, .02); tone(o, t + .02, x === 1 ? 370 : 311, 140, .9, 'triangle', .16 * v, .02); noise(o, t, .5, 'lowpass', 400, 200, .6, .16 * v, .05); } },
+      wolf:  { p: 2, cd: 8, max: 1, fn(o, t, v) {
+        const d = 2.4, f = 320 + rnd() * 40, os = osc('sine', f), e = ctx.createGain(), lf = osc('sine', 5.5), lg = g(f * .02, os.frequency), l2 = filt('lowpass', 900, .5);
+        os.frequency.setValueAtTime(f, t); os.frequency.linearRampToValueAtTime(f * 1.6, t + d * .35); os.frequency.linearRampToValueAtTime(f * .85, t + d);
+        e.gain.setValueAtTime(.0001, t); e.gain.linearRampToValueAtTime(.2 * v, t + d * .3); e.gain.linearRampToValueAtTime(.0001, t + d); lf.connect(lg);
+        os.connect(l2); l2.connect(e); e.connect(o); os.start(t); lf.start(t); os.stop(t + d + .1); lf.stop(t + d + .1);
+        const o2 = osc('triangle', f * 2.01, g(.05 * v, e)); o2.frequency.setValueAtTime(f * 2.01, t); o2.frequency.linearRampToValueAtTime(f * 3.2, t + d * .35); o2.frequency.linearRampToValueAtTime(f * 1.7, t + d); o2.start(t); o2.stop(t + d + .1); } },
+      horn:  { p: 3, cd: 4, max: 1, fn(o, t, v) { [[147, 0, .6], [196, .75, .9]].forEach(([f, d, du]) => { const os = osc('sawtooth', f), lp = filt('lowpass', 650, 1.2), e = ctx.createGain(); e.gain.setValueAtTime(.0001, t + d); e.gain.linearRampToValueAtTime(.32 * v, t + d + .08); e.gain.setTargetAtTime(0, t + d + du * .6, du * .25); os.connect(lp); lp.connect(e); e.connect(o); os.start(t + d); os.stop(t + d + du + .4); }); } },
+      raid:  { p: 4, cd: 6, max: 1, fn(o, t, v) { FXX.horn.fn(o, t, v); for (let i = 0; i < 6; i++) tone(o, t + .2 + i * .19, 95, 50, .16, 'sine', (i % 2 ? .4 : .55) * v, .003); } },
+      alarm: { p: 4, cd: 2.5, max: 1, fn(o, t, v) { for (let i = 0; i < 3; i++) { tone(o, t + i * .2, 1047, 0, .12, 'triangle', .26 * v, .004); tone(o, t + i * .2 + .1, 784, 0, .1, 'triangle', .22 * v, .004); } tone(o, t, 90, 60, .3, 'sine', .35 * v, .005); } },
+      alert: { p: 2, cd: 2.5, max: 1, fn(o, t, v) { tone(o, t, 659, 0, .18, 'triangle', .22 * v, .005); tone(o, t + .12, 523, 0, .22, 'triangle', .2 * v, .005); } },
+      okay:  { p: 1, cd: 3, max: 1, fn(o, t, v) { tone(o, t, 523, 0, .15, 'sine', .14 * v, .005); tone(o, t + .1, 784, 0, .3, 'sine', .13 * v, .005); } },
+      cold:  { p: 2, cd: 6, max: 1, fn(o, t, v) { noise(o, t, 1.4, 'bandpass', 3200, 2400, 3, .13 * v, .4); tone(o, t, 1760, 0, 1.4, 'sine', .05 * v, .4); tone(o, t, 1768, 0, 1.4, 'sine', .05 * v, .4); } },
+      built: { p: 3, cd: 1, max: 1, fn(o, t, v) { tone(o, t, 180, 100, .1, 'sine', .4 * v, .002); [392, 494, 587].forEach((f, i) => tone(o, t + .06 + i * .1, f, 0, .6, 'triangle', .22 * v, .006)); } },
+      upgrade:{ p: 3, cd: 1, max: 1, fn(o, t, v) { [392, 523, 659, 784].forEach((f, i) => { tone(o, t + i * .09, f, 0, .7, 'triangle', .2 * v, .006); tone(o, t + i * .09, f * 2, 0, .35, 'sine', .06 * v, .004); }); } },
+      tech:  { p: 3, cd: 1, max: 1, fn(o, t, v) { [784, 988, 1175, 1568].forEach((f, i) => { tone(o, t + i * .1, f, 0, 1.1, 'sine', .2 * v, .006); tone(o, t + i * .1, f * 2.76, 0, .4, 'sine', .04 * v, .003); }); } },
+      discover:{ p: 3, cd: 1, max: 1, fn(o, t, v) { noise(o, t, .55, 'bandpass', 400, 3000, 1.2, .2 * v, .25); [880, 1320].forEach((f, i) => tone(o, t + .3 + i * .12, f, 0, .8, 'sine', .18 * v, .005)); } },
+      path:  { p: 3, cd: 1, max: 1, fn(o, t, v) { tone(o, t, 440, 0, .3, 'triangle', .24 * v, .006); tone(o, t + .15, 659, 0, .6, 'triangle', .24 * v, .006); tone(o, t + .15, 1318, 0, .4, 'sine', .06 * v, .004); } },
+      trade: { p: 2, cd: .5, max: 1, fn(o, t, v) { [0, .07, .15].forEach((d, i) => { tone(o, t + d, 2400 + i * 330, 0, .15, 'sine', .15 * v, .002); tone(o, t + d, 4100, 0, .06, 'sine', .04 * v, .001); }); tone(o, t, 170, 100, .1, 'sine', .22 * v, .003); } },
+      gift:  { p: 2, cd: 1, max: 1, fn(o, t, v) { tone(o, t, 659, 0, .5, 'sine', .2 * v, .01); tone(o, t + .12, 880, 0, .7, 'sine', .2 * v, .01); tone(o, t + .12, 1760, 0, .3, 'sine', .05 * v, .005); } },
+      ally:  { p: 3, cd: 2, max: 1, fn(o, t, v) { [392, 494, 587, 784].forEach((f, i) => { tone(o, t + i * .16, f, 0, 1.3, 'sine', .2 * v, .01); tone(o, t + i * .16, f * 1.5, 0, .9, 'triangle', .08 * v, .01); }); } },
+      ambush:{ p: 2, cd: 2, max: 1, fn(o, t, v) { tone(o, t, 220, 110, .45, 'triangle', .3 * v, .005); noise(o, t, .3, 'bandpass', 700, 300, 1.3, .22 * v, .01); tone(o, t + .22, 160, 80, .4, 'triangle', .22 * v, .005); } },
+      win:   { p: 4, cd: 5, max: 1, fn(o, t, v) { [0, 4, 7, 12, 16, 19, 24, 28].forEach((s, i) => { const f = 262 * Math.pow(2, s / 12); tone(o, t + i * .12, f, 0, 1.6, 'sine', .2 * v, .006); tone(o, t + i * .12, f * 2.01, 0, .7, 'sine', .06 * v, .004); }); noise(o, t, 1, 'bandpass', 300, 5000, 1.2, .18 * v, .6); } },
+      lose:  { p: 4, cd: 5, max: 1, fn(o, t, v) { [392, 349, 311, 262].forEach((f, i) => tone(o, t + i * .35, f, f * .97, 1.4, 'triangle', .26 * v, .02)); tone(o, t, 65, 55, 2.2, 'sine', .35 * v, .2); } },
+      disease:{ p: 2, cd: 4, max: 1, fn(o, t, v) { tone(o, t, 156, 147, .9, 'sine', .3 * v, .05); tone(o, t, 165, 150, .9, 'triangle', .2 * v, .05); noise(o, t, .8, 'lowpass', 300, 200, .6, .16 * v, .1); } },
+      fission:{ p: 2, cd: 4, max: 1, fn(o, t, v) { noise(o, t, .8, 'bandpass', 600, 200, 1.1, .2 * v, .05); tone(o, t, 330, 220, .8, 'triangle', .22 * v, .02); } },
+      prio:  { p: 2, cd: .08, max: 1, fn(o, t, v) { tone(o, t, 700, 990, .07, 'triangle', .18 * v, .003); } }
+    };
+    const FXA = Object.assign({}, FX, FXX);
     const FX_ALIAS = { ability_rug: 'rug', ability_cam: 'cam', ability_exc: 'exc', ability_ala: 'ala', ability_mig: 'mig', fire: 'fire', incendio: 'fire', sequia: 'drought' };
 
     function sfx(name, o) {
       if (!ctx || (ctx.state !== 'running' && !offline)) return false; o = o || {};
-      name = FX_ALIAS[name] || name; const d = FX[name]; if (!d || vol.mute || bm.sfx) return false;
+      name = FX_ALIAS[name] || name; const d = FXA[name]; if (!d || vol.mute || bm.sfx) return false;
       const t = o.at !== undefined && isFinite(+o.at) ? +o.at : ctx.currentTime + .005, tn = ctx.currentTime;
       for (let i = ends.length - 1; i >= 0; i--) if (ends[i].e < tn) ends.splice(i, 1);
       const prio = d.p + (o.own ? 1 : 0), act = ends.length;
@@ -326,18 +409,23 @@
     }
 
     /* ---------- control ---------- */
-    function setMoodNow(name, inst) { if (!MOODS[name]) return; moodName = name; T = MOODS[name]; if (inst) moodApply(true); }
+    function setMoodNow(name, inst) { if (!ALLM[name]) return; moodName = name; T = ALLM[name]; if (inst) moodApply(true); }
     function setMood(name, o) {
-      if (!MOODS[name]) return; o = o || {};
+      if (!ALLM[name]) return; o = o || {};
       if (o.hold) { if (name !== 'evolucion') pendingMood = name; holdUntil = Math.max(nextT, now()) + o.hold; setMoodNow(name, !!o.instant); return; }
       pendingMood = name; if (holdUntil) return; setMoodNow(name, !!o.instant);
     }
     function modulate(semi) { keyTarget = (semi === undefined ? keyTarget + pick([5, 7, 2, 4]) : semi) % 12; }
     function stinger(hold) { sfx('evolve', { force: true, own: true }); modulate(); setMood('evolucion', { hold: hold || 10 }); }
-    function setBiome(k, inst) { if (!BIOMES[k] || k === biome && !inst) return; biome = k; applyBiome(!!inst); }
+    function setBiome(k, inst) { if (!ALLB[k] || k === biome && !inst) return; biome = k; applyBiome(!!inst); }
     function setVolume(k, v) { if (!(k in vol) || k === 'mute') return; vol[k] = clamp(+v || 0, 0, 1); save(); applyVolumes(offline); }
     function setBusMuted(k, m) { if (!(k in bm)) return; bm[k] = !!m; save(); applyVolumes(offline); }
     function setMuted(m) { vol.mute = !!m; save(); applyVolumes(offline); }
+    function setWork(k, v) { if (!(k in WORK_RATE)) return; v = +v; work[k] = isFinite(v) ? clamp(v, 0, 1) : 0; }
+    function duckFor(sec, depth) { // ducking breve de la música (y algo del ambiente) ante una alerta crítica; vuelve solo
+      if (!ctx) return; const s = isFinite(+sec) ? clamp(+sec, .1, 6) : 1.2; duckDepth = clamp(isFinite(+depth) ? +depth : .4, .15, 1);
+      duckEnd = Math.max(duckEnd, ctx.currentTime + s); duckOn = true; applyVolumes(false);
+    }
     function setDuck(d) { d = !!d; if (d !== duck) { duck = d; applyVolumes(false); } }
 
     /* ---------- ciclo de vida (móvil) ---------- */
@@ -370,14 +458,65 @@
       root.addEventListener('pagehide', () => { stopTimer(); try { ctx && ctx.suspend(); } catch (e) {} });
     }
 
+    /* ---------- controles compartidos (Era 2, 3 y 4): botón de parlante + panel con 4 volúmenes, silencio por capa y total, tecla M ----------
+       Posición: esquina fija (corner: 'tr' | 'br' | 'tl' | 'bl'); se afina con las variables CSS --audio-top/-right/-bottom/-left. No toca ni lee la simulación. */
+    function mountUI(o) {
+      o = o || {}; if (typeof document === 'undefined') return null; const old = document.getElementById('audioUI'); if (old) return old._api || null;
+      const corner = /^(tr|br|tl|bl)$/.test(o.corner) ? o.corner : 'tr';
+      const css = document.createElement('style');
+      css.textContent = '#audioUI{position:fixed;z-index:' + (o.z || 8) + ';display:flex;gap:6px;font:13px/1.35 "IBM Plex Sans",system-ui,sans-serif}' +
+        '#audioUI[data-corner=tr],#audioUI[data-corner=tl]{top:calc(var(--audio-top,8px) + env(safe-area-inset-top,0px));flex-direction:column}#audioUI[data-corner=br],#audioUI[data-corner=bl]{bottom:calc(var(--audio-bottom,8px) + env(safe-area-inset-bottom,0px));flex-direction:column-reverse}' +
+        '#audioUI[data-corner=tr],#audioUI[data-corner=br]{right:var(--audio-right,8px);align-items:flex-end}#audioUI[data-corner=tl],#audioUI[data-corner=bl]{left:var(--audio-left,8px);align-items:flex-start}' +
+        '#audioBtn{width:44px;height:44px;border-radius:12px;border:1px solid var(--line,rgba(0,0,0,.2));background:var(--panel,#fff);color:var(--ink,#123);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;touch-action:manipulation}' +
+        '#audioBtn[aria-pressed="true"]{border-color:var(--warn,#c9406f)}#audioBtn svg{width:24px;height:24px}' +
+        '#audioPanel{width:min(78vw,240px);background:linear-gradient(var(--panel,#fff),var(--panel,#fff)),var(--bg,#fff);color:var(--ink,#123);border:1px solid var(--line,rgba(0,0,0,.2));border-radius:12px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.25);max-height:calc(100vh - 76px);max-height:calc(100dvh - 76px);overflow:auto}' +
+        '#audioPanel[hidden]{display:none}#audioPanel h3{font-size:14px;margin:0 0 6px}#audioPanel label{display:flex;justify-content:space-between;gap:8px;color:var(--ink2,#456);margin-top:6px}' +
+        '#audioPanel input[type=range]{width:100%;min-height:44px;margin:0;accent-color:var(--accent,#0d7a74);touch-action:manipulation}#audioPanel button{margin-top:8px;width:100%;min-height:44px;border-radius:10px;border:1px solid var(--line,rgba(0,0,0,.2));background:transparent;color:inherit;font:inherit;font-weight:600;cursor:pointer}' +
+        '#audioPanel small{display:block;margin-top:6px;color:var(--ink2,#456)}' +
+        '#audioPanel .aud-ctl{display:flex;align-items:center;gap:6px}#audioPanel .aud-ctl input{flex:1;min-width:0}' +
+        '#audioPanel button.aud-m{width:44px;min-width:44px;height:44px;min-height:44px;margin:0;padding:0;display:flex;align-items:center;justify-content:center}#audioPanel button.aud-m svg{width:20px;height:20px}' +
+        '#audioPanel button.aud-m[aria-pressed="true"]{border-color:var(--warn,#c9406f);color:var(--warn,#c9406f)}' +
+        '#audioPanel input:focus-visible,#audioPanel button:focus-visible,#audioBtn:focus-visible{outline:2px solid var(--accent,#0d7a74);outline-offset:2px}' + (o.css || '');
+      document.head.appendChild(css);
+      const ui = document.createElement('div'); ui.id = 'audioUI'; ui.setAttribute('data-corner', corner);
+      const ICON_ON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>';
+      const ICON_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+      ui.innerHTML = '<button id="audioBtn" type="button" aria-label="Sonido y volúmenes" aria-expanded="false" aria-controls="audioPanel" aria-keyshortcuts="M" title="Sonido y volúmenes (M silencia)"></button>' +
+        '<div id="audioPanel" hidden role="group" aria-label="Sonido"><h3>Sonido</h3>' +
+        ['master:Maestro', 'music:Música', 'sfx:Efectos', 'amb:Ambiente'].map(x => { const [k, n] = x.split(':'); return '<label for="aud_' + k + '"><span>Volumen: ' + n + '</span><output id="aud_' + k + '_o" aria-hidden="true"></output></label><div class="aud-ctl"><input id="aud_' + k + '" type="range" min="0" max="100" step="1" data-k="' + k + '" aria-label="Volumen ' + n.toLowerCase() + '">' + (k === 'master' ? '' : '<button class="aud-m" type="button" data-m="' + k + '" aria-pressed="false" aria-label="Silenciar ' + n.toLowerCase() + '" title="Silenciar ' + n.toLowerCase() + '"></button>') + '</div>'; }).join('') +
+        '<button id="audioMute" type="button" aria-keyshortcuts="M"></button><small id="audioNote" role="status" aria-live="polite"></small></div>';
+      document.body.appendChild(ui);
+      if (o.reserve) document.documentElement.style.setProperty('--audio-reserve', o.reserve);
+      const btn = ui.querySelector('#audioBtn'), panel = ui.querySelector('#audioPanel'), muteB = ui.querySelector('#audioMute'), note = ui.querySelector('#audioNote');
+      function sync() {
+        const v = api.volumes, bmu = api.busMuted;
+        ui.querySelectorAll('input[type=range]').forEach(i => { i.value = Math.round(v[i.dataset.k] * 100); ui.querySelector('#aud_' + i.dataset.k + '_o').textContent = i.value + '%'; i.setAttribute('aria-valuetext', i.value + ' por ciento' + (bmu[i.dataset.k] ? ', silenciado' : '')); });
+        ui.querySelectorAll('button.aud-m').forEach(m => { const on = !!bmu[m.dataset.m]; m.innerHTML = on ? ICON_OFF : ICON_ON; m.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+        btn.innerHTML = v.mute ? ICON_OFF : ICON_ON; btn.setAttribute('aria-pressed', v.mute ? 'true' : 'false'); muteB.textContent = v.mute ? 'Activar sonido' : 'Silenciar todo';
+        note.textContent = api.state === 'running' ? '' : 'El sonido se activa con tu primer toque o tecla.';
+      }
+      btn.onclick = () => { const open = panel.hidden; panel.hidden = !open; btn.setAttribute('aria-expanded', open ? 'true' : 'false'); if (open) { api.unlock(); sync(); } };
+      ui.querySelectorAll('input[type=range]').forEach(i => { i.oninput = () => { api.setVolume(i.dataset.k, i.value / 100); if (api.volumes.mute && i.value > 0) api.setMuted(false); sync(); }; });
+      muteB.onclick = () => { api.setMuted(!api.volumes.mute); sync(); };
+      ui.querySelectorAll('button.aud-m').forEach(m => { m.onclick = () => { api.setBusMuted(m.dataset.m, !api.busMuted[m.dataset.m]); sync(); }; });
+      const closePanel = () => { if (!panel.hidden) { panel.hidden = true; btn.setAttribute('aria-expanded', 'false'); } };
+      root.addEventListener('keydown', e => { if (e.ctrlKey || e.metaKey || e.altKey) return; const k = (e.key || '').toLowerCase(), tg = e.target && e.target.tagName;
+        if (k === 'm' && tg !== 'INPUT' && tg !== 'TEXTAREA' && tg !== 'SELECT' && !e.repeat) { api.unlock(); api.setMuted(!api.volumes.mute); sync(); }
+        else if (k === 'escape' && !panel.hidden) { closePanel(); btn.focus(); } });
+      document.addEventListener('pointerdown', e => { if (!panel.hidden && !ui.contains(e.target)) closePanel(); }, true);
+      setInterval(() => { if (!panel.hidden) sync(); }, 1000); sync();
+      const r = { el: ui, sync, closePanel, corner }; ui._api = r; return r;
+    }
+
     const api = {
-      create, attach, schedule, wire, unlock, setMood, setBiome, setVolume, setMuted, setBusMuted, setDuck, sfx, stinger, modulate,
+      create, attach, schedule, wire, unlock, setMood, setBiome, setVolume, setMuted, setBusMuted, setDuck, duckFor, setWork, sfx, stinger, modulate, mountUI,
       moods: Object.keys(MOODS), biomes: Object.keys(BIOMES), effects: Object.keys(FX),
+      moodsAll: Object.keys(ALLM), biomesAll: Object.keys(ALLB), effectsAll: Object.keys(FXA), workKinds: Object.keys(WORK_RATE),
       pan(x, w) { return clamp((x / (w || 960)) * 2 - 1, -1, 1) * .8; },
       resetVoices() { ends.length = 0; for (const k in lastFx) delete lastFx[k]; },
       get ctx() { return ctx; }, get state() { return ctx ? ctx.state : 'none'; }, get mood() { return moodName; }, get biome() { return biome; },
       get volumes() { return Object.assign({}, vol); }, get muted() { return vol.mute; }, get busMuted() { return Object.assign({}, bm); }, get key() { return keySemi; }, get targetKey() { return keyTarget; }, get stats() { return Object.assign({}, stats, { active: ends.length }); },
-      get params() { return Object.assign({}, cur); }
+      get params() { return Object.assign({}, cur); }, get ducking() { return duckOn || duck; }, get work() { return Object.assign({}, work); }
     };
     return api;
   }
