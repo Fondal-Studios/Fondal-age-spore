@@ -469,6 +469,33 @@ const ASSETS = {};
   }
   add('acu.terreno.costa', 'terreno');
 })();
+/* Puente con la biblia de arte (docs/ARTE-RUNWAY-ERA3.md, §7): acepta sus ids y los traduce a los del juego.
+   Lo que no tiene equivalente todavía (obras, daño, retratos, íconos de tecnología, fauna extra) queda en ASSET_EXTRA
+   para cuando el dibujo lo use; no se pierde. Unidades: la biblia trae una por rama (c.uni.<rama>.<rol>); la primera
+   registrada de cada rol cubre el genérico c.unidad.<rol>. Las equivalencias de terreno son aproximadas (ver ERA3-CIVILIZACIONES.md). */
+const ASSET_EXTRA = {};
+function assetAlias(id) {
+  if (ASSETS[id]) return id;
+  const p = id.split('.'), c = p[0] === 'anf' ? 'acu' : p[0];
+  if (!CIV_KEYS.includes(c)) return null;
+  if (p[0] === 'anf') return p[1] === 'suelo' && p[2] === '1' ? 'acu.terreno.costa' : null;
+  if (p.length === 2 && (p[1] === 'unico' || p[1] === 'maravilla')) return c + '.' + p[1] + '.1';
+  if (p[1] === 'ico' && RES_KEYS.includes(p[2])) return c + '.recurso.' + p[2];
+  if (p[1] === 'uni') return p.length === 4 ? c + '.unidad.' + p[3] : c + '.unidad.campeon';
+  const T = { 'suelo.1': 'suelo', 'decor.1': 'obstaculo', 'nodo.mat2.1': 'veta', 'nodo.comida.1': 'arbusto', 'puesto': 'nodo' };
+  const k = p.slice(1).join('.');
+  if (T[k]) return c + '.terreno.' + T[k];
+  if (p[1] === 'fau') return c + '.terreno.amenaza';
+  return null;
+}
+function assetRegister(id, url) {
+  const g = assetAlias(id);
+  const load = (o) => { o.src = url; if (typeof Image !== 'undefined') { o.img = new Image(); o.img.src = url; } };
+  if (!g) { if (!/^(ter|ins|acu|ave|anf|ui|gen)\./.test(id)) return false; ASSET_EXTRA[id] = ASSET_EXTRA[id] || { id }; load(ASSET_EXTRA[id]); return 'extra'; }
+  const a = ASSETS[g];
+  if (g !== id && a.src && /\.unidad\.|\.terreno\.amenaza/.test(g)) { ASSET_EXTRA[id] = { id }; load(ASSET_EXTRA[id]); return 'extra'; }
+  load(a); return g;
+}
 const STAGES = 4;
 /* Rivales: personalidad en datos. raidBelow: ataca si la relación es menor; opp: ataca al débil si su tamaño de saqueo supera (fuerza × opp); respect: lo frena una defensa fuerte. */
 const PERS = {
@@ -2465,7 +2492,7 @@ window.__e3 = { scr(x, y) { const r = cv.getBoundingClientRect(); return { x: r.
   Bus, tribeInfo, rivalInfo, buildingInfo, roleInfo, upgradeBuilding, upgradeCheck, setPrio, releasePins, choosePath, deal, dealList, targetCounts, rebalance, alerts, growthCheck, tribeStr, raidSize, raidGate, spawnRaid, clanOf, relAdd, foodRunway, foodStress, workItems, farmSlots, shelterCap, foodCap, cohLimit, PERS, PRIOS, ROLES, RORDER, PATHS, STAGES, CLAN_SITES, POI_SITES, mkPerson, setRoleOf, ensureX3, discoverPoi, pathProgress, selectB(i) { selB = i; }, get x3() { return G && G.x3; },
   /* ciclo 4 · civilizaciones: datos, grilla, Edades, unidades, expediciones y continuidad */
   CIVS, SL, SLOTS, SPECIES, SP_KEYS, TRAIT_FX, UNITS, UKEYS, AGE_R, AGE_REQ, NODE_SITES, GS, ASSETS, mods, get MSRC() { return MSRC; }, modsDirty() { modsDirty = true; }, mul, age, core, terrR, ageReq, placeCheck, findSpot, snapG, moveBuilding, demolish, refundOf, train, trainCheck, unitCost, sendExpedition, expCheck, recall, idleUnits, techCheck, techOf, canFound, found, foodCap, matCap, civSetup, civilians, slotName, bName, slotEffect, fxDesc, footprintWhy, OLD2SLOT, migrateCiv, set pickSp(v) { pickSp = v; }, get pickSp() { return pickSp; }, civUI,
-  assets: { ASSETS, register(id, url) { const a = ASSETS[id]; if (!a) return false; a.src = url; a.img = new Image(); a.img.src = url; return true; }, ids: () => Object.keys(ASSETS) },
+  assets: { ASSETS, ASSET_EXTRA, assetAlias, register: assetRegister, ids: () => Object.keys(ASSETS) },
   /* ciclo 4 (arte, animación y HUD): solo lectura/diagnóstico; nada de esto toca la simulación */
   art: { STAT, SPR, AN, PA, ageCls, personSprite, bldSprite, scaffSprite, markerSprite, badgeSprite, spObj, drawPersonCiv, paintPerson, drawPerson, drawBuilding, drawRaider, drawWolf, drawPrey, drawGhost, drawNode, render, PSZ, ELD, RGEAR, POSES, CLAN_C, get SPRK() { return SPRK; }, set SPRK(v) { SPRK = v; }, spr, BTOP, ghostAt },
   ui: { UI, CAM, tut, TUT3, tutBegin, tutNext, tutSkip, alertAct, alertItems, camFocus, applyCam, layout, openPanel, openDip, hud, hudTop, hudAlerts, hudSide, get selId() { return selId; }, get selB() { return selB; }, setSel(a, b) { selId = a; selB = b; }, tickerPush, get mode() { return mode; }, setMode, ghostTap, zoomAt, PANELS, get SC() { return SC; }, trayTick, renderLin }
