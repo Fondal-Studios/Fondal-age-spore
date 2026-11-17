@@ -205,7 +205,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
     <div id="hud">
       <div class="chip" id="cSeason"><b id="vSeason">—</b><span id="vYear"></span><em id="vSeasonIn"></em></div>
       <div class="chip" id="cPop" title="Población por oficio"><div class="fr"><b id="vPop">0</b><span id="vPopT">personas</span></div><div id="popBar"></div></div>
-      <button class="chip" id="cAge" type="button" title="Edad y requisitos para avanzar"><b id="vAge">I</b><span id="vAgeN">Edad</span><em id="vAgeR"></em></button>
+      <button class="chip" id="cAge" type="button" title="Edad y requisitos para avanzar"><b id="vAge">I</b><span id="vAgeN" class="dl">Edad</span><em id="vAgeR"></em></button>
       <div class="chip col" id="cFood"><div class="fr"><b id="vFood">0/20</b><span id="nFood">comida</span><em id="vFoodNet"></em></div><i class="meter" id="fMeter"><u id="fBar"></u></i><small id="vRun"></small></div>
       <div class="chip" id="cWood"><b id="vWood">0</b><span id="nWood">madera</span><em id="vWoodNet"></em></div>
       <div class="chip" id="cStone"><b id="vStone">0</b><span id="nStone">piedra</span><em id="vStoneNet"></em></div>
@@ -336,19 +336,19 @@ const SL = {
   corazon: { sz: 3, age: 1, lim: 1, lv: [
     { fx: { rad: 60, beds: 2, fcap: 40, mcap: 40 } },
     { w: 60, s: 20, f: 40, time: 40, fx: { rad: 90, beds: 6, fcap: 80, mcap: 80 } },
-    { w: 130, s: 90, f: 110, time: 60, fx: { rad: 120, beds: 10, fcap: 120, mcap: 140 } }] },
+    { w: 110, s: 70, f: 80, time: 60, fx: { rad: 120, beds: 10, fcap: 120, mcap: 140 } }] },
   vivienda: { sz: 2, age: 1, lv: [{ w: 6, time: 10, fx: { cap: 4 } }, { w: 8, s: 3, time: 12, fx: { cap: 6 } }, { w: 10, s: 6, time: 14, fx: { cap: 8 } }] },
   almacen: { sz: 2, age: 1, lv: [{ w: 10, s: 2, time: 14, fx: { fcap: 40, mcap: 50, spoil: 1 } }, { w: 14, s: 6, time: 16, fx: { fcap: 80, mcap: 100, spoil: .8 } }, { w: 20, s: 12, time: 18, fx: { fcap: 130, mcap: 160, spoil: .6 } }] },
   granja: { sz: 2, age: 1, prod: 'comida', lv: [{ w: 5, time: 12, fx: { out: .16, crew: 2, winter: .3 } }, { w: 8, s: 3, time: 14, fx: { out: .2, crew: 3, winter: .45 } }, { w: 12, s: 6, time: 16, fx: { out: .24, crew: 4, winter: .6 } }] },
   cria: { sz: 2, age: 2, prod: 'comida', lv: [{ w: 12, s: 2, time: 16, fx: { out: .13, crew: 2, winter: 1 } }, { w: 12, s: 5, time: 16, fx: { out: .16, crew: 3, winter: 1 } }, { w: 16, s: 8, time: 18, fx: { out: .19, crew: 4, winter: 1 } }] },
-  ext1: { sz: 2, age: 1, prod: 'mat1', lv: [{ w: 4, s: 2, time: 10, fx: { out: .3, crew: 2 } }, { w: 8, s: 4, time: 12, fx: { out: .36, crew: 3 } }, { w: 12, s: 8, time: 14, fx: { out: .42, crew: 4 } }] },
-  ext2: { sz: 2, age: 2, prod: 'mat2', lv: [{ w: 12, time: 14, fx: { out: .2, crew: 2 } }, { w: 14, s: 4, time: 14, fx: { out: .25, crew: 3 } }, { w: 18, s: 8, time: 16, fx: { out: .3, crew: 4 } }] },
+  ext1: { sz: 2, age: 1, prod: 'mat1', lv: [{ w: 4, s: 2, time: 10, fx: { out: .36, crew: 2 } }, { w: 8, s: 4, time: 12, fx: { out: .42, crew: 3 } }, { w: 12, s: 8, time: 14, fx: { out: .48, crew: 4 } }] },
+  ext2: { sz: 2, age: 2, prod: 'mat2', lv: [{ w: 12, time: 14, fx: { out: .25, crew: 2 } }, { w: 14, s: 4, time: 14, fx: { out: .3, crew: 3 } }, { w: 18, s: 8, time: 16, fx: { out: .35, crew: 4 } }] },
   saber: { sz: 2, age: 1, lim: 2, prod: 'saber', lv: [{ w: 8, s: 4, time: 18, fx: { coh: 25, trad: .05, kn: .03, crew: 2 } }, { w: 10, s: 8, time: 18, fx: { coh: 35, trad: .09, kn: .045, crew: 3 } }, { w: 14, s: 14, time: 20, fx: { coh: 45, trad: .12, kn: .06, crew: 4 } }] },
   muro: { sz: 1, age: 2, lv: [{ w: 3, s: 1, time: 4, fx: { hp: 60, loss: .6, dmg: .8, def: .25 } }, { w: 2, s: 3, time: 5, fx: { hp: 120, loss: .45, dmg: .7, def: .4 } }, { w: 2, s: 5, time: 6, fx: { hp: 200, loss: .35, dmg: .65, def: .5 } }] },
   torre: { sz: 2, age: 2, lv: [{ w: 10, s: 6, time: 16, fx: { dmg: 10, rng: 110 } }, { w: 12, s: 10, time: 18, fx: { dmg: 16, rng: 130 } }, { w: 16, s: 16, time: 20, fx: { dmg: 24, rng: 150 } }] },
   cuartel: { sz: 2, age: 2, lim: 2, lv: [{ w: 16, s: 8, time: 20, fx: { units: 1 } }, { w: 16, s: 12, time: 20, fx: { units: 2 } }, { w: 20, s: 16, time: 24, fx: { units: 3 } }] },
   unico: { sz: 2, age: 2, lim: 1, lv: [{ w: 20, s: 14, time: 30, fx: {} }] },
-  maravilla: { sz: 3, age: 3, lim: 1, lv: [{ w: 180, s: 140, f: 120, time: 120, fx: {} }] }
+  maravilla: { sz: 3, age: 3, lim: 1, lv: [{ w: 150, s: 120, f: 100, time: 120, fx: {} }] }
 };
 Object.keys(SL).forEach(k => { SL[k].max = SL[k].lv.length; SL[k].lv.forEach(L => { L.w = L.w || 0; L.s = L.s || 0; L.f = L.f || 0; L.time = L.time || 0; }); });
 /* Texto del efecto de un nivel (sale de fx: lo que se lee es lo que hace la simulación) */
@@ -367,7 +367,7 @@ function slotEffect(k, fx, civ) {
 const RES_ICO = { comida: '●', mat1: '▲', mat2: '■', saber: '✦' };
 /* Efectos acumulables (todos aditivos: el multiplicador es 1 + suma). FXN = cómo se lee cada uno. */
 const FXN = { food: ['comida', '%'], farm: ['granjas', '%'], cria: ['cría', '%'], mat1: ['material 1', '%'], mat2: ['material 2', '%'], kn: ['saber', '%'], build: ['velocidad de obra', '%'], cap: ['almacenamiento', '%'], spoil: ['deterioro', '%'], carry: ['carga por viaje', '%'], hunt: ['caza', 'pp'], def: ['defensa', '%'], atk: ['daño de guerreros', '%'], hp: ['vida', '%'], birth: ['nacimientos', '%'], cold: ['daño por frío', '%'], hunger: ['hambre', '%'], cook: ['comida cocinada', '%'], rad: ['radio del Corazón', 'px'], trade: ['tratos', '%'], intel: ['inteligencia', '%'], coh: ['cohesión', 'abs'], tower: ['daño de torres', '%'], range: ['alcance de torres', 'px'], ucost: ['costo de unidades', '%'], raid: ['saqueos rivales', '%'], loss: ['pérdidas por saqueo', '%'], node: ['producción de nodos', '%'], spd: ['velocidad de exploradores y unidades', '%'], prep: ['aviso de saqueo', 's'], wallhp: ['vida de muros', '%'], beds: ['camas', 'abs'], scav: ['comida de presas abatidas', 'abs'], sick: ['enfermedad', '%'] };
-function fxText(fx) { return Object.keys(fx).map(k => { const n = FXN[k] || [k, '%'], v = fx[k]; return n[1] === '%' ? (v > 0 ? '+' : '−') + Math.round(Math.abs(v) * 100) + ' % ' + n[0] : n[1] === 'pp' ? (v > 0 ? '+' : '−') + Math.round(Math.abs(v) * 100) + ' puntos de ' + n[0] : n[1] === 's' ? '+' + v + ' s de ' + n[0] : n[1] === 'px' ? '+' + v + ' px de ' + n[0] : (v > 0 ? '+' : '−') + Math.abs(v) + ' ' + n[0]; }).join(', '); }
+function fxDesc(fx) { return Object.keys(fx).map(k => { const n = FXN[k] || [k, '%'], v = fx[k]; return n[1] === '%' ? (v > 0 ? '+' : '−') + Math.round(Math.abs(v) * 100) + ' % ' + n[0] : n[1] === 'pp' ? (v > 0 ? '+' : '−') + Math.round(Math.abs(v) * 100) + ' puntos de ' + n[0] : n[1] === 's' ? '+' + v + ' s de ' + n[0] : n[1] === 'px' ? '+' + v + ' px de ' + n[0] : (v > 0 ? '+' : '−') + Math.abs(v) + ' ' + n[0]; }).join(', '); }
 const TECH_COST = [[4, 5, 6, 7], [10, 12, 13, 15], [18, 20, 22, 24]];
 const T_ = (id, n, fx, d) => ({ id, n, fx, d });
 const CIVS = {
@@ -502,7 +502,7 @@ const RN = k => CIV().res[k].s, RNN = k => CIV().res[k].n;
 const RK = { food: 'comida', wood: 'mat1', stone: 'mat2', know: 'saber' };
 const TERR = () => CIV().terr;
 
-function mkPerson(x, y, age, role) { return { id: ++G.id, x, y, a: rnd(0, TAU), hunger: rnd(70, 100), hp: 30, mhp: 30, age, role: role || 'libre', st: 'idle', tgt: null, carry: null, cd: 0, tt: 0, tx: x, ty: y, wt: 0, dead: false, flash: 0, ph: rnd(0, 6), mv: 0, pin: false, rc: -99 }; }
+function mkPerson(x, y, age, role) { return { id: ++G.id, x, y, a: rnd(0, TAU), hunger: rnd(70, 100), hp: 30, mhp: 30, age, role: role || 'libre', st: 'idle', tgt: null, carry: null, cd: 0, tt: 0, tx: x, ty: y, wt: 0, dead: false, flash: 0, ph: rnd(0, 6), mv: 0, pin: false, rc: -99, wk: null, ord: null }; }
 const femC = c => /^(Colmena|Bandada)/.test(c.n), deN = c => (femC(c) ? 'de la ' : 'del ') + c.n, aN = c => (femC(c) ? 'a la ' : 'al ') + c.n, elN = c => (femC(c) ? 'la ' : 'el ') + c.n;
 const clanName = (i, civ) => CIVS[civ].clanN + (i ? ' del Norte' : ' del Este');
 function mkClan(i, pers, civ) { const S = CLAN_SITES[i], P0 = PERS[pers]; return { id: i, n: clanName(i, civ), civ, pers, x: S.x, y: S.y, r: S.r, rel: P0.rel0, allied: false, intel: 20, rt: DF.raid0 * P0.start + i * 30, prep: 0, prepN: 0, why: {}, hist: [], gd: 0, pass: 0, sent: 0, repelled: 0, fear: 0, lastOk: false, gifts: 0, trades: 0, view: '', dhp: 0, nt: 200 + i * 60 }; }
@@ -532,8 +532,9 @@ function mkB(k, gx, gy, lvl, isDone, civ) { const sz = SL[k].sz, b = { k, gx, gy
 const OLD2SLOT = { fogata: 'corazon', refugio: 'vivienda', almacen: 'almacen', taller: 'ext1', huerto: 'granja', corral: 'cria', totem: 'saber', empalizada: 'muro' };
 const OLD2TECH = { fuego: 'fuego', piedra: 'piedra', cesta: 'cesta', ceram: 'ceram', agri: 'agri', domes: 'domes', arco: 'arco', marcas: 'marcas', lanza: 'arco' };
 function ensureX3() {
-  const old = !G.x3; if (old) G.x3 = mkX3(G.seed || 'x', { species: 'ter_ingeniero' });
-  const X = G.x3, mig = !X.civ, d = mkX3(G.seed || 'x', { species: X.sp || 'ter_ingeniero', tierra: !!X.amph, traits: X.traits || [] });
+  const old = !G.x3, mig = old || !G.x3.civ || !G.B.some(b => b.k === 'corazon'); if (old) G.x3 = mkX3(G.seed || 'x', { species: 'ter_ingeniero' });
+  const X = G.x3;
+  const d = mkX3(G.seed || 'x', { species: X.sp || 'ter_ingeniero', tierra: !!X.amph, traits: X.traits || [] });
   for (const k in d) if (X[k] === undefined) X[k] = d[k];
   for (const k in d.prio) if (X.prio[k] === undefined) X.prio[k] = 1;
   X.clans.forEach((c, i) => { if (!c.civ) { c.civ = d.clans[i].civ; c.n = clanName(i, c.civ); } if (c.dhp === undefined) c.dhp = 0; if (c.nt === undefined) c.nt = d.clans[i].nt; });
@@ -591,7 +592,7 @@ let modsDirty = true, MODS = {}, MSRC = [];
 function mods() {
   if (!modsDirty && G) return MODS; modsDirty = false; const m = {}, src = [];
   if (!G || !G.x3) { MODS = m; return m; }
-  const X = G.x3, C = CIVS[X.civ] || CIVS.ter, add = (fx, n, kind) => { for (const k in fx) m[k] = (m[k] || 0) + fx[k]; src.push({ n, kind, fx, txt: fxText(fx) }); };
+  const X = G.x3, C = CIVS[X.civ] || CIVS.ter, add = (fx, n, kind) => { for (const k in fx) m[k] = (m[k] || 0) + fx[k]; src.push({ n, kind, fx, txt: fxDesc(fx) }); };
   add(C.bonus.fx, 'Clase ' + C.n, 'clase'); const sp = SPECIES[X.sp] || SPECIES.ter_ingeniero; add(sp.spec.fx, 'Especialización: ' + sp.spec.n, 'especie');
   for (const t of X.traits || []) if (TRAIT_FX[t]) add(TRAIT_FX[t][1], 'Rasgo ' + TRAIT_FX[t][0] + ' de la Era 2', 'rasgo');
   for (const id in G.techs) { const t = C.tech[id]; if (G.techs[id] && t) add(t.fx, 'Tecnología ' + t.n, 'tech'); }
@@ -748,8 +749,8 @@ function tickPerson(p, dt) {
     if (p.role === 'con') { const wi = workItems().filter(o => !jobOf(o).stall || jobOf(o).prog < jobOf(o).paid / STAGES - 1e-9); if (wi.length) { const s = nearestOf(wi, p.x, p.y, 1e9); if (s) { p.st = 'build'; if (moveP(p, s.x + Math.cos(p.id) * 24, s.y + Math.sin(p.id) * 24, sp, dt)) { if (!p.tt) Bus.emit('work', p, 'build', s, 'start'); p.tt = (p.tt || 0) + dt; if (p.tt > 3) p.tt = 0; } return; } } }
     const need = matNeed();
     // extractores: el artesano trabaja en el edificio (producción continua, sin viajes); prefiere el material que falta
-    // extractores: el material que falta manda; si el almacén de ese material está lleno, no se trabaja ahí (se perdería)
-    const full1 = G.wood >= matCap() - 1, full2 = G.stone >= matCap() - 1, useful = b => b.k === 'ext1' ? !full1 && !(need.stone && !need.wood) : !full2;
+    // extractores: el material que falta manda; con el almacén lleno se sigue produciendo (y se pierde) salvo que haga falta el otro material
+    const full1 = G.wood >= matCap() - 1, full2 = G.stone >= matCap() - 1, useful = b => b.k === 'ext1' ? !(full1 && need.stone) && !(need.stone && !need.wood) : !(full2 && need.wood);
     let ex = p.role === 'art' && p.wk && p.wk.done && (p.wk.k === 'ext1' || p.wk.k === 'ext2') && G.B.includes(p.wk) && useful(p.wk) ? p.wk : null;
     if (!ex && p.role === 'art') { ex = nearestOf(G.B, p.x, p.y, 1e9, b => b.done && (b.k === 'ext1' || b.k === 'ext2') && (b.crewN || 0) < FXb(b).crew && useful(b)); if (ex) ex.crewN = (ex.crewN || 0) + 1; }
     if (ex) { p.wk = ex; p.st = ex.k === 'ext2' ? 'mine' : 'chop'; if (moveP(p, ex.x + Math.cos(p.id) * 14, ex.y + Math.sin(p.id) * 14, sp, dt)) { ex.crewT = G.t; if (!p.tt) Bus.emit('work', p, p.st, ex, 'start'); p.tt = (p.tt || 0) + dt; if (p.tt > 3) { p.tt = 0; Bus.emit('work', p, p.st, ex, 'end'); } } return; }
@@ -839,18 +840,19 @@ function tickWolf(w, dt) {
   else { if (w.wt <= 0) { w.wt = rnd(3, 7); const q = randLand(w.x, w.y, 120); w.tx = q.x; w.ty = q.y; } moveP(w, w.tx, w.ty, 28, dt); }
 }
 /* muros: los saqueadores no los atraviesan; si quedan trabados, los golpean hasta romperlos */
+let BLK = null;   // muro que traba al saqueador en este paso (transitorio, no va en G)
 const wallAt = (x, y) => { for (const b of G.B) if (b.k === 'muro' && b.done && x >= b.gx * GS && x < (b.gx + 1) * GS && y >= b.gy * GS && y < (b.gy + 1) * GS) return b; return null; };
 function moveR(r, gx, gy, spd, dt) {
   const dx = gx - r.x, dy = gy - r.y, d = hyp(dx, dy); if (d <= 3) { r.mv = 0; return true; }
   const mx = dx / d * spd * dt, my = dy / d * spd * dt, ok = (x, y) => okLand(x, y) && !wallAt(x, y);
-  if (ok(r.x + mx, r.y + my)) { r.x += mx; r.y += my; } else if (ok(r.x + mx, r.y)) r.x += mx; else if (ok(r.x, r.y + my)) r.y += my; else { r.blk = wallAt(r.x + mx, r.y + my) || wallAt(r.x + mx, r.y) || wallAt(r.x, r.y + my); }
+  if (ok(r.x + mx, r.y + my)) { r.x += mx; r.y += my; } else if (ok(r.x + mx, r.y)) r.x += mx; else if (ok(r.x, r.y + my)) r.y += my; else { BLK = wallAt(r.x + mx, r.y + my) || wallAt(r.x + mx, r.y) || wallAt(r.x, r.y + my); }
   r.a = Math.atan2(dy, dx); r.mv = 1; return false;
 }
 function tickRaider(r, dt) {
   r.cd -= dt; r.at = (r.at || 0) - dt; const c = G.x3.clans[r.cl || 0] || G.x3.clans[0], ink = G.P.some(q => q.role === 'cam' && !q.dead && champFx().ink && hyp(q.x - r.x, q.y - r.y) < 70) ? 1 - champFx().ink : 1;
   if (r.fleeing) { moveR(r, c.x, c.y, 60, dt); if (hyp(r.x - c.x, r.y - c.y) < 30) r.dead = true; return; }
-  const nd = r.nd !== undefined ? G.x3.nodes[r.nd] : null, dest = nd || G.camp; r.blk = null; moveR(r, dest.x + 20, dest.y, 52, dt);
-  if (r.blk) { r.blk.hp -= 10 * dt; if (r.cd <= 0) { r.cd = 1; Bus.emit('hit', r, r.blk, 10, 'saqueo'); } if (r.blk.hp <= 0) wallBreak(r.blk); }
+  const nd = r.nd !== undefined ? G.x3.nodes[r.nd] : null, dest = nd || G.camp; BLK = null; moveR(r, dest.x + 20, dest.y, 52, dt);
+  if (BLK) { const wb = BLK; BLK = null; wb.hp -= 10 * dt; if (r.cd <= 0) { r.cd = 1; Bus.emit('hit', r, wb, 10, 'saqueo'); } if (wb.hp <= 0) wallBreak(wb); }
   const near = nearestOf(G.P, r.x, r.y, 22, q => !q.dead);
   if (near && r.cd <= 0) { r.cd = 1; hurtP(near, DF.rdmg * empDmg() * ink * (1 - Math.max(0, -mv('loss')) * .5), 'saqueo', r); }
   let who = null, dm = 0; for (const q of G.P) if (!q.dead && (q.role === 'def' || q.role === 'caz') && hyp(q.x - r.x, q.y - r.y) < 34) { dm += (q.role === 'def' ? 14 * (1 + empDef()) : 9) * mul('def') * dt; who = q; }
@@ -893,7 +895,7 @@ function spawnRaid(c) {
 function nodeRaid(c, nd) { const n = Math.max(2, Math.round(raidSize(c) * .5)); for (let i = 0; i < n; i++) G.Rd.push({ x: c.x + rnd(-20, 20), y: c.y + rnd(-20, 20), hp: 18 + 3 * Math.floor(G.t / 200), cd: 0, dead: false, fleeing: false, cl: c.id, nd: nd.i }); clanNote(c, 'Ataca tu nodo de ' + RN(nd.k)); logMsg(c.n + ' manda ' + n + ' guerreros a tu nodo de ' + RN(nd.k) + '.'); setAlert('nodo', 'warn', c.n + ' ataca tu nodo de ' + RN(nd.k) + ' (' + n + ' guerreros): mandá unidades a defenderlo.', nd.x, nd.y); Bus.emit('raidPrep', c, n, 'nodo'); }
 function tickClan(c, dt) {
   const P0 = PERS[c.pers], X = G.x3;
-  for (const k in c.why) { c.why[k] *= 1 - dt / 90; if (Math.abs(c.why[k]) < .25) delete c.why[k]; }
+  for (const k in c.why) { c.why[k] *= 1 - dt / 90; if (Math.abs(c.why[k]) < .05) delete c.why[k]; }
   if (c.pass > 0) c.pass -= dt; if (c.gd > 0) c.gd = Math.max(0, c.gd - .004 * dt); if (c.fear > 0) c.fear = Math.max(0, c.fear - .004 * dt);
   if (c.allied) { relAdd(c, -DF.rel * P0.decay * dt, 'alianza'); if (c.rel < 15) { c.allied = false; logMsg('Se enfrió la relación con ' + c.n + ': la alianza se rompió. Hay que cuidarla con regalos.'); toast('La alianza con ' + c.n + ' se rompió: hacele regalos.', true); clanNote(c, 'La alianza se rompió'); if (c.id === 0) syncLegacy(); } }
   else if (c.rel > -30) relAdd(c, -.01 * P0.decay * dt, 'tiempo');
@@ -1223,7 +1225,7 @@ function techCheck(k) {
 function research(k) {
   const t = techOf(k), ch = techCheck(k); if (!t || has(k)) return false;
   if (!ch.ok) { toast('No se puede: ' + ch.why + '.'); return false; }
-  G.know -= techCost(k); G.techs[k] = true; modsDirty = true; logMsg('Aprendieron: ' + t.n + ' (' + fxText(t.fx) + ').'); toast('Nueva tecnología: ' + t.n); Bus.emit('tech', k); renderTech(); return true;
+  G.know -= techCost(k); G.techs[k] = true; modsDirty = true; logMsg('Aprendieron: ' + t.n + ' (' + fxDesc(t.fx) + ').'); toast('Nueva tecnología: ' + t.n); Bus.emit('tech', k); renderTech(); return true;
 }
 function choosePath(k) {
   if (!['jefatura', 'mercado', 'templo', null].includes(k) || G.over) return false; G.x3.path = k;
@@ -1695,7 +1697,7 @@ function artHooks() {
     fxText(p.x, p.y - 28, 'murió: ' + why, '#ffb0a8', 2.2); pingAt(p.x, p.y, '#e0453a', 2.2); fxBurst(p.x, p.y - 8, '#8a8a96', 6, 20, .9, 1.8, 6);
   });
   Bus.on('build', (b, prog) => { if (!b) return; pa(b).stage = NOWT(); fxPuff(b.x, b.y + 8, '#cdbf9a', 12, .8); fxBurst(b.x, b.y, '#c9a36a', 6, 40, .5, 1.6, 14); if (prog > 0) fxText(b.x, b.y - (BTOP[b.k] || 24) - 8, 'etapa ' + (Math.round(prog * 4) + 1) + '/4', '#fff1b0', 1.3); });
-  Bus.on('built', (b, up) => { if (!b) return; pa(b).built = NOWT(); fxRing(b.x, b.y, '#ffe08a', 16, .9, 3); fxPuff(b.x, b.y + 8, '#e0d4b0', 18, 1); for (let i = 0; i < 4; i++) fxStar(b.x + rr(-18, 18), b.y - rr(6, 28), '#fff3a0', rr(4, 7), rr(.6, 1)); fxBurst(b.x, b.y - 8, '#ffe08a', 12, 60, .8, 1.8, 20); fxText(b.x, b.y - (BTOP[b.k] || 24) - 10, up ? '¡Mejorado: ' + lvOf(b.k, bl(b)).n + '!' : '¡Terminado!', '#ffe27a', 1.8); });
+  Bus.on('built', (b, up) => { if (!b) return; pa(b).built = NOWT(); fxRing(b.x, b.y, '#ffe08a', 16, .9, 3); fxPuff(b.x, b.y + 8, '#e0d4b0', 18, 1); for (let i = 0; i < 4; i++) fxStar(b.x + rr(-18, 18), b.y - rr(6, 28), '#fff3a0', rr(4, 7), rr(.6, 1)); fxBurst(b.x, b.y - 8, '#ffe08a', 12, 60, .8, 1.8, 20); fxText(b.x, b.y - (BTOP[b.k] || 24) - 10, up ? '¡Mejorado: ' + bName(b) + '!' : '¡Terminado!', '#ffe27a', 1.8); });
   Bus.on('raidPrep', c => { if (c) pingAt(c.x, c.y, CLAN_C[c.id] || '#e0453a', 4); });
   Bus.on('raid', (n, c) => { if (G) { fxRing(G.camp.x, G.camp.y, '#e0453a', 30, 1.2, 4); fxText(G.camp.x, G.camp.y - 40, '¡Saqueo!', '#ff9a8a', 2); } });
   Bus.on('alert', a => { if (a && a.level !== 'ok' && a.x) pingAt(a.x, a.y, a.level === 'crit' ? '#e0453a' : '#e8a21b', 2.4); });
@@ -1950,10 +1952,10 @@ function paintBadge(g, role) {
   else if (role === 'con') { L(-2.6, 3, .6, -.4); g.fillRect(-.6, -3.4, 4, 2.4); }
   else if (role === 'def' || role === 'gue') { g.beginPath(); g.moveTo(-2.8, -2.8); g.lineTo(2.8, -2.8); g.lineTo(2.8, .4); g.quadraticCurveTo(0, 3.6, 0, 3.6); g.quadraticCurveTo(-2.8, 1.8, -2.8, .4); g.closePath(); g.fill(); if (role === 'gue') { g.strokeStyle = c; L(0, -2, 0, 2); } }
   else if (role === 'cha') { g.beginPath(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, rr2 = i % 2 ? 1.3 : 3.2; i ? g.lineTo(Math.cos(a) * rr2, Math.sin(a) * rr2) : g.moveTo(Math.cos(a) * rr2, Math.sin(a) * rr2); } g.closePath(); g.fill(); }
-  else if (role === 'exp') { g.beginPath(); g.moveTo(0, -3.4); g.lineTo(1.6, 1.8); g.lineTo(0, .8); g.lineTo(-1.6, 1.8); g.closePath(); g.fill(); }
+  else if (role === 'exp') { g.beginPath(); g.moveTo(0, -3.9); g.lineTo(2.8, 2.8); g.lineTo(0, 1.2); g.lineTo(-2.8, 2.8); g.closePath(); g.fill(); }
   else if (role === 'tir') { g.beginPath(); g.arc(-1, 0, 3.2, -1.2, 1.2); g.stroke(); L(-2.4, 0, 3.4, 0); }
   else if (role === 'cam') { g.beginPath(); g.moveTo(-3.2, 2); g.lineTo(-3.2, -1.6); g.lineTo(-1.6, 0); g.lineTo(0, -3); g.lineTo(1.6, 0); g.lineTo(3.2, -1.6); g.lineTo(3.2, 2); g.closePath(); g.fill(); }
-  else { g.beginPath(); g.arc(0, 0, 1.4, 0, TAU); g.fill(); }
+  // sin oficio: insignia lisa, sin glifo
 }
 const badgeSprite = role => spr('BG|' + role, 14, 14, 7, 7, g => paintBadge(g, role));
 const st2of = p => ST2[p.st] || 'idle';
@@ -2175,7 +2177,7 @@ function renderTech() {
   const g = $('techGrid'); g.innerHTML = '';
   C.techs.forEach((row, a) => { const h = document.createElement('h3'); h.style.gridColumn = '1/-1'; h.style.marginTop = '6px'; h.textContent = 'Edad ' + ROMAN[a] + ' · ' + AGE_N[a] + (a + 1 > age() ? ' (bloqueada)' : ''); g.appendChild(h);
     row.forEach(t => { const b = document.createElement('button'), ch = techCheck(t.id); b.className = 'tc' + (has(t.id) ? ' done' : ''); b.disabled = has(t.id) || t.age > age(); b.dataset.t = t.id; b.innerHTML = '<b></b><span></span><em></em>';
-      b.children[0].textContent = (has(t.id) ? '✓ ' : '') + t.n; b.children[1].textContent = fxText(t.fx) + '. ' + t.d; b.children[2].textContent = has(t.id) ? 'Aprendida' : t.age > age() ? 'Se abre en la Edad ' + ROMAN[t.age - 1] : 'Costo: ' + techCost(t.id) + ' de ' + RN('saber') + (ch.ok ? '' : ' · ' + ch.why);
+      b.children[0].textContent = (has(t.id) ? '✓ ' : '') + t.n; b.children[1].textContent = fxDesc(t.fx) + '. ' + t.d; b.children[2].textContent = has(t.id) ? 'Aprendida' : t.age > age() ? 'Se abre en la Edad ' + ROMAN[t.age - 1] : 'Costo: ' + techCost(t.id) + ' de ' + RN('saber') + (ch.ok ? '' : ' · ' + ch.why);
       b.onclick = () => research(t.id); g.appendChild(b); }); });
 }
 function renderDip(focusId) {
@@ -2204,12 +2206,12 @@ function renderLin() {
   const l = readLineage(), b = $('linBox'), pk = $('spPick'); if (!b) return;
   if (l && l.era2) { const e = l.era2, C = CIVS[e.cls], amph = e.cls === 'acu' && e.tierra; pk.innerHTML = ''; pk.style.display = 'none';
     b.innerHTML = '<h3>Tu linaje</h3><span></span><br><small></small><br><small></small>'; b.children[1].textContent = linText(l);
-    b.children[3].textContent = 'Continuidad: tu ' + e.name + ' de la Era 2 funda ' + C.city + ' (' + C.n + (amph ? ', ciudad anfibia de costa porque salió del agua' : e.cls === 'acu' ? ', ciudad submarina' : '') + '). Especialización: ' + SPECIES[e.species].spec.n + ' (' + fxText(SPECIES[e.species].spec.fx) + ').';
-    b.children[5].textContent = e.traits.length ? 'Rasgos que pasan: ' + e.traits.map(t => TRAIT_FX[t][0] + ' (' + fxText(TRAIT_FX[t][1]) + ')').join(' · ') + '. Bono: +' + l.tier + ' de saber inicial.' : 'Sin rasgos de la Era 2. Bono: +' + l.tier + ' de saber inicial.'; return; }
+    b.children[3].textContent = 'Continuidad: tu ' + e.name + ' de la Era 2 funda ' + C.city + ' (' + C.n + (amph ? ', ciudad anfibia de costa porque salió del agua' : e.cls === 'acu' ? ', ciudad submarina' : '') + '). Especialización: ' + SPECIES[e.species].spec.n + ' (' + fxDesc(SPECIES[e.species].spec.fx) + ').';
+    b.children[5].textContent = e.traits.length ? 'Rasgos que pasan: ' + e.traits.map(t => TRAIT_FX[t][0] + ' (' + fxDesc(TRAIT_FX[t][1]) + ')').join(' · ') + '. Bono: +' + l.tier + ' de saber inicial.' : 'Sin rasgos de la Era 2. Bono: +' + l.tier + ' de saber inicial.'; return; }
   b.innerHTML = '<h3>Tu linaje</h3><span></span>'; b.lastChild.textContent = l ? linText(l) + '. No trae especie de la Era 2: elegí una abajo (+' + l.tier + ' de saber inicial).' : 'Sin linaje de la Era 2: elegí tu especie. La clase decide la civilización (Terrestres, Insectos, Acuáticos o Aves) y la especie, su especialización.';
   pk.style.display = ''; if (!pickSp) pickSp = 'ter_ingeniero'; pk.innerHTML = '';
   CIV_KEYS.forEach(c => { const h = document.createElement('h4'); h.textContent = CIVS[c].n + ' · ' + CIVS[c].city; pk.appendChild(h);
-    SP_KEYS.filter(k => SPECIES[k].cls === c).forEach(k => { const bt = document.createElement('button'); bt.type = 'button'; bt.dataset.sp = k; bt.className = pickSp === k ? 'on' : ''; bt.setAttribute('aria-pressed', pickSp === k ? 'true' : 'false'); bt.innerHTML = '<span></span><small></small>'; bt.firstChild.textContent = SPECIES[k].n; bt.lastChild.textContent = SPECIES[k].spec.n + ': ' + fxText(SPECIES[k].spec.fx);
+    SP_KEYS.filter(k => SPECIES[k].cls === c).forEach(k => { const bt = document.createElement('button'); bt.type = 'button'; bt.dataset.sp = k; bt.className = pickSp === k ? 'on' : ''; bt.setAttribute('aria-pressed', pickSp === k ? 'true' : 'false'); bt.innerHTML = '<span></span><small></small>'; bt.firstChild.textContent = SPECIES[k].n; bt.lastChild.textContent = SPECIES[k].spec.n + ': ' + fxDesc(SPECIES[k].spec.fx);
       bt.onclick = () => { pickSp = k; renderLin(); }; pk.appendChild(bt); }); });
 }
 addEventListener('keydown', e => { if (!started || !G) return; if (e.key === ' ') { e.preventDefault(); $('bPause').onclick(); } else if (e.key === '+' || e.key === '=') $('zIn').onclick(); else if (e.key === '-') $('zOut').onclick(); });
@@ -2273,14 +2275,14 @@ function hudTop(ti) {
   const pop = ti.pop, fd = ti.food, run = fd.net >= -.005 ? null : fd.stock / -fd.net, lowF = fd.stock < 2 || (run !== null && run < 45), midF = run !== null && run < 120;
   setT($('vSeason'), ti.seasonName); setT($('vYear'), 'año ' + ti.year); setT($('vSeasonIn'), (ti.season === 3 ? 'termina' : SEAS[(ti.season + 1) % 4].n.toLowerCase()) + ' en ' + ti.seasonIn + ' s');
   const rq = ti.ageReq, rok = rq.filter(r => r.ok).length; setT($('vAge'), 'Edad ' + ROMAN[ti.age - 1]); setT($('vAgeN'), ti.ageN); setT($('vAgeR'), ti.age < 3 ? rok + '/' + rq.length : ti.canFound ? '¡fundar!' : 'Maravilla'); $('cAge').title = ti.city + ' · Edad ' + ROMAN[ti.age - 1] + (ti.age < 3 ? ' · requisitos para la Edad ' + ROMAN[ti.age] + ': ' + rq.map(r => (r.ok ? '✓ ' : '· ') + r.t).join(' · ') : '');
-  setT($('vPop'), String(pop)); setT($('vPopT'), 'habitantes · ' + ti.children + ' crías');
+  setT($('vPop'), String(pop)); setT($('vPopT'), (mobile() ? '' : 'habitantes · ') + ti.children + ' crías');
   const segs = RORDER.concat('libre').concat(UKEYS).map(r => [ti.roles[r], r === 'libre' ? '#9a948a' : ROLES[r].c, r === 'libre' ? 'sin oficio' : isUnit(r) ? unitName(r) : ROLES[r].n]).concat([[ti.children, '#d8b98a', 'crías']]).filter(s => s[0] > 0);
   setH($('popBar'), segs.map(s => '<i title="' + s[2] + ': ' + s[0] + '" style="width:' + (s[0] / Math.max(1, pop) * 100).toFixed(1) + '%;background:' + s[1] + '"></i>').join('')); $('cPop').title = 'Población por oficio: ' + segs.map(s => s[2] + ' ' + s[0]).join(' · ');
   setT($('vFood'), Math.floor(fd.stock) + '/' + fd.cap); setT($('vFoodNet'), sg2(fd.net) + '/s');
   $('fBar').style.width = clamp(fd.stock / fd.cap * 100, 0, 100).toFixed(0) + '%'; const cls = 'meter' + (lowF ? ' crit' : midF ? ' warn' : ''); if ($('fMeter').className !== cls) $('fMeter').className = cls; $('mMeter').className = cls; $('mBar').style.width = $('fBar').style.width;
   const pin = fd.prod.rec + fd.prod.caz + fd.prod.agr + fd.prod.comercio + fd.prod.nodos, pout = fd.cons.comer + fd.cons.deterioro + fd.cons.saqueo + fd.cons.regalos + fd.cons.comercio + fd.cons.obras + fd.cons.unidades;
   setT($('vRun'), run === null ? 'estable · +' + f2(pin) + ' entra, −' + f2(pout) + ' sale' : 'alcanza ~' + Math.round(run) + ' s al ritmo actual (' + f2(pin) + ' entra, ' + f2(pout) + ' sale)');
-  $('cFood').classList.toggle('bad', lowF); $('mFoodBox').classList.toggle('bad', lowF); setT($('mFood'), Math.floor(fd.stock) + '/' + fd.cap + (run === null ? '' : ' · ~' + Math.round(run) + ' s')); setT($('mSeason'), RN('comida') + ' · Edad ' + ROMAN[ti.age - 1]);
+  $('cFood').classList.toggle('bad', lowF); $('mFoodBox').classList.toggle('bad', lowF); setT($('mFood'), Math.floor(fd.stock) + '/' + fd.cap + (run === null ? '' : ' · ~' + Math.round(run) + ' s')); setT($('mSeason'), RN('comida'));
   setT($('vWood'), Math.floor(ti.wood.stock) + '/' + ti.wood.cap); setT($('vWoodNet'), sg2(ti.wood.in - ti.wood.out) + '/s'); setT($('vStone'), Math.floor(ti.stone.stock) + '/' + ti.stone.cap); setT($('vStoneNet'), sg2(ti.stone.in - ti.stone.out) + '/s');
   setT($('vKnow'), f1(ti.know.stock)); setT($('vKnowNet'), sg2(ti.know.rate) + '/s'); setT($('vCoh'), pop + '/' + ti.cohesion.lim); $('cCoh').classList.toggle('bad', pop > ti.cohesion.lim);
   $('cWood').classList.toggle('bad', ti.wood.stock >= ti.wood.cap - .5 || (ti.wood.stock < 2 && ti.wood.trees === 0)); $('cStone').classList.toggle('bad', ti.stone.stock >= ti.stone.cap - .5 || (ti.stone.stock < 1 && ti.stone.rocks === 0));
@@ -2380,7 +2382,7 @@ function hudSide(ti, rv) {
   setT($('sm_eco'), (fd.net >= 0 ? '+' : '−') + f2(Math.abs(fd.net)) + ' comida/s');
   if ($('bx_eco').open) setH($('eco'), '<div class="sec">' + RNN('comida') + ' ' + Math.floor(fd.stock) + '/' + fd.cap + '</div>' + bar(fd.stock, fd.cap) + '<div class="kv"><span>Entra</span><b>+' + f2(prod.rec + prod.caz + prod.agr + prod.comercio + prod.nodos) + '/s</b><span>recolectores / cazadores / granjas / nodos</span><b>' + f2(prod.rec) + ' · ' + f2(prod.caz) + ' · ' + f2(prod.agr) + ' · ' + f2(prod.nodos) + '</b><span>Sale</span><b>−' + f2(cons.comer + cons.deterioro + cons.saqueo + cons.regalos + cons.comercio + cons.obras + cons.unidades) + '/s</b><span>comer / deterioro / obras</span><b>' + f2(cons.comer) + ' · ' + f2(cons.deterioro) + ' · ' + f2(cons.obras) + '</b><span>Neto</span><b>' + sg2(fd.net) + '/s</b></div>'
     + '<div class="sec">Recursos</div><div class="kv"><span>' + RNN('mat1') + ' ' + Math.floor(ti.wood.stock) + '/' + ti.wood.cap + ' (extractores ' + f2(ti.wood.ext) + '/s)</span><b>' + sg2(ti.wood.in - ti.wood.out) + '/s</b><span>' + RNN('mat2') + ' ' + Math.floor(ti.stone.stock) + '/' + ti.stone.cap + ' (extractores ' + f2(ti.stone.ext) + '/s)</span><b>' + sg2(ti.stone.in - ti.stone.out) + '/s</b><span>Perdido por almacén lleno</span><b>' + f2(ti.wood.lost + ti.stone.lost) + '/s</b><span>' + RNN('saber') + ' ' + f1(ti.know.stock) + '</span><b>' + sg2(ti.know.rate) + '/s</b><span>Tradición</span><b>' + f1(ti.trad.value) + '</b></div>'
-    + '<div class="sec">Refugio y necesidades</div><div class="kv"><span>Camas / personas</span><b>' + ti.housing.cap + ' / ' + ti.pop + '</b></div><div>' + (ti.housing.growthOk ? 'La tribu puede crecer.' : 'No crece: ' + esc(ti.housing.growthBlockers[0] || '')) + '</div><div class="nd">' + [['Hambre ' + ti.needs.hambre.v + '%', ti.needs.hambre.lvl], ['Sin abrigo ' + ti.needs.frio.v, ti.needs.frio.lvl], ['Defensa ' + f1(ti.needs.seguridad.v), ti.needs.seguridad.lvl], ['Cohesión ' + (ti.needs.cohesion.v > 0 ? '+' : '') + ti.needs.cohesion.v, ti.needs.cohesion.lvl]].map(n => '<i class="' + (lvlC[n[1]] || '') + '">' + n[0] + '</i>').join('') + '</div>');
+    + '<div class="sec">Refugio y necesidades</div><div class="kv"><span>Camas / personas</span><b>' + ti.housing.cap + ' / ' + ti.pop + '</b></div><div>' + (ti.housing.growthOk ? 'La población puede crecer.' : 'No crece: ' + esc(ti.housing.growthBlockers[0] || '')) + '</div><div class="nd">' + [['Hambre ' + ti.needs.hambre.v + '%', ti.needs.hambre.lvl], ['Sin abrigo ' + ti.needs.frio.v, ti.needs.frio.lvl], ['Defensa ' + f1(ti.needs.seguridad.v), ti.needs.seguridad.lvl], ['Cohesión ' + (ti.needs.cohesion.v > 0 ? '+' : '') + ti.needs.cohesion.v, ti.needs.cohesion.lvl]].map(n => '<i class="' + (lvlC[n[1]] || '') + '">' + n[0] + '</i>').join('') + '</div>');
   setT($('sm_log'), G.log[0] || ''); if ($('bx_log').open) setH($('log'), G.log.slice(0, 6).map(t => '<div>' + esc(t) + '</div>').join(''));
 }
 function hintText() {
@@ -2404,7 +2406,7 @@ const TUT3 = [
   { id: 'civ', info: 1, hl: '#cAge', t: 'Tu civilización', b: () => 'Sos ' + CIV().city + ' (' + CIV().n + ', ' + SPECIES[G.x3.sp].n + '). Colocás edificios en una grilla, producen solos, los mejorás y avanzás de Edad: Campamento, Aldea y Ciudad. Tu gente trabaja sola; vos administrás.', show: () => true },
   { id: 'colocar', hl: '#bBuild', t: 'Colocar', b: () => 'Tocá «Construir», elegí ' + slotName('vivienda', 1).toLowerCase() + ' o ' + slotName('granja', 1).toLowerCase() + ' y ponelo en la grilla dentro de tu territorio (círculo punteado). El fantasma verde dice que se puede; rojo, por qué no.', show: () => true, done: ti => ti.buildings.length > 1 },
   { id: 'generar', hl: '#bx_builds', t: 'Generar', b: () => slotName('granja', 1) + ', ' + slotName('ext1', 1).toLowerCase() + ' y ' + slotName('saber', 1).toLowerCase() + ' producen solos con obreros (puntos verdes sobre el edificio). Los almacenes tienen tope: lo que sobra se pierde.', show: ti => ti.buildings.some(b => b.done && b.k !== 'corazon'), done: ti => ti.buildings.some(b => b.done && ['granja', 'ext1', 'saber'].includes(b.k) && b.workers > 0) },
-  { id: 'mejorar', hl: '#bx_sel', t: 'Mejorar', b: () => 'Tocá un edificio terminado: en su ficha están «Mejorar», «Mover» y «Demoler». El nivel máximo depende de la Edad.', show: ti => ti.buildings.some(b => b.done && b.k !== 'corazon'), done: ti => ti.buildings.some(b => b.k !== 'corazon' && (b.upgrading || b.lvl > 1)) || ti.age >= 2 },
+  { id: 'mejorar', hl: '#bx_sel', t: 'Mejorar', b: () => 'Tocá un edificio terminado: en su ficha están «Mejorar», «Mover» y «Demoler». El nivel máximo depende de la Edad.', show: ti => ti.age >= 2 || ti.buildings.some(b => b.done && b.k !== 'corazon'), done: ti => ti.buildings.some(b => b.k !== 'corazon' && (b.upgrading || b.lvl > 1)) || ti.age >= 2 },
   { id: 'edad', hl: '#bx_age', t: 'Avanzar de Edad', b: () => 'El Corazón es tu Edad. En «Edades y civilización» ves los requisitos con su avance; cuando estén, tocá «Avanzar». Cada Edad agranda el territorio y abre edificios, niveles, tecnologías y unidades.', show: () => true, done: ti => ti.age >= 2 },
   { id: 'defender', hl: '#bx_army', t: 'Defender', b: () => 'Desde la Edad II: ' + slotName('cuartel', 1).toLowerCase() + ' entrena unidades y ' + slotName('torre', 1).toLowerCase() + ' dispara sola a los saqueadores. Los muros frenan el paso.', show: ti => ti.age >= 2, done: ti => ti.defense.torres > 0 || ti.defense.units > 0 },
   { id: 'expedicion', hl: '#bx_army', t: 'Expediciones', b: () => 'En la Edad III mandá unidades a los nodos lejanos (tomarlos y defenderlos) o a los campamentos rivales (atacar o comerciar). La Maravilla termina la Era 3.', show: ti => ti.age >= 3, done: ti => ti.army.out > 0 || ti.nodes.some(n => n.own === 2) }
@@ -2445,6 +2447,7 @@ function hud() {
   $('bPause').classList.toggle('on', G.paused); $('pauseTag').style.display = G.paused && !G.modal && !G.over ? 'block' : 'none'; tickerTick(); tutTick(ti, rv);
 }
 addEventListener('resize', layout);
+try { new ResizeObserver(() => layout()).observe($('cvWrap')); } catch (_) { }   // el mapa cambia de tamaño al abrir el menú de construcción
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', pal);
 let last = performance.now(), acc = 0, uiT = 0, palN = 0;
 function loop(now) {
@@ -2461,7 +2464,7 @@ window.__e3 = { scr(x, y) { const r = cv.getBoundingClientRect(); return { x: r.
   /* ciclo 4: bus, datos para la interfaz y acciones estratégicas */
   Bus, tribeInfo, rivalInfo, buildingInfo, roleInfo, upgradeBuilding, upgradeCheck, setPrio, releasePins, choosePath, deal, dealList, targetCounts, rebalance, alerts, growthCheck, tribeStr, raidSize, raidGate, spawnRaid, clanOf, relAdd, foodRunway, foodStress, workItems, farmSlots, shelterCap, foodCap, cohLimit, PERS, PRIOS, ROLES, RORDER, PATHS, STAGES, CLAN_SITES, POI_SITES, mkPerson, setRoleOf, ensureX3, discoverPoi, pathProgress, selectB(i) { selB = i; }, get x3() { return G && G.x3; },
   /* ciclo 4 · civilizaciones: datos, grilla, Edades, unidades, expediciones y continuidad */
-  CIVS, SL, SLOTS, SPECIES, SP_KEYS, TRAIT_FX, UNITS, UKEYS, AGE_R, AGE_REQ, NODE_SITES, GS, ASSETS, mods, get MSRC() { return MSRC; }, modsDirty() { modsDirty = true; }, mul, age, core, terrR, ageReq, placeCheck, findSpot, snapG, moveBuilding, demolish, refundOf, train, trainCheck, unitCost, sendExpedition, expCheck, recall, idleUnits, techCheck, techOf, canFound, found, foodCap, matCap, civSetup, civilians, slotName, bName, slotEffect, fxText, footprintWhy, OLD2SLOT, migrateCiv, set pickSp(v) { pickSp = v; }, get pickSp() { return pickSp; }, civUI,
+  CIVS, SL, SLOTS, SPECIES, SP_KEYS, TRAIT_FX, UNITS, UKEYS, AGE_R, AGE_REQ, NODE_SITES, GS, ASSETS, mods, get MSRC() { return MSRC; }, modsDirty() { modsDirty = true; }, mul, age, core, terrR, ageReq, placeCheck, findSpot, snapG, moveBuilding, demolish, refundOf, train, trainCheck, unitCost, sendExpedition, expCheck, recall, idleUnits, techCheck, techOf, canFound, found, foodCap, matCap, civSetup, civilians, slotName, bName, slotEffect, fxDesc, footprintWhy, OLD2SLOT, migrateCiv, set pickSp(v) { pickSp = v; }, get pickSp() { return pickSp; }, civUI,
   assets: { ASSETS, register(id, url) { const a = ASSETS[id]; if (!a) return false; a.src = url; a.img = new Image(); a.img.src = url; return true; }, ids: () => Object.keys(ASSETS) },
   /* ciclo 4 (arte, animación y HUD): solo lectura/diagnóstico; nada de esto toca la simulación */
   art: { STAT, SPR, AN, PA, ageCls, personSprite, bldSprite, scaffSprite, markerSprite, badgeSprite, spObj, drawPersonCiv, paintPerson, drawPerson, drawBuilding, drawRaider, drawWolf, drawPrey, drawGhost, drawNode, render, PSZ, ELD, RGEAR, POSES, CLAN_C, get SPRK() { return SPRK; }, set SPRK(v) { SPRK = v; }, spr, BTOP, ghostAt },

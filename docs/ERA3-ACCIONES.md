@@ -136,3 +136,29 @@ Dos clanes (`G.x3.clans`, `CLAN_SITES`): Clan del Este (880,150, radio 120) y Cl
 - Determinismo: solo `R()`; el mundo de clanes y puntos usa `mkRng` local. `Math.random`/`Date` no se usan en `update`.
 - Linaje: `evo_lineage` sin cambios de forma; se agrega `path` al escribirlo. La Era 4 lo lee igual.
 - Ganchos de prueba nuevos en `window.__e3`: `Bus, tribeInfo, rivalInfo, buildingInfo, roleInfo, upgradeBuilding, upgradeCheck, setPrio, releasePins, choosePath, deal, dealList, targetCounts, rebalance, alerts, growthCheck, tribeStr, raidSize, raidGate, spawnRaid, clanOf, relAdd, foodRunway, workItems, farmSlots, shelterCap, foodCap, cohLimit, mkPerson, setRoleOf, ensureX3, discoverPoi, pathProgress, selectB, x3` y `newGame(seed, {pers:[a,b]})`.
+
+## 8. Ciclo 4 · civilizaciones por clase (implementación del contrato `docs/ERA3-CIVILIZACIONES.md`)
+
+La simulación de arriba sigue (personas, oficios, prioridades, clanes, Bus, alertas, guardado); encima se agregó el constructor por Edades. Todo dirigido por datos en `eras/era3-tribus.html`:
+
+| Tabla | Qué tiene |
+| --- | --- |
+| `SL` | los 13 casilleros (`corazon` … `maravilla`): lado en celdas, Edad que lo abre, límite, y por nivel costo `w`/`s`/`f` (material 1, material 2, comida) y efecto `fx`. Un solo balance para las 4 civilizaciones |
+| `CIVS[ter\|ins\|acu\|ave]` | nombres de recursos (`res`), de cada casillero por nivel (`B`), único y Maravilla con efecto (`unico.fx`, `mar.fx`), 12 tecnologías (4 por Edad, `techs`/`tech`), bono de clase, nombres de unidades, campeón y terreno |
+| `SPECIES` | las 12 especies de la Era 2 (mismos ids que `SP2`) con su especialización (`spec.fx`) |
+| `TRAIT_FX` | los 36 rasgos de la Era 2 → bono chico con origen («Rasgo Colmillos y garras de la Era 2: +5 % daño de guerreros») |
+| `UNITS`, `AGE_REQ`, `NODE_SITES`, `ASSETS` | unidades del cuartel, requisitos de Edad, nodos lejanos e ids de arte (`ter.corazon.1`, `ins.vivienda.2`, `acu.unidad.guerrero`, `ave.terreno.amenaza`…) |
+
+**Efectos**: todo efecto es aditivo (`mods()`, `mul(k) = 1 + suma`) y sale de clase + especialización + rasgos + tecnologías + único + Maravilla; `tribeInfo().bonuses` lista cada fuente con su texto. Claves (`FXN`): `food farm cria mat1 mat2 kn build cap spoil carry hunt def atk hp birth cold hunger cook rad trade intel coh tower range ucost raid loss node spd prep wallhp beds scav sick`.
+
+**Grilla y territorio**: celdas de 20 px (48 × 30); edificios de 2×2 (Corazón y Maravilla 3×3, muro 1×1) con `b.gx, b.gy, b.sz` y centro `b.x, b.y`. Territorio: radio 6/10/14 celdas por Edad alrededor del Corazón. `placeCheck(k, gx, gy)` → `{ok, why, civ}` (fuera del territorio, ocupado, sobre el lago, hay árboles/rocas, Edad, límite, materiales, constructor); `findSpot(k, cerca)`; `placeBuilding(k, {x,y}|{gx,gy})`; `moveBuilding(b, …)` (sin costo); `demolish(b)` (devuelve 50 % de lo pagado; el Corazón no). Ciudad anfibia (`G.x3.amph`): al oeste del Corazón es tierra y los edificios son terrestres (`b.civ = 'ter'`, nivel máx. 2, o 3 con la especialización Anfibios) con extractores +20 %.
+
+**Productores y topes**: granja/cría (agricultores), extractores `ext1`/`ext2` (artesanos asignados con `p.wk`, sin viajes), saber (guardianes). Comida con tope `foodCap()` (lo que sobra se echa a perder); materiales con tope `matCap()` (lo que sobra se pierde: `G.x3.lost`, alerta `almacen`).
+
+**Edades**: la Edad es el nivel del Corazón (`age()`); `ageReq(n)` lista los requisitos con avance (población, edificios, 2 tecnologías de la Edad anterior, recursos). Subir el Corazón emite `age`. Edad II abre cría, extractor 2, muro, torre (dispara sola), cuartel, único; Edad III abre nivel 3, campeón, expediciones y la Maravilla. `found()` (con la Maravilla en pie) funda la civilización y escribe `evo_lineage.era3 = {civ, especie, edad, techs, maravilla, anfibia, ciudad, path}` (conserva `era2`, rama y nivel).
+
+**Unidades y expediciones**: `train(k)` (`gue`, `tir`, `cam`; cola de 3 por cuartel; el adulto deja su oficio), `sendExpedition('node'|'clan', i, 'tomar'|'atacar'|'comerciar', n)`, `recall(t, i)`. Un nodo tomado produce mientras lo defiendas; los clanes hostiles o belicosos lo disputan (`Rd` con `nd`). Atacar el campamento rival: botín y miedo (tarda en volver a saquearte), relación −25.
+
+**Bus (nuevos)**: `age (n)`, `train (k, fin, p)`, `expedition (modo, destino, n, resultado|null)`, `node (nodo, dueño)`, `move (b)`, `demolish (b, devolución)`, `wonder (b)`. Los de la §6 siguen iguales (el audio los usa).
+
+**Guardado**: `evo_save3_v1` sigue en `v:1`; lo nuevo va en `G.x3` (`v: 2`, `civ, sp, amph, traits, nodes, q, ages, wonder, found, lost`) y por edificio (`gx, gy, sz, civ, hp`) y persona (`wk` índice de edificio en el guardado, `ord`). Una partida vieja se migra (`migrateCiv`): Terrestres, fogata → Corazón donde estaba, cada edificio al casillero equivalente en la celda libre más cercana (`OLD2SLOT`), tecnologías al árbol terrestre (`OLD2TECH`). Pruebas: `tests/era3-civs.js`, `tests/era3-ciclo.js`, `tests/era3-ui.js`, `tests/era3-arte.js`, `tests/era3-guardado.js`, `tests/era3-bot.js`; balance `tests/era3-civs-run.js` (ver `tests/era3-civs-balance.md`).

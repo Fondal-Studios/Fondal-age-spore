@@ -1,7 +1,7 @@
 // Bots de la Era 3 (Ciclo 4 · civilizaciones), para inyectar en la página: window.runBot3(seed, diff, maxT, perfil, opts) -> resultado.
 // Perfiles: economico, defensivo, militar (expediciones), clash (construye y mejora todo) + 'idle' (no toca nada).
 // Juegan SOLO por la API pública de __e3 (placeBuilding/findSpot, upgradeBuilding, research, train, sendExpedition, deal, setPrio, found): nada de modificar G a mano.
-// opts: { species, tierra, traits, world: {pers:[a,b]} }
+// opts: { species, tierra, traits, world: {pers:[a,b]}, stopAge, stopAfter, noFound }
 window.BOTS3 = {
   economico: { w: { food: 3, farm: 3, cria: 2, mat1: 2, mat2: 2, cap: 2, build: 2, kn: 2, carry: 2, spoil: 1, birth: 1, cook: 1, def: .5, tower: .5 }, towers: 1, walls: 0, units: { gue: 1 }, upgrade: ['granja', 'ext1', 'almacen', 'vivienda', 'ext2', 'saber', 'cria'], maxWorks: 2, prio: { comida: 2, construccion: 2, defensa: 1, exploracion: 0, saber: 1 }, exp: 'caravana', gifts: 25 },
   defensivo: { w: { def: 3, tower: 3, wallhp: 2, loss: 2, hp: 2, food: 2, farm: 2, mat1: 1, mat2: 1, cap: 1, kn: 1, build: 1 }, towers: 3, walls: 8, units: { gue: 2, tir: 1 }, upgrade: ['torre', 'muro', 'granja', 'vivienda', 'almacen', 'ext1', 'ext2'], maxWorks: 2, prio: { comida: 1, construccion: 1, defensa: 2, exploracion: 0, saber: 1 }, exp: 'nodos', gifts: 0 },
@@ -20,7 +20,8 @@ window.runBot3 = function (seed, diff, maxT, perfil, opts) {
     E.step(.05); tick++; if (tick % 20) continue;
     const G = E.G; if (!B) continue;
     if (!setP) { for (const k in B.prio) E.setPrio(k, B.prio[k]); setP = true; }
-    if (E.canFound()) { E.found(); break; }
+    if (opts.stopAge && E.age() >= opts.stopAge && G.t - (G.x3.ages[opts.stopAge] || 0) >= (opts.stopAfter || 0)) break;
+    if (E.canFound() && !opts.noFound) { E.found(); break; }
     const ad = E.adults(); if (!ad.length) continue;
     const age = E.age(), core = E.core(), ti = null; void ti;
     // 1. tecnología: la de mejor puntaje del perfil entre las disponibles
