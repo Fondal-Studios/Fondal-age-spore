@@ -9,7 +9,7 @@ Fecha: 2026-11-17. Este documento separa lo **verificado en CI**, lo **verificad
 | `main` | `211e740` (sin cambios en este ciclo; no se hizo merge) |
 | PR #1 (Ciclo 3) | https://github.com/Fondal-Studios/Fondal-age-spore/pull/1, rama `claude/dazzling-davinci-wvedmk` @ `34505c5`, CI run #26 verde. Esperando autorización del dueño para el merge |
 | PR #2 (Ciclo 4, borrador) | https://github.com/Fondal-Studios/Fondal-age-spore/pull/2, rama `claude/ciclo4-estrategia-evolutiva`, base = rama del PR #1 |
-| Commit probado en CI | `032ae83`, run #27 (ver §1.1) |
+| Commit probado en CI | `7b51ccb`, run #29 verde (ver «Registro de CI») |
 | Diferencia con el PR #1 | 26 commits, 140 archivos, +23 525 / −751 líneas (incluye ~16 800 de biblias de arte y prompts) |
 
 ### 1.1 CI
@@ -142,4 +142,4 @@ Recomendación: la equilibrada. Sin datos de personas, la Era 2 y la Era 3 son a
 ## Registro de CI
 - Run #27 (`032ae83`): cancelado por un push posterior (concurrencia).
 - Run #28 (`6b99849`): Era 1, Era 2 (con `era2-evolucion`), Era 4 y Audio en verde; **Era 3 falló**. `era3-bot.js` se colgó hasta el límite de 30 min: el CI le pasa las rutas de captura como primer argumento y la versión nueva leía ahí los segundos (`T = NaN`, espera infinita). Se corrigió en el test, que ahora acepta ambas formas; corrido en local con los mismos argumentos que el CI: OK en 4 min.
-- Run siguiente: ver https://github.com/Fondal-Studios/Fondal-age-spore/pull/2 (checks).
+- **Run #29 (`7b51ccb`): verde en los 5 jobs** (Era 1, 2, 3, 4 y Audio Eras 3-4). https://github.com/Fondal-Studios/Fondal-age-spore/actions/runs/44086582335. Los commits posteriores solo tocan este documento.
