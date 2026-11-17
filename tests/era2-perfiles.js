@@ -1,6 +1,6 @@
 // Balance de la Era 2 por especie x dificultad x perfil x bioma, con causas de derrota. Reproducible con una sola orden:
 //   NODE_PATH=$(npm root -g) node tests/era2-perfiles.js <etiqueta> [--n 2] [--diffs 0,1,2] [--profiles razonable,cazador,...|all] [--specs ter_cazador,...|all]
-//        [--biomes pradera,selva,...] [--col2 selva,desierto,...] [--maxT 900] [--workers 4] [--html ruta] [--ov '{"1":{"hd":3}}'] [--abOff rug,ala] [--agg]
+//        [--biomes pradera,selva,...] [--col2 selva,desierto,...] [--maxT 900] [--workers 4] [--html ruta] [--ov '{"1":{"hd":3}}'] [--abOff rug,ala] [--tierra si|no] [--agg]
 // n = repeticiones por (especie, dificultad, perfil, bioma); la semilla es 'P<dif><perfil><bioma><especie>#<i>'.
 // Con --agg solo vuelve a imprimir las tablas de tests/.balance-out/<etiqueta>.json. Los bots viven en tests/era2-perfiles-bot.js.
 const { chromium } = require('playwright'); const fs = require('fs'), path = require('path'), cp = require('child_process');
@@ -73,7 +73,7 @@ async function worker(jobFile, i, n, tag) {
   for (let k = i; k < J.jobs.length; k += n) {
     const j = J.jobs[k]; let r = null;
     for (let intento = 0; intento < 3 && !r; intento++) {
-      try { r = await p.evaluate(o => window.runProfile(o), Object.assign({ maxT: J.maxT, abOff: J.abOff }, j)); r.maxT = J.maxT; }
+      try { r = await p.evaluate(o => window.runProfile(o), Object.assign({ maxT: J.maxT, abOff: J.abOff, tierra: J.tierra || null }, j)); r.maxT = J.maxT; }
       catch (e) { const m = String(e.message).slice(0, 200); if (/closed|crash|disconnected/i.test(m) && intento < 2) { errs.push('reintento: ' + m.slice(0, 60)); await open(); } else r = { error: m, job: j, end: 'error', diff: j.diff, spec: j.spec, profile: j.profile, biome: j.biome, dc: {}, stSh: {}, eat: {}, hungryDeaths: 0 }; }
     }
     out.push(r); fs.writeFileSync(path.join(OUT, tag + '-w' + i + '.json'), JSON.stringify({ out, errs: errs.slice(0, 8) }));
@@ -89,7 +89,7 @@ async function worker(jobFile, i, n, tag) {
   const col2s = a.col2 ? a.col2.split(',') : [null];   // --col2 selva,tundra...: empieza en el bioma indicado (pradera por defecto) y el 2.º ecosistema que coloniza es ESE (el camino real del jugador: Empezar siempre es en la pradera)
   const jobs = []; for (const bio of biomes) for (const c2 of col2s) for (const d of diffs) for (const pr of profs) for (const sp of specsA) { if ((bio === 'oceano' || c2 === 'oceano') && !HAB[sp] && c2 === 'oceano') continue; if (bio === 'oceano' && !HAB[sp]) continue; for (let i = 0; i < n; i++) jobs.push({ seed: 'P' + d + pr + bio + (c2 || '') + sp + '#' + i, diff: d, spec: sp, profile: pr, biome: bio, col2: c2 }); }
   // mezcla estable para repartir las partidas largas entre los workers
-  jobs.sort((x, y) => (x.seed < y.seed ? -1 : 1)); const jf = path.join(OUT, label + '-jobs.json'); fs.writeFileSync(jf, JSON.stringify({ jobs, maxT, html: a.html || null, ov: a.ov ? JSON.parse(a.ov) : null, abOff: a.abOff ? a.abOff.split(',') : [], js: a.js || null }));
+  jobs.sort((x, y) => (x.seed < y.seed ? -1 : 1)); const jf = path.join(OUT, label + '-jobs.json'); fs.writeFileSync(jf, JSON.stringify({ jobs, maxT, html: a.html || null, ov: a.ov ? JSON.parse(a.ov) : null, abOff: a.abOff ? a.abOff.split(',') : [], js: a.js || null, tierra: a.tierra || null }));
   console.log('partidas: ' + jobs.length + ', workers: ' + W); const t0 = Date.now();
   await Promise.all(Array.from({ length: W }, (_, i) => new Promise(res => { const c = cp.spawn(process.execPath, [__filename, '--worker', jf, '--i', String(i), '--n', String(W), '--tag', label], { stdio: 'inherit', env: process.env }); c.on('exit', res); })));
   let rs = [], errs = []; for (let i = 0; i < W; i++) { const f = path.join(OUT, label + '-w' + i + '.json'); if (fs.existsSync(f)) { const d = JSON.parse(fs.readFileSync(f)); rs = rs.concat(d.out); errs = errs.concat(d.errs); fs.unlinkSync(f); } }

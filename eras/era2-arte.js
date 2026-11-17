@@ -330,6 +330,26 @@
     h.Lit(-r * .1, 0, r * 1.0, r * .8, col); x.strokeStyle = 'rgba(0,0,0,.4)'; x.lineWidth = 1; x.beginPath(); x.moveTo(r * .75, 0); x.lineTo(-r * 1.0, 0); x.stroke(); h.gloss(-r * .3, -r * .3, r * .5, r * .15, .35);
     h.Lit(r * 1.0, 0, r * .34, r * .3, shade(col, .6)); h.A = { fx: 1.4, hx: 1.0, eyeY: .2, bw: .8, bl: 1.0, bx: -1.0, tx: -1.1, neck: .6, hr: .3 };
   };
+  /* --- Ciclo 4: tetrápodo de tierra (acuático que completó la transición): cuerpo largo y bajo, cuatro patas con codo, escamas, sin branquias --- */
+  DRAW.tetrapodo = h => {
+    const { x, r, col, P } = h, w = P.tt * (P.mv ? 9 : 3) + P.ph, K = P.legK, dk = shade(col, .55);
+    const spine = t => Math.sin(w - t * 2.2) * r * (P.mv ? .14 : .05);
+    x.beginPath(); x.moveTo(-r * .7, -r * .3); const tp = [[-1.3, .24], [-1.9, .14], [-2.5, .07], [-3.0, 0]];
+    for (const [px, wd] of tp) x.lineTo(r * px, -r * wd + spine(-px));
+    for (let i = tp.length - 1; i >= 0; i--) x.lineTo(r * tp[i][0], r * tp[i][1] + spine(-tp[i][0])); x.lineTo(-r * .7, r * .3); x.closePath();
+    x.fillStyle = h.lit(r * 1.6, r * .35, -r * 1.6, 0, shade(col, .8)); x.fill(); x.lineWidth = h.lw; x.strokeStyle = INK; x.stroke();
+    for (const s of [-1, 1]) for (const f of [0, 1]) { const px = f ? .7 : -.5, sg = (f ? 1 : -1) * s * P.sw, kx = px * r + (f ? .35 : -.35) * r + sg * r * .3 * K, ky = s * r * (.75 + .35 * K), fx = kx + (f ? .3 : -.1) * r + sg * r * .15, fy = s * r * (1.0 + .45 * K);
+      x.strokeStyle = INK; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = r * .24 + h.lw * 1.3; x.beginPath(); x.moveTo(px * r, s * r * .25); x.lineTo(kx, ky); x.lineTo(fx, fy); x.stroke(); x.strokeStyle = shade(col, .8); x.lineWidth = r * .24; x.stroke();
+      x.strokeStyle = INK; x.lineWidth = Math.max(1, r * .07); x.beginPath(); for (const k of [-1, 0, 1]) { x.moveTo(fx, fy); x.lineTo(fx + r * .22 + k * r * .05, fy + s * k * r * .14); } x.stroke(); }
+    h.Lit(0, 0, r * 1.05, r * (.48 + .02 * P.br), col); h.Lit(-r * .55, 0, r * .6, r * .42, col);
+    x.strokeStyle = dk; x.lineWidth = Math.max(1, r * .07); x.beginPath(); for (let i = 0; i < 6; i++) { const px = r * (.6 - i * .32); x.moveTo(px - r * .14, -r * .16); x.lineTo(px, 0); x.lineTo(px - r * .14, r * .16); } x.stroke();
+    h.gloss(-r * .1, -r * .22, r * .6, r * .08, .25);
+    const hx = r * (1.4 + P.hd);
+    h.Lit(hx, 0, r * .55, r * .4, col); h.Lit(hx + r * .45, 0, r * .32, r * (.26 + .04 * P.jaw), shade(col, 1.1));
+    x.strokeStyle = 'rgba(30,15,20,.7)'; x.lineWidth = Math.max(1, r * .05); x.beginPath(); x.moveTo(hx + r * .2, -r * .16); x.lineTo(hx + r * .72, 0); x.lineTo(hx + r * .2, r * .16); x.stroke();
+    h.eye(hx + r * .05, -r * .28, r * .12, '#f0c040'); h.eye(hx + r * .05, r * .28, r * .12, '#f0c040');
+    h.A = { fx: hx / r + .75, hx: hx / r, eyeY: .28, bw: .48, bl: 1.05, bx: -.7, tx: -3.0, neck: .95, hr: .4 };
+  };
   const KEYMAP = { lobo: 'ter_cazador', oso: 'ter_gigante', lucio: 'gen_acu', pez: 'gen_acu', conejo: 'gen_ter', ciervo: 'gen_ter', escarabajo: 'escarabajo' };
   const GMAP = { ter: 'gen_ter', acu: 'gen_acu', ave: 'ave_rapaz', ins: 'ins_enjambre' };
 
@@ -372,22 +392,63 @@
     fuego: (x, r, t, A) => { const bx = A.bx * r - r * .2; x.fillStyle = '#ffcf3a'; x.beginPath(); x.moveTo(bx, -r * .4); x.quadraticCurveTo(bx - r * .3, -r * (1.1 + .15 * Math.sin(t * 10)), bx + r * .2, -r * 1.25); x.quadraticCurveTo(bx + r * .3, -r * .7, bx, -r * .4); x.fill(); x.fillStyle = '#ff6b1b'; x.beginPath(); x.arc(bx + r * .1, -r * .55, r * .2, 0, TAU); x.fill(); },
     lenguaje: (x, r, t, A) => { const cy = -r * (A.bw + 1.0); x.fillStyle = '#fff'; x.strokeStyle = INK; x.lineWidth = .9; x.beginPath(); x.ellipse(r * .4, cy, r * .65, r * .38, 0, 0, TAU); x.fill(); x.stroke(); x.beginPath(); x.moveTo(r * .1, cy + r * .3); x.lineTo(r * .0, cy + r * .6); x.lineTo(r * .3, cy + r * .35); x.fill(); x.fillStyle = '#333'; for (const k of [-.3, 0, .3]) { x.beginPath(); x.arc(r * .4 + k * r, cy, r * .07, 0, TAU); x.fill(); } }
   };
+  /* Ciclo 4: partes nuevas de la transición a tierra y de «quedarse en el agua». lobuladas se dibuja DEBAJO del cuerpo (UNDER). */
+  TV.lobuladas = (x, r, t, A, v, h) => { const sw = Math.sin(t * 6 + (h.P.ph || 0)) * .25; for (const s of [-1, 1]) for (const f of [.45, -.45]) { x.save(); x.translate(f * r, s * A.bw * r * .7); x.rotate(s * (.9 + (f > 0 ? sw : -sw))); x.beginPath(); x.ellipse(r * .45, 0, r * .55, r * .2, 0, 0, TAU); x.fillStyle = shade(h.col, .8); x.fill(); x.lineWidth = Math.max(1, r * .08); x.strokeStyle = INK; x.stroke(); x.strokeStyle = 'rgba(250,240,220,.85)'; x.lineWidth = Math.max(1, r * .07); x.beginPath(); x.moveTo(r * .05, 0); x.lineTo(r * .55, 0); x.lineTo(r * .85, -r * .08); x.stroke(); x.restore(); } };
+  TV.pulmones = (x, r, t, A) => { const u = (t * .9) % 1; x.globalAlpha = 1 - u; x.fillStyle = 'rgba(220,245,255,.9)'; x.strokeStyle = INK; x.lineWidth = 1; for (const k of [0, .5]) { const q = (u + k) % 1; x.beginPath(); x.arc(A.fx * r + r * (.1 + q * .5), -r * (.3 + q * .6), r * (.08 + q * .1), 0, TAU); x.fill(); x.stroke(); } x.globalAlpha = 1; };
+  TV.amniota = (x, r, t, A) => { x.fillStyle = '#f4ecd0'; x.strokeStyle = INK; x.lineWidth = Math.max(.8, r * .06); x.beginPath(); x.ellipse(A.bx * r - r * .2, A.bw * r * 1.6, r * .22, r * .3, .3, 0, TAU); x.fill(); x.stroke(); x.strokeStyle = 'rgba(120,90,60,.6)'; x.beginPath(); x.moveTo(A.bx * r - r * .32, A.bw * r * 1.5); x.lineTo(A.bx * r - r * .1, A.bw * r * 1.7); x.stroke(); };
+  TV.radiadas = (x, r, t, A, v, h) => { const sw = Math.sin(t * 9 + (h.P.ph || 0)) * .2; x.strokeStyle = INK; x.lineWidth = Math.max(1, r * .06); for (const s of [-1, 1]) { x.save(); x.translate(r * .1, s * A.bw * r * .8); x.rotate(s * (1.2 + sw)); x.beginPath(); x.moveTo(0, 0); for (let k = 0; k <= 4; k++) { const q = -.5 + k * .25; x.lineTo(Math.cos(q) * r * 1.0, Math.sin(q) * r * 1.0); x.lineTo(Math.cos(q + .12) * r * .55, Math.sin(q + .12) * r * .55); } x.closePath(); x.fillStyle = 'rgba(90,170,240,.75)'; x.fill(); x.stroke(); x.restore(); } };
+  const UNDER = { lobuladas: 1 }, ACACHE = {};
+
+  /* ================================================================ MORFOLOGÍA (Ciclo 4) ================================================================
+     Cada rasgo cambia el cuerpo entero, no solo agrega un trazo: k = tamaño, sx/sy = largo y ancho, tint = [color, cuánto] hacia el que vira el color.
+     Variante A: más grande y la parte ×1,12; variante B: más alargado y el color ×1,6. Maestría: aura del color del hilo. Híbrido: bandas en el lomo.
+     Etapas de la transición a tierra (acuáticos): 1 aletas lobuladas debajo del pez, 2 cuerpo de anfibio con patas, 3 tetrápodo de tierra.
+     Todo procedural y barato: es un marcador hasta que llegue el arte de Runway (docs/ARTE-RUNWAY-ERA2.md). */
+  const MORPH = {
+    alas: { k: 1.04 }, aletas: { sy: .9, tint: ['#3f8fd1', .2] }, patas: { sx: 1.14, sy: .88 }, caparazon: { k: 1.12, sy: 1.18, tint: ['#7a6040', .35] }, exo: { sy: 1.05, tint: ['#3a3048', .3] }, piel: { k: 1.1, sy: 1.1, tint: ['#efe6d4', .25] },
+    garras: { k: 1.04, tint: ['#a03020', .15] }, cuernos: { k: 1.08 }, aguijon: { sx: 1.1, tint: ['#d8a020', .22] }, olfato: { sx: 1.05 }, vision: { tint: ['#20202a', .12] }, eco: { sx: 1.06, tint: ['#5a64d0', .15] },
+    sangre: { k: 1.04, tint: ['#e05030', .2] }, hiber: { k: 1.08, sy: 1.12, tint: ['#9ab0c8', .2] }, digest: { sy: 1.14 }, camadas: { k: .9 }, cuidado: { k: 1.08 }, metamorfosis: { tint: ['#a070d0', .2] },
+    manada: { k: 1.05, tint: ['#5a4a3a', .12] }, colmena: { tint: ['#e0b020', .25] }, territorio: { k: 1.06 }, veneno: { tint: ['#22c040', .45] }, feromonas: { tint: ['#a050d0', .15] }, defquim: { tint: ['#e0e030', .3] },
+    camuflaje: { tint: ['#5a7a3a', .45] }, senuelo: { sx: 1.04, tint: ['#f0f0f0', .15] }, imitacion: { tint: ['#f0c020', .4] }, madriguera: { sy: 1.06, tint: ['#7b5a3a', .2] }, nido: { k: 1.03 }, ingenieria: { tint: ['#4a9a3a', .15] },
+    migracion: { sx: 1.1, sy: .92 }, reserva: { sy: 1.14, tint: ['#4aa8e0', .12] }, pirofila: { tint: ['#e06020', .25] }, herramientas: { k: 1.05 }, fuego: { tint: ['#c05020', .12] }, lenguaje: { k: 1.05, tint: ['#3f56d9', .1] },
+    radiadas: { sx: 1.12, sy: .88, tint: ['#3a8ad0', .25] }, lobuladas: { sy: 1.06, tint: ['#7a8a50', .2] }, pulmones: { tint: ['#6a9a50', .3] }, amniota: { k: 1.06, tint: ['#8a7a4a', .35] }
+  };
+  const THREAD = { Movimiento: '#2f7fd1', Defensa: '#7a8a90', Ataque: '#d1495b', Sentidos: '#e0a526', Metabolismo: '#e08a1e', 'Reproducción': '#c9406f', Social: '#12958f', 'Química': '#8a5cd0', 'Engaño': '#8c6a3b', 'Construcción': '#8c5a2b', Entorno: '#4f9d3a', Mente: '#3f56d9' };
+  function mix(a, b, t) { if (t <= 0) return a; const p = parseInt(a.slice(1), 16), q = parseInt(b.slice(1), 16), f = (s) => [(s >> 16) & 255, (s >> 8) & 255, s & 255], A = f(p), B = f(q); return '#' + A.map((v, i) => clamp(Math.round(v + (B[i] - v) * Math.min(1, t)), 0, 255).toString(16).padStart(2, '0')).join(''); }
+  const _mo = new Map();
+  function stageOf(sp, traits) { if (!(sp.g === 'acu' || /^acu_/.test(sp.key || ''))) return -1; if (!sp.cls && !/^acu_/.test(sp.key || '')) return -1; let s = sp.key === 'acu_anfibio' ? 2 : 0; if (traits) for (const id of traits) { const v = id === 'lobuladas' ? 1 : id === 'pulmones' ? 2 : id === 'amniota' ? 3 : 0; if (v > s) s = v; } return s; }
+  function morphOf(sp, traits, vars) {
+    const key = (sp.key || '') + '|' + sp.col + '|' + (traits ? traits.join(',') : '') + '|' + (vars ? JSON.stringify(vars) : '') + '|' + (sp.mast ? sp.mast.join(',') : '') + '|' + (sp.hyb ? sp.hyb.join(',') : '');
+    let m = _mo.get(key); if (m) return m; if (_mo.size > 600) _mo.clear();
+    let k = 1, sx = 1, sy = 1, col = sp.col || '#888888', n = 0;
+    if (traits) for (const id of traits) { const d = MORPH[id]; if (!d) continue; const v = vars ? vars[id] : null; n++;
+      k *= (d.k || 1) * (v === 'A' ? 1.06 : 1); sx *= (d.sx || 1) * (v === 'B' ? 1.07 : 1); sy *= (d.sy || 1) * (v === 'B' ? .95 : 1);
+      if (d.tint) col = mix(col, d.tint[0], d.tint[1] * (v === 'B' ? 1.6 : 1)); }
+    k *= 1 + Math.min(.14, n * .012);   // cada evolución suma un poco de tamaño (la especie se ve «más evolucionada»)
+    k = clamp(k, .8, 1.5); sx = clamp(sx, .8, 1.35); sy = clamp(sy, .8, 1.4);
+    const mast = (sp.mast || []).map(h => THREAD[h] || '#ffffff'), hyb = (sp.hyb || []).length, stage = stageOf(sp, traits);
+    m = { k, sx, sy, col, mast, hyb, stage, key }; _mo.set(key, m); return m;
+  }
 
   /* ================================================================ drawAnimal ================================================================ */
   function drawAnimal(x, sp, o) {
     const r = sp.r * o.s, tt = o.tt || 0, ph = o.ph || 0, a = o.a || 0, P = pose(o, tt, ph);
     const lite = !!o.lite, dead = o.dead || 0, bornK = o.born == null ? 1 : o.born;
+    const M = (sp.team === 'wild' || (!o.traits || !o.traits.length) && !(sp.mast && sp.mast.length) && stageOf(sp, null) < 1) ? null : morphOf(sp, o.traits, o.vars);
     x.save(); x.translate(o.px, o.py); x.rotate(a);
+    if (M) { x.scale(M.k * M.sx, M.k * M.sy); if (M.mast.length && !lite) { const hr0 = r * 1.9; for (let i = 0; i < M.mast.length; i++) { x.strokeStyle = M.mast[i]; x.globalAlpha = .55 + .2 * Math.sin(tt * 3 + i); x.lineWidth = Math.max(1.5, r * .16); x.setLineDash([r * .5, r * .3]); x.beginPath(); x.ellipse(0, 0, hr0 + i * r * .25, hr0 * .72 + i * r * .2, 0, 0, TAU); x.stroke(); } x.setLineDash([]); x.globalAlpha = 1; } }
     if (bornK < 1) { const k = Math.max(.05, bornK), ov = k < .8 ? k / .8 * 1.1 : 1.1 - (k - .8) / .2 * .1; x.scale(ov, ov); }
     if (dead > 0) { x.rotate(dead * 1.25); x.scale(1 + dead * .1, 1 - dead * .28); x.globalAlpha = Math.max(0, 1 - dead * dead * 1.05); }
     if (P.hurt > 0) { x.scale(1 - .16 * P.hurt, 1 + .12 * P.hurt); }
     if (P.lunge > 0) x.translate(r * .5 * P.lunge, 0);
     if (P.lay) { const k = Math.sin(tt * 6) * .05; x.scale(1 + k, 1 - k); }
     x.lineCap = 'round'; x.lineJoin = 'round';
-    const col = o.flash > 0 ? '#ffffff' : sp.col, h = mkH(x, r, col, P); h.sp = sp;
-    const fn = DRAW[sp.key] || DRAW[KEYMAP[sp.key]] || DRAW[GMAP[sp.g]] || DRAW.gen_ter;
-    fn(h, sp);
+    const col = o.flash > 0 ? '#ffffff' : M ? M.col : sp.col, h = mkH(x, r, col, P); h.sp = sp;
+    const st = M ? M.stage : -1, fn = st === 3 ? DRAW.tetrapodo : st === 2 && sp.key !== 'acu_anfibio' ? DRAW.acu_anfibio : DRAW[sp.key] || DRAW[KEYMAP[sp.key]] || DRAW[GMAP[sp.g]] || DRAW.gen_ter;
+    if (!lite && o.traits) for (const id of o.traits) if (UNDER[id] && st < 2) { const A0 = ACACHE[sp.key] || { bw: .8, bl: 1, fx: 1.4, hx: .9, bx: -.9, tx: -1.9, neck: .5, hr: .4, eyeY: .3 }; x.save(); TV[id](x, r, tt, A0, o.vars ? o.vars[id] : null, h); x.restore(); }
+    fn(h, sp); if (!ACACHE[sp.key] && st < 1) ACACHE[sp.key] = h.A;
     const A = h.A;
+    if (M && M.hyb && !lite) { x.save(); x.beginPath(); x.ellipse(-r * .1, 0, r * A.bl * .95, r * A.bw * .95, 0, 0, TAU); x.clip(); x.fillStyle = 'rgba(30,20,40,.28)'; for (let i = 0; i < 1 + M.hyb * 2; i++) { const px = r * (-.9 + i * .45); x.beginPath(); x.moveTo(px, -r); x.lineTo(px + r * .18, -r); x.lineTo(px - r * .05, r); x.lineTo(px - r * .23, r); x.closePath(); x.fill(); } x.restore(); }
     if (o.lin && o.lin.col) {   // cinta de la rama heredada
       x.fillStyle = o.lin.col; x.strokeStyle = INK; x.lineWidth = Math.max(1, r * .08); const nx = A.neck * r - r * .14, bw = A.bw * r * 1.05;
       x.beginPath(); x.rect(nx, -bw, r * .26, bw * 2); x.fill(); x.stroke();
@@ -395,7 +456,7 @@
     }
     if (o.cloth) { x.fillStyle = 'rgba(18,149,143,.92)'; x.fillRect(A.neck * r - r * .5, -A.bw * r * .95, r * .22, A.bw * r * 1.9); x.fillStyle = '#ffe08a'; x.fillRect(A.neck * r - r * .5, -r * .16, r * .22, r * .32); }
     if (!lite && o.traits) for (const id of o.traits) {
-      const f = TV[id]; if (!f) continue; const v = o.vars ? o.vars[id] : null;
+      const f = TV[id]; if (!f || UNDER[id]) continue; const v = o.vars ? o.vars[id] : null;
       x.save(); x.lineCap = 'round'; x.lineJoin = 'round'; if (v === 'A') x.scale(1.12, 1.12); f(x, r, tt, A, v, h); x.restore();
     }
     if (o.flash > 0) { x.fillStyle = 'rgba(255,255,255,.35)'; x.beginPath(); x.ellipse(0, 0, r * 1.2, r * .9, 0, 0, TAU); x.fill(); }
@@ -403,6 +464,7 @@
   }
 
   /* ================================================================ ESTADO COSMÉTICO (efectos) ================================================================ */
+  const VIEW = { focus: false };   // modo foco (lo prende la interfaz): menos efectos de la fauna que no es tuya; solo cosmético
   const FX = { nums: [], hits: [], bits: [], arrows: [], ghosts: [], dust: [], rings: [], lunge: Object.create(null), recoil: Object.create(null), lastHit: null, scarce: false, scarceT: 0, migBurst: 0, seen: new Set(), scorch: [], gref: null, plantAvg: 1, plantT: 0 };
   const now = () => performance.now() / 1000;
   function reset() { FX.nums.length = FX.hits.length = FX.bits.length = FX.arrows.length = FX.ghosts.length = FX.dust.length = FX.rings.length = 0; FX.lunge = Object.create(null); FX.recoil = Object.create(null); FX.lastHit = null; FX.scorch.length = 0; FX.seen = new Set(); FX.scarce = false; FX.migBurst = 0; SIG.bub.length = 0; SIG.info.clear(); SIG.burstT = -1e9; }
@@ -421,17 +483,17 @@
     });
     Bus.on('dmg', (b, amt, src) => {
       if (!src || !(amt >= .4)) return; const G = getG(); if (!G) return; const sel = getSel(), many = G.A.length >= 60;
-      if (many && !(b.sp.team === 'player' || src.sp.team === 'player' || b.id === sel || src.id === sel)) return;
+      if ((many || VIEW.focus) && !(b.sp.team === 'player' || src.sp.team === 'player' || b.id === sel || src.id === sel)) return;   // modo foco: solo los números de tus peleas
       let kind = 'red'; const lh = FX.lastHit;
       if (lh && lh.a === src && lh.b === b) { const m = lh.info && lh.info.mult; if (typeof m === 'number' ? m >= 1.12 : false) kind = 'gold'; else if (typeof m === 'number' && m <= .88) kind = 'gray'; else if (lh.d > 0 && amt / lh.d < .8) kind = 'gray'; }
       FX.nums.push({ x: b.x + (Math.random() - .5) * 8, y: b.y - b.rr * 1.4, v: Math.max(1, Math.round(amt)), kind, t0: now(), mine: b.sp.team === 'player' }); cap(FX.nums, 40);
     });
-    Bus.on('kill', b => {
-      const G = getG(); if (!G) return; const many = G.A.length >= 160; if (many && FX.ghosts.length > 10) return;
+    Bus.on('kill', (b, src) => {
+      const G = getG(); if (!G) return; const many = G.A.length >= 160; if (many && FX.ghosts.length > 10) return; if (VIEW.focus && b.sp.team === 'wild' && !(src && src.sp.team === 'player')) return;
       FX.ghosts.push({ sp: b.sp, x: b.x, y: b.y, a: b.a, ph: b.ph || 0, rr: b.rr, t0: now(), lite: many }); cap(FX.ghosts, 24);
     });
-    Bus.on('eat', (a, tgt, tk) => { if (FX.bits.length > 120) return; const c = tk === 'plant' ? '#6cc850' : '#c04040'; for (let i = 0; i < 3; i++) FX.bits.push({ x: a.x + Math.cos(a.a) * a.rr * 1.5, y: a.y + Math.sin(a.a) * a.rr * 1.5, vx: (Math.random() - .5) * 30, vy: -10 - Math.random() * 20, t0: now(), l: .5, c, s: 1.3 }); });
-    Bus.on('born', a => { if (!a) return; for (let i = 0; i < 5; i++) { const q = Math.random() * TAU; FX.bits.push({ x: a.x, y: a.y, vx: Math.cos(q) * 26, vy: Math.sin(q) * 26 - 8, t0: now(), l: .7, c: '#ffe08a', s: 1.6 }); } cap(FX.bits, 140); });
+    Bus.on('eat', (a, tgt, tk) => { if (FX.bits.length > 120 || (VIEW.focus && a.sp.team !== 'player')) return; const c = tk === 'plant' ? '#6cc850' : '#c04040'; for (let i = 0; i < 3; i++) FX.bits.push({ x: a.x + Math.cos(a.a) * a.rr * 1.5, y: a.y + Math.sin(a.a) * a.rr * 1.5, vx: (Math.random() - .5) * 30, vy: -10 - Math.random() * 20, t0: now(), l: .5, c, s: 1.3 }); });
+    Bus.on('born', a => { if (!a || (VIEW.focus && a.sp.team !== 'player')) return; for (let i = 0; i < 5; i++) { const q = Math.random() * TAU; FX.bits.push({ x: a.x, y: a.y, vx: Math.cos(q) * 26, vy: Math.sin(q) * 26 - 8, t0: now(), l: .7, c: '#ffe08a', s: 1.6 }); } cap(FX.bits, 140); });
     Bus.on('lay', a => { FX.rings.push({ x: a.x, y: a.y, t0: now(), c: '255,224,138', max: 22, l: .9 }); cap(FX.rings, 16); });
     Bus.on('evolve', () => { SIG.burstT = now(); });
     Bus.on('cause', onCause);   // (animal, texto corto, tipo): lo emite la jugabilidad; aquí solo se muestra
@@ -727,5 +789,5 @@
     }
   }
 
-  window.Era2Arte = { SIG, ICO, signals, drawAnimal, attach, opts, linOf, lodBob, status, breath, groundDetail, topDetail, plantStyle, under, over, drawFX, reset, TV, DRAW, FX, BRCOL, pose };
+  window.Era2Arte = { VIEW, MORPH, morphOf, stageOf, SIG, ICO, signals, drawAnimal, attach, opts, linOf, lodBob, status, breath, groundDetail, topDetail, plantStyle, under, over, drawFX, reset, TV, DRAW, FX, BRCOL, pose };
 })();
