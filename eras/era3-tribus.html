@@ -1460,7 +1460,7 @@ const BRN = { pred: 'Depredador', para: 'Parásito', foto: 'Fotosintético', col
 const BCOL = { pred: '#d63a3a', para: '#8a6b2a', foto: '#3fa84a', colo: '#3a7fd6' };
 function readLineage() {
   try {
-    const d = JSON.parse(localStorage.getItem('evo_lineage')); if (!d || d.v !== 1 || (d.from !== 2 && d.from !== 3)) return null;
+    const d = JSON.parse(localStorage.getItem('evo_lineage')); if (!d || d.v !== 1 || ![1, 2, 3, 4].includes(d.from)) return null;   // también Era 1 directa (conserva la rama) y Era 4 rejugada
     const br = ['pred', 'para', 'foto', 'colo'].includes(d.branch) ? d.branch : null, e = d.era2 && typeof d.era2 === 'object' ? d.era2 : null;
     const era2 = e && SPECIES[e.species] ? { species: e.species, name: String(e.name || SPECIES[e.species].n).slice(0, 40), cls: SPECIES[e.species].cls, traits: Array.isArray(e.traits) ? e.traits.filter(t => TRAIT_FX[t]).slice(0, 14) : [], vars: e.vars && typeof e.vars === 'object' ? e.vars : {}, tierra: e.tierra === true } : null;
     return { branch: br, tier: clamp(Math.round(+d.tier) || 0, 0, 3), mutCount: Math.max(0, Math.round(+d.mutCount) || 0), species: String(d.species || '').slice(0, 40), seed: String(d.seed || '').slice(0, 30), from: d.from, era2, raw: d };
