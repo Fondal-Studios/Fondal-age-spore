@@ -194,6 +194,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
   .grid{grid-template-columns:1fr}
 }
 .chip.hasico{padding-left:30px;background-image:var(--ico);background-repeat:no-repeat;background-position:6px center;background-size:20px 20px}
+@media (max-width:430px){.chip.hasico{padding-left:21px;background-position:3px center;background-size:15px 15px}}
 </style>
 </head>
 <body>
@@ -500,7 +501,8 @@ function assetRegister(id, url) {
 }
 /* Dibujos de los edificios (art/era3/*.png, motor de imágenes de Anakin; ver tools/anakin_dibujar_era3.py). La lista sale de
    art/era3/manifest.js; si falta un dibujo o el archivo, queda el marcador. Solo dibujo: no toca G ni R(). */
-(function () { const L = (typeof window !== 'undefined' && window.ERA3_ART) || []; for (const id of L) if (ASSETS[id]) assetRegister(id, '../art/era3/' + id + '.png'); })();
+(function () { const L = (typeof window !== 'undefined' && window.ERA3_ART && !/[?&]sinarte\b/.test(location.search)) ? window.ERA3_ART : [];   // ?sinarte: solo marcadores (pruebas que leen píxeles en file://)
+ for (const id of L) if (ASSETS[id]) assetRegister(id, '../art/era3/' + id + '.png'); })();
 const STAGES = 4;
 /* Rivales: personalidad en datos. raidBelow: ataca si la relación es menor; opp: ataca al débil si su tamaño de saqueo supera (fuerza × opp); respect: lo frena una defensa fuerte. */
 const PERS = {

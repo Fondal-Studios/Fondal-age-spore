@@ -1623,3 +1623,11 @@ Saldo de Runway al empezar: **7 créditos** (no alcanzaba para las 12 imágenes,
 - **Fondo:** sale rosa-magenta claro (≈ #F040F0), no #FF00FF puro: el recorte debe usar distancia de color con tolerancia, no igualdad.
 - **`acu.suelo.1`:** baldosa pintada correcta y continua; se lee más como arena de desierto que como lecho marino (agregar «underwater, blue-green tint, caustic light» al prompt).
 - Archivos: `art/runway/era3/_raw/ter.uni.cazador.obrero-caminar.png`, `art/runway/era3/_raw/acu.suelo.1.png`. Todavía no se usan en el juego (falta el script de recorte).
+
+## 10. Dibujos hechos con el motor de Anakin (2026-11-18)
+A pedido del dueño, los edificios y los íconos de recurso se dibujaron con el motor de imágenes del repo **Anakin** (`pc/imagenes.ps1`: stable-diffusion.cpp + DreamShaper 8 LCM), gratis y local, sin Runway. Acá corrió en CPU (≈ 48 s por imagen a 384 px, 4 pasos LCM; en la PC de Anakin con placa de video tarda segundos).
+- Herramienta: `tools/anakin_dibujar_era3.py` (variables `SD_CLI`, `SD_MODEL`, `SD_SEED`). Toma la descripción en inglés de las tablas de este documento, le suma el material de cada civilización y el nivel, genera, **quita el fondo** (relleno desde los bordes + «nube» gris), recorta y guarda `art/era3/<id>.png` (256 px, transparente) y `art/era3/manifest.js`.
+- **Aves**: con texto solo, el modelo dibuja casas; se usa imagen-a-imagen desde un boceto de nido generado por código (`nest_sketch`, fuerza 0,5).
+- **Íconos**: «icon» hace medallas redondas; se piden como «game item» y se prohíben círculos/esferas. Dos de los 16 quedaron flojos (fibra y memoria de la colmena).
+- Resultado: **140 edificios** (4 civilizaciones × 35) + **16 íconos** = 156 dibujos. La Era 3 los carga al iniciar (`manifest.js`) y usa el marcador si falta alguno; `?sinarte` fuerza los marcadores (pruebas que leen píxeles en `file://`).
+- Limitaciones: dentro de una civilización varios edificios se parecen (cuesta distinguir granja de cuartel a tamaño de juego); algunos de aves de nivel 2-3 quedaron como chozas de ramas; no hay obras, daño, unidades ni terreno pintados (el terreno y los habitantes siguen siendo procedurales). Capturas: `docs/ciclo4/era3-arte/`.

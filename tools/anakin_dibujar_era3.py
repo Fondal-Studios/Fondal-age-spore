@@ -89,14 +89,14 @@ def manifest():
     ids = sorted(f[:-4] for f in os.listdir(OUT) if f.endswith('.png'))
     open(os.path.join(OUT, 'manifest.js'), 'w').write('/* Generado por tools/anakin_dibujar_era3.py: dibujos de la Era 3 disponibles (motor de Anakin). */\nwindow.ERA3_ART = ' + json.dumps(ids) + ';\n')
     return len(ids)
-def gen(gid, forzar=False, seed=7):
+def gen(gid, forzar=False, seed=int(os.environ.get('SD_SEED', 7))):
     gi = game_id(gid); dst = os.path.join(OUT, gi + '.png')
     if os.path.exists(dst) and not forzar: return 'ya existía'
     os.makedirs(RAW, exist_ok=True); raw = os.path.join(RAW, gi + '.png'); t0 = time.time()
     extra = []; steps = '4'
     if gid.startswith('ave.') and '.recurso.' not in gid:   # aves: imagen-a-imagen desde el boceto de nido
         sk = os.path.join(RAW, '_nido_' + gi.split('.')[-1] + '.png'); nest_sketch(sk, gi.split('.')[-1]); extra = ['-i', sk, '--strength', '0.5']; steps = '8'
-    subprocess.run([SD, '-m', MODEL, *extra, '-p', prompt(gid), '-n', NEG + (', house, roof' if extra else '') + (', circle, badge, button, app icon, coin, round frame' if '.recurso.' in gid else ''), '--sampling-method', 'lcm', '--steps', steps, '--cfg-scale', '1.5', '-W', '384', '-H', '384', '-s', str(seed + len(gid)), '-t', str(os.cpu_count()), '-o', raw], check=True, capture_output=True)
+    subprocess.run([SD, '-m', MODEL, *extra, '-p', prompt(gid), '-n', NEG + (', house, roof' if extra else '') + (', circle, badge, button, app icon, coin, round frame, sphere, black ball, dark' if '.recurso.' in gid else ''), '--sampling-method', 'lcm', '--steps', steps, '--cfg-scale', '1.5', '-W', '384', '-H', '384', '-s', str(seed + len(gid)), '-t', str(os.cpu_count()), '-o', raw], check=True, capture_output=True)
     ok = cutout(raw, dst); return ('ok' if ok else 'SIN OBJETO') + ' %.0fs' % (time.time() - t0)
 if __name__ == '__main__':
     args = [a for a in sys.argv[1:] if not a.startswith('--')]

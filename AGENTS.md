@@ -64,3 +64,6 @@ Contrato: `docs/ERA3-CIVILIZACIONES.md`; implementación, API y Bus nuevos: `doc
 
 ## Ciclo 4 · Era 2 evolución y claridad
 Diseño y números en `docs/ERA2-EVOLUCION.md`; arte a encargar en `docs/ARTE-RUNWAY-ERA2.md`. Cada rasgo da una **capacidad** (`CAPS`, nivel por variante/maestría/híbrido; los rivales no usan las de `RIVNO`), hay ramas excluyentes (`EXCL`) y los acuáticos pueden **salir del agua** (`lobuladas` → `pulmones` → `amniota`, o `radiadas`; etapa `sp.lst` derivada de los rasgos, hábitat efectivo `sp.hab` = `habOf`, base en `sp.hab0`). Al ganar, `evo_lineage.era2.tierra` (contrato con la Era 3). El dibujo de cada evolución es procedural (`MORPH`, `morphOf` en `eras/era2-arte.js`). **Modo foco** (`FOCUS`, `ART.VIEW.focus`, tecla F) y la metamorfosis (`META`) son SOLO interfaz: nunca en `G`. Prueba: `tests/era2-evolucion.js`; capturas `tools/era2-evo-capturas.js`.
+
+## Arte de la Era 3 con el motor de Anakin
+156 dibujos (140 edificios + 16 íconos) en `art/era3/` hechos con stable-diffusion.cpp + DreamShaper 8 LCM (el motor del repo Anakin), sin Runway. Se regeneran con `tools/anakin_dibujar_era3.py` (ver `docs/ARTE-RUNWAY-ERA3.md` §10). La Era 3 los lee de `art/era3/manifest.js`; `?sinarte` vuelve a los marcadores. Los originales de 384 px (`art/era3/_raw/`) no se suben.

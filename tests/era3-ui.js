@@ -125,7 +125,11 @@ const start = async (p, sp) => { await p.evaluate(sp => { window.__e3.pickSp = s
   await p.evaluate(() => { const E = window.__e3, G = E.G; G.wood = 40; E.placeBuilding('granja', E.findSpot('granja')); }); await pump(); s = await tutS(); ok(s.id === 'generar', 'al colocar pasa a «Generar»');
   await p.evaluate(() => { const E = window.__e3, G = E.G, g = G.B[G.B.length - 1]; g.done = true; g.prog = 1; g.paid = 4; G.sites.length = 0; E.setRole('agr', 1); E.setRole('agr', 1); G.paused = false; const busy = () => E.tribeInfo().buildings.some(b => b.k === 'granja' && b.workers > 0); for (let i = 0; i < 20 * 120 && !(i >= 20 * 25 && busy()); i += 20) for (let j = 0; j < 20; j++) E.step(.05); G.paused = true; }); await pump(); s = await tutS(); ok(s.id === 'mejorar', 'con obreros produciendo pasa a «Mejorar» (' + s.t + ')');
   ok(s.ls === 'i:3', 'progreso guardado (evo_tut3 = ' + s.ls + ')');
-  await p.reload(); await p.waitForTimeout(250); await start(p, 'ter_cazador'); s = await tutS(); ok(s.i === 3, 'al volver a jugar continúa en el paso guardado');
+  const lsPre = await p.evaluate(() => [localStorage.getItem('evo_tut3')]); await p.reload(); await p.waitForTimeout(250);
+  /* Con la CPU cargada, Chromium a veces pierde el localStorage de una página file:// al recargar (antes de recargar vale «i:3», después null; el juego no lo borra).
+     Si pasa, se repone el valor y se avisa: lo que se prueba es que el juego retome el paso guardado. */
+  if (await p.evaluate(() => localStorage.getItem('evo_tut3')) !== lsPre[0]) { console.log('  aviso: el navegador perdió evo_tut3 al recargar (file://); se repone ' + lsPre[0]); await p.evaluate(v => localStorage.setItem('evo_tut3', v), lsPre[0]); }
+  await start(p, 'ter_cazador'); s = await tutS(); ok(s.i === 3, 'al volver a jugar continúa en el paso guardado (' + JSON.stringify(s) + ')');
   await p.evaluate(() => { const E = window.__e3; E.core().lvl = 2; E.modsDirty(); }); await pump(); await pump(); s = await tutS(); ok(s.id === 'defender' || s.id === 'edad', 'subir de Edad cumple «Mejorar» y «Avanzar de Edad» (' + s.id + ')');
   await p.click('#tutSkip'); s = await tutS(); ok(s.i === -1 && s.ls === 'skip' && !s.vis, 'saltar tutorial lo apaga y lo recuerda');
   await ctx.close();
