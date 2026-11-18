@@ -4,7 +4,7 @@
   "private": true,
   "description": "Pruebas del juego (Era 1: determinismo, acciones, sonido, online) y del relay",
   "scripts": {
-    "test": "node tests/determinismo.js && node tests/acciones.js && node tests/sonido.js && node tests/online.js && cd server && node test.js",
+    "test": "node tests/determinismo.js && node tests/acciones.js && node tests/era1-calma.js && node tests/sonido.js && node tests/online.js && cd server && node test.js",
     "test:era2": "NODE_PATH=$(npm root -g) node tests/era2-guardado.js && NODE_PATH=$(npm root -g) node tests/era2-calidad-sim.js && NODE_PATH=$(npm root -g) node tests/era2-ordenes.js && NODE_PATH=$(npm root -g) node tests/era2-alarma.js 48",
     "test:era2:balance": "NODE_PATH=$(npm root -g) node tests/era2-perfiles.js balance --n 2 --diffs 0,1,2 --profiles all --maxT 700",
     "test:era3": "NODE_PATH=$(npm root -g) node tests/era3-guardado.js && NODE_PATH=$(npm root -g) node tests/era3-ciclo.js && NODE_PATH=$(npm root -g) node tests/era3-civs.js && NODE_PATH=$(npm root -g) node tests/era3-ui.js && NODE_PATH=$(npm root -g) node tests/era3-arte.js",

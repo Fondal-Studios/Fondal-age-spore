@@ -1623,3 +1623,23 @@ Saldo de Runway al empezar: **7 créditos** (no alcanzaba para las 12 imágenes,
 - **Fondo:** sale rosa-magenta claro (≈ #F040F0), no #FF00FF puro: el recorte debe usar distancia de color con tolerancia, no igualdad.
 - **`acu.suelo.1`:** baldosa pintada correcta y continua; se lee más como arena de desierto que como lecho marino (agregar «underwater, blue-green tint, caustic light» al prompt).
 - Archivos: `art/runway/era3/_raw/ter.uni.cazador.obrero-caminar.png`, `art/runway/era3/_raw/acu.suelo.1.png`. Todavía no se usan en el juego (falta el script de recorte).
+
+## 10. Dibujos hechos con el motor de Anakin (2026-11-18)
+A pedido del dueño, los edificios y los íconos de recurso se dibujaron con el motor de imágenes del repo **Anakin** (`pc/imagenes.ps1`: stable-diffusion.cpp + DreamShaper 8 LCM), gratis y local, sin Runway. Acá corrió en CPU (≈ 48 s por imagen a 384 px, 4 pasos LCM; en la PC de Anakin con placa de video tarda segundos).
+- Herramienta: `tools/anakin_dibujar_era3.py` (variables `SD_CLI`, `SD_MODEL`, `SD_SEED`). Toma la descripción en inglés de las tablas de este documento, le suma el material de cada civilización y el nivel, genera, **quita el fondo** (relleno desde los bordes + «nube» gris), recorta y guarda `art/era3/<id>.png` (256 px, transparente) y `art/era3/manifest.js`.
+- **Aves**: con texto solo, el modelo dibuja casas; se usa imagen-a-imagen desde un boceto de nido generado por código (`nest_sketch`, fuerza 0,5).
+- **Íconos**: «icon» hace medallas redondas; se piden como «game item» y se prohíben círculos/esferas. Dos de los 16 quedaron flojos (fibra y memoria de la colmena).
+- Resultado: **140 edificios** (4 civilizaciones × 35) + **16 íconos** = 156 dibujos. La Era 3 los carga al iniciar (`manifest.js`) y usa el marcador si falta alguno; `?sinarte` fuerza los marcadores (pruebas que leen píxeles en `file://`).
+- Limitaciones: dentro de una civilización varios edificios se parecen (cuesta distinguir granja de cuartel a tamaño de juego); algunos de aves de nivel 2-3 quedaron como chozas de ramas; no hay obras, daño, unidades ni terreno pintados (el terreno y los habitantes siguen siendo procedurales). Capturas: `docs/ciclo4/era3-arte/`.
+
+### 10.1 Ciclo artístico 2: terreno, habitantes, obras y daño (2026-11-18)
+Mismo motor (`tools/anakin_dibujar_era3.py --terreno --habitantes --obras --dano`). En el juego:
+- **Habitantes** (`hab.<especie>`, 12): de costado, se espejan según el rumbo (`art/era3/face.json` dice hacia dónde mira cada dibujo), con rebote al caminar. También se usan para los saqueadores y amenazas de esas especies. Reemplazan al dibujo procedural de la Era 2: **los rasgos de tu especie ya no se ven en el cuerpo** (sigue el anillo y la insignia de oficio); `?sinarte` vuelve al procedural.
+- **Terreno**: suelo pintado como baldosa continua (mezcla con copia desplazada, sin espejo), a media escala y 40 % sobre el color de la estación; árboles, rocas/vetas y arbustos por mundo (tinte de invierno y otoño); nodos lejanos con su dibujo y el ícono del recurso.
+- **Obras**: plano → andamio → a medio hacer según lo pagado (`b.paid`); las mejoras muestran un andamio chico encima.
+- **Daño**: muros dañados con escombros, humo y llamas; humo y llamas en los edificios con saqueadores encima. El humo es el procedural del juego.
+- Descartados (quedan los dibujos por código): suelo de insectos (salía rojo), barro de las aves, arbusto terrestre, humo pintado. El modelo tiende a ponerles **caras** a los objetos y una vez dibujó **una bandera nacional real**: el negativo prohíbe caras y banderas y los nodos usan «pennant».
+- Total en `art/era3/`: **198 dibujos**. Capturas actualizadas en `docs/ciclo4/era3-arte/`.
+
+### 10.2 Habitantes con tus rasgos (2026-11-18)
+Los habitantes pintados muestran los rasgos que evolucionaste en la Era 2 (`evolvedSprite` en `eras/era3-tribus.html`): el cuerpo cambia de tamaño y proporción con la tabla `MORPH` de la Era 2, se tiñe y toma patrones dentro de la silueta (veneno, camuflaje, imitación, exoesqueleto, defensa química, sangre caliente, hibernación…) y suma partes reconocibles de costado (alas, aletas, cuernos, caparazón, aguijón, garras, piel), ubicadas con la caja real del dibujo (`window.ERA3_BOX`, la calcula `tools/anakin_dibujar_era3.py`) y la orientación (`face.json`). Se pinta una vez por combinación (caché). Muestra: `docs/ciclo4/era3-arte/habitantes-rasgos.png`. Rasgos sin parte propia (sentidos, sociales, mente) solo cambian tamaño y color.

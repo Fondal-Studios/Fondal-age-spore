@@ -132,6 +132,9 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Guardado, determinismo y linaje
         run: mkdir -p ci-logs ci-shots && node tests/era4-guardado.js 2>&1 | tee ci-logs/era4-guardado.log
+      - name: Continuidad por civilización, fin de partida y arte
+        if: ${{ !cancelled() }}
+        run: node tests/era4-continuidad.js 2>&1 | tee ci-logs/era4-continuidad.log
       - name: Bot de 5 minutos (escritorio y móvil)
         run: node tests/era4-bot.js ci-shots/era4-escritorio.png ci-shots/era4-movil.png 2>&1 | tee ci-logs/era4-bot.log
       - uses: actions/upload-artifact@v4

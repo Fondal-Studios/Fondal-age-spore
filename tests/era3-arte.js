@@ -3,7 +3,8 @@
 // caché estable, costo por cuadro con carga alta y 0 errores de consola. El arte final (Runway) se enchufa por id en ASSETS.
 // Uso: NODE_PATH=$(npm root -g) node tests/era3-arte.js
 const { chromium } = require('playwright'); const assert = require('assert'); const path = require('path');
-const url = 'file://' + path.resolve(__dirname, '../eras/era3-tribus.html');
+// ?sinarte: esta prueba mide los marcadores y lee píxeles; con los PNG de art/era3 cargados desde file:// el canvas queda «contaminado» (SecurityError).
+const url = 'file://' + path.resolve(__dirname, '../eras/era3-tribus.html') + '?sinarte';
 const errs = []; const ok = (c, m) => { assert.ok(c, m); console.log('  ok  ' + m); };
 async function open(b, w, h, sp) { const ctx = await b.newContext({ viewport: { width: w || 1280, height: h || 800 } }); await ctx.addInitScript(() => { try { localStorage.setItem('evo_tut3', 'done'); localStorage.removeItem('evo_lineage'); } catch (_) { } }); const p = await ctx.newPage(); p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/font|ERR_|Failed to load/i.test(m.text())) errs.push(m.text()); }); await p.goto(url); await p.waitForTimeout(250); await p.evaluate(s => { window.__e3.pickSp = s || 'ter_ingeniero'; }, sp); await p.click('#startBtn'); await p.evaluate(() => { window.__e3.G.paused = true; }); return { ctx, p }; }
 const dup = m => { const seen = {}, d = []; for (const k of Object.keys(m)) { const h = m[k]; if (seen[h]) d.push(seen[h] + ' = ' + k); else seen[h] = k; } return d; };
