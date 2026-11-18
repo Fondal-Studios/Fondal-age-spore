@@ -13,7 +13,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'art/era3'); RAW = os.path.join(OUT, '_raw')
 SD = os.environ.get('SD_CLI', '/home/user/sdtools/sdcpp/build/bin/sd-cli'); MODEL = os.environ.get('SD_MODEL', '/home/user/sdtools/modelos/DreamShaper8_LCM.safetensors')
 CIV = {'ter': 'prehistoric tribal hut of stone, logs and animal hides', 'ins': 'insect hive architecture of beeswax, paper pulp and amber honeycomb',
-       'acu': 'underwater coral reef building with seashells, pearls and seaweed', 'ave': 'giant round woven twig bird nest on a thick tree branch, mud and feathers, no house, no roof'}
+       'acu': 'underwater coral reef building with seashells, pearls and seaweed', 'ave': 'huge bird nest of woven twigs on a thick tree branch, eggs and feathers'}
 LV = {'1': 'small simple', '2': 'bigger improved', '3': 'grand ornate'}
 STY = 'isometric mobile strategy game building sprite, hand painted, stylized cartoon, thick dark outline, single building on plain white background'
 NEG = 'text, letters, watermark, people, human, photo, realistic, blurry, cropped, frame, dark background, colored background, scenery, landscape, sky, multiple buildings'
@@ -30,13 +30,35 @@ ICO = {'ter': {'comida': 'raw meat and red berries', 'mat1': 'stack of wooden lo
        'ins': {'comida': 'jar of golden royal jelly', 'mat1': 'ball of chewed plant fiber', 'mat2': 'chunk of amber resin and beeswax', 'saber': 'glowing honeycomb crystal'},
        'acu': {'comida': 'green seaweed and a small fish', 'mat1': 'pink coral branch', 'mat2': 'iridescent mother of pearl seashell', 'saber': 'glowing spiral conch shell'},
        'ave': {'comida': 'pile of seeds and beetles', 'mat1': 'bundle of twigs', 'mat2': 'clump of wet mud', 'saber': 'glowing golden feather'}}
+AVE = {'corazon': 'great central nest hall', 'vivienda': 'cluster of small nest pods', 'almacen': 'nest full of stored seeds', 'granja': 'seed patch beside a nest',
+       'cria': 'nest full of insect larvae', 'ext1': 'nest with piles of twigs', 'ext2': 'nest of dried mud', 'saber': 'nest with a lookout perch and a feather banner',
+       'muro': 'low fence of woven twigs', 'torre': 'tall nest on top of a wooden pole', 'cuartel': 'big guard nest with sharp thorns', 'unico': 'roosting nest on a giant tree', 'maravilla': 'monumental nest arch crowned with feathers'}
 ICON_IDS = [c + '.recurso.' + r for c in ICO for r in ICO[c]]
 def game_id(gid):  # la biblia nombra unico/maravilla sin nivel; el juego, con .1
     p = gid.split('.'); return gid + '.1' if len(p) == 2 else gid
 def prompt(gid):
     civ, slot, *l = gid.split('.')
+    if civ == 'ave' and slot in AVE: return 'isometric mobile strategy game sprite, hand painted, stylized cartoon, thick dark outline, white background, huge bird nest of woven twigs with eggs and feathers, ' + {'1': 'small', '2': 'large', '3': 'huge'}[l[0] if l else '3'] + ' ' + AVE[slot]
     if slot == 'recurso': return 'game resource icon, hand painted, stylized cartoon, thick dark outline, single object on plain white background, ' + ICO[civ][l[0]]
     return f"{STY}, {LV[l[0] if l else '3']} {CIV[civ]}, {R[gid][3]}"
+def nest_sketch(path, lv):
+    # Boceto de nido (pasto, rama, cuenco de ramitas, huevos, plumas) para imagen-a-imagen: sin él, el modelo dibuja casas.
+    import math, random
+    from PIL import ImageDraw
+    random.seed(3 + int(lv)); k = {'1': .8, '2': .95, '3': 1.1}[lv]
+    im = Image.new('RGB', (384, 384), (255, 255, 255)); d = ImageDraw.Draw(im)
+    d.polygon([(192, 250), (340, 300), (192, 350), (44, 300)], fill=(110, 170, 70), outline=(43, 34, 51))
+    d.polygon([(44, 300), (192, 350), (192, 365), (44, 315)], fill=(120, 85, 50)); d.polygon([(340, 300), (192, 350), (192, 365), (340, 315)], fill=(95, 65, 40))
+    d.line([(70, 280), (310, 240)], fill=(100, 70, 40), width=18)
+    rx, ry = 100 * k, 70 * k
+    d.ellipse([192 - rx, 220 - ry, 192 + rx, 220 + ry], fill=(140, 95, 55), outline=(43, 34, 51), width=3)
+    d.ellipse([192 - rx * .8, 220 - ry, 192 + rx * .8, 220 - ry * .1], fill=(90, 60, 35))
+    for i in range(160):
+        a = random.uniform(0, math.pi * 2); r = random.uniform(.6, 1); x = 192 + math.cos(a) * rx * r; y = 220 + math.sin(a) * ry * r
+        d.line([(x, y), (x + random.uniform(-25, 25), y + random.uniform(-8, 8))], fill=random.choice([(170, 120, 70), (120, 80, 45), (190, 150, 90)]), width=2)
+    for ex in (165, 192, 219): d.ellipse([ex - 13, 220 - ry + 15, ex + 13, 220 - ry + 48], fill=(235, 235, 215), outline=(43, 34, 51), width=2)
+    for fx, fy in ((192 - rx + 18, 220 - ry + 10), (192 + rx - 22, 220 - ry)): d.polygon([(fx, fy), (fx + 10, fy - 45), (fx + 18, fy)], fill=(220, 90, 60), outline=(43, 34, 51))
+    im.save(path)
 def cutout(src, dst, size=256, tol=34):
     im = np.array(Image.open(src).convert('RGB')).astype(np.int32); h, w, _ = im.shape
     border = np.concatenate([im[0], im[-1], im[:, 0], im[:, -1]]); ref = np.median(border, axis=0)
@@ -71,7 +93,10 @@ def gen(gid, forzar=False, seed=7):
     gi = game_id(gid); dst = os.path.join(OUT, gi + '.png')
     if os.path.exists(dst) and not forzar: return 'ya existía'
     os.makedirs(RAW, exist_ok=True); raw = os.path.join(RAW, gi + '.png'); t0 = time.time()
-    subprocess.run([SD, '-m', MODEL, '-p', prompt(gid), '-n', NEG, '--sampling-method', 'lcm', '--steps', '4', '--cfg-scale', '1.5', '-W', '384', '-H', '384', '-s', str(seed), '-t', str(os.cpu_count()), '-o', raw], check=True, capture_output=True)
+    extra = []; steps = '4'
+    if gid.startswith('ave.') and '.recurso.' not in gid:   # aves: imagen-a-imagen desde el boceto de nido
+        sk = os.path.join(RAW, '_nido_' + gi.split('.')[-1] + '.png'); nest_sketch(sk, gi.split('.')[-1]); extra = ['-i', sk, '--strength', '0.5']; steps = '8'
+    subprocess.run([SD, '-m', MODEL, *extra, '-p', prompt(gid), '-n', NEG + (', house, roof' if extra else ''), '--sampling-method', 'lcm', '--steps', steps, '--cfg-scale', '1.5', '-W', '384', '-H', '384', '-s', str(seed + len(gid)), '-t', str(os.cpu_count()), '-o', raw], check=True, capture_output=True)
     ok = cutout(raw, dst); return ('ok' if ok else 'SIN OBJETO') + ' %.0fs' % (time.time() - t0)
 if __name__ == '__main__':
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
