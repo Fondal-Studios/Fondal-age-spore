@@ -34,9 +34,37 @@ AVE = {'corazon': 'great central nest hall', 'vivienda': 'cluster of small nest 
        'cria': 'nest full of insect larvae', 'ext1': 'nest with piles of twigs', 'ext2': 'nest of dried mud', 'saber': 'nest with a lookout perch and a feather banner',
        'muro': 'low fence of woven twigs', 'torre': 'tall nest on top of a wooden pole', 'cuartel': 'big guard nest with sharp thorns', 'unico': 'roosting nest on a giant tree', 'maravilla': 'monumental nest arch crowned with feathers'}
 ICON_IDS = [c + '.recurso.' + r for c in ICO for r in ICO[c]]
+# --- Ciclo artístico 2: terreno, habitantes, obras y daño -------------------------------------------------------------
+OBJ = 'hand painted game sprite, stylized cartoon, thick dark outline, single object on plain white background, '
+TILE = 'seamless top-down ground texture, uniform small scale detail, no large shapes, hand painted, stylized cartoon, flat even lighting, fills the frame, no objects, '
+TERR = {'ter': {'suelo': 'green grass meadow with small flowers', 'obstaculo': 'a leafy round oak tree', 'veta': 'a big grey boulder rock', 'arbusto': 'a berry bush with red berries', 'nodo': 'a small stone shrine with a red flag'},
+        'ins': {'suelo': 'dry brown soil with fallen leaves and twigs', 'obstaculo': 'a giant gnarled plant root arching out of the soil', 'veta': 'a big glossy drop of golden amber resin', 'arbusto': 'a cluster of orange and white mushrooms', 'nodo': 'a small clay termite mound with a flag'},
+        'acu': {'suelo': 'underwater sandy sea floor with ripples, blue green tint', 'obstaculo': 'a branching pink and orange coral', 'veta': 'an open oyster shell with white pearls', 'arbusto': 'tall green kelp seaweed', 'nodo': 'a glowing spiral seashell shrine with a flag'},
+        'ave': {'suelo': 'grassy cliff top meadow with small stones', 'obstaculo': 'a giant tree with a thick trunk and wide canopy', 'veta': 'a puddle of brown mud', 'arbusto': 'a tall seed plant with yellow seed heads', 'nodo': 'a tall wooden perch pole with feathers and a flag'}}
+HAB = {'ter_cazador': 'a grey wolf walking, four legs, bushy tail', 'ter_gigante': 'a big armored horned triceratops-like beast walking, four legs', 'ter_ingeniero': 'a brown beaver walking, flat paddle tail', 'ins_colmena': 'a honey bee insect with transparent wings and yellow black striped abdomen, six thin legs',
+       'ins_enjambre': 'a green grasshopper insect with long hind legs', 'ins_parasito': 'a purple wasp insect with thin waist, wings and long legs', 'acu_abisal': 'a deep sea anglerfish fish with big teeth and a glowing lure', 'acu_arrecife': 'a tropical clownfish fish with orange and white stripes',
+       'acu_anfibio': 'a green newt salamander walking, four legs, long tail', 'ave_rapaz': 'a brown eagle bird standing', 'ave_carronera': 'a black vulture bird with bald pink head standing', 'ave_migratoria': 'a blue swallow bird with forked tail standing'}
+MAT = {'ter': 'stone and logs', 'ins': 'beeswax and paper pulp', 'acu': 'coral and seashells', 'ave': 'woven twigs and mud'}
+OBRA = {'plano': 'construction site: wooden stakes and string marking a square foundation on bare dirt, a few {m} blocks', 'andamio': 'construction site: wooden scaffolding around low {m} walls',
+        'mitad': 'half built small house of {m} wrapped in wooden scaffolding'}
+DANO = {'humo': 'a puff of grey smoke', 'escombros': 'a small pile of broken planks and stones rubble'}
+EXTRA = {}
+for c in TERR:
+    for k, d in TERR[c].items(): EXTRA[c + '.terreno.' + k] = ('tile' if k == 'suelo' else 'obj', (TILE if k == 'suelo' else OBJ) + d)
+    for k, d in OBRA.items(): EXTRA[c + '.obra.' + k] = ('obj', OBJ.replace('single object', 'isometric') + d.format(m=MAT[c]))
+for sp, d in HAB.items(): EXTRA['hab.' + sp] = ('obj', 'side view game creature sprite facing right, full body, cute, hand painted, stylized cartoon, thick dark outline, single animal on plain white background, ' + d)
+for k, d in DANO.items(): EXTRA['gen.dano.' + k] = ('obj', OBJ + d)
+GRUPOS = {'--terreno': [k for k in EXTRA if '.terreno.' in k], '--habitantes': [k for k in EXTRA if k.startswith('hab.')], '--obras': [k for k in EXTRA if '.obra.' in k], '--dano': [k for k in EXTRA if k.startswith('gen.dano.')]}
+def tile(src, dst, size=256):
+    # baldosa continua sin simetría: se mezcla la imagen con su copia desplazada media baldosa, con peso 1 en el centro y 0 en los bordes
+    a = np.array(Image.open(src).convert('RGB').resize((size, size), Image.LANCZOS)).astype(float); b = np.roll(np.roll(a, size // 2, 0), size // 2, 1)
+    yy, xx = np.mgrid[0:size, 0:size] / (size - 1); w = (np.minimum(np.minimum(xx, 1 - xx), np.minimum(yy, 1 - yy)) * 2) ** .8
+    Image.fromarray((a * w[..., None] + b * (1 - w[..., None])).astype(np.uint8)).save(dst)
 def game_id(gid):  # la biblia nombra unico/maravilla sin nivel; el juego, con .1
+    if gid in EXTRA: return gid
     p = gid.split('.'); return gid + '.1' if len(p) == 2 else gid
 def prompt(gid):
+    if gid in EXTRA: return EXTRA[gid][1]
     civ, slot, *l = gid.split('.')
     if civ == 'ave' and slot in AVE: return 'isometric mobile strategy game sprite, hand painted, stylized cartoon, thick dark outline, white background, huge bird nest of woven twigs with eggs and feathers, ' + {'1': 'small', '2': 'large', '3': 'huge'}[l[0] if l else '3'] + ' ' + AVE[slot]
     if slot == 'recurso': return 'hand painted game item, stylized cartoon, thick dark outline, single object on plain white background, ' + ICO[civ][l[0]]
@@ -87,20 +115,25 @@ def cutout(src, dst, size=256, tol=34):
     can.resize((size, size), Image.LANCZOS).save(dst); return True
 def manifest():
     ids = sorted(f[:-4] for f in os.listdir(OUT) if f.endswith('.png'))
-    open(os.path.join(OUT, 'manifest.js'), 'w').write('/* Generado por tools/anakin_dibujar_era3.py: dibujos de la Era 3 disponibles (motor de Anakin). */\nwindow.ERA3_ART = ' + json.dumps(ids) + ';\n')
+    fp = os.path.join(OUT, 'face.json'); face = json.load(open(fp)) if os.path.exists(fp) else {}   # hacia dónde mira cada habitante pintado (1 derecha, -1 izquierda), revisado a mano
+    open(os.path.join(OUT, 'manifest.js'), 'w').write('/* Generado por tools/anakin_dibujar_era3.py: dibujos de la Era 3 disponibles (motor de Anakin). */\nwindow.ERA3_ART = ' + json.dumps(ids) + ';\nwindow.ERA3_FACE = ' + json.dumps(face) + ';\n')
     return len(ids)
 def gen(gid, forzar=False, seed=int(os.environ.get('SD_SEED', 7))):
     gi = game_id(gid); dst = os.path.join(OUT, gi + '.png')
     if os.path.exists(dst) and not forzar: return 'ya existía'
     os.makedirs(RAW, exist_ok=True); raw = os.path.join(RAW, gi + '.png'); t0 = time.time()
-    extra = []; steps = '4'
+    extra = []; mode = EXTRA[gid][0] if gid in EXTRA else 'b'; steps = '8' if gid.startswith('hab.') else '4'
+    if mode == 'hab':   # habitantes: imagen-a-imagen desde el dibujo de la especie en la Era 2 (misma silueta, cenital, mirando a la derecha)
+        extra = ['-i', os.path.join(ROOT, 'art/runway/era3/_ref', gid[4:] + '.png'), '--strength', '0.55']; steps = '8'
     if gid.startswith('ave.') and '.recurso.' not in gid:   # aves: imagen-a-imagen desde el boceto de nido
         sk = os.path.join(RAW, '_nido_' + gi.split('.')[-1] + '.png'); nest_sketch(sk, gi.split('.')[-1]); extra = ['-i', sk, '--strength', '0.5']; steps = '8'
     subprocess.run([SD, '-m', MODEL, *extra, '-p', prompt(gid), '-n', NEG + (', house, roof' if extra else '') + (', circle, badge, button, app icon, coin, round frame, sphere, black ball, dark' if '.recurso.' in gid else ''), '--sampling-method', 'lcm', '--steps', steps, '--cfg-scale', '1.5', '-W', '384', '-H', '384', '-s', str(seed + len(gid)), '-t', str(os.cpu_count()), '-o', raw], check=True, capture_output=True)
+    if mode == 'tile': tile(raw, dst); return 'ok %.0fs' % (time.time() - t0)
     ok = cutout(raw, dst); return ('ok' if ok else 'SIN OBJETO') + ' %.0fs' % (time.time() - t0)
 if __name__ == '__main__':
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
-    ids = ICON_IDS if '--iconos' in sys.argv else args or sorted((k for k in R), key=lambda k: (k.split('.')[2] if len(k.split('.')) > 2 else '4', k))
+    grp = [g for f, L in GRUPOS.items() if f in sys.argv for g in L]
+    ids = grp or (ICON_IDS if '--iconos' in sys.argv else args or sorted((k for k in R), key=lambda k: (k.split('.')[2] if len(k.split('.')) > 2 else '4', k)))
     for g in ids:
         try: print(g, gen(g, '--forzar' in sys.argv), flush=True)
         except Exception as e: print(g, 'ERROR', e, flush=True)
