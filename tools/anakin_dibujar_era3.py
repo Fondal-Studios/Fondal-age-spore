@@ -44,6 +44,9 @@ TERR = {'ter': {'suelo': 'green grass meadow with small flowers', 'obstaculo': '
 HAB = {'ter_cazador': 'a grey wolf walking, four legs, bushy tail', 'ter_gigante': 'a big armored horned triceratops-like beast walking, four legs', 'ter_ingeniero': 'a brown beaver walking, flat paddle tail', 'ins_colmena': 'a honey bee insect with transparent wings and yellow black striped abdomen, six thin legs',
        'ins_enjambre': 'a green grasshopper insect with long hind legs', 'ins_parasito': 'a purple wasp insect with thin waist, wings and long legs', 'acu_abisal': 'a deep sea anglerfish fish with big teeth and a glowing lure', 'acu_arrecife': 'a tropical clownfish fish with orange and white stripes',
        'acu_anfibio': 'a green newt salamander walking, four legs, long tail', 'ave_rapaz': 'a brown eagle bird standing', 'ave_carronera': 'a black vulture bird with bald pink head standing', 'ave_migratoria': 'a blue swallow bird with forked tail standing'}
+# fauna de los mundos de la Era 3 (presas y amenazas que no son especies del jugador)
+HAB.update({'lobo': 'a grey wolf with open jaws walking, four legs', 'ciervo': 'a brown deer with antlers walking, four legs', 'conejo': 'a small brown rabbit', 'lucio': 'a grey shark fish swimming',
+            'pez': 'a small blue silver fish swimming', 'escarabajo': 'a shiny green beetle insect, six legs'})
 MAT = {'ter': 'stone and logs', 'ins': 'beeswax and paper pulp', 'acu': 'coral and seashells', 'ave': 'woven twigs and mud'}
 OBRA = {'plano': 'construction site: wooden stakes and string marking a square foundation on bare dirt, a few {m} blocks', 'andamio': 'construction site: wooden scaffolding around low {m} walls',
         'mitad': 'half built small house of {m} wrapped in wooden scaffolding'}
@@ -55,6 +58,25 @@ for c in TERR:
 for sp, d in HAB.items(): EXTRA['hab.' + sp] = ('obj', 'side view game creature sprite facing right, full body, cute, hand painted, stylized cartoon, thick dark outline, single animal on plain white background, ' + d)
 for k, d in DANO.items(): EXTRA['gen.dano.' + k] = ('obj', OBJ + d)
 GRUPOS = {'--terreno': [k for k in EXTRA if '.terreno.' in k], '--habitantes': [k for k in EXTRA if k.startswith('hab.')], '--obras': [k for k in EXTRA if '.obra.' in k], '--dano': [k for k in EXTRA if k.startswith('gen.dano.')]}
+def sketch(gid, path):
+    # bocetos por código para piezas que el modelo no logra con texto solo (salían rojas, con cara o como medalla)
+    import random
+    from PIL import ImageDraw, ImageFilter
+    random.seed(len(gid)); im = Image.new('RGB', (384, 384), (255, 255, 255)); d = ImageDraw.Draw(im)
+    if gid == 'ins.terreno.suelo':
+        im = Image.new('RGB', (384, 384), (120, 86, 52)); d = ImageDraw.Draw(im)
+        for i in range(900): x, y, r = random.randint(0, 383), random.randint(0, 383), random.randint(1, 5); c = random.choice([(96, 66, 40), (140, 104, 66), (80, 56, 34), (150, 120, 80)]); d.ellipse([x - r, y - r, x + r, y + r], fill=c)
+        for i in range(25): x, y = random.randint(0, 383), random.randint(0, 383); d.polygon([(x, y), (x + 14, y + 5), (x + 4, y + 16)], fill=(160, 110, 50))
+        im = im.filter(ImageFilter.GaussianBlur(1))
+    elif gid == 'ave.terreno.veta':
+        d.ellipse([60, 170, 324, 300], fill=(110, 76, 44), outline=(43, 34, 51), width=4); d.ellipse([110, 195, 280, 270], fill=(84, 58, 34))
+        for x in (140, 210, 250): d.ellipse([x, 215, x + 18, 227], fill=(150, 120, 90))
+    elif gid == 'ter.terreno.arbusto':
+        for cx, cy, r in ((150, 220, 70), (230, 215, 75), (190, 165, 70)): d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(60, 140, 60), outline=(43, 34, 51), width=4)
+        for i in range(14): x, y = random.randint(110, 280), random.randint(130, 270); d.ellipse([x - 8, y - 8, x + 8, y + 8], fill=(210, 40, 50), outline=(43, 34, 51), width=2)
+        d.rectangle([180, 280, 200, 320], fill=(110, 70, 40))
+    im.save(path)
+SKETCH = {'ins.terreno.suelo', 'ave.terreno.veta', 'ter.terreno.arbusto'}
 def tile(src, dst, size=256):
     # baldosa continua sin simetría: se mezcla la imagen con su copia desplazada media baldosa, con peso 1 en el centro y 0 en los bordes
     a = np.array(Image.open(src).convert('RGB').resize((size, size), Image.LANCZOS)).astype(float); b = np.roll(np.roll(a, size // 2, 0), size // 2, 1)
@@ -123,6 +145,8 @@ def gen(gid, forzar=False, seed=int(os.environ.get('SD_SEED', 7))):
     if os.path.exists(dst) and not forzar: return 'ya existía'
     os.makedirs(RAW, exist_ok=True); raw = os.path.join(RAW, gi + '.png'); t0 = time.time()
     extra = []; mode = EXTRA[gid][0] if gid in EXTRA else 'b'; steps = '8' if gid.startswith('hab.') else '4'
+    if gid in SKETCH:   # imagen-a-imagen desde un boceto hecho por código
+        sk = os.path.join(RAW, '_boceto_' + gi + '.png'); os.makedirs(RAW, exist_ok=True); sketch(gid, sk); extra = ['-i', sk, '--strength', '0.5']; steps = '8'
     if mode == 'hab':   # habitantes: imagen-a-imagen desde el dibujo de la especie en la Era 2 (misma silueta, cenital, mirando a la derecha)
         extra = ['-i', os.path.join(ROOT, 'art/runway/era3/_ref', gid[4:] + '.png'), '--strength', '0.55']; steps = '8'
     if gid.startswith('ave.') and '.recurso.' not in gid and gid not in EXTRA:   # aves: imagen-a-imagen desde el boceto de nido

@@ -472,7 +472,7 @@ const ASSETS = {};
   }
   add('acu.terreno.costa', 'terreno');
   for (const c of CIV_KEYS) for (const k of ['plano', 'andamio', 'mitad']) add(c + '.obra.' + k, 'obra');
-  for (const k of Object.keys(SPECIES)) add('hab.' + k, 'habitante');
+  for (const k of Object.keys(SPECIES).concat(['lobo', 'ciervo', 'conejo', 'lucio', 'pez', 'escarabajo'])) add('hab.' + k, 'habitante');   // especies y fauna de cada mundo
   for (const k of ['humo', 'escombros']) add('gen.dano.' + k, 'dano');
 })();
 /* Puente con la biblia de arte (docs/ARTE-RUNWAY-ERA3.md, §7): acepta sus ids y los traduce a los del juego.
@@ -2114,8 +2114,8 @@ function render() {
     const o = d.o;
     switch (d.t) {
       case 1: { const st = styleAt(o.x), A = PA.get(o), sh = A && A.shake !== undefined && tt - A.shake < .45 ? Math.sin((tt - A.shake) * 38) * 1.6 * (1 - (tt - A.shake) / .45) : 0; ctx.save(); ctx.translate(o.x, o.y); if (o.w < .5) blit(ctx, spr('St', 24, 20, 12, 14, paintStump), 1); else { const sz = (.62 + .38 * clamp(o.w / 3, 0, 1)) * (st === 'ave' ? 1.3 : 1), v = (Math.floor(o.x * 7 + o.y * 3) & 3), sp = spr('T|' + st + '|' + sea + '|' + v, 44, 54, 22, 40, g => paintTreeC(g, st, sea, v)); ctx.scale(sz, sz); ctx.rotate(sh * .03); blit(ctx, sp, 1); } ctx.restore(); break; }
-      case 2: { const st = civStyle(o); if (st === 'ter' || !E2A()) drawPrey(ctx, o, tt); else drawFoeAnimal(ctx, o, PREY_SP[st][0], PREY_SP[st][1], o.kind === 'ciervo' ? 7 : 5, tt, false); break; }
-      case 3: { const st = civStyle(o); if (st === 'ter' || !E2A()) drawWolf(ctx, o, tt); else { drawFoeAnimal(ctx, o, THREAT_SP[st][0], THREAT_SP[st][1], 9, tt, true); if (o.hp < 30) { ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(o.x - 9, o.y - 20, 18, 3); ctx.fillStyle = '#e0453a'; ctx.fillRect(o.x - 9, o.y - 20, 18 * clamp(o.hp / 30, 0, 1), 3); } } break; }
+      case 2: { const st = civStyle(o); if (st === 'ter' && paintedAnimal(ctx, o.kind === 'ciervo' ? 'ciervo' : 'conejo', o.x, o.y + 2, o.kind === 'ciervo' ? 24 : 15, o.a, tt, (o.x + o.y) % 6, !!o.mv, 0, 1)) { } else if (st === 'ter' || !E2A()) drawPrey(ctx, o, tt); else drawFoeAnimal(ctx, o, PREY_SP[st][0], PREY_SP[st][1], o.kind === 'ciervo' ? 7 : 5, tt, false); break; }
+      case 3: { const st = civStyle(o); if (st === 'ter' && assetImg('hab.lobo')) { ctx.fillStyle = 'rgba(20,30,10,.28)'; ctx.beginPath(); ctx.ellipse(o.x, o.y + 1.5, 10, 3.6, 0, 0, TAU); ctx.fill(); drawEnemyRing(ctx, o.x, o.y, 12, tt); paintedAnimal(ctx, 'lobo', o.x, o.y + 2, 27, o.a, tt, (o.x + o.y) % 6, !!o.mv, 0, 1); } else if (st === 'ter' || !E2A()) drawWolf(ctx, o, tt); else { drawFoeAnimal(ctx, o, THREAT_SP[st][0], THREAT_SP[st][1], 9, tt, true); if (o.hp < 30) { ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(o.x - 9, o.y - 20, 18, 3); ctx.fillStyle = '#e0453a'; ctx.fillRect(o.x - 9, o.y - 20, 18 * clamp(o.hp / 30, 0, 1), 3); } } break; }
       case 4: { const c = X.clans[o.cl || 0] || X.clans[0]; if (E2A()) drawFoeAnimal(ctx, o, CIV_REP[c.civ || 'ter'], CIVS[c.civ || 'ter'].col, 8.5, tt, true); else drawRaider(ctx, o, tt, far); break; }
       case 5: if (E2A()) drawPersonCiv(ctx, o, tt, far); else drawPerson(ctx, o, tt, far); break;
       case 6: drawGhost(ctx, o, tt); break;
