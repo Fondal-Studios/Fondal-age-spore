@@ -193,6 +193,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
   .prio button{min-width:44px;font-size:11.5px;padding:0}
   .grid{grid-template-columns:1fr}
 }
+.chip.hasico{padding-left:30px;background-image:var(--ico);background-repeat:no-repeat;background-position:6px center;background-size:20px 20px}
 </style>
 </head>
 <body>
@@ -261,6 +262,7 @@ button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outli
 
 <script src="era2-arte.js"></script>
 <script src="audio-lofi.js"></script>
+<script src="../art/era3/manifest.js" onerror="window.ERA3_ART=[]"></script>
 <script>
 (() => {
 "use strict";
@@ -496,6 +498,9 @@ function assetRegister(id, url) {
   if (g !== id && a.src && /\.unidad\.|\.terreno\.amenaza/.test(g)) { ASSET_EXTRA[id] = { id }; load(ASSET_EXTRA[id]); return 'extra'; }
   load(a); return g;
 }
+/* Dibujos de los edificios (art/era3/*.png, motor de imágenes de Anakin; ver tools/anakin_dibujar_era3.py). La lista sale de
+   art/era3/manifest.js; si falta un dibujo o el archivo, queda el marcador. Solo dibujo: no toca G ni R(). */
+(function () { const L = (typeof window !== 'undefined' && window.ERA3_ART) || []; for (const id of L) if (ASSETS[id]) assetRegister(id, '../art/era3/' + id + '.png'); })();
 const STAGES = 4;
 /* Rivales: personalidad en datos. raidBelow: ataca si la relación es menor; opp: ataca al débil si su tamaño de saqueo supera (fuerza × opp); respect: lo frena una defensa fuerte. */
 const PERS = {
@@ -2189,6 +2194,7 @@ function civUI() {
   if (!G) return; const C = CIV(), tr = $('tray'); tr.innerHTML = '';
   SLOTS.filter(k => k !== 'corazon').forEach(k => { const b = document.createElement('button'); b.type = 'button'; b.id = 'bb_' + k; b.innerHTML = '<b></b><small></small>'; b.onclick = () => { if (!ready()) return; const ch = slotLock(k); if (ch) { toast(slotName(k, 1) + ': ' + ch + '.', true); return; } setMode(mode === 'b:' + k ? null : 'b:' + k); if (mode && innerWidth <= 820) { $('tray').classList.remove('show'); $('bBuild').classList.remove('on'); $('cvWrap').scrollIntoView({ block: 'center', behavior: 'smooth' }); } }; tr.appendChild(b); });
   setT($('nFood'), RN('comida')); setT($('nWood'), RN('mat1')); setT($('nStone'), RN('mat2')); setT($('nKnow'), RN('saber'));
+  [['cFood', 'comida'], ['cWood', 'mat1'], ['cStone', 'mat2'], ['cKnow', 'saber']].forEach(([id, r]) => { const el = $(id), a = ASSETS[G.x3.civ + '.recurso.' + r]; if (!el) return; el.classList.toggle('hasico', !!(a && a.src)); if (a && a.src) el.style.setProperty('--ico', 'url("' + a.src + '")'); else el.style.removeProperty('--ico'); });   // ícono del recurso si hay dibujo (art/era3)
   setT($('bBuildS'), slotName('vivienda', 1).toLowerCase() + ', ' + slotName('granja', 1).toLowerCase() + '…'); trayTick(); BGC = null;
 }
 const slotLock = k => { const S = SL[k]; if (S.age > age()) return 'se abre en la Edad ' + ROMAN[S.age - 1]; if (S.lim && countSlot(k) >= S.lim) return 'máximo ' + S.lim; return ''; };
