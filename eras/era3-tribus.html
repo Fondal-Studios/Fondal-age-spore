@@ -1985,12 +1985,49 @@ function markerPaint(g, civ, k, lvl, building) {
 }
 function markerSprite(civ, k, lvl, building) { const sz = SL[k].sz * GS + 6; return spr('MK|' + civ + '|' + k + '|' + lvl + '|' + (building ? 1 : 0), sz, sz, sz / 2, sz / 2, g => markerPaint(g, civ, k, lvl, building)); }
 /* PNG por id (ASSETS): __e3.assets.register(id, url) → se dibuja en lugar del marcador cuando termina de cargar */
-function artChanged() { try { SPR.clear(); BGC = null; } catch (_) { } }   // un dibujo terminó de cargar: se rehacen sprites y fondo (solo dibujo)
+function artChanged() { try { SPR.clear(); BGC = null; EVS.clear(); } catch (_) { } }   // un dibujo terminó de cargar: se rehacen sprites y fondo (solo dibujo)
 /* Dibujo pintado (art/era3) dentro de un sprite: alto h, apoyado en y = base. Devuelve false si no hay imagen. */
 function artIn(g, id, h, base, k) { const im = assetImg(id); if (!im) return false; g.drawImage(im, -h / 2, base - h, h, h); if (k) { g.save(); g.globalCompositeOperation = 'source-atop'; g.fillStyle = k; g.fillRect(-h / 2, base - h, h, h); g.restore(); } return true; }
 /* Habitante o animal pintado (hab.<especie>): de costado, se espeja según el rumbo; rebote al caminar. */
-function paintedAnimal(x, key, px, py, h, a, tt, ph, mv, flash, born) {
-  const im = assetImg('hab.' + key); if (!im) return false;
+/* Habitante pintado + tus rasgos de la Era 2: el cuerpo cambia de tamaño y proporción con la misma tabla MORPH de la Era 2,
+   se tiñe y toma patrones según el rasgo (solo dentro de la silueta) y suma las partes que se reconocen de costado
+   (alas, cuernos, caparazón, aguijón, aletas, garras, piel). Se pinta una vez por combinación (caché EVS). Solo dibujo. */
+const EVS = new Map();
+const TR_TINT = { veneno: ['#22c040', .35], camuflaje: ['#4a6a2a', .3], imitacion: ['#f0c020', .3], defquim: ['#e0e030', .25], pirofila: ['#e06020', .22], hiber: ['#9ab0c8', .2], sangre: ['#e05030', .15], colmena: ['#e0b020', .18], feromonas: ['#a050d0', .15], metamorfosis: ['#a070d0', .18], exo: ['#3a3048', .22], amniota: ['#8a7a4a', .2], pulmones: ['#6a9a50', .2] };
+function evolvedSprite(key, traits, vars) {
+  const im = assetImg('hab.' + key); if (!im || !traits || !traits.length) return null;
+  const ck = key + '|' + traits.join(',') + '|' + JSON.stringify(vars || {}); let c = EVS.get(ck); if (c) return c;
+  const E2 = E2A(), sp = SPECIES[key] || {}, m = E2 && E2.morphOf ? E2.morphOf({ key, col: sp.col || '#888888', g: sp.cls }, traits, vars) : { k: 1, sx: 1, sy: 1 };
+  const N = 128, B = 92, f = (typeof window !== 'undefined' && window.ERA3_FACE && window.ERA3_FACE[key]) || 1, has = id => traits.includes(id), V = id => vars ? vars[id] : null;
+  c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'); g.lineJoin = 'round'; g.lineCap = 'round';
+  const w = B * m.k * m.sx, hh = B * m.k * m.sy, x0 = (N - w) / 2, y0 = N - 6 - hh, bb = (typeof window !== 'undefined' && window.ERA3_BOX && window.ERA3_BOX[key]) || [.05, .3, .95, .98];
+  const bx0 = x0 + bb[0] * w, by0 = y0 + bb[1] * hh, bx1 = x0 + bb[2] * w, by1 = y0 + bb[3] * hh, bw = bx1 - bx0, bh = by1 - by0;   // caja real del animal dentro del dibujo
+  const cx = (bx0 + bx1) / 2, hx = f > 0 ? bx0 + bw * .8 : bx1 - bw * .8, tx = f > 0 ? bx0 + bw * .06 : bx1 - bw * .06, top = by0 + bh * .2;
+  const part = fn => { g.save(); fn(); g.restore(); };
+  // detrás del cuerpo: alas y aletas dorsales
+  if (has('alas')) part(() => { g.globalAlpha = .75; g.fillStyle = V('alas') === 'B' ? '#f4ecd8' : '#dff3ff'; g.strokeStyle = INK; g.lineWidth = 2.5; for (const d of [0, 1]) { g.beginPath(); g.ellipse(cx - f * bw * (.05 + d * .12), top - bh * .12, bw * .28, bh * .2, -f * (.6 + d * .25), 0, TAU); g.fill(); g.stroke(); } });
+  g.drawImage(im, x0, y0, w, hh);
+  // dentro de la silueta: tinte y patrones
+  part(() => { g.globalCompositeOperation = 'source-atop';
+    for (const id of traits) { const t = TR_TINT[id]; if (t) { g.globalAlpha = t[1] * (V(id) === 'B' ? 1.5 : 1); g.fillStyle = t[0]; g.fillRect(0, 0, N, N); } }
+    g.globalAlpha = .55;
+    if (has('camuflaje')) { g.fillStyle = '#2f4a1a'; for (let i = 0; i < 14; i++) { g.beginPath(); g.ellipse(x0 + ((i * 37) % w), y0 + ((i * 23) % hh), 6, 4, i, 0, TAU); g.fill(); } }
+    if (has('imitacion') || has('defquim')) { g.fillStyle = '#1a1420'; for (let i = 0; i < 5; i++) g.fillRect(x0 + w * (.2 + i * .14), y0, w * .05, hh); }
+    if (has('exo')) { g.strokeStyle = '#1a1420'; g.lineWidth = 2; for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(cx + f * (i - 1.5) * bw * .12, top + bh * .4, bh * .35, Math.PI * 1.15, Math.PI * 1.85); g.stroke(); } }
+    if (has('veneno')) { g.fillStyle = '#9cff5a'; for (let i = 0; i < 10; i++) { g.beginPath(); g.arc(x0 + ((i * 41) % w), y0 + hh * .3 + ((i * 17) % (hh * .5)), 2.4, 0, TAU); g.fill(); } } });
+  // delante: partes reconocibles
+  if (has('aletas') || has('radiadas')) part(() => { g.globalAlpha = .9; g.fillStyle = '#4aa0e0'; g.strokeStyle = INK; g.lineWidth = 2.5; g.beginPath(); g.moveTo(cx - f * bw * .15, top + 4); g.quadraticCurveTo(cx, top - bh * .45, cx + f * bw * .12, top + 4); g.closePath(); g.fill(); g.stroke(); });
+  if (has('caparazon')) part(() => { g.fillStyle = V('caparazon') === 'B' ? '#b9a07a' : '#8a6a44'; g.strokeStyle = INK; g.lineWidth = 3; g.beginPath(); g.ellipse(cx - f * bw * .06, top + bh * .18, bw * .3, bh * .3, 0, Math.PI, 0); g.closePath(); g.fill(); g.stroke(); g.strokeStyle = 'rgba(40,25,10,.6)'; g.lineWidth = 2; for (const d of [-.12, 0, .12]) { g.beginPath(); g.moveTo(cx - f * bw * .06 + d * bw, top + bh * .18); g.lineTo(cx - f * bw * .06 + d * bw * 1.3, top - bh * .08); g.stroke(); } });
+  if (has('cuernos')) part(() => { g.strokeStyle = INK; g.lineWidth = 7; g.beginPath(); g.moveTo(hx, top + 2); g.quadraticCurveTo(hx + f * bw * .05, top - bh * .35, hx + f * bw * .16, top - bh * .3); g.stroke(); g.strokeStyle = '#f2ead8'; g.lineWidth = 4; g.stroke(); });
+  if (has('aguijon')) part(() => { g.fillStyle = '#d8a020'; g.strokeStyle = INK; g.lineWidth = 2.5; g.beginPath(); g.moveTo(tx, top + bh * .25); g.lineTo(tx - f * bw * .2, top + bh * .35); g.lineTo(tx, top + bh * .45); g.closePath(); g.fill(); g.stroke(); });
+  if (has('garras')) part(() => { g.fillStyle = '#f6f2e6'; g.strokeStyle = INK; g.lineWidth = 1.5; for (const d of [0, 1]) { const bx = hx - f * (6 + d * 9), by = by1 - 2; g.beginPath(); g.moveTo(bx, by); g.lineTo(bx + f * 9, by + 3); g.lineTo(bx + f * 2, by - 4); g.closePath(); g.fill(); g.stroke(); } });
+  if (has('piel')) part(() => { g.strokeStyle = V('piel') === 'B' ? '#efe9dc' : '#5a3e28'; g.lineWidth = 2; for (let i = 0; i < 9; i++) { const xx = bx0 + bw * (.25 + i * .06); g.beginPath(); g.moveTo(xx, top + 3); g.lineTo(xx - f * 3, top - 4); g.stroke(); } });
+  if (m.mast && m.mast.length) { const gc = document.createElement('canvas'); gc.width = gc.height = N; const q = gc.getContext('2d'), rg = q.createRadialGradient(cx, N * .6, 6, cx, N * .6, N * .5); rg.addColorStop(0, m.mast[0] + '88'); rg.addColorStop(1, m.mast[0] + '00'); q.fillStyle = rg; q.fillRect(0, 0, N, N); q.drawImage(c, 0, 0); c = gc; }
+  if (EVS.size > 60) EVS.clear(); EVS.set(ck, c); return c;
+}
+function paintedAnimal(x, key, px, py, h, a, tt, ph, mv, flash, born, traits, vars) {
+  const ev = traits && traits.length ? evolvedSprite(key, traits, vars) : null, im = ev || assetImg('hab.' + key); if (!im) return false;
+  if (ev) h = h * 128 / 92;   // el sprite con rasgos es más grande (deja lugar a alas y cuernos); el cuerpo queda del mismo tamaño
   const face = (Math.cos(a || 0) < -.05 ? -1 : 1) * ((typeof window !== 'undefined' && window.ERA3_FACE && window.ERA3_FACE[key]) || 1), bob = mv ? Math.abs(Math.sin(tt * 10 + ph)) * h * .07 : 0, sq = mv ? 1 + Math.sin(tt * 20 + ph) * .03 : 1, hh = h * (born || 1);
   x.save(); x.translate(px, py - bob); x.scale(face * sq, 1 / sq); if (flash) x.globalAlpha = .55; x.drawImage(im, -hh / 2, -hh + hh * .06, hh, hh); x.restore(); return true;
 }
@@ -2027,7 +2064,7 @@ function drawPersonCiv(x, p, tt, far) {
   const px = p.x + ox, py = p.y + oy - rr0 * .35, rc = role === 'libre' ? '#9a948a' : ROLES[role].c;
   x.fillStyle = 'rgba(20,30,10,.26)'; x.beginPath(); x.ellipse(p.x + ox, p.y + oy + 1.5, rr0 * 1.05, rr0 * .38, 0, 0, TAU); x.fill();
   if (!child) { x.strokeStyle = rc; x.lineWidth = unit ? 2.2 : 1.6; x.globalAlpha = .9; x.beginPath(); x.ellipse(p.x + ox, p.y + oy + 1.5, rr0 * 1.15, rr0 * .45, 0, 0, TAU); x.stroke(); x.globalAlpha = 1; }
-  if (paintedAnimal(x, X.sp, p.x + ox, p.y + oy + 2, rr0 * 3.1, p.a, tt, p.ph || 0, !!p.mv, flash, born)) { }
+  if (paintedAnimal(x, X.sp, p.x + ox, p.y + oy + 2, rr0 * 3.1, p.a, tt, p.ph || 0, !!p.mv, flash, born, X.traits, X.vars)) { }
   else if (A2) { const lin = G.lin && G.lin.branch ? { col: A2.BRCOL[G.lin.branch], tier: G.lin.tier } : null; A2.drawAnimal(x, sp, { px, py, a: p.a || 0, s, tt, ph: p.ph || 0, mv: !!p.mv, flash, st: st2of(p), lunge, born, lin, traits: sp.traits, vars: sp.vars, lite: far }); }
   else { x.beginPath(); x.ellipse(px, py, rr0, rr0 * .7, 0, 0, TAU); blob(x, sp.col, INK, 1.2); }
   if (!child && !far) { x.save(); x.translate(px + rr0 * .55, py - rr0 * .95); const k = A.role !== undefined && tt - A.role < .5 ? 1.4 - (tt - A.role) * .8 : 1; x.scale(k * (unit ? 1.15 : 1), k * (unit ? 1.15 : 1)); blit(x, badgeSprite(role), 1); x.restore(); }
@@ -2529,7 +2566,7 @@ window.__e3 = { scr(x, y) { const r = cv.getBoundingClientRect(); return { x: r.
   CIVS, SL, SLOTS, SPECIES, SP_KEYS, TRAIT_FX, UNITS, UKEYS, AGE_R, AGE_REQ, NODE_SITES, GS, ASSETS, mods, get MSRC() { return MSRC; }, modsDirty() { modsDirty = true; }, mul, age, core, terrR, ageReq, placeCheck, findSpot, snapG, moveBuilding, demolish, refundOf, train, trainCheck, unitCost, sendExpedition, expCheck, recall, idleUnits, techCheck, techOf, canFound, found, foodCap, matCap, civSetup, civilians, slotName, bName, slotEffect, fxDesc, footprintWhy, OLD2SLOT, migrateCiv, set pickSp(v) { pickSp = v; }, get pickSp() { return pickSp; }, civUI,
   assets: { ASSETS, ASSET_EXTRA, assetAlias, register: assetRegister, ids: () => Object.keys(ASSETS) },
   /* ciclo 4 (arte, animación y HUD): solo lectura/diagnóstico; nada de esto toca la simulación */
-  art: { STAT, SPR, AN, PA, ageCls, personSprite, bldSprite, scaffSprite, markerSprite, badgeSprite, spObj, drawPersonCiv, paintPerson, drawPerson, drawBuilding, drawRaider, drawWolf, drawPrey, drawGhost, drawNode, render, PSZ, ELD, RGEAR, POSES, CLAN_C, get SPRK() { return SPRK; }, set SPRK(v) { SPRK = v; }, spr, BTOP, ghostAt },
+  art: { evolvedSprite, EVS, STAT, SPR, AN, PA, ageCls, personSprite, bldSprite, scaffSprite, markerSprite, badgeSprite, spObj, drawPersonCiv, paintPerson, drawPerson, drawBuilding, drawRaider, drawWolf, drawPrey, drawGhost, drawNode, render, PSZ, ELD, RGEAR, POSES, CLAN_C, get SPRK() { return SPRK; }, set SPRK(v) { SPRK = v; }, spr, BTOP, ghostAt },
   ui: { UI, CAM, tut, TUT3, tutBegin, tutNext, tutSkip, alertAct, alertItems, camFocus, applyCam, layout, openPanel, openDip, hud, hudTop, hudAlerts, hudSide, get selId() { return selId; }, get selB() { return selB; }, setSel(a, b) { selId = a; selB = b; }, tickerPush, get mode() { return mode; }, setMode, ghostTap, zoomAt, PANELS, get SC() { return SC; }, trayTick, renderLin }
 };
 /* === AUDIO ===

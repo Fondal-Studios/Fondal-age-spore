@@ -138,7 +138,12 @@ def cutout(src, dst, size=256, tol=34):
 def manifest():
     ids = sorted(f[:-4] for f in os.listdir(OUT) if f.endswith('.png'))
     fp = os.path.join(OUT, 'face.json'); face = json.load(open(fp)) if os.path.exists(fp) else {}   # hacia dónde mira cada habitante pintado (1 derecha, -1 izquierda), revisado a mano
-    open(os.path.join(OUT, 'manifest.js'), 'w').write('/* Generado por tools/anakin_dibujar_era3.py: dibujos de la Era 3 disponibles (motor de Anakin). */\nwindow.ERA3_ART = ' + json.dumps(ids) + ';\nwindow.ERA3_FACE = ' + json.dumps(face) + ';\n')
+    box = {}   # caja del contenido de cada habitante (fracciones 0..1): la Era 3 ubica ahí los rasgos (alas, cuernos...)
+    for i in ids:
+        if not i.startswith('hab.'): continue
+        a = np.array(Image.open(os.path.join(OUT, i + '.png')).convert('RGBA'))[..., 3] > 40; ys, xs = np.where(a)
+        if len(xs): box[i[4:]] = [round(xs.min() / a.shape[1], 3), round(ys.min() / a.shape[0], 3), round((xs.max() + 1) / a.shape[1], 3), round((ys.max() + 1) / a.shape[0], 3)]
+    open(os.path.join(OUT, 'manifest.js'), 'w').write('/* Generado por tools/anakin_dibujar_era3.py: dibujos de la Era 3 disponibles (motor de Anakin). */\nwindow.ERA3_ART = ' + json.dumps(ids) + ';\nwindow.ERA3_FACE = ' + json.dumps(face) + ';\nwindow.ERA3_BOX = ' + json.dumps(box) + ';\n')
     return len(ids)
 def gen(gid, forzar=False, seed=int(os.environ.get('SD_SEED', 7))):
     gi = game_id(gid); dst = os.path.join(OUT, gi + '.png')
