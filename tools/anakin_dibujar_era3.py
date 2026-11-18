@@ -37,17 +37,17 @@ ICON_IDS = [c + '.recurso.' + r for c in ICO for r in ICO[c]]
 # --- Ciclo artístico 2: terreno, habitantes, obras y daño -------------------------------------------------------------
 OBJ = 'hand painted game sprite, stylized cartoon, thick dark outline, single object on plain white background, '
 TILE = 'seamless top-down ground texture, uniform small scale detail, no large shapes, hand painted, stylized cartoon, flat even lighting, fills the frame, no objects, '
-TERR = {'ter': {'suelo': 'green grass meadow with small flowers', 'obstaculo': 'a leafy round oak tree', 'veta': 'a big grey boulder rock', 'arbusto': 'a round green leafy bush with red berries', 'nodo': 'a small stone cairn shrine with a red cloth pennant'},
-        'ins': {'suelo': 'brown dry dirt soil with small dead leaves, earthy brown colors', 'obstaculo': 'a giant gnarled plant root arching out of the soil', 'veta': 'a translucent golden amber resin blob', 'arbusto': 'a cluster of orange and white mushrooms', 'nodo': 'a tall brown clay termite mound tower'},
+TERR = {'ter': {'suelo': 'green grass meadow with small flowers', 'obstaculo': 'a leafy round oak tree', 'veta': 'a big grey boulder rock', 'arbusto': 'a green shrub plant with small red berries on its branches', 'nodo': 'a small stone cairn shrine with a red cloth pennant'},
+        'ins': {'suelo': 'dark brown earth soil texture, sepia, small pebbles', 'obstaculo': 'a giant gnarled plant root arching out of the soil', 'veta': 'a translucent golden amber resin blob', 'arbusto': 'a cluster of orange and white mushrooms', 'nodo': 'a tall brown clay termite mound tower'},
         'acu': {'suelo': 'underwater sandy sea floor with ripples, blue green tint', 'obstaculo': 'a branching pink coral plant', 'veta': 'an open oyster shell with white pearls', 'arbusto': 'tall green kelp seaweed', 'nodo': 'a glowing spiral seashell shrine'},
-        'ave': {'suelo': 'grassy cliff top meadow with small stones', 'obstaculo': 'a giant tree with a thick trunk and wide canopy', 'veta': 'a flat puddle of brown mud on the ground', 'arbusto': 'a tall seed plant with yellow seed heads', 'nodo': 'a tall wooden perch pole with feathers tied on top'}}
+        'ave': {'suelo': 'grassy cliff top meadow with small stones', 'obstaculo': 'a giant tree with a thick trunk and wide canopy', 'veta': 'a pile of wet brown clay mud', 'arbusto': 'a tall seed plant with yellow seed heads', 'nodo': 'a tall wooden perch pole with feathers tied on top'}}
 HAB = {'ter_cazador': 'a grey wolf walking, four legs, bushy tail', 'ter_gigante': 'a big armored horned triceratops-like beast walking, four legs', 'ter_ingeniero': 'a brown beaver walking, flat paddle tail', 'ins_colmena': 'a honey bee insect with transparent wings and yellow black striped abdomen, six thin legs',
        'ins_enjambre': 'a green grasshopper insect with long hind legs', 'ins_parasito': 'a purple wasp insect with thin waist, wings and long legs', 'acu_abisal': 'a deep sea anglerfish fish with big teeth and a glowing lure', 'acu_arrecife': 'a tropical clownfish fish with orange and white stripes',
        'acu_anfibio': 'a green newt salamander walking, four legs, long tail', 'ave_rapaz': 'a brown eagle bird standing', 'ave_carronera': 'a black vulture bird with bald pink head standing', 'ave_migratoria': 'a blue swallow bird with forked tail standing'}
 MAT = {'ter': 'stone and logs', 'ins': 'beeswax and paper pulp', 'acu': 'coral and seashells', 'ave': 'woven twigs and mud'}
 OBRA = {'plano': 'construction site: wooden stakes and string marking a square foundation on bare dirt, a few {m} blocks', 'andamio': 'construction site: wooden scaffolding around low {m} walls',
         'mitad': 'half built small house of {m} wrapped in wooden scaffolding'}
-DANO = {'humo': 'a fluffy grey smoke cloud', 'escombros': 'a small pile of broken planks and stones rubble'}
+DANO = {'escombros': 'a small pile of broken planks and stones rubble'}
 EXTRA = {}
 for c in TERR:
     for k, d in TERR[c].items(): EXTRA[c + '.terreno.' + k] = ('tile' if k == 'suelo' else 'obj', (TILE if k == 'suelo' else OBJ) + d)

@@ -1631,3 +1631,12 @@ A pedido del dueño, los edificios y los íconos de recurso se dibujaron con el 
 - **Íconos**: «icon» hace medallas redondas; se piden como «game item» y se prohíben círculos/esferas. Dos de los 16 quedaron flojos (fibra y memoria de la colmena).
 - Resultado: **140 edificios** (4 civilizaciones × 35) + **16 íconos** = 156 dibujos. La Era 3 los carga al iniciar (`manifest.js`) y usa el marcador si falta alguno; `?sinarte` fuerza los marcadores (pruebas que leen píxeles en `file://`).
 - Limitaciones: dentro de una civilización varios edificios se parecen (cuesta distinguir granja de cuartel a tamaño de juego); algunos de aves de nivel 2-3 quedaron como chozas de ramas; no hay obras, daño, unidades ni terreno pintados (el terreno y los habitantes siguen siendo procedurales). Capturas: `docs/ciclo4/era3-arte/`.
+
+### 10.1 Ciclo artístico 2: terreno, habitantes, obras y daño (2026-11-18)
+Mismo motor (`tools/anakin_dibujar_era3.py --terreno --habitantes --obras --dano`). En el juego:
+- **Habitantes** (`hab.<especie>`, 12): de costado, se espejan según el rumbo (`art/era3/face.json` dice hacia dónde mira cada dibujo), con rebote al caminar. También se usan para los saqueadores y amenazas de esas especies. Reemplazan al dibujo procedural de la Era 2: **los rasgos de tu especie ya no se ven en el cuerpo** (sigue el anillo y la insignia de oficio); `?sinarte` vuelve al procedural.
+- **Terreno**: suelo pintado como baldosa continua (mezcla con copia desplazada, sin espejo), a media escala y 40 % sobre el color de la estación; árboles, rocas/vetas y arbustos por mundo (tinte de invierno y otoño); nodos lejanos con su dibujo y el ícono del recurso.
+- **Obras**: plano → andamio → a medio hacer según lo pagado (`b.paid`); las mejoras muestran un andamio chico encima.
+- **Daño**: muros dañados con escombros, humo y llamas; humo y llamas en los edificios con saqueadores encima. El humo es el procedural del juego.
+- Descartados (quedan los dibujos por código): suelo de insectos (salía rojo), barro de las aves, arbusto terrestre, humo pintado. El modelo tiende a ponerles **caras** a los objetos y una vez dibujó **una bandera nacional real**: el negativo prohíbe caras y banderas y los nodos usan «pennant».
+- Total en `art/era3/`: **198 dibujos**. Capturas actualizadas en `docs/ciclo4/era3-arte/`.
