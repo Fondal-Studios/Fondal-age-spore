@@ -37,17 +37,17 @@ ICON_IDS = [c + '.recurso.' + r for c in ICO for r in ICO[c]]
 # --- Ciclo artístico 2: terreno, habitantes, obras y daño -------------------------------------------------------------
 OBJ = 'hand painted game sprite, stylized cartoon, thick dark outline, single object on plain white background, '
 TILE = 'seamless top-down ground texture, uniform small scale detail, no large shapes, hand painted, stylized cartoon, flat even lighting, fills the frame, no objects, '
-TERR = {'ter': {'suelo': 'green grass meadow with small flowers', 'obstaculo': 'a leafy round oak tree', 'veta': 'a big grey boulder rock', 'arbusto': 'a berry bush with red berries', 'nodo': 'a small stone shrine with a red flag'},
-        'ins': {'suelo': 'dry brown soil with fallen leaves and twigs', 'obstaculo': 'a giant gnarled plant root arching out of the soil', 'veta': 'a big glossy drop of golden amber resin', 'arbusto': 'a cluster of orange and white mushrooms', 'nodo': 'a small clay termite mound with a flag'},
-        'acu': {'suelo': 'underwater sandy sea floor with ripples, blue green tint', 'obstaculo': 'a branching pink and orange coral', 'veta': 'an open oyster shell with white pearls', 'arbusto': 'tall green kelp seaweed', 'nodo': 'a glowing spiral seashell shrine with a flag'},
-        'ave': {'suelo': 'grassy cliff top meadow with small stones', 'obstaculo': 'a giant tree with a thick trunk and wide canopy', 'veta': 'a puddle of brown mud', 'arbusto': 'a tall seed plant with yellow seed heads', 'nodo': 'a tall wooden perch pole with feathers and a flag'}}
+TERR = {'ter': {'suelo': 'green grass meadow with small flowers', 'obstaculo': 'a leafy round oak tree', 'veta': 'a big grey boulder rock', 'arbusto': 'a round green leafy bush with red berries', 'nodo': 'a small stone cairn shrine with a red cloth pennant'},
+        'ins': {'suelo': 'brown dry dirt soil with small dead leaves, earthy brown colors', 'obstaculo': 'a giant gnarled plant root arching out of the soil', 'veta': 'a translucent golden amber resin blob', 'arbusto': 'a cluster of orange and white mushrooms', 'nodo': 'a tall brown clay termite mound tower'},
+        'acu': {'suelo': 'underwater sandy sea floor with ripples, blue green tint', 'obstaculo': 'a branching pink coral plant', 'veta': 'an open oyster shell with white pearls', 'arbusto': 'tall green kelp seaweed', 'nodo': 'a glowing spiral seashell shrine'},
+        'ave': {'suelo': 'grassy cliff top meadow with small stones', 'obstaculo': 'a giant tree with a thick trunk and wide canopy', 'veta': 'a flat puddle of brown mud on the ground', 'arbusto': 'a tall seed plant with yellow seed heads', 'nodo': 'a tall wooden perch pole with feathers tied on top'}}
 HAB = {'ter_cazador': 'a grey wolf walking, four legs, bushy tail', 'ter_gigante': 'a big armored horned triceratops-like beast walking, four legs', 'ter_ingeniero': 'a brown beaver walking, flat paddle tail', 'ins_colmena': 'a honey bee insect with transparent wings and yellow black striped abdomen, six thin legs',
        'ins_enjambre': 'a green grasshopper insect with long hind legs', 'ins_parasito': 'a purple wasp insect with thin waist, wings and long legs', 'acu_abisal': 'a deep sea anglerfish fish with big teeth and a glowing lure', 'acu_arrecife': 'a tropical clownfish fish with orange and white stripes',
        'acu_anfibio': 'a green newt salamander walking, four legs, long tail', 'ave_rapaz': 'a brown eagle bird standing', 'ave_carronera': 'a black vulture bird with bald pink head standing', 'ave_migratoria': 'a blue swallow bird with forked tail standing'}
 MAT = {'ter': 'stone and logs', 'ins': 'beeswax and paper pulp', 'acu': 'coral and seashells', 'ave': 'woven twigs and mud'}
 OBRA = {'plano': 'construction site: wooden stakes and string marking a square foundation on bare dirt, a few {m} blocks', 'andamio': 'construction site: wooden scaffolding around low {m} walls',
         'mitad': 'half built small house of {m} wrapped in wooden scaffolding'}
-DANO = {'humo': 'a puff of grey smoke', 'escombros': 'a small pile of broken planks and stones rubble'}
+DANO = {'humo': 'a fluffy grey smoke cloud', 'escombros': 'a small pile of broken planks and stones rubble'}
 EXTRA = {}
 for c in TERR:
     for k, d in TERR[c].items(): EXTRA[c + '.terreno.' + k] = ('tile' if k == 'suelo' else 'obj', (TILE if k == 'suelo' else OBJ) + d)
@@ -127,7 +127,7 @@ def gen(gid, forzar=False, seed=int(os.environ.get('SD_SEED', 7))):
         extra = ['-i', os.path.join(ROOT, 'art/runway/era3/_ref', gid[4:] + '.png'), '--strength', '0.55']; steps = '8'
     if gid.startswith('ave.') and '.recurso.' not in gid and gid not in EXTRA:   # aves: imagen-a-imagen desde el boceto de nido
         sk = os.path.join(RAW, '_nido_' + gi.split('.')[-1] + '.png'); nest_sketch(sk, gi.split('.')[-1]); extra = ['-i', sk, '--strength', '0.5']; steps = '8'
-    subprocess.run([SD, '-m', MODEL, *extra, '-p', prompt(gid), '-n', NEG + (', house, roof' if extra else '') + (', circle, badge, button, app icon, coin, round frame, sphere, black ball, dark' if '.recurso.' in gid else ''), '--sampling-method', 'lcm', '--steps', steps, '--cfg-scale', '1.5', '-W', '384', '-H', '384', '-s', str(seed + len(gid)), '-t', str(os.cpu_count()), '-o', raw], check=True, capture_output=True)
+    subprocess.run([SD, '-m', MODEL, *extra, '-p', prompt(gid), '-n', NEG + (', face, eyes, mouth, cute character, mascot, flag, national flag' if gid in EXTRA and not gid.startswith('hab.') else '') + (', house, roof' if extra else '') + (', circle, badge, button, app icon, coin, round frame, sphere, black ball, dark' if '.recurso.' in gid else ''), '--sampling-method', 'lcm', '--steps', steps, '--cfg-scale', '1.5', '-W', '384', '-H', '384', '-s', str(seed + len(gid)), '-t', str(os.cpu_count()), '-o', raw], check=True, capture_output=True)
     if mode == 'tile': tile(raw, dst); return 'ok %.0fs' % (time.time() - t0)
     ok = cutout(raw, dst); return ('ok' if ok else 'SIN OBJETO') + ' %.0fs' % (time.time() - t0)
 if __name__ == '__main__':
