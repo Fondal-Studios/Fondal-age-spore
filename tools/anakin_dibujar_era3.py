@@ -13,7 +13,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'art/era3'); RAW = os.path.join(OUT, '_raw')
 SD = os.environ.get('SD_CLI', '/home/user/sdtools/sdcpp/build/bin/sd-cli'); MODEL = os.environ.get('SD_MODEL', '/home/user/sdtools/modelos/DreamShaper8_LCM.safetensors')
 CIV = {'ter': 'prehistoric tribal hut of stone, logs and animal hides', 'ins': 'insect hive architecture of beeswax, paper pulp and amber honeycomb',
-       'acu': 'underwater coral reef building with seashells, pearls and seaweed', 'ave': 'bird nest architecture of woven twigs, mud and feathers'}
+       'acu': 'underwater coral reef building with seashells, pearls and seaweed', 'ave': 'giant round woven twig bird nest on a thick tree branch, mud and feathers, no house, no roof'}
 LV = {'1': 'small simple', '2': 'bigger improved', '3': 'grand ornate'}
 STY = 'isometric mobile strategy game building sprite, hand painted, stylized cartoon, thick dark outline, single building on plain white background'
 NEG = 'text, letters, watermark, people, human, photo, realistic, blurry, cropped, frame, dark background, colored background, scenery, landscape, sky, multiple buildings'
