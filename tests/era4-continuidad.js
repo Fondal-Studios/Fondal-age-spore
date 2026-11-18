@@ -101,8 +101,8 @@ const lin3 = (civ, sp, mar, extra) => JSON.stringify(Object.assign({ v: 1, from:
   // 6) arte: carga con manifest; ?sinarte no carga nada
   { const { ctx, p } = await page(url, [l => { localStorage.setItem('evo_lineage', l); }, lin3('ins', 'ins_enjambre', 'La Reina Madre')]);
     await p.click('#startBtn'); await p.waitForTimeout(1200);
-    const a = await p.evaluate(() => { const E = window.__e4; return { hab: !!E.art('hab.ins_enjambre'), cor: !!E.art('ins.corazon.1'), suelo: E.art('ins.terreno.suelo'), ico: document.getElementById('iWood').classList.contains('on'), noart: E.NOART, imgs: performance.getEntriesByType('resource').filter(r => /art\/era3\/.*\.png/.test(r.name)).length }; });
-    console.log('arte', JSON.stringify(a)); assert.ok(a.hab && a.cor && a.ico && !a.noart, 'dibujos de art/era3 cargados'); assert.strictEqual(a.suelo, null, 'ins.terreno.suelo no existe: fallback');
+    const a = await p.evaluate(() => { const E = window.__e4; return { hab: !!E.art('hab.ins_enjambre'), cor: !!E.art('ins.corazon.1'), suelo: E.art('ave.terreno.veta'), ico: document.getElementById('iWood').classList.contains('on'), noart: E.NOART, imgs: performance.getEntriesByType('resource').filter(r => /art\/era3\/.*\.png/.test(r.name)).length }; });
+    console.log('arte', JSON.stringify(a)); assert.ok(a.hab && a.cor && a.ico && !a.noart, 'dibujos de art/era3 cargados'); assert.strictEqual(a.suelo, null, 'ave.terreno.veta no existe (descartado): fallback');
     await p.goto(url + '?sinarte'); await p.click('#startBtn'); await p.waitForTimeout(600);
     const s = await p.evaluate(() => { const E = window.__e4; return { noart: E.NOART, hab: E.art('hab.ins_enjambre'), imgs: performance.getEntriesByType('resource').filter(r => /art\/era3\/.*\.png/.test(r.name)).length, ico: document.getElementById('iWood').classList.contains('on'), px: (() => { try { document.getElementById('cv').getContext('2d').getImageData(10, 10, 1, 1); return 'ok'; } catch (e) { return e.name; } })() }; });
     console.log('sinarte', JSON.stringify(s)); assert.ok(s.noart && s.hab === null && !s.ico && s.px === 'ok', '?sinarte: sin imágenes y el lienzo se puede leer');
