@@ -26,10 +26,10 @@ def rows():
             if len(c) == 4 and re.match(r'F\d', c[0]) and re.search(r'[a-z]{3}', c[3]): R.setdefault(m.group(1), c)
     return R
 R = rows()
-ICO = {'ter': {'comida': 'raw meat and red berries', 'mat1': 'stack of wooden logs', 'mat2': 'pile of grey stones', 'saber': 'glowing carved rune stone'},
-       'ins': {'comida': 'jar of golden royal jelly', 'mat1': 'ball of chewed plant fiber', 'mat2': 'chunk of amber resin and beeswax', 'saber': 'glowing honeycomb crystal'},
-       'acu': {'comida': 'green seaweed and a small fish', 'mat1': 'pink coral branch', 'mat2': 'iridescent mother of pearl seashell', 'saber': 'glowing spiral conch shell'},
-       'ave': {'comida': 'pile of seeds and beetles', 'mat1': 'bundle of twigs', 'mat2': 'clump of wet mud', 'saber': 'glowing golden feather'}}
+ICO = {'ter': {'comida': 'a roasted meat leg and red berries', 'mat1': 'three stacked wooden logs', 'mat2': 'a pile of grey rocks', 'saber': 'a glowing carved rune stone'},
+       'ins': {'comida': 'jar of golden royal jelly', 'mat1': 'a ball of grey paper pulp fiber', 'mat2': 'a chunk of golden amber resin', 'saber': 'a glowing piece of honeycomb'},
+       'acu': {'comida': 'a small blue fish with green seaweed', 'mat1': 'pink coral branch', 'mat2': 'iridescent mother of pearl seashell', 'saber': 'glowing spiral conch shell'},
+       'ave': {'comida': 'a pile of sunflower seeds', 'mat1': 'a bundle of twigs tied with string', 'mat2': 'a lump of brown wet mud', 'saber': 'glowing golden feather'}}
 AVE = {'corazon': 'great central nest hall', 'vivienda': 'cluster of small nest pods', 'almacen': 'nest full of stored seeds', 'granja': 'seed patch beside a nest',
        'cria': 'nest full of insect larvae', 'ext1': 'nest with piles of twigs', 'ext2': 'nest of dried mud', 'saber': 'nest with a lookout perch and a feather banner',
        'muro': 'low fence of woven twigs', 'torre': 'tall nest on top of a wooden pole', 'cuartel': 'big guard nest with sharp thorns', 'unico': 'roosting nest on a giant tree', 'maravilla': 'monumental nest arch crowned with feathers'}
@@ -39,7 +39,7 @@ def game_id(gid):  # la biblia nombra unico/maravilla sin nivel; el juego, con .
 def prompt(gid):
     civ, slot, *l = gid.split('.')
     if civ == 'ave' and slot in AVE: return 'isometric mobile strategy game sprite, hand painted, stylized cartoon, thick dark outline, white background, huge bird nest of woven twigs with eggs and feathers, ' + {'1': 'small', '2': 'large', '3': 'huge'}[l[0] if l else '3'] + ' ' + AVE[slot]
-    if slot == 'recurso': return 'game resource icon, hand painted, stylized cartoon, thick dark outline, single object on plain white background, ' + ICO[civ][l[0]]
+    if slot == 'recurso': return 'hand painted game item, stylized cartoon, thick dark outline, single object on plain white background, ' + ICO[civ][l[0]]
     return f"{STY}, {LV[l[0] if l else '3']} {CIV[civ]}, {R[gid][3]}"
 def nest_sketch(path, lv):
     # Boceto de nido (pasto, rama, cuenco de ramitas, huevos, plumas) para imagen-a-imagen: sin él, el modelo dibuja casas.
@@ -96,7 +96,7 @@ def gen(gid, forzar=False, seed=7):
     extra = []; steps = '4'
     if gid.startswith('ave.') and '.recurso.' not in gid:   # aves: imagen-a-imagen desde el boceto de nido
         sk = os.path.join(RAW, '_nido_' + gi.split('.')[-1] + '.png'); nest_sketch(sk, gi.split('.')[-1]); extra = ['-i', sk, '--strength', '0.5']; steps = '8'
-    subprocess.run([SD, '-m', MODEL, *extra, '-p', prompt(gid), '-n', NEG + (', house, roof' if extra else ''), '--sampling-method', 'lcm', '--steps', steps, '--cfg-scale', '1.5', '-W', '384', '-H', '384', '-s', str(seed + len(gid)), '-t', str(os.cpu_count()), '-o', raw], check=True, capture_output=True)
+    subprocess.run([SD, '-m', MODEL, *extra, '-p', prompt(gid), '-n', NEG + (', house, roof' if extra else '') + (', circle, badge, button, app icon, coin, round frame' if '.recurso.' in gid else ''), '--sampling-method', 'lcm', '--steps', steps, '--cfg-scale', '1.5', '-W', '384', '-H', '384', '-s', str(seed + len(gid)), '-t', str(os.cpu_count()), '-o', raw], check=True, capture_output=True)
     ok = cutout(raw, dst); return ('ok' if ok else 'SIN OBJETO') + ' %.0fs' % (time.time() - t0)
 if __name__ == '__main__':
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
