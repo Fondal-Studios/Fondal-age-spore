@@ -158,7 +158,7 @@ button:focus-visible,summary:focus-visible,a.btn:focus-visible{outline:3px solid
   </div>
   <div id="hint"></div>
   <div id="main">
-    <div id="cvWrap"><canvas id="cv" role="img" aria-label="Mapa del continente: regiones, dueños, vías férreas, fábricas, centrales y el hielo de los polos."></canvas><div id="pauseTag">Pausa</div><div id="netTag"></div><div id="legend">Tocá una región para ver qué podés hacer. Las regiones sin vía férrea hasta tu capital rinden la mitad.</div></div>
+    <div id="cvWrap"><canvas id="cv" role="img" aria-label="Mapa del continente: regiones, dueños, vías férreas, fábricas, centrales y el hielo de los polos."></canvas><div id="pauseTag">Pausa</div><div id="netTag"></div><div id="legend">Tocá una región para ver qué podés hacer. Rueda o dos dedos: acercar. Las regiones sin vía hasta tu capital rinden la mitad (½).</div></div>
     <div id="side">
       <div class="box" id="regBox"><h3 id="regT">Región</h3><div id="regInfo">Tocá una región del mapa.</div><div class="act" id="regAct"></div></div>
       <div class="box"><h3>Carrera al espacio</h3><div id="race"></div></div>
@@ -666,7 +666,7 @@ function clearSave() { try { localStorage.removeItem(SAVE_K); } catch (e) {} }
 let pickSp = null, bgDirty = true, ownDirty = true;
 const cv = $('cv'), cx = cv.getContext('2d');
 let DPR = 1, cw = 0, ch = 0, sc = 1, ox = 0, oy = 0;
-const VW = 300, VH = 190, VS = W / VW;
+const VW = 480, VH = 304, VS = W / VW;
 let VOR = null, VB = null, BG = null, OWNC = null, lastOwnVer = -1;
 const PART = [], ROCK = []; let seenSt = [];
 const hex2 = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
@@ -681,34 +681,39 @@ function buildVor() {
     for (const g of G.regs) { const d = hyp(g.x - x, g.y - y); if (d < d1) { d2 = d1; d1 = d; b1 = g.id; } else if (d < d2) d2 = d; }
     const nz = vnoise(x / 60 + seedN, y / 60) * .55 + vnoise(x / 22, y / 22 + seedN) * .25;
     const land = d1 < 96 + nz * 70;
-    VOR[py * VW + px] = land ? b1 : -1; VB[py * VW + px] = land && d2 - d1 < 4.5 ? 1 : 0;
+    VOR[py * VW + px] = land ? b1 : -1; VB[py * VW + px] = land && d2 - d1 < 3.5 ? 1 : 0;
   }
 }
 function buildBG() {
   if (!VOR) buildVor();
   BG = BG || document.createElement('canvas'); BG.width = VW; BG.height = VH;
   const bx = BG.getContext('2d'), im = bx.createImageData(VW, VH), D = im.data, seedN = hashStr(G.seed) % 1000;
-  const ocol = G.civs.map(c => hex2(c.col));
+  const ocol = G.civs.map(c => hex2(c.col)), OW = Int8Array.from(G.regs.map(g => g.own)), TC = G.regs.map(g => TER[g.ter].c);
+  const own = j => j >= 0 ? OW[j] : -9;
   for (let py = 0; py < VH; py++) for (let px = 0; px < VW; px++) {
     const i = py * VW + px, rid = VOR[i], o = i * 4;
     if (rid < 0) { D[o + 3] = 0; continue; }
-    const g = G.regs[rid], base = TER[g.ter].c, n = vnoise(px / 7 + seedN, py / 7) * .22 + vnoise(px / 2.2, py / 2.2) * .1 - .16;
+    const go = OW[rid], base = TC[rid], n = vnoise(px * VS / 28 + seedN, py * VS / 28) * .22 + vnoise(px * VS / 9, py * VS / 9) * .1 - .16;
     let r = base[0] * (1 + n), gg = base[1] * (1 + n), b = base[2] * (1 + n);
     // costa: borde claro contra el mar
     const coast = (px > 0 && VOR[i - 1] < 0) || (px < VW - 1 && VOR[i + 1] < 0) || (py > 0 && VOR[i - VW] < 0) || (py < VH - 1 && VOR[i + VW] < 0);
-    if (g.own >= 0) { const c = ocol[g.own]; r = r * .7 + c[0] * .3; gg = gg * .7 + c[1] * .3; b = b * .7 + c[2] * .3; }
+    if (go >= 0) { const c = ocol[go]; r = r * .7 + c[0] * .3; gg = gg * .7 + c[1] * .3; b = b * .7 + c[2] * .3; }
     if (VB[i]) { r *= .72; gg *= .72; b *= .72; }
-    const ob = g.own >= 0 && ((px < VW - 1 && VOR[i + 1] >= 0 && G.regs[VOR[i + 1]].own !== g.own) || (py < VH - 1 && VOR[i + VW] >= 0 && G.regs[VOR[i + VW]].own !== g.own) || (px > 0 && VOR[i - 1] >= 0 && G.regs[VOR[i - 1]].own !== g.own) || (py > 0 && VOR[i - VW] >= 0 && G.regs[VOR[i - VW]].own !== g.own));
-    if (ob) { const c = ocol[g.own]; r = c[0] * .75; gg = c[1] * .75; b = c[2] * .75; }
+    const ob = go >= 0 && ((px < VW - 1 && VOR[i + 1] >= 0 && own(VOR[i + 1]) !== go) || (py < VH - 1 && VOR[i + VW] >= 0 && own(VOR[i + VW]) !== go) || (px > 0 && VOR[i - 1] >= 0 && own(VOR[i - 1]) !== go) || (py > 0 && VOR[i - VW] >= 0 && own(VOR[i - VW]) !== go));
+    if (ob) { const c = ocol[go]; r = c[0] * .75; gg = c[1] * .75; b = c[2] * .75; }
     if (coast) { r = r * .6 + 240 * .4; gg = gg * .6 + 232 * .4; b = b * .6 + 200 * .4; }
     D[o] = clamp(r, 0, 255); D[o + 1] = clamp(gg, 0, 255); D[o + 2] = clamp(b, 0, 255); D[o + 3] = 255;
   }
   bx.putImageData(im, 0, 0); lastOwnVer = G.ownVer; bgDirty = false;
 }
+/* cámara: zoom 1 = todo el continente; con zoom se arrastra para mover la vista */
+const cam = { z: 1, x: W / 2, y: H / 2 }; let sc0 = 1;
+function camApply() { const hw = cw / 2 / (sc0 * cam.z), hh = ch / 2 / (sc0 * cam.z); if (cam.z <= 1.001) { cam.x = W / 2; cam.y = H / 2; } else { cam.x = clamp(cam.x, Math.min(hw, W / 2), Math.max(W - hw, W / 2)); cam.y = clamp(cam.y, Math.min(hh, H / 2), Math.max(H - hh, H / 2)); }
+  sc = sc0 * cam.z; ox = cw / 2 - cam.x * sc; oy = ch / 2 - cam.y * sc; }
 function resize() {
   DPR = Math.min(2, window.devicePixelRatio || 1); const r = cv.getBoundingClientRect(); cw = Math.max(50, r.width); ch = Math.max(50, r.height);
   cv.width = Math.round(cw * DPR); cv.height = Math.round(ch * DPR);
-  sc = Math.min(cw / W, ch / H); ox = (cw - W * sc) / 2; oy = (ch - H * sc) / 2;
+  sc0 = Math.min(cw / W, ch / H); camApply();
 }
 window.addEventListener('resize', resize);
 const STK = '#2a2418';
@@ -921,7 +926,7 @@ const openOv = id => { $(id).classList.add('show'); };
 const closeOv = id => { $(id).classList.remove('show'); };
 $('bTech').onclick = () => { techOverlay(); openOv('techm'); }; $('techClose').onclick = () => closeOv('techm');
 $('bSpace').onclick = () => { spaceOverlay(); openOv('spacem'); }; $('spaceClose').onclick = () => closeOv('spacem');
-$('bCap').onclick = () => { selR = me().cap; ui(true); };
+$('bCap').onclick = () => { selR = me().cap; if (cam.z > 1) { const g = G.regs[selR]; cam.x = g.x; cam.y = g.y; camApply(); } ui(true); };
 $('bPause').onclick = () => { paused = !paused; ui(true); };
 $('bSpd').onclick = () => { spdI = (spdI + 1) % SPD.length; ui(true); };
 $('bSave').onclick = () => toast(saveGame() ? 'Partida guardada.' : 'No se pudo guardar.');
@@ -953,9 +958,18 @@ function ui(force) {
   $('netTag').style.display = NET ? 'block' : 'none'; if (NET) $('netTag').textContent = 'En línea · ' + NET.status();
 }
 /* entrada: tocar una región */
-let down = null;
-cv.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+let down = null, pinch = null; const ptrs = new Map();
+cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: hyp(a[0] - b[0], a[1] - b[1]), z: cam.z }; down = null; return; }
+  down = [e.clientX, e.clientY, cam.x, cam.y]; });
+cv.addEventListener('pointermove', e => { if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (pinch && ptrs.size === 2) { const [a, b] = [...ptrs.values()]; cam.z = clamp(pinch.z * hyp(a[0] - b[0], a[1] - b[1]) / pinch.d, 1, 3.5); camApply(); return; }
+  if (down && cam.z > 1 && hyp(e.clientX - down[0], e.clientY - down[1]) > 8) { cam.x = down[2] - (e.clientX - down[0]) / sc; cam.y = down[3] - (e.clientY - down[1]) / sc; camApply(); } });
+cv.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); pinch = null; down = null; });
+cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top, wx = (px - ox) / sc, wy = (py - oy) / sc;
+  cam.z = clamp(cam.z * (e.deltaY < 0 ? 1.15 : 1 / 1.15), 1, 3.5); camApply(); cam.x += wx - (px - ox) / sc; cam.y += wy - (py - oy) / sc; camApply(); }, { passive: false });
 cv.addEventListener('pointerup', e => {
+  ptrs.delete(e.pointerId); if (pinch) { if (ptrs.size < 2) pinch = null; down = null; return; }
   if (!down || hyp(e.clientX - down[0], e.clientY - down[1]) > 10 || !G) { down = null; return; } down = null;
   const r = cv.getBoundingClientRect(), x = (e.clientX - r.left - ox) / sc, y = (e.clientY - r.top - oy) / sc;
   const px = Math.floor(x / VS), py = Math.floor(y / VS); let id = -1;
