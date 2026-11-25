@@ -534,6 +534,7 @@ function cmd(ci, o) {
     case 'space': e = canSpace(c); if (!e) { c.mat -= STAGES[c.sp5.st].mat; c.sp5.b = c.sp5.st; c.sp5.p = 0; tell(c, 'Empieza la obra: ' + STAGES[c.sp5.st].n.toLowerCase() + '.'); for (const x of G.civs) if (x.human && x.id !== c.id) tell(x, nameOf(c) + ' empezó: ' + STAGES[c.sp5.st].n.toLowerCase() + '.', c.sp5.st >= 2); } break;
     case 'dlg': if (!c.dlg) e = 'Sin decisión.'; else resolveDlg(c, o.i | 0); break;
     case 'bot': c.human = false; c.name = c.name + ' (bot)'; for (const x of G.civs) if (x.human) tell(x, c.name + ': la persona se fue; sigue un bot.'); break;
+    case 'human': if (!c.human) { c.human = true; c.name = c.name.replace(/ \(bot\)$/, ''); for (const x of G.civs) if (x.human && x !== c) tell(x, c.name + ' volvió a la partida.'); } break;
     default: e = '?';
   }
   return e;
@@ -1016,7 +1017,7 @@ let acc = 0, lastT = performance.now();
 function loop(now) {
   const dt = Math.min(.25, (now - lastT) / 1000); lastT = now;
   if (G && started && !G.over) {
-    if (NET) { let n = 0; while (NET.queue.length && n < 12) { const tr = NET.queue.shift(); for (const x of tr.cmds) cmd(x.slot, x.c && x.c.type === 'bot' ? { t: 'bot' } : x.c); update(FIX); if (tr.n % 50 === 0) NET.hash(tr.n, stateHash()); n++; } }
+    if (NET) { let n = 0; const lim = NET.queue.length > 60 ? 4000 : 12; while (NET.queue.length && n < lim) { const tr = NET.queue.shift(); for (const x of tr.cmds) cmd(x.slot, x.c && (x.c.type === 'bot' || x.c.type === 'human') ? { t: x.c.type } : x.c); update(FIX); if (tr.n % 50 === 0 && NET.queue.length < 60) NET.hash(tr.n, stateHash()); n++; } }
     else if (!paused && !me().dlg && !document.querySelector('.ov.show:not(#dlg)')) { acc += dt * SPD[spdI]; let n = 0; while (acc >= FIX && n < 40) { update(FIX); acc -= FIX; n++; } if (G.t - lastSaveT > 60) saveGame(); }
   }
   if (G && started) { render(now); ui(); }

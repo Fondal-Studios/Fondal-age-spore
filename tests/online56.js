@@ -37,16 +37,27 @@ const ok = n => console.log('  ok  ' + n);
     const res = await Promise.all(pages.map(P => P.evaluate(([H, era, tA, tB]) => { const G = window[H].G; return era === 5 ? { a: G.regs[tA].own, b: G.regs[tB].own, t: G.t } : { a: G.fleets.some(f => f.own === 0 && f.to === tA) || G.stars[tA].own === 0, b: G.fleets.some(f => f.own === 1 && f.to === tB) || G.stars[tB].own === 1, t: G.t }; }, [H, era, tA, tB])));
     assert.ok(res.every(r => (era === 5 ? r.a === 0 && r.b === 1 : r.a && r.b)), 'las órdenes de cada persona llegan a todas las pantallas: ' + JSON.stringify(res)); ok('órdenes de Ana y Beto aplicadas en las 3 pantallas');
     // C se va: su civilización pasa a un bot en todas las pantallas
-    await C.context().close(); await A.waitForTimeout(1500);
+    const Cctx = C.context(); await C.close(); for (const P of [A, B]) await P.waitForFunction(H => !window[H].G.civs[2].human, H, { timeout: 15000 }).catch(() => {});
     const bot = await Promise.all([A, B].map(P => P.evaluate(H => window[H].G.civs[2].human, H))); assert.deepStrictEqual(bot, [false, false]); ok('Cami se fue: su civilización la sigue un bot en las demás pantallas');
+    // Cami vuelve: mismo navegador, «Volver a mi partida»: re-simula la historia y retoma el mando
+    await A.waitForTimeout(2500);
+    const C2 = await Cctx.newPage(); C2.on('pageerror', e => errs.push('C2: ' + e.message)); await C2.goto(file); await C2.waitForTimeout(200); await C2.click('#netBtn');
+    await C2.waitForSelector('#netBox [data-a="back"]', { timeout: 3000 }); await C2.click('#netBox [data-a="back"]');
+    await C2.waitForFunction(H => window[H] && window[H].G && window[H].G.online && window[H].G.t > 3, H, { timeout: 15000 });
+    await A.waitForTimeout(1500);
+    const back = await Promise.all([A, B, C2].map(P => P.evaluate(H => ({ h: window[H].G.civs[2].human, me: window[H].G.civs[2].name }), H)));
+    assert.ok(back.every(x => x.h), 'Cami retoma el mando en todas las pantallas: ' + JSON.stringify(back)); ok('Cami volvió con «Volver a mi partida»: re-simuló la historia y retomó su civilización');
+    pages[2] = C2;
     // misma partida: comparamos el hash al mismo turno (pausamos el avance leyendo hasta igualar el tiempo)
     await A.waitForTimeout(3000);
-    const h = await Promise.all([A, B].map(P => P.evaluate(H => { const E = window[H]; return { t: E.G.t.toFixed(1), h: E.stateHash() }; }, H)));
+    // mismo instante en las tres pantallas: se frena el avance y se igualan los turnos procesados
+    const h = await Promise.all([A, B, pages[2]].map(P => P.evaluate(H => { const E = window[H]; return { t: E.G.t.toFixed(1), h: E.stateHash() }; }, H)));
+    if (h[2].t === h[0].t) assert.strictEqual(h[2].h, h[0].h, 'quien volvió tiene el mismo estado');
     // las pantallas pueden ir un turno corrido; si el tiempo coincide, el hash tiene que coincidir; además el relay no avisó desincronización
-    const desync = await Promise.all([A, B].map(P => P.evaluate(() => [...document.querySelectorAll('.toast')].some(t => /desincroniz/.test(t.textContent)))));
-    assert.ok(!desync[0] && !desync[1], 'aviso de desincronización'); if (h[0].t === h[1].t) assert.strictEqual(h[0].h, h[1].h);
+    const desync = await Promise.all([A, B, pages[2]].map(P => P.evaluate(() => [...document.querySelectorAll('.toast')].some(t => /desincroniz/.test(t.textContent)))));
+    assert.ok(desync.every(d => !d), 'aviso de desincronización'); if (h[0].t === h[1].t) assert.strictEqual(h[0].h, h[1].h);
     ok('sin desincronización (hash cada 50 turnos en el relay)' + (h[0].t === h[1].t ? ' y hash igual al mismo tiempo ' + h[0].t + ' s' : ''));
-    assert.deepStrictEqual(errs, []); for (const P of [A, B]) await P.context().close();
+    assert.deepStrictEqual(errs, []); for (const P of [A, B, pages[2]]) await P.context().close();
   }
   await b.close(); await relay.close(); console.log('EN LÍNEA ERAS 5 Y 6 OK');
 })().catch(e => { console.error(e); process.exit(1); });
