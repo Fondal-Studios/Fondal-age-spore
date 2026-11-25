@@ -5,7 +5,7 @@
   "description": "Fondal Age Spore: pruebas de las seis eras, del modo en línea y del relay",
   "scripts": {
     "test": "node tests/determinismo.js && node tests/acciones.js && node tests/era1-calma.js && node tests/sonido.js && node tests/online.js && cd server && node test.js",
-    "test:era56": "NODE_PATH=$(npm root -g) node tests/era56.js && NODE_PATH=$(npm root -g) node tests/online56.js",
+    "test:era56": "NODE_PATH=$(npm root -g) node tests/era56.js && NODE_PATH=$(npm root -g) node tests/online56.js && NODE_PATH=$(npm root -g) node tests/recorrido.js",
     "balance:era5": "NODE_PATH=$(npm root -g) node tests/era5-balance.js 0,1,2 10",
     "balance:era6": "NODE_PATH=$(npm root -g) node tests/era6-balance.js 0,1,2 8",
     "relay": "cd server && npm start",

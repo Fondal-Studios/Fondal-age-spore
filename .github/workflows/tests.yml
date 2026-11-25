@@ -189,6 +189,9 @@ jobs:
       - name: En línea (relay + 3 navegadores, desconexión y reconexión)
         if: ${{ !cancelled() }}
         run: node tests/online56.js 2>&1 | tee ci-logs/online56.log
+      - name: Recorrido de punta a punta (Era 4 → 5 → 6 → epílogo → portada)
+        if: ${{ !cancelled() }}
+        run: node tests/recorrido.js 2>&1 | tee ci-logs/recorrido.log
       - name: Balance corto (Normal, 4 partidas por era)
         if: ${{ !cancelled() }}
         run: node tests/era5-balance.js 1 4 2>&1 | tee ci-logs/era5-balance.log && node tests/era6-balance.js 1 4 2>&1 | tee ci-logs/era6-balance.log
