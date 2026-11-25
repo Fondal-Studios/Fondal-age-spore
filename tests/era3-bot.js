@@ -30,7 +30,8 @@ const BOT = () => {
     if (shot) await p.screenshot({ path: shot });
     const fin = await p.evaluate(() => { clearInterval(window.__iv); const E = window.__e3; E.forceWin(); return { dlg: document.getElementById('dlg').classList.contains('show'), txt: document.getElementById('dB').textContent, btns: [...document.querySelectorAll('#dBtns button')].map(x => x.textContent + ':' + Math.round(x.getBoundingClientRect().height)), lin: JSON.parse(localStorage.getItem('evo_lineage')), save: localStorage.getItem('evo_save3_v1') }; });
     console.log(fin.btns, fin.lin.era3); assert.ok(fin.dlg && fin.btns.some(x => /Volver a la portada/.test(x)) && fin.btns.every(x => +x.split(':').pop() >= 44)); assert.strictEqual(fin.lin.from, 3); assert.strictEqual(fin.lin.era3.civ, sp.slice(0, 3)); assert.strictEqual(fin.lin.era2.species, sp); assert.strictEqual(fin.save, null);
-    await Promise.all([p.waitForNavigation(), p.click('#dBtns button')]); assert.ok(/index\.html$/.test(p.url()), p.url());
+    assert.ok(fin.btns.some(x => /Seguir a la Era 4/.test(x)), 'el final ofrece seguir a la Era 4');
+    await Promise.all([p.waitForNavigation(), p.click('#dBtns button')]); assert.ok(/era4-civilizaciones\.html$/.test(p.url()), p.url());
     await ctx.close();
   }
   assert.strictEqual(errs.length, 0, errs.join(' | ')); console.log('BOT ERA 3 OK'); await b.close();
