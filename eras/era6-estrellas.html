@@ -1,0 +1,730 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Evolución · Era 6: Las Estrellas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link rel="manifest" href="../manifest.webmanifest"><meta name="theme-color" content="#14101f">
+<style>
+:root{
+  --bg:#e4e2ec; --panel:rgba(249,248,252,.95); --ink:#221f2e; --ink2:#5d5970; --line:rgba(34,31,46,.2);
+  --accent:#6a3fc0; --accent-ink:#ffffff; --warn:#c9406f; --ok:#2f8a3f; --dark:0; --stroke:#2a2418;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#100e18;--panel:rgba(26,23,38,.95);--ink:#ece8f6;--ink2:#a9a3bd;--line:rgba(236,232,246,.2);--accent:#b08cff;--accent-ink:#2a1a06;--ok:#6fcf80;--stroke:#0a0804;--dark:1;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#100e18;--panel:rgba(26,23,38,.95);--ink:#ece8f6;--ink2:#a9a3bd;--line:rgba(236,232,246,.2);--accent:#b08cff;--accent-ink:#2a1a06;--ok:#6fcf80;--stroke:#0a0804;--dark:1;color-scheme:dark}
+*{box-sizing:border-box}
+html{height:100%;background:var(--bg)}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+small{font-size:12px}
+h1,h2,h3{font-family:'Bricolage Grotesque','IBM Plex Sans',system-ui,sans-serif;margin:0;letter-spacing:-.01em}
+button,a.btn{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible,a.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#stage{height:100%;display:flex;flex-direction:column;gap:6px;padding:8px;position:relative}
+#hud{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:flex;align-items:baseline;gap:5px;padding:5px 9px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:12px;color:var(--ink2)}
+.chip b{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
+.chip.bad b{color:var(--warn)}
+#hint{font-size:13px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:7px 11px;color:var(--ink);line-height:1.4}
+#main{flex:1;min-height:0;display:flex;gap:6px}
+#cvWrap{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#legend{position:absolute;left:8px;bottom:6px;right:8px;font-size:12px;color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:8px;pointer-events:none}
+#pauseTag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;display:none;pointer-events:none}
+#side{width:290px;display:flex;flex-direction:column;gap:6px;overflow:auto}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--ink2);line-height:1.4}
+.box h3{font-size:13px;color:var(--ink);margin-bottom:5px}
+.box b{color:var(--ink)}
+.role{display:flex;align-items:center;gap:6px;padding:3px 0}
+.role i{width:11px;height:11px;border-radius:50%;flex:none}
+.role span{flex:1;color:var(--ink)}
+.role b{min-width:20px;text-align:right}
+.role button{width:44px;height:44px;border:1px solid var(--line);background:transparent;border-radius:8px;font-weight:700;font-size:16px}
+.role button:disabled{opacity:.4}
+#log{display:flex;flex-direction:column;gap:3px;font-size:12px}
+#log div{color:var(--ink2)}#log div:first-child{color:var(--ink);font-weight:600}
+#rep ul{margin:4px 0 0;padding-left:16px}#rep li{margin:2px 0}
+#rep .dec{color:var(--ink);font-weight:600}
+.riv{display:flex;align-items:center;gap:6px;padding:3px 0;border-top:1px solid var(--line)}
+.riv:first-of-type{border-top:0}
+.riv i{width:12px;height:12px;border-radius:3px;flex:none}
+.riv span{flex:1}
+.riv button{min-height:44px;min-width:64px;border:1px solid var(--line);background:transparent;border-radius:8px;font-size:12.5px;font-weight:600}
+.riv button:disabled{opacity:.4}
+#goal summary{cursor:pointer;font-weight:600;color:var(--ink);list-style:none;display:flex;justify-content:space-between;min-height:24px}
+#goal summary::-webkit-details-marker{display:none}
+.g{padding:2px 0}.g.ok{color:var(--ok);font-weight:600}
+.chip img.ri{width:20px;height:20px;align-self:center;object-fit:contain;display:none}.chip img.ri.on{display:inline-block}
+#spPick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-top:6px}
+#spPick h4{grid-column:1/-1;margin:6px 0 0;font-size:13px;color:var(--ink)}
+#spPick button{min-height:44px;padding:6px 8px;border:1px solid var(--line);background:transparent;border-radius:10px;text-align:left;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+#spPick button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+#spPick button img{width:30px;height:30px;object-fit:contain;flex:none}
+.sgbar{display:block;height:6px;border-radius:3px;background:var(--line);margin-top:3px;overflow:hidden}.sgbar i{display:block;height:100%;background:var(--warn)}
+#bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+#bar button,#bar a.btn{padding:7px 12px;min-height:54px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:14px;font-weight:600;min-width:104px;text-decoration:none;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink)}
+#bar button small{display:block;font-weight:400;color:var(--ink2);font-size:12px;line-height:1.25}
+#bar button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}#bar button.on small{color:inherit;opacity:.85}
+#bar button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}#bar button.go small{color:inherit}
+#bar button:disabled{opacity:.45;cursor:not-allowed}
+#bar .sm{min-height:44px !important;min-width:70px !important;font-size:12.5px !important}
+#bar .brk{flex-basis:100%;height:0}
+#tray{flex-basis:100%;order:-1;display:none;gap:6px;flex-wrap:wrap;justify-content:center}#tray.show{display:flex}
+#tray button{text-align:left;align-items:flex-start;min-width:150px}
+#tray button b{display:block;font-size:14px}
+#tray button:disabled{opacity:.45}
+#toasts{position:fixed;left:50%;top:70px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,440px);z-index:6}
+.toast{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;animation:tin .25s ease-out,tout .4s ease-in 4.2s forwards}
+.toast.warn{border-color:var(--warn)}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes tout{to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.toast{animation:tout .4s ease-in 4.2s forwards}}
+.ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(4px);z-index:10;overflow:auto}
+.ov.show{display:flex}
+.card{width:min(720px,100%);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;max-height:100%;overflow:auto}
+.card h1{font-size:clamp(30px,8vw,44px);font-weight:800;line-height:1}
+.card h2{font-size:22px;font-weight:800;margin-bottom:6px}
+.card p{margin:8px 0;line-height:1.5;color:var(--ink2);font-size:14px}
+.card p.sm{font-size:12.5px}
+.bigbtn{width:100%;min-height:48px;padding:13px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:16px;margin-top:10px}
+.ghost{width:100%;min-height:44px;padding:10px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;margin-top:8px;display:block;text-align:center;text-decoration:none;color:var(--ink);font-size:14px}
+.ghost small{display:block;font-weight:400;color:var(--ink2);font-size:12px;margin-top:2px}
+.seg{display:flex;gap:6px;margin:6px 0;flex-wrap:wrap}
+.seg button{flex:1;min-width:96px;min-height:44px;padding:9px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;font-size:13px}
+.seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:10px}
+.tc{min-height:44px;text-align:left;padding:10px;border:1px solid var(--line);background:transparent;border-radius:12px;display:block;width:100%}
+.tc:hover:not(:disabled),.tc:focus-visible{border-color:var(--accent)}
+.tc:disabled{opacity:.5;cursor:not-allowed}
+.tc.done{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.tc b{font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;display:block}
+.tc span{display:block;font-size:12.5px;color:var(--ink2);margin-top:2px}
+.tc em{display:block;font-style:normal;font-size:12px;margin-top:4px;color:var(--ink2)}
+@media (max-width:820px){
+  body{overflow-y:auto;overflow-x:hidden}
+  #stage{height:auto;min-height:100%;padding:8px 8px 0}
+  .chip{padding:4px 7px}
+  #main{flex:none;flex-direction:column}
+  #cvWrap{flex:none;height:56vh;height:56svh;min-height:340px}
+  #side{width:100%;overflow:visible;flex:none}
+  #bar{position:sticky;bottom:0;z-index:5;background:var(--bg);padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 8px -6px rgba(0,0,0,.25)}
+  #bar button,#bar a.btn{min-width:0;flex:1 1 22%;min-height:48px;padding:6px 6px;font-size:13px}
+  #bar .sm{flex:1 1 20%;min-width:0 !important}
+  #legend{display:none}
+  #bar button small{display:none}
+  #tray.show{display:grid;grid-template-columns:1fr 1fr;max-height:30vh;overflow:auto}#tray button{min-width:0;min-height:48px}.ds{display:none}
+  #toasts{top:auto;bottom:130px}
+}
+.chip.k b{color:var(--accent)}
+.chip.hot b{color:var(--warn)}
+.bars{display:flex;gap:3px;margin-top:3px}.bars i{flex:1;height:7px;border-radius:3px;background:var(--line);position:relative;overflow:hidden}.bars i u{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ok)}
+.race{display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid var(--line)}.race:first-child{border-top:0}
+.race i.dot{width:12px;height:12px;border-radius:3px;flex:none}.race .nm{flex:1;min-width:0}.race .nm b{display:block;font-size:12.5px}
+.race .st{width:92px}
+.act{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}
+.act button{min-height:44px;padding:5px 7px;border:1px solid var(--line);background:transparent;border-radius:9px;font-size:12px;font-weight:600;text-align:left;line-height:1.25}
+.act button small{display:block;font-weight:400;color:var(--ink2);font-size:11px}
+.act button:disabled{opacity:.42;cursor:not-allowed}
+.act button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}.act button.go small{color:inherit;opacity:.9}
+.act .full{grid-column:1/-1}
+#climC{width:100%;height:46px;display:block;margin-top:4px}
+.pip{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-right:2px}.pip.on{background:var(--accent)}
+.age{grid-column:1/-1;margin:8px 0 0;font-size:13px;color:var(--ink)}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid var(--line);margin-left:4px;font-weight:600}
+#netBox{display:none;margin-top:8px}
+#netBox.show{display:block}
+#netTag{position:absolute;right:8px;top:8px;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;display:none}
+#cvWrap{background:#07060d}
+#frac{display:flex;gap:4px}#frac button{min-width:54px !important}
+.epi{border-left:3px solid var(--accent);padding:4px 0 4px 10px;margin:8px 0}
+.epi b{display:block;color:var(--ink);font-size:14px}
+.epi span{font-size:13px;color:var(--ink2)}
+.plus{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:linear-gradient(90deg,#b08cff,#ffcf6a);color:#1a1226;font-weight:800;margin-left:6px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="hud">
+    <div class="chip"><b id="vTime">0:00</b><span>tiempo</span></div>
+    <div class="chip"><b id="vE">0</b><span id="nE">energía</span></div>
+    <div class="chip"><b id="vSci">0</b><span>ciencia</span></div>
+    <div class="chip"><b id="vSys">1</b><span>sistemas</span></div>
+    <div class="chip"><b id="vShips">0</b><span>naves</span></div>
+    <div class="chip k" title="Escala de Kardashev: Tipo I = toda la energía de un planeta; Tipo II = toda la de una estrella"><b id="vK">0,73</b><span>Kardashev</span></div>
+  </div>
+  <div id="hint"></div>
+  <div id="main">
+    <div id="cvWrap"><canvas id="cv" role="img" aria-label="Mapa de la galaxia: estrellas, planetas, flotas y enjambres de Dyson."></canvas><div id="pauseTag">Pausa</div><div id="netTag"></div><div id="legend">Tocá uno de tus sistemas y después otra estrella para mandar naves. Arrastrar también sirve.</div></div>
+    <div id="side">
+      <div class="box" id="sysBox"><h3 id="sysT">Sistema</h3><div id="sysInfo">Tocá una estrella.</div><div class="act" id="sysAct"></div></div>
+      <div class="box"><h3>Carrera al Tipo II</h3><div id="race"></div></div>
+      <div class="box" id="repBox"><h3>Por qué ganó</h3><div id="rep">Todavía no hubo batallas.</div></div>
+      <div class="box"><h3>Qué está pasando</h3><div id="log" aria-live="polite"></div></div>
+      <details class="box" id="goal" open><summary><span>Camino al Tipo II</span><span id="goalN">0/7</span></summary><div id="goalRows"></div></details>
+    </div>
+  </div>
+  <div id="bar">
+    <button id="bTech" class="go">Tecnologías<small id="bTechS">8 por descubrir</small></button>
+    <div id="frac" role="group" aria-label="Cuántas naves mandar"><button data-f=".25" class="sm">25 %</button><button data-f=".5" class="sm on">50 %</button><button data-f="1" class="sm">100 %</button></div>
+    <button id="bHomeSys">Sistema natal<small>ver y mejorar</small></button>
+    <span class="brk"></span>
+    <button id="bSave" class="sm">Guardar</button>
+    <button id="bPause" class="sm">Pausa</button>
+    <button id="bSpd" class="sm">×1</button>
+    <a class="btn sm" id="bHome" href="../index.html">Portada</a>
+  </div>
+  <div id="toasts" aria-live="polite"></div>
+
+  <div id="menu" class="ov show"><div class="card" role="dialog" aria-modal="true" aria-labelledby="menuT">
+    <h1 id="menuT">Era 6: Las Estrellas</h1>
+    <p>Tu Arca llegó a una estrella nueva. La galaxia tiene cientos de soles y otras civilizaciones que también salieron de su planeta. Colonizá sistemas, mandá flotas (los choques se resuelven con la <b>ley cuadrática de Lanchester</b>, como en la Era 4) y rodeá tus estrellas con <b>enjambres de Dyson</b> para captar su luz. Ganás al llegar al <b>Tipo II de Kardashev</b>: usar toda la energía de una estrella. O tomando los sistemas natales de todos.</p>
+    <div class="seg" id="diffSeg" role="group" aria-label="Dificultad"><button data-d="0" class="on">Fácil · 1 rival</button><button data-d="1">Normal · 2 rivales</button><button data-d="2">Difícil · 3 rivales</button></div>
+    <div class="box" id="linBox" style="margin-top:8px"></div>
+    <div id="spPick" role="group" aria-label="Elegí tu especie"></div>
+    <button class="bigbtn" id="startBtn">Empezar</button>
+    <button class="ghost" id="contBtn" style="display:none"></button>
+    <button class="ghost" id="netBtn">Jugar en línea<small>hasta 4 civilizaciones en la misma galaxia: personas y bots</small></button>
+    <div class="box" id="netBox"></div>
+    <a class="ghost" href="../index.html">Volver a la portada</a>
+    <p class="sm"><b>Base real, cifras de juego:</b> la escala de Kardashev (Tipo II ≈ 4·10²⁶ W, la potencia del Sol), la esfera de Dyson (Freeman Dyson, 1960) y las leyes de Lanchester (1916) son ideas publicadas; tamaños, costos, velocidades y la galaxia son de diseño. Viajar más rápido que la luz es ficción.</p>
+  </div></div>
+
+  <div id="techm" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="techT"><h2 id="techT">Tecnologías</h2><p id="techP"></p><div class="grid" id="techGrid"></div><button class="ghost" id="techClose">Cerrar</button></div></div>
+  <div id="dlg" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="dT"><h2 id="dT"></h2><div id="dB"></div><div id="dBtns"></div></div></div>
+</div>
+
+<script src="audio-lofi.js"></script>
+<script src="net-lockstep.js"></script>
+<script src="fondal-plus.js"></script>
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+let _rs = 1;
+const seedRng = n => { _rs = (n >>> 0) || 1; };
+const R = () => { _rs = (_rs + 0x6D2B79F5) >>> 0; let t = _rs; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const hashStr = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const newSeedStr = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
+const rnd = (a, b) => a + R() * (b - a);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const hyp = Math.hypot, TAU = Math.PI * 2;
+const FIX = .1, W = 1400, H = 900;
+const nf = (v, d) => (Math.round(v * Math.pow(10, d || 0)) / Math.pow(10, d || 0)).toLocaleString('es-AR', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 });
+const fmt = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+
+/* ---------- Datos ---------- */
+const CIV_KEYS = ['ter', 'ins', 'acu', 'ave'];
+const SPECIES = {
+  ter_cazador: { n: 'Cazadores de manada', cls: 'ter' }, ter_gigante: { n: 'Gigantes herbívoros', cls: 'ter' }, ter_ingeniero: { n: 'Omnívoros ingenieros', cls: 'ter' },
+  ins_colmena: { n: 'Colmena con castas', cls: 'ins' }, ins_enjambre: { n: 'Enjambre migratorio', cls: 'ins' }, ins_parasito: { n: 'Parasitoides', cls: 'ins' },
+  acu_abisal: { n: 'Depredadores abisales', cls: 'acu' }, acu_arrecife: { n: 'Arrecife constructor', cls: 'acu' }, acu_anfibio: { n: 'Anfibios pioneros', cls: 'acu' },
+  ave_rapaz: { n: 'Rapaces', cls: 'ave' }, ave_carronera: { n: 'Carroñeras oportunistas', cls: 'ave' }, ave_migratoria: { n: 'Migratorias y polinizadoras', cls: 'ave' }
+};
+const SP_KEYS = Object.keys(SPECIES);
+/* habitabilidad por clase: cada especie prefiere su mundo (los acuáticos, los océanos; las aves pueden vivir flotando en gigantes gaseosos) */
+const CV = {
+  ter: { n: 'Terrestres', col: '#e07a3a', rep: 'ter_cazador', rival: 'Clanes de Tolmar', pers: 'conquista', hab: { jardin: 1, roca: .7, oceano: .4, hielo: .3, gas: 0, nada: 0 }, ship: 'cruceros de piedra' },
+  ins: { n: 'Insectos', col: '#e8b422', rep: 'ins_colmena', rival: 'Colmena de Kerán', pers: 'enjambre', hab: { roca: 1, jardin: .8, hielo: .5, oceano: .2, gas: 0, nada: .1 }, ship: 'enjambres de cápsulas' },
+  acu: { n: 'Acuáticos', col: '#3aa6d8', rep: 'acu_abisal', rival: 'Arrecife de Ushad', pers: 'dyson', hab: { oceano: 1, jardin: .6, hielo: .5, roca: .2, gas: .1, nada: 0 }, ship: 'naves-burbuja' },
+  ave: { n: 'Aves', col: '#6aa8ff', rep: 'ave_rapaz', rival: 'Bandada de Ilen', pers: 'ciencia', hab: { jardin: 1, gas: .7, oceano: .4, roca: .4, hielo: .2, nada: 0 }, ship: 'bandadas de velas solares' }
+};
+const STARS = {
+  roja: { n: 'Enana roja', L: .05, c: '#ff8a66', r: 5, w: 5 }, amarilla: { n: 'Estrella amarilla', L: 1, c: '#ffe08a', r: 7, w: 4 },
+  blanca: { n: 'Estrella blanca', L: 3, c: '#f2f4ff', r: 8, w: 2 }, azul: { n: 'Gigante azul', L: 12, c: '#9cc4ff', r: 10, w: 1 }
+};
+const PLANETS = { jardin: { n: 'mundo jardín', c: '#5cb87a' }, oceano: { n: 'mundo océano', c: '#3a7fd0' }, roca: { n: 'mundo rocoso', c: '#b08a64' }, hielo: { n: 'mundo helado', c: '#cfe6f2' }, gas: { n: 'gigante gaseoso', c: '#d8a868' }, nada: { n: 'cinturón de asteroides', c: '#8a8478' } };
+const PL_KEYS = Object.keys(PLANETS);
+const L_SUN = 3.8e26;            // W: potencia del Sol (Tipo II de Kardashev ≈ esto)
+const DY_F = [0, 1e-10, 1e-7, 1e-4, 1e-2, 1];      // fracción de la luz de la estrella que capta cada nivel del enjambre
+const DY_E = [0, .5, 1.2, 2.4, 4.2, 7];             // energía de juego por segundo (× luminosidad)
+const DY_C = [0, 70, 170, 340, 640, 1100], DY_T = [0, 12, 20, 32, 50, 75];
+const BLD = {
+  ast: { n: 'Astillero', max: 3, cost: [0, 40, 80, 150], t: [0, 8, 12, 18], d: 'Más naves por segundo (+50 % por nivel).' },
+  lab: { n: 'Laboratorio', max: 3, cost: [0, 30, 65, 130], t: [0, 8, 12, 18], d: 'Ciencia (+100 % por nivel).' },
+  esc: { n: 'Escudo planetario', max: 3, cost: [0, 40, 80, 150], t: [0, 8, 12, 18], tech: 'escudos', d: 'Las naves de este sistema resisten +30 % por nivel.' },
+  dy: { n: 'Enjambre de Dyson', max: 5, cost: DY_C, t: DY_T, d: 'Capta la luz de la estrella: mucha energía y sube Kardashev.' }
+};
+const TECH = [
+  { id: 'warp', n: 'Motor de curvatura', cost: 40, req: [], d: 'Flotas 50 % más rápidas.' },
+  { id: 'laser', n: 'Armas de energía', cost: 50, req: [], d: 'Tus naves pegan +25 %.' },
+  { id: 'blindaje', n: 'Blindaje de nanotubos', cost: 50, req: [], d: 'Tus naves resisten +25 %.' },
+  { id: 'escudos', n: 'Escudos planetarios', cost: 60, req: ['blindaje'], d: 'Habilita el escudo de cada sistema.' },
+  { id: 'terra', n: 'Terraformación', cost: 70, req: [], d: 'Todos los mundos +0,3 de habitabilidad: más población.' },
+  { id: 'replic', n: 'Fábricas replicantes', cost: 100, req: ['warp'], d: 'Naves +40 % en todos tus astilleros.' },
+  { id: 'enjambre', n: 'Enjambres de Dyson', cost: 90, req: [], d: 'Habilita los niveles 3 y 4 del enjambre.' },
+  { id: 'esfera', n: 'Esfera de Dyson', cost: 170, req: ['enjambre'], d: 'Habilita el nivel 5: toda la luz de la estrella. Con eso llegás al Tipo II.' }
+];
+const TECH_BY = Object.fromEntries(TECH.map(t => [t.id, t]));
+const PERS = {
+  conquista: { tech: ['laser', 'warp', 'blindaje', 'replic', 'terra', 'enjambre', 'escudos', 'esfera'], agg: 1.3, dy: .8 },
+  enjambre: { tech: ['warp', 'replic', 'laser', 'terra', 'blindaje', 'enjambre', 'escudos', 'esfera'], agg: 1.15, dy: .9 },
+  dyson: { tech: ['enjambre', 'terra', 'blindaje', 'escudos', 'esfera', 'warp', 'laser', 'replic'], agg: .85, dy: 1.3 },
+  ciencia: { tech: ['terra', 'enjambre', 'warp', 'esfera', 'laser', 'blindaje', 'escudos', 'replic'], agg: .95, dy: 1.15 }
+};
+const DIFFS = [{ n: 'Fácil', riv: 1, eco: .85, think: 2.4 }, { n: 'Normal', riv: 2, eco: 1, think: 1.7 }, { n: 'Difícil', riv: 3, eco: 1.02, think: 1.4 }];
+let DF = DIFFS[0], diffI = 0;
+const NSTAR = 40, K_WIN = 2;
+const SYL1 = ['Al', 'Ve', 'Sar', 'Ori', 'Ka', 'Thu', 'Mi', 'Ze', 'Lua', 'Nor', 'Ix', 'Pe', 'Dra', 'Cen', 'Eri', 'Ry', 'Ty', 'Gal'];
+const SYL2 = ['dara', 'nis', 'ta', 'ón', 'kei', 'ris', 'ade', 'umi', 'el', 'ora', 'is', 'ux', 'mar', 'tea'];
+
+/* ---------- Estado ---------- */
+let G = null, started = false, paused = false, spdI = 0, selS = -1, src = -1, frac = .5, lastSaveT = 0, NET = null, ME = 0, pickSp = null;
+const SPD = [1, 2, 4];
+const civ = i => G.civs[i];
+const me = () => G && G.civs[ME];
+const hasT = (c, id) => c.tech.includes(id);
+const starsOf = c => G.stars.filter(s => s.own === c.id);
+const nameOf = c => c.id === ME ? 'Tu civilización' : c.name;
+const habOf = (c, s) => clamp(CV[c.cv].hab[s.pl] + (hasT(c, 'terra') && s.pl !== 'nada' ? .3 : 0) + (c.sp === 'acu_anfibio' && s.pl === 'jardin' ? .2 : 0), 0, 1);
+const popCap = (c, s) => Math.round(12 * habOf(c, s) * 10) / 10;
+const dist = (a, b) => hyp(a.x - b.x, a.y - b.y);
+const speed = c => 34 * (hasT(c, 'warp') ? 1.5 : 1);
+function log(c, t) { if (!c.human) return; c.log.unshift(fmt(G.t) + ' · ' + t); if (c.log.length > 30) c.log.pop(); }
+let toast = (t, warn) => { if (typeof document === 'undefined' || !$('toasts')) return; while ($('toasts').children.length > 3) $('toasts').firstChild.remove(); const d = document.createElement('div'); d.className = 'toast' + (warn ? ' warn' : ''); d.textContent = t; $('toasts').appendChild(d); setTimeout(() => d.remove(), 4700); };
+const tell = (c, t, warn) => { log(c, t); if (c.id === ME && started) toast(t, warn); };
+const tellAll = (t, warn, but) => { for (const c of G.civs) if (c.human && c !== but) tell(c, t, warn); };
+
+/* ---------- Galaxia: espiral de dos brazos ---------- */
+function genGalaxy() {
+  const stars = []; let tries = 0; const used = new Set();
+  while (stars.length < NSTAR && tries++ < 4000) {
+    const arm = stars.length % 2, t = rnd(.16, 1), a = arm * Math.PI + t * 3.4 + rnd(-.38, .38), r = t * Math.min(W, H) * .47 + rnd(-26, 26);
+    const x = W / 2 + Math.cos(a) * r * 1.42, y = H / 2 + Math.sin(a) * r;
+    if (x < 50 || y < 50 || x > W - 50 || y > H - 50) continue;
+    if (stars.some(s => hyp(s.x - x, s.y - y) < 62)) continue;
+    let tw = 0; for (const k in STARS) tw += STARS[k].w; let p = R() * tw, ty = 'roja'; for (const k in STARS) { p -= STARS[k].w; if (p <= 0) { ty = k; break; } }
+    const pl = PL_KEYS[Math.floor(R() * PL_KEYS.length)];
+    let n; do { n = SYL1[Math.floor(R() * SYL1.length)] + SYL2[Math.floor(R() * SYL2.length)]; } while (used.has(n)); used.add(n);
+    stars.push({ id: stars.length, x: Math.round(x), y: Math.round(y), n, ty, pl, own: -1, ships: Math.round(6 + R() * 12 + (STARS[ty].L > 2 ? 12 : 0) + (pl === 'jardin' || pl === 'oceano' ? 5 : 0)), pop: 0, ast: 0, lab: 0, esc: 0, dy: 0, bk: '', bt: 0 });
+  }
+  return stars;
+}
+const CORNERS = [[.12, .78], [.88, .22], [.88, .8], [.12, .2]];
+const HOMEPL = { ter: 'jardin', ins: 'roca', acu: 'oceano', ave: 'jardin' };
+
+/* ---------- Linaje (Eras 1 a 5) ---------- */
+function readLineage() {
+  try {
+    const d = JSON.parse(localStorage.getItem('evo_lineage')); if (!d || d.v !== 1 || ![1, 2, 3, 4, 5, 6].includes(d.from)) return null;
+    const pick = e => e && typeof e === 'object' && CV[e.civ] ? e : null;
+    const src = pick(d.era6) || pick(d.era5) || pick(d.era4) || pick(d.era3); let cv = null, sp = null;
+    if (src) { cv = src.civ; sp = SPECIES[src.especie] && SPECIES[src.especie].cls === cv ? src.especie : CV[cv].rep; }
+    else if (d.era2 && SPECIES[d.era2.species]) { sp = d.era2.species; cv = SPECIES[sp].cls; }
+    const e5 = pick(d.era5);
+    return { from: d.from, cv, sp, branch: ['pred', 'para', 'foto', 'colo'].includes(d.branch) ? d.branch : null, K5: e5 ? +e5.K || 0 : 0, temp5: e5 ? +e5.temp || 0 : 0, pacto: e5 ? !!e5.pacto : false, species: String(d.species || '').slice(0, 40), raw: d };
+  } catch (e) { return null; }
+}
+function linBonus(L) {
+  const b = { E: 0, sci: 0, ships: 0, atk: 1, dyc: 1, why: [] }; if (!L) return b;
+  b.E += 30; b.why.push('Venís de la Era ' + L.from + ': +30 energía.');
+  if (L.from === 5 && L.K5 >= .73) { b.sci += 25; b.why.push('Tu Arca salió con Kardashev ' + nf(L.K5, 2) + ': +25 ciencia.'); }
+  if (L.from === 5 && L.temp5 < 1.5) { b.dyc = .9; b.why.push('Dejaste tu planeta a +' + nf(L.temp5, 1) + ' °C: sabés usar la luz; enjambres 10 % más baratos.'); }
+  if (L.pacto) { b.E += 20; b.why.push('Firmaste el acuerdo climático: +20 energía.'); }
+  if (L.branch === 'pred') { b.atk = 1.08; b.why.push('Rama Depredadora (Era 1): tus naves pegan +8 %.'); }
+  else if (L.branch === 'colo') { b.ships = 8; b.why.push('Rama Colonial (Era 1): +8 naves al empezar.'); }
+  else if (L.branch === 'foto') { b.dyc = Math.min(b.dyc, .88); b.why.push('Rama Fotosintética (Era 1): enjambres más baratos.'); }
+  else if (L.branch === 'para') { b.sci += 15; b.why.push('Rama Parásita (Era 1): +15 ciencia.'); }
+  return b;
+}
+
+/* ---------- Partida nueva ---------- */
+function newGame(seed, o) {
+  o = o || {}; seed = String(seed || newSeedStr()).slice(0, 24); seedRng(hashStr(seed));
+  const L = o.noLineage ? null : readLineage(), slots = o.slots || null, n = slots ? slots.length : DF.riv + 1;
+  const myCv = o.cv || (L && L.cv) || (SPECIES[pickSp] ? SPECIES[pickSp].cls : 'ter'), mySp = o.sp || (L && L.sp) || (SPECIES[pickSp] && SPECIES[pickSp].cls === myCv ? pickSp : CV[myCv].rep);
+  const order = [myCv].concat(CIV_KEYS.filter(k => k !== myCv)), B = linBonus(L);
+  const stars = genGalaxy();
+  G = { v: 1, seed, t: 0, tick: 0, diff: diffI, stars, fleets: [], fid: 1, civs: [], over: false, win: false, winner: -1, how: '', online: !!slots, lin: L ? { from: L.from, species: L.species } : null, bonus: B.why.slice(), alerts: {} };
+  const homes = [];
+  for (let i = 0; i < n; i++) {
+    const cv = slots && slots[i].cv ? slots[i].cv : order[i % 4], human = slots ? slots[i].kind === 'human' : i === 0;
+    const [qx, qy] = CORNERS[i]; let best = -1, bd = 1e9; for (const s of stars) { if (homes.includes(s.id)) continue; const d = hyp(s.x - qx * W, s.y - qy * H); if (d < bd) { bd = d; best = s.id; } }
+    homes.push(best);
+    const bon = i === 0 && !slots ? B : linBonus(null);
+    const c = { id: i, cv, sp: i === 0 && !slots ? mySp : CV[cv].rep, name: slots ? slots[i].name : (i === 0 ? 'Tu civilización' : CV[cv].rival), col: slots && slots[i].color ? slots[i].color : CV[cv].col, human, pers: CV[cv].pers, alive: true, home: best,
+      E: 40 + bon.E, sci: bon.sci, tech: [], bon, think: R() * 1.5, log: [], K: .7, rate: { E: 0, sci: 0, P: 0 }, stats: { won: 0, lost: 0, cap: 0, sent: 0 }, last: null };
+    G.civs.push(c);
+    const s = stars[best]; s.own = i; s.ty = 'amarilla'; s.pl = HOMEPL[cv]; s.pop = 8; s.ships = 18 + bon.ships; s.ast = 1;
+    // vecinos alcanzables: dos sistemas libres cerca con defensa baja
+    stars.filter(x => x.own < 0 && !homes.includes(x.id)).sort((a, b) => dist(a, s) - dist(b, s) || a.id - b.id).slice(0, 2).forEach(x => { x.ships = Math.min(x.ships, 6); });
+  }
+  for (const c of G.civs) calcRates(c);
+  selS = civ(ME) ? civ(ME).home : -1; src = -1; bgDirty = true;
+  return G;
+}
+
+/* ---------- Economía y potencia (Kardashev) ---------- */
+function calcRates(c) {
+  let E = .4, sci = .15, P = 0; const eco = c.human ? 1 : DF.eco;
+  for (const s of G.stars) { if (s.own !== c.id) continue; const L = STARS[s.ty].L;
+    E += (.07 * s.pop + DY_E[s.dy] * L) * eco; sci += .035 * s.pop * (1 + s.lab) * eco + .1 * s.lab;
+    P += s.pop * 2e12 + DY_F[s.dy] * L * L_SUN; }
+  c.rate = { E, sci, P }; c.K = (Math.log10(Math.max(P, 1e6)) - 6) / 10; return c.rate;
+}
+function shipRate(c, s) { return (.035 + .014 * s.pop) * (1 + .5 * s.ast) * (hasT(c, 'replic') ? 1.4 : 1) * (c.human ? 1 : DF.eco); }
+function econ(c, dt) {
+  const r = calcRates(c); c.E += r.E * dt; c.sci += r.sci * dt;
+  for (const s of G.stars) { if (s.own !== c.id) continue;
+    const cap = popCap(c, s); if (s.pop < cap) s.pop = Math.min(cap, s.pop + (.04 + .02 * s.pop) * (1 - s.pop / Math.max(cap, .1)) * dt + (cap > 0 && s.pop < .5 ? .05 * dt : 0)); else s.pop = Math.max(cap, s.pop - .1 * dt);
+    s.ships += shipRate(c, s) * dt;
+    if (s.bt > 0) { s.bt = Math.max(0, s.bt - dt); if (s.bt === 0 && s.bk) { s[s.bk]++; const k = s.bk; s.bk = '';
+      if (k === 'dy') { tell(c, 'Enjambre de Dyson en ' + s.n + ': nivel ' + s.dy + '.'); if (s.dy >= 4) tellAll(nameOf(c) + ' terminó el nivel ' + s.dy + ' del enjambre de ' + s.n + '.', true, c); }
+      else tell(c, BLD[k].n + ' en ' + s.n + ': nivel ' + s[k] + '.'); } } }
+}
+
+/* ---------- Flotas y batallas (Lanchester cuadrática: fuerza = eficacia × N²) ---------- */
+const atkOf = c => (hasT(c, 'laser') ? 1.25 : 1) * (c ? c.bon.atk || 1 : 1);
+const defOf = (c, s) => (c && hasT(c, 'blindaje') ? 1.25 : 1) * (s ? 1 + .3 * s.esc + (c && s.id === c.home ? .5 : 0) : 1);
+function battle(f, s) {
+  const A = f.n, D = s.ships, ca = civ(f.own), cd = s.own >= 0 ? civ(s.own) : null;
+  const a = atkOf(ca) / defOf(cd, s), d = (cd ? atkOf(cd) : .9) / defOf(ca, null);   // eficacia de cada bando contra el otro
+  const sA = a * A * A, sD = d * D * D, win = sA > sD;
+  const surv = win ? Math.sqrt(Math.max(0, A * A - (d / a) * D * D)) : Math.sqrt(Math.max(0, D * D - (a / d) * A * A));
+  const rep = { t: G.t, star: s.id, a: f.own, d: s.own, A: Math.round(A), D: Math.round(D), ea: +a.toFixed(2), ed: +d.toFixed(2), win, surv: Math.round(surv),
+    why: (cd && s.esc ? 'escudo nivel ' + s.esc + '; ' : '') + (cd && s.id === cd.home ? 'sistema natal (+50 %); ' : '') + (hasT(ca, 'laser') ? 'armas de energía; ' : '') + (cd && hasT(cd, 'blindaje') ? 'blindaje del defensor; ' : '') };
+  ca.last = rep; if (cd) cd.last = rep;
+  if (win) { const prev = s.own; s.own = f.own; s.ships = surv; s.pop = Math.max(0, s.pop * .5); s.bk = ''; s.bt = 0; ca.stats.cap++; if (cd) cd.stats.lost++;
+    tell(ca, 'Tomaste ' + s.n + (prev >= 0 ? ' de ' + nameOf(cd) : '') + ' (' + Math.round(A) + ' contra ' + Math.round(D) + ').');
+    if (cd) tell(cd, nameOf(ca) + ' tomó ' + s.n + (s.id === cd.home ? ', ¡tu sistema natal!' : '.'), true); }
+  else { s.ships = surv; if (cd) { cd.stats.won++; tell(cd, 'Defendiste ' + s.n + ' de ' + nameOf(ca) + '.'); } tell(ca, 'El ataque a ' + s.n + ' fracasó (' + Math.round(A) + ' contra ' + Math.round(D) + ').', true); }
+}
+function moveFleets(dt) {
+  for (let i = 0; i < G.fleets.length; i++) {
+    const f = G.fleets[i], a = G.stars[f.from], b = G.stars[f.to], c = civ(f.own); f.p += speed(c) * dt / Math.max(1, dist(a, b));
+    if (f.p >= 1) { f.done = true;
+      if (b.own === f.own) b.ships += f.n; else battle(f, b); }
+  }
+  G.fleets = G.fleets.filter(f => !f.done);
+}
+
+/* ---------- Órdenes ---------- */
+const bCost = (c, k, lv) => Math.round(BLD[k].cost[lv] * (k === 'dy' ? c.bon.dyc || 1 : 1));
+function canSend(c, a, b, fr) { const A = G.stars[a], B = G.stars[b]; if (!A || !B || a === b) return 'Elegí otra estrella.'; if (A.own !== c.id) return 'Ese sistema no es tuyo.'; if (Math.floor(A.ships * clamp(fr, .05, 1)) < 1) return 'No hay naves para mandar.'; return null; }
+function canBuild(c, s, k) {
+  if (!s || s.own !== c.id) return 'No es tu sistema.'; const B = BLD[k]; if (!B) return '?'; if (s.bt > 0) return 'Ya hay una obra en ' + s.n + '.';
+  const lv = s[k] + 1; if (lv > B.max) return 'Nivel máximo.'; if (B.tech && !hasT(c, B.tech)) return 'Falta ' + TECH_BY[B.tech].n + '.';
+  if (k === 'dy' && lv >= 3 && lv <= 4 && !hasT(c, 'enjambre')) return 'Falta Enjambres de Dyson.'; if (k === 'dy' && lv === 5 && !hasT(c, 'esfera')) return 'Falta Esfera de Dyson.';
+  if (k === 'dy' && s.pl === 'nada' && false) return '';
+  if (c.E < bCost(c, k, lv)) return 'Falta energía (' + bCost(c, k, lv) + ').'; return null;
+}
+function canTech(c, id) { const t = TECH_BY[id]; if (!t) return '?'; if (hasT(c, id)) return 'Ya la tenés.'; for (const q of t.req) if (!hasT(c, q)) return 'Antes: ' + TECH_BY[q].n + '.'; if (c.sci < t.cost) return 'Falta ciencia (' + t.cost + ').'; return null; }
+function cmd(ci, o) {
+  const c = civ(ci); if (!c || !c.alive || !o || G.over) return 'no'; let e = null;
+  switch (o.t) {
+    case 'send': { e = canSend(c, o.a, o.b, +o.f); if (!e) { const A = G.stars[o.a], n = Math.floor(A.ships * clamp(+o.f, .05, 1)); A.ships -= n; G.fleets.push({ id: G.fid++, own: c.id, from: o.a, to: o.b, n, p: 0 }); c.stats.sent += n;
+      const B = G.stars[o.b]; if (B.own >= 0 && B.own !== c.id && civ(B.own).human) tell(civ(B.own), 'Una flota de ' + nameOf(c) + ' (' + n + ' naves) va hacia ' + B.n + '.', true); } break; }
+    case 'build': { const s = G.stars[o.s]; e = canBuild(c, s, o.k); if (!e) { const lv = s[o.k] + 1; c.E -= bCost(c, o.k, lv); s.bk = o.k; s.bt = BLD[o.k].t[lv];
+      if (o.k === 'dy' && lv >= 4) { tellAll('¡' + nameOf(c) + ' está construyendo el nivel ' + lv + ' del enjambre de Dyson en ' + s.n + '!' + (lv === 5 ? ' Si lo termina, llega al Tipo II.' : ''), true, c); } } break; }
+    case 'tech': e = canTech(c, o.id); if (!e) { c.sci -= TECH_BY[o.id].cost; c.tech.push(o.id); tell(c, 'Nueva tecnología: ' + TECH_BY[o.id].n + '.'); } break;
+    case 'bot': c.human = false; c.name += ' (bot)'; tellAll(c.name + ': la persona se fue; sigue un bot.'); break;
+    default: e = '?';
+  }
+  return e;
+}
+
+/* ---------- IA ---------- */
+function threat(c, s) { let n = 0; for (const f of G.fleets) if (f.to === s.id && f.own !== c.id) n += f.n; return n; }
+function needToTake(c, s) { const cd = s.own >= 0 ? civ(s.own) : null, a = atkOf(c) / defOf(cd, s), d = (cd ? atkOf(cd) : .9) / defOf(c, null); let D = s.ships; for (const f of G.fleets) if (f.to === s.id && f.own === s.own) D += f.n; if (cd) D += shipRate(cd, s) * dist(s, G.stars[c.home]) / speed(c) * .5; return Math.sqrt(d / a) * D; }
+function aiThink(c) {
+  const P = PERS[c.pers], mine = starsOf(c);
+  for (const id of P.tech) if (!canTech(c, id)) { cmd(c.id, { t: 'tech', id }); break; }
+  // obras: enjambre en la estrella más brillante, astillero en el natal, laboratorio, escudo si hay amenaza
+  let best = null, bs = 0;
+  for (const s of mine) { if (s.bt > 0) continue; const L = STARS[s.ty].L;
+    for (const k of ['dy', 'ast', 'lab', 'esc']) { if (canBuild(c, s, k)) continue; const lv = s[k] + 1;
+      let v = k === 'dy' ? P.dy * (1 + Math.log10(L * 20 + 1)) * (lv >= 4 ? 2.2 : 1) * (G.t > 240 ? 1.3 : .7) : k === 'ast' ? (s.id === c.home ? 1.6 : .9) * (s.pop > 3 ? 1 : .5) : k === 'lab' ? (c.tech.length < TECH.length ? .9 * (s.pop > 4 ? 1 : .4) : 0) : (threat(c, s) > s.ships * .6 || s.dy >= 3 ? 1.5 : .2);
+      v /= lv * .7 + .3; if (v > bs) { bs = v; best = { t: 'build', s: s.id, k }; } } }
+  if (best) cmd(c.id, best);
+  // defensa: si una flota enemiga viene a un sistema con más naves que las que tiene, traer refuerzos
+  for (const s of mine) { const th = threat(c, s); if (th > s.ships * .9) { const helper = mine.filter(x => x !== s && x.ships > 10 && threat(c, x) < x.ships * .5).sort((a, b) => dist(a, s) - dist(b, s) || a.id - b.id)[0]; if (helper) cmd(c.id, { t: 'send', a: helper.id, b: s.id, f: .6 }); } }
+  // ataque: el blanco con mejor valor / costo al alcance; prioridad a quien está cerca del Tipo II
+  const leader = G.civs.filter(x => x.alive && x !== c).sort((a, b) => b.K - a.K)[0];
+  for (const s of mine) {
+    if (s.ships < 10 || threat(c, s) > s.ships * .4) continue;
+    let tg = null, ts = 0;
+    for (const t of G.stars) { if (t.own === c.id) continue; const dd = dist(s, t); if (dd > 430) continue;
+      const need = needToTake(c, t) * 1.25 + 2, avail = s.id === c.home ? s.ships * .7 - 14 : s.ships * .85; if (avail < need) continue;
+      let v = (1 + STARS[t.ty].L * .3 + habOf(c, t) * 1.5 + t.dy * 2 + (t.own >= 0 && t.id === civ(t.own).home ? 2 : 0)) * (t.own >= 0 ? P.agg : 1) * (leader && t.own === leader.id && leader.K > 1.6 ? 3 : 1);
+      v = v / (need + 6) / (1 + dd / 300); if (v > ts) { ts = v; tg = t; } }
+    if (tg) { const need = needToTake(c, tg) * 1.3 + 3, keep = s.id === c.home ? 14 + s.ships * .3 : 3; if (s.ships - need >= keep) cmd(c.id, { t: 'send', a: s.id, b: tg.id, f: clamp(need / s.ships, .2, .95) }); }
+  }
+}
+
+/* ---------- Fin ---------- */
+function end(w, how) { if (G.over) return; G.over = true; G.winner = w; G.how = how; G.win = w === ME; if (!G.online) { if (G.win) writeLineage(); clearSave(); } }
+function checkEnd() {
+  for (const c of G.civs) { if (!c.alive) continue; if (!G.stars.some(s => s.own === c.id) && !G.fleets.some(f => f.own === c.id)) { c.alive = false; tellAll(nameOf(c) + ' desapareció de la galaxia.', true, c); if (c.id === ME && !G.online) { end(-2, 'eliminado'); return; } } }
+  for (const c of G.civs) if (c.alive && c.K >= K_WIN) { end(c.id, 'tipo2'); return; }
+  const al = G.civs.filter(c => c.alive); if (al.length === 1) { end(al[0].id, 'conquista'); return; }
+  const homesHeld = c => G.civs.every(o => o === c || G.stars[o.home].own === c.id || !o.alive);
+  for (const c of al) if (homesHeld(c)) { end(c.id, 'conquista'); return; }
+}
+function writeLineage() {
+  try { const c = civ(ME), prev = (() => { try { return JSON.parse(localStorage.getItem('evo_lineage')) || {}; } catch (e) { return {}; } })();
+    localStorage.setItem('evo_lineage', JSON.stringify(Object.assign({}, prev, { v: 1, from: 6, seed: G.seed, species: SPECIES[c.sp].n, era6: { civ: c.cv, especie: c.sp, K: Math.round(c.K * 100) / 100, t: Math.round(G.t), como: G.how, sistemas: starsOf(c).length, dificultad: diffI }, at: Date.now() })));
+    const done = JSON.parse(localStorage.getItem('evo_recorridos') || '[]'); done.push({ at: Date.now(), especie: SPECIES[c.sp].n, civ: c.cv, como: G.how, t: Math.round(G.t) }); localStorage.setItem('evo_recorridos', JSON.stringify(done.slice(-20)));
+  } catch (e) {}
+}
+function update(dt) {
+  if (!G || G.over) return; G.t += dt; G.tick++;
+  for (const c of G.civs) if (c.alive) econ(c, dt);
+  moveFleets(dt);
+  for (const c of G.civs) { if (!c.alive || c.human) continue; c.think -= dt; if (c.think <= 0) { c.think += DF.think; aiThink(c); } }
+  checkEnd();
+}
+const SAVE_K = 'evo_save6_v1';
+function stateHash() { return hashStr(JSON.stringify([G.t.toFixed(2), G.stars.map(s => [s.own, s.ships.toFixed(3), s.pop.toFixed(3), s.ast, s.lab, s.esc, s.dy, s.bk, s.bt.toFixed(2)]), G.fleets.map(f => [f.id, f.own, f.to, f.n, f.p.toFixed(4)]), G.civs.map(c => [c.alive, c.E.toFixed(3), c.sci.toFixed(3), c.tech])])).toString(16) + ':' + _rs; }
+function saveGame() { if (!G || G.over || G.online) return false; try { const c = civ(ME); localStorage.setItem(SAVE_K, JSON.stringify({ v: 1, at: Date.now(), summary: CV[c.cv].n + ' · ' + starsOf(c).length + ' sistemas · K ' + nf(c.K, 2) + ' · ' + fmt(G.t), diff: diffI, rs: _rs, G })); lastSaveT = G.t; return true; } catch (e) { return false; } }
+function readSave() { try { const d = JSON.parse(localStorage.getItem(SAVE_K)); return d && d.v === 1 && d.G ? d : null; } catch (e) { return null; } }
+function restoreGame(d) { diffI = d.diff || 0; DF = DIFFS[diffI]; G = JSON.parse(JSON.stringify(d.G)); _rs = d.rs >>> 0; for (const c of G.civs) calcRates(c); selS = civ(ME).home; src = -1; bgDirty = true; }
+function clearSave() { try { localStorage.removeItem(SAVE_K); } catch (e) {} }
+
+/* ====================================================================================================
+   DIBUJO (nunca toca G ni R())
+   ==================================================================================================== */
+let bgDirty = true;
+const cv = $('cv'), cx = cv.getContext('2d');
+let DPR = 1, cw = 0, ch = 0, sc0 = 1, cam = { z: 1, x: W / 2, y: H / 2 };
+let BGC = null; const FLASH = []; let seenBat = [];
+const S2 = (x, y) => [(x - cam.x) * sc0 * cam.z + cw / 2, (y - cam.y) * sc0 * cam.z + ch / 2];
+const W2 = (px, py) => [(px - cw / 2) / (sc0 * cam.z) + cam.x, (py - ch / 2) / (sc0 * cam.z) + cam.y];
+function clampCam() { const z = cam.z, hw = cw / 2 / (sc0 * z), hh = ch / 2 / (sc0 * z); cam.x = z <= 1.001 ? W / 2 : clamp(cam.x, hw, W - hw); cam.y = z <= 1.001 ? H / 2 : clamp(cam.y, hh, H - hh); }
+function resize() { DPR = Math.min(2, window.devicePixelRatio || 1); const r = cv.getBoundingClientRect(); cw = Math.max(50, r.width); ch = Math.max(50, r.height); cv.width = Math.round(cw * DPR); cv.height = Math.round(ch * DPR); sc0 = Math.min(cw / W, ch / H); clampCam(); bgDirty = true; }
+window.addEventListener('resize', resize);
+function buildBG() {
+  BGC = BGC || document.createElement('canvas'); BGC.width = Math.round(cw * DPR); BGC.height = Math.round(ch * DPR); const b = BGC.getContext('2d'); b.setTransform(DPR, 0, 0, DPR, 0, 0);
+  b.fillStyle = '#07060d'; b.fillRect(0, 0, cw, ch);
+  let s = hashStr(G ? G.seed : 'x'); const rr = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+  for (const [col, k] of [['rgba(120,70,200,', .22], ['rgba(40,120,200,', .16], ['rgba(200,80,120,', .1]]) for (let i = 0; i < 3; i++) { const x = rr() * cw, y = rr() * ch, r = (.25 + rr() * .4) * Math.max(cw, ch), g = b.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col + k + ')'); g.addColorStop(1, col + '0)'); b.fillStyle = g; b.fillRect(0, 0, cw, ch); }
+  for (let i = 0; i < 520; i++) { const x = rr() * cw, y = rr() * ch, a = .2 + rr() * .7, r = rr() < .05 ? 1.4 : .7; b.fillStyle = `rgba(255,255,255,${a})`; b.fillRect(x, y, r, r); }
+  bgDirty = false;
+}
+function drawStar(s, t) {
+  const [x, y] = S2(s.x, s.y), T = STARS[s.ty], z = sc0 * cam.z, r = Math.max(3.5, T.r * z * 1.25), o = s.own >= 0 ? civ(s.own) : null;
+  const g = cx.createRadialGradient(x, y, 0, x, y, r * 4); g.addColorStop(0, T.c); g.addColorStop(.25, T.c + '66'); g.addColorStop(1, T.c + '00'); cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r * 4, 0, TAU); cx.fill();
+  cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(x, y, r * .7, 0, TAU); cx.fill();
+  // enjambre de Dyson: anillos de colectores que giran; el nivel 5 es casi una cáscara
+  for (let i = 1; i <= s.dy; i++) { const rad = r * (1.5 + i * .42), n = 10 + i * 7; cx.fillStyle = i === 5 ? 'rgba(255,214,110,.95)' : 'rgba(255,214,110,.75)'; for (let k = 0; k < n; k++) { const a = k / n * TAU + t * (i % 2 ? .35 : -.28) / i; cx.fillRect(x + Math.cos(a) * rad - 1, y + Math.sin(a) * rad * .62 - 1, 2.2, 2.2); } }
+  if (s.dy >= 5) { cx.strokeStyle = 'rgba(255,214,110,.35)'; cx.lineWidth = 3; cx.beginPath(); cx.ellipse(x, y, r * 3.6, r * 2.3, 0, 0, TAU); cx.stroke(); }
+  // planeta en órbita
+  const pa = t * .4 + s.id, pr = r * 2.2 + 6, px = x + Math.cos(pa) * pr, py = y + Math.sin(pa) * pr * .6, P = PLANETS[s.pl];
+  if (s.pl === 'nada') { cx.fillStyle = P.c; for (let k = 0; k < 6; k++) { const a = pa + k * .22; cx.fillRect(x + Math.cos(a) * pr, y + Math.sin(a) * pr * .6, 1.6, 1.6); } }
+  else { const pz = Math.max(2, 3.2 * z * 1.4); cx.fillStyle = P.c; cx.beginPath(); cx.arc(px, py, pz, 0, TAU); cx.fill(); if (s.pl === 'gas') { cx.strokeStyle = 'rgba(255,230,190,.6)'; cx.lineWidth = 1; cx.beginPath(); cx.ellipse(px, py, pz * 1.8, pz * .5, -.3, 0, TAU); cx.stroke(); } }
+  // dueño, naves y obra
+  const rr = r * 2.2 + 10;
+  if (o) { cx.strokeStyle = o.col; cx.lineWidth = s.id === o.home ? 3 : 2; cx.beginPath(); cx.arc(x, y, rr, 0, TAU); cx.stroke(); if (s.id === o.home) { cx.setLineDash([2, 4]); cx.beginPath(); cx.arc(x, y, rr + 4, 0, TAU); cx.stroke(); cx.setLineDash([]); } }
+  if (s.bt > 0) { const tot = BLD[s.bk] ? BLD[s.bk].t[s[s.bk] + 1] || 1 : 1; cx.strokeStyle = '#ffd66e'; cx.lineWidth = 2.5; cx.beginPath(); cx.arc(x, y, rr + 7, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - s.bt / tot)); cx.stroke(); }
+  if (s.id === selS) { cx.strokeStyle = 'rgba(255,255,255,.9)'; cx.lineWidth = 1.5; cx.setLineDash([5, 4]); cx.beginPath(); cx.arc(x, y, rr + 12, 0, TAU); cx.stroke(); cx.setLineDash([]); }
+  if (s.id === src) { cx.strokeStyle = '#fff'; cx.lineWidth = 3; cx.beginPath(); cx.arc(x, y, rr + 4 + Math.sin(t * 6) * 2, 0, TAU); cx.stroke(); }
+  cx.font = '800 ' + Math.round(clamp(12 * z * 1.4, 10, 15)) + 'px "Bricolage Grotesque",system-ui'; cx.textAlign = 'center'; cx.textBaseline = 'top';
+  cx.fillStyle = o ? o.col : 'rgba(220,220,230,.85)'; cx.fillText(Math.floor(s.ships), x, y + rr + 3);
+  if (z > .45) { cx.font = '500 ' + Math.round(clamp(10 * z * 1.3, 9, 12)) + 'px "IBM Plex Sans",system-ui'; cx.fillStyle = 'rgba(230,228,240,.7)'; cx.fillText(s.n, x, y + rr + 18); }
+}
+function render(now) {
+  if (!G) return; const t = now / 1000;
+  if (bgDirty || !BGC) buildBG();
+  cx.setTransform(1, 0, 0, 1, 0, 0); cx.drawImage(BGC, 0, 0); cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  // núcleo galáctico
+  { const [x, y] = S2(W / 2, H / 2), r = 140 * sc0 * cam.z, g = cx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, 'rgba(255,230,200,.35)'); g.addColorStop(.3, 'rgba(200,150,255,.12)'); g.addColorStop(1, 'rgba(0,0,0,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(x, y, r, 0, TAU); cx.fill(); }
+  // línea de envío
+  if (src >= 0 && hoverS >= 0 && hoverS !== src) { const [x0, y0] = S2(G.stars[src].x, G.stars[src].y), [x1, y1] = S2(G.stars[hoverS].x, G.stars[hoverS].y); cx.strokeStyle = 'rgba(255,255,255,.7)'; cx.lineWidth = 2; cx.setLineDash([6, 6]); cx.lineDashOffset = -t * 30; cx.beginPath(); cx.moveTo(x0, y0); cx.lineTo(x1, y1); cx.stroke(); cx.setLineDash([]);
+    cx.fillStyle = '#fff'; cx.font = '700 12px system-ui'; cx.textAlign = 'center'; cx.fillText(Math.floor(G.stars[src].ships * frac) + ' naves', (x0 + x1) / 2, (y0 + y1) / 2 - 8); }
+  for (const s of G.stars) drawStar(s, t);
+  const skin = window.FondalPlus && FondalPlus.skin ? FondalPlus.skin() : null;
+  for (const f of G.fleets) {
+    const a = G.stars[f.from], b = G.stars[f.to], c = civ(f.own), wx = a.x + (b.x - a.x) * f.p, wy = a.y + (b.y - a.y) * f.p, [x, y] = S2(wx, wy), ang = Math.atan2(b.y - a.y, b.x - a.x);
+    const [tx, ty] = S2(a.x + (b.x - a.x) * Math.max(0, f.p - .08), a.y + (b.y - a.y) * Math.max(0, f.p - .08));
+    cx.strokeStyle = (f.own === ME && skin ? skin.trail : c.col) + '88'; cx.lineWidth = f.own === ME && skin ? 3 : 1.5; cx.beginPath(); cx.moveTo(tx, ty); cx.lineTo(x, y); cx.stroke();
+    const k = clamp(Math.round(Math.sqrt(f.n) / 1.6), 1, 6), sz = Math.max(4, 6 * sc0 * cam.z * 1.3);
+    cx.fillStyle = c.col; cx.strokeStyle = '#07060d'; cx.lineWidth = 1;
+    for (let i = 0; i < k; i++) { const ox = -Math.cos(ang) * i * sz * 1.2 + -Math.sin(ang) * ((i % 2) * 2 - 1) * sz * .8 * (i > 0), oy = -Math.sin(ang) * i * sz * 1.2 + Math.cos(ang) * ((i % 2) * 2 - 1) * sz * .8 * (i > 0);
+      cx.save(); cx.translate(x + ox, y + oy); cx.rotate(ang); cx.beginPath(); cx.moveTo(sz, 0); cx.lineTo(-sz * .7, sz * .55); cx.lineTo(-sz * .35, 0); cx.lineTo(-sz * .7, -sz * .55); cx.closePath(); cx.fill(); cx.stroke(); cx.restore(); }
+    cx.fillStyle = '#fff'; cx.font = '700 11px system-ui'; cx.textAlign = 'center'; cx.textBaseline = 'bottom'; cx.fillText(f.n, x, y - sz - 2);
+  }
+  // destellos de batalla
+  for (const c of G.civs) { const l = c.last; if (l && seenBat[c.id] !== l.t + ':' + l.star) { seenBat[c.id] = l.t + ':' + l.star; FLASH.push({ s: l.star, t0: now }); } }
+  for (let i = FLASH.length - 1; i >= 0; i--) { const f = FLASH[i], k = (now - f.t0) / 700; if (k > 1) { FLASH.splice(i, 1); continue; } const s = G.stars[f.s], [x, y] = S2(s.x, s.y); cx.strokeStyle = `rgba(255,240,200,${1 - k})`; cx.lineWidth = 3; cx.beginPath(); cx.arc(x, y, 10 + k * 40, 0, TAU); cx.stroke(); }
+  $('pauseTag').style.display = paused && started && !G.over ? 'block' : 'none';
+}
+
+/* ====================================================================================================
+   INTERFAZ
+   ==================================================================================================== */
+function why(c, o) { if (o.t === 'send') return canSend(c, o.a, o.b, o.f); if (o.t === 'build') return canBuild(c, G.stars[o.s], o.k); if (o.t === 'tech') return canTech(c, o.id); return null; }
+function doCmd(o) { if (!G || G.over) return; const e = why(me(), o); if (e) { toast(e, true); return false; } if (NET) NET.send(o); else cmd(ME, o); ui(true); return true; }
+function sysPanel() {
+  const s = G.stars[selS], c = me(); if (!s) { $('sysT').textContent = 'Sistema'; $('sysInfo').textContent = 'Tocá una estrella.'; $('sysAct').innerHTML = ''; return; }
+  const o = s.own >= 0 ? civ(s.own) : null, T = STARS[s.ty];
+  $('sysT').innerHTML = s.n + ' <span class="tag">' + T.n + '</span>';
+  const L = [];
+  L.push((o ? (o.id === ME ? '<b>Tuyo</b>' : 'De <b>' + nameOf(o) + '</b>') : 'Sistema libre') + (o && s.id === o.home ? ' · sistema natal' : '') + ' · ' + Math.floor(s.ships) + ' naves');
+  L.push('Planeta: ' + PLANETS[s.pl].n + ' · para vos, habitabilidad ' + Math.round(habOf(c, s) * 100) + ' %' + (s.own === ME ? ' · población ' + nf(s.pop, 1) + '/' + nf(popCap(c, s), 1) : ''));
+  L.push('Luz: ×' + nf(T.L, T.L < 1 ? 2 : 0) + ' la del Sol' + (s.dy ? ' · enjambre nivel ' + s.dy + ' (capta ' + (DY_F[s.dy] >= .01 ? Math.round(DY_F[s.dy] * 100) + ' %' : 'una fracción mínima') + ')' : ''));
+  if (s.own === ME) L.push('+' + nf(shipRate(c, s), 2) + ' naves/s · +' + nf(.07 * s.pop + DY_E[s.dy] * T.L, 1) + ' energía/s' + (s.bt > 0 ? ' · obra: ' + BLD[s.bk].n + ' (' + Math.ceil(s.bt) + ' s)' : ''));
+  else if (src >= 0) L.push('Para tomarlo hacen falta unas <b>' + Math.ceil(needToTake(c, s) + 1) + '</b> naves (ley cuadrática).');
+  $('sysInfo').innerHTML = L.join('<br>');
+  const B = [];
+  if (s.own === ME) for (const k of ['dy', 'ast', 'lab', 'esc']) { const lv = s[k] + 1, e = canBuild(c, s, k); if (lv > BLD[k].max) { B.push('<button disabled>' + BLD[k].n + '<small>nivel máximo (' + BLD[k].max + ')</small></button>'); continue; }
+    B.push('<button data-c=\'' + JSON.stringify({ t: 'build', s: s.id, k }) + '\'' + (e ? ' disabled' : '') + ' class="' + (k === 'dy' && !e ? 'go' : '') + '">' + BLD[k].n + ' ' + lv + '<small>' + (e || bCost(c, k, lv) + ' energía · ' + BLD[k].t[lv] + ' s · ' + BLD[k].d) + '</small></button>'); }
+  if (s.own === ME) B.push('<button class="full" data-src="' + s.id + '">' + (src === s.id ? 'Elegido: tocá el destino' : 'Mandar naves desde acá') + '<small>' + Math.floor(s.ships * frac) + ' naves (' + Math.round(frac * 100) + ' %)</small></button>');
+  else if (src >= 0 && src !== s.id) B.push('<button class="go full" data-to="' + s.id + '">Mandar ' + Math.floor(G.stars[src].ships * frac) + ' naves desde ' + G.stars[src].n + '<small>llegan en ' + Math.ceil(dist(G.stars[src], s) / speed(c)) + ' s</small></button>');
+  $('sysAct').innerHTML = B.join('');
+}
+$('sysAct').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled) return;
+  if (b.dataset.c) doCmd(JSON.parse(b.dataset.c)); else if (b.dataset.src) { src = src === +b.dataset.src ? -1 : +b.dataset.src; ui(true); } else if (b.dataset.to) { sendTo(+b.dataset.to); } });
+function sendTo(t) { if (src < 0) return; if (doCmd({ t: 'send', a: src, b: t, f: frac })) { toast('Flota en camino a ' + G.stars[t].n + '.'); } src = -1; ui(true); }
+function hud() {
+  const c = me(), ships = Math.floor(starsOf(c).reduce((a, s) => a + s.ships, 0) + G.fleets.filter(f => f.own === ME).reduce((a, f) => a + f.n, 0));
+  $('vTime').textContent = fmt(G.t); $('vE').textContent = Math.floor(c.E); $('nE').textContent = 'energía (+' + nf(c.rate.E, 1) + '/s)';
+  $('vSci').textContent = Math.floor(c.sci); $('vSys').textContent = starsOf(c).length; $('vShips').textContent = ships; $('vK').textContent = nf(c.K, 2);
+}
+function race() {
+  $('race').innerHTML = G.civs.map(c => { const p = clamp((c.K - .7) / (K_WIN - .7), 0, 1), dmax = Math.max(0, ...starsOf(c).map(s => s.dy));
+    return '<div class="race"><i class="dot" style="background:' + c.col + '"></i><div class="nm"><b>' + nameOf(c) + (c.alive ? '' : ' (fuera)') + '</b>K ' + nf(c.K, 2) + ' · ' + starsOf(c).length + ' sistemas · enjambre máx. ' + dmax + '</div><div class="st"><div class="bars"><i><u style="width:' + Math.round(p * 100) + '%;background:' + c.col + '"></u></i></div></div></div>'; }).join('');
+}
+function repBox() {
+  const l = me().last; if (!l) return; const A = civ(l.a), D = l.d >= 0 ? civ(l.d) : null, s = G.stars[l.star];
+  const fa = l.ea * l.A * l.A, fd = l.ed * l.D * l.D;
+  $('rep').innerHTML = '<b>' + s.n + ' (' + fmt(l.t) + ')</b>: ' + nameOf(A) + ' atacó con <b>' + l.A + '</b> contra <b>' + l.D + '</b> de ' + (D ? nameOf(D) : 'los defensores locales') + '.<br>Ley cuadrática: fuerza = eficacia × naves². ' + nameOf(A) + ': ' + l.ea + ' × ' + l.A + '² = <b>' + Math.round(fa) + '</b>; defensa: ' + l.ed + ' × ' + l.D + '² = <b>' + Math.round(fd) + '</b>.<br>Ganó <b>' + (l.win ? nameOf(A) : D ? nameOf(D) : 'la defensa') + '</b> con ' + l.surv + ' naves en pie.' + (l.why ? '<br><small>Factores: ' + l.why.replace(/; $/, '') + '.</small>' : '') + '<br><small>Por eso conviene juntar naves: el doble de naves pega cuatro veces más fuerte.</small>';
+}
+const GOALS = [
+  ['Colonizá un sistema', c => starsOf(c).length >= 2, 'Tocá tu sistema natal, después una estrella libre cercana (número bajo).'],
+  ['Investigá una tecnología', c => c.tech.length >= 1, 'Tecnologías: la ciencia sale de la población y los laboratorios.'],
+  ['Construí un enjambre de Dyson', c => starsOf(c).some(s => s.dy >= 1), 'En un sistema tuyo: Enjambre de Dyson 1. Las estrellas blancas y azules rinden más.'],
+  ['Tené 6 sistemas', c => starsOf(c).length >= 6, 'Mandá flotas grandes: la ley cuadrática premia juntar naves.'],
+  ['Llegá a Kardashev 1,5', c => c.K >= 1.5, 'Enjambre nivel 3 (pide la tecnología Enjambres de Dyson).'],
+  ['Enjambre nivel 4', c => starsOf(c).some(s => s.dy >= 4), 'Avisa a los rivales: preparate para defender ese sistema.'],
+  ['Tipo II de Kardashev', c => c.K >= K_WIN, 'Esfera de Dyson (nivel 5) en una estrella amarilla, blanca o azul.']
+];
+function goals() {
+  const c = me(); let n = 0, first = null;
+  $('goalRows').innerHTML = GOALS.map(([t, f, h]) => { const ok = f(c); if (ok) n++; else if (!first) first = [t, h]; return '<div class="g' + (ok ? ' ok' : '') + '">' + (ok ? '✓ ' : '○ ') + t + '</div>'; }).join(''); $('goalN').textContent = n + '/' + GOALS.length;
+  const inc = G.fleets.filter(f => f.own !== ME && G.stars[f.to].own === ME), big = inc.sort((a, b) => b.n - a.n)[0];
+  const rival = G.civs.find(x => x.id !== ME && x.alive && starsOf(x).some(s => s.dy >= 4));
+  $('hint').innerHTML = big ? '<b style="color:var(--warn)">¡Ataque!</b> ' + big.n + ' naves de ' + nameOf(civ(big.own)) + ' van a ' + G.stars[big.to].n + ' (tenés ' + Math.floor(G.stars[big.to].ships) + '). Mandá refuerzos.' : rival ? '<b style="color:var(--warn)">' + nameOf(rival) + ' está cerca del Tipo II</b> (K ' + nf(rival.K, 2) + '): atacá el sistema con su enjambre.' : first ? '<b>Siguiente:</b> ' + first[0] + '. ' + first[1] : '¡Tipo II!';
+}
+function logBox() { $('log').innerHTML = me().log.slice(0, 8).map(t => '<div>' + t + '</div>').join('') || '<div>La galaxia está en calma.</div>'; }
+function barLabels() { const c = me(), av = TECH.filter(t => !canTech(c, t.id)).length, left = TECH.length - c.tech.length; $('bTechS').textContent = av ? av + ' lista' + (av > 1 ? 's' : '') : left + ' por descubrir'; $('bTech').classList.toggle('go', av > 0);
+  $('bPause').textContent = paused ? 'Seguir' : 'Pausa'; $('bSpd').textContent = '×' + SPD[spdI]; $('bPause').disabled = $('bSpd').disabled = $('bSave').disabled = !!NET; }
+function techOverlay() { const c = me(); $('techP').textContent = 'Ciencia: ' + Math.floor(c.sci) + ' (+' + nf(c.rate.sci, 2) + '/s). Sale de la población y de los laboratorios.';
+  $('techGrid').innerHTML = TECH.map(t => { const e = canTech(c, t.id), d = hasT(c, t.id); return '<button class="tc' + (d ? ' done' : '') + '" data-t="' + t.id + '"' + (d || e ? ' disabled' : '') + '><b>' + t.n + '</b><span>' + t.d + '</span><em>' + (d ? 'Investigada' : e || 'Investigar: ' + t.cost + ' ciencia') + '</em></button>'; }).join(''); }
+$('techGrid').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b || b.disabled) return; doCmd({ t: 'tech', id: b.dataset.t }); techOverlay(); });
+const openOv = id => $(id).classList.add('show'), closeOv = id => $(id).classList.remove('show');
+$('bTech').onclick = () => { techOverlay(); openOv('techm'); }; $('techClose').onclick = () => closeOv('techm');
+$('bHomeSys').onclick = () => { selS = me().home; const s = G.stars[selS]; if (cam.z > 1) { cam.x = s.x; cam.y = s.y; clampCam(); } ui(true); };
+$('bPause').onclick = () => { paused = !paused; ui(true); }; $('bSpd').onclick = () => { spdI = (spdI + 1) % SPD.length; ui(true); };
+$('bSave').onclick = () => toast(saveGame() ? 'Partida guardada.' : 'No se pudo guardar.');
+$('frac').addEventListener('click', e => { const b = e.target.closest('button[data-f]'); if (!b) return; frac = +b.dataset.f; [...$('frac').children].forEach(x => x.classList.toggle('on', x === b)); ui(true); });
+function dialog(title, html, btns) { $('dT').textContent = title; $('dB').innerHTML = html; const bb = $('dBtns'); bb.innerHTML = '';
+  btns.forEach(([t, f, main]) => { const b = document.createElement(typeof f === 'string' ? 'a' : 'button'); b.className = main ? 'bigbtn' : 'ghost'; if (typeof f === 'string') { b.href = f; b.style.cssText = 'display:block;text-align:center;text-decoration:none'; } else b.onclick = f; b.innerHTML = t; bb.appendChild(b); }); openOv('dlg'); }
+/* Epílogo: tu recorrido de la célula a las estrellas, leído del linaje */
+function epilogue() {
+  let d = {}; try { d = JSON.parse(localStorage.getItem('evo_lineage')) || {}; } catch (e) {}
+  const BRN = { pred: 'Depredadora', para: 'Parásita', foto: 'Fotosintética', colo: 'Colonial' }, CIVN = { ter: 'Clanes de la madriguera', ins: 'La Colmena', acu: 'La Ciudad del Arrecife', ave: 'La Bandada' };
+  const rows = [
+    ['Era 1 · Célula', d.branch ? 'Rama ' + BRN[d.branch] + (d.tier ? ', nivel ' + d.tier : '') + (d.mutCount ? ', ' + d.mutCount + ' mutaciones' : '') : null],
+    ['Era 2 · Especie', d.era2 && d.era2.species ? (SPECIES[d.era2.species] ? SPECIES[d.era2.species].n : d.era2.species) + (d.era2.tierra ? ', salió del agua' : '') : null],
+    ['Era 3 · Civilización', d.era3 && d.era3.civ ? CIVN[d.era3.civ] + (d.era3.maravilla ? ', Maravilla: ' + d.era3.maravilla : '') : null],
+    ['Era 4 · Guerra', d.era4 && d.era4.civ ? (d.era4.capitales ? d.era4.capitales + ' capitales tomadas' : 'ganada') + (d.era4.rendiciones ? ', ' + d.era4.rendiciones + ' rendiciones' : '') : null],
+    ['Era 5 · Industria', d.era5 && d.era5.civ ? 'Arca con Kardashev ' + nf(+d.era5.K || 0, 2) + ', planeta a +' + nf(+d.era5.temp || 0, 1) + ' °C' + (d.era5.pacto ? ', firmaste el acuerdo climático' : '') : null],
+    ['Era 6 · Estrellas', d.era6 ? (d.era6.como === 'tipo2' ? 'Tipo II de Kardashev' : 'Conquista de la galaxia') + ' en ' + fmt(d.era6.t || 0) + ' con ' + d.era6.sistemas + ' sistemas' : null]
+  ];
+  const n = rows.filter(r => r[1]).length;
+  return '<p>De una célula en el agua a una especie que usa toda la luz de una estrella. ' + (n === 6 ? '<b>Jugaste las seis eras.</b>' : 'Jugaste ' + n + ' de 6 eras en este navegador.') + '</p>' + rows.map(([e, t]) => '<div class="epi"><b>' + e + '</b><span>' + (t || 'no jugada en este navegador') + '</span></div>').join('');
+}
+let dlgShown = '';
+function showEnd() {
+  const c = me(), w = G.winner >= 0 ? civ(G.winner) : null;
+  if (G.win) dialog(G.how === 'tipo2' ? '¡Tipo II de Kardashev!' : '¡La galaxia es tuya!', (G.online ? '<p>Ganaste la partida en línea en ' + fmt(G.t) + '.</p>' : epilogue()) + '<p class="sm">Gracias por jugar Fondal Age Spore. Si te gustó, contáselo a alguien o <a href="../apoyar.html">apoyá el juego</a>.</p>',
+    [['Ver tu recorrido en la portada', '../index.html#recorrido', 1], ['Jugar otra galaxia', () => location.reload()]]);
+  else dialog(G.how === 'eliminado' ? 'Tu civilización desapareció' : G.how === 'tipo2' ? nameOf(w) + ' llegó al Tipo II' : nameOf(w) + ' conquistó la galaxia', '<p>' + (G.how === 'tipo2' ? 'Terminó su esfera de Dyson antes que vos. Consejo: cuando un rival anuncia el nivel 4 o 5 de su enjambre, juntá una flota grande y tomá ese sistema.' : 'Consejo: no dejes tu sistema natal sin naves y colonizá estrellas cercanas temprano.') + '</p>', [['Jugar de nuevo', () => location.reload(), 1], ['Volver a la portada', '../index.html']]);
+}
+let lastUi = 0;
+function ui(force) { if (!G || !started) return; const now = performance.now(); if (!force && now - lastUi < 250) return; lastUi = now;
+  hud(); sysPanel(); race(); repBox(); logBox(); goals(); barLabels(); if ($('techm').classList.contains('show')) techOverlay();
+  if (G.over && dlgShown !== 'over') { dlgShown = 'over'; showEnd(); }
+  $('netTag').style.display = NET ? 'block' : 'none'; if (NET) $('netTag').textContent = 'En línea · ' + NET.status(); }
+
+/* entrada: tocar, arrastrar de una estrella a otra, mover la vista y acercar (rueda o dos dedos) */
+let hoverS = -1; const ptrs = new Map(); let drag = null, pinch = null;
+function starAt(px, py) { const [x, y] = W2(px, py); let best = -1, bd = Math.max(26, 30 / (sc0 * cam.z) * .6); for (const s of G.stars) { const d = hyp(s.x - x, s.y - y); if (d < bd) { bd = d; best = s.id; } } return best; }
+const rel = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+cv.addEventListener('pointerdown', e => { if (!G) return; cv.setPointerCapture(e.pointerId); const p = rel(e); ptrs.set(e.pointerId, p);
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch = { d: hyp(a[0] - b[0], a[1] - b[1]), z: cam.z }; drag = null; return; }
+  const s = starAt(p[0], p[1]); drag = { p0: p, s, moved: false, cx: cam.x, cy: cam.y }; });
+cv.addEventListener('pointermove', e => { if (!G) return; const p = rel(e); if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, p);
+  if (pinch && ptrs.size === 2) { const [a, b] = [...ptrs.values()]; cam.z = clamp(pinch.z * hyp(a[0] - b[0], a[1] - b[1]) / pinch.d, 1, 4); clampCam(); return; }
+  hoverS = starAt(p[0], p[1]);
+  if (!drag) return; if (hyp(p[0] - drag.p0[0], p[1] - drag.p0[1]) > 8) drag.moved = true;
+  if (drag.moved && drag.s >= 0 && G.stars[drag.s].own === ME) { src = drag.s; }
+  else if (drag.moved && cam.z > 1) { cam.x = drag.cx - (p[0] - drag.p0[0]) / (sc0 * cam.z); cam.y = drag.cy - (p[1] - drag.p0[1]) / (sc0 * cam.z); clampCam(); } });
+cv.addEventListener('pointerup', e => { ptrs.delete(e.pointerId); if (pinch) { if (ptrs.size < 2) pinch = null; drag = null; return; } if (!drag || !G) return; const p = rel(e), s = starAt(p[0], p[1]), d = drag; drag = null;
+  if (d.moved) { if (d.s >= 0 && G.stars[d.s].own === ME && s >= 0 && s !== d.s) { src = d.s; sendTo(s); } return; }
+  if (s < 0) { src = -1; ui(true); return; }
+  selS = s;
+  if (src >= 0 && s !== src) sendTo(s);
+  else if (G.stars[s].own === ME) { src = src === s ? -1 : s; }
+  ui(true); if (window.innerWidth <= 820 && src < 0) $('sysBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+cv.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); pinch = null; drag = null; });
+cv.addEventListener('wheel', e => { if (!G) return; e.preventDefault(); const p = rel(e), [wx, wy] = W2(p[0], p[1]); cam.z = clamp(cam.z * (e.deltaY < 0 ? 1.15 : 1 / 1.15), 1, 4); const [nx, ny] = W2(p[0], p[1]); cam.x += wx - nx; cam.y += wy - ny; clampCam(); }, { passive: false });
+document.addEventListener('keydown', e => { if (!started || e.target.tagName === 'INPUT') return;
+  if (e.key === ' ' && !NET) { paused = !paused; e.preventDefault(); ui(true); } else if (e.key === 't' || e.key === 'T') $('bTech').click(); else if (e.key === 'h' || e.key === 'H') $('bHomeSys').click();
+  else if (['1', '2', '3'].includes(e.key)) $('frac').children[+e.key - 1].click(); else if (e.key === 'Escape') { src = -1; closeOv('techm'); ui(true); } });
+
+/* ---------- Menú ---------- */
+function menuLin() {
+  const L = readLineage(), B = linBonus(L);
+  if (L && L.cv) { $('linBox').innerHTML = '<h3>Tu linaje</h3>Venís de la Era ' + L.from + ': <b>' + (L.sp ? SPECIES[L.sp].n : CV[L.cv].n) + '</b> (' + CV[L.cv].n + ').<br>' + B.why.join('<br>'); $('spPick').innerHTML = ''; pickSp = L.sp; }
+  else { $('linBox').innerHTML = '<h3>Sin linaje</h3>Elegí tu especie: cada clase vive mejor en otro tipo de mundo (los acuáticos en océanos, las aves también en gigantes gaseosos).'; pickSp = pickSp || 'ter_cazador';
+    $('spPick').innerHTML = CIV_KEYS.map(k => '<h4>' + CV[k].n + '</h4>' + SP_KEYS.filter(s => SPECIES[s].cls === k).map(s => '<button data-sp="' + s + '" class="' + (s === pickSp ? 'on' : '') + '">' + SPECIES[s].n + '</button>').join('')).join(''); }
+  const sv = readSave(); $('contBtn').style.display = sv ? 'block' : 'none'; if (sv) $('contBtn').innerHTML = 'Continuar<small>' + sv.summary + '</small>';
+}
+$('spPick').addEventListener('click', e => { const b = e.target.closest('button[data-sp]'); if (!b) return; pickSp = b.dataset.sp; menuLin(); });
+$('diffSeg').addEventListener('click', e => { const b = e.target.closest('button[data-d]'); if (!b) return; diffI = +b.dataset.d; DF = DIFFS[diffI]; [...$('diffSeg').children].forEach(x => x.classList.toggle('on', x === b)); });
+function begin() { closeOv('menu'); started = true; paused = false; resize(); seenBat = G.civs.map(c => c.last ? c.last.t + ':' + c.last.star : ''); ui(true); }
+$('startBtn').onclick = () => { ME = 0; newGame(null); begin(); toast('Tu sistema natal es ' + G.stars[me().home].n + '. Tocá tu estrella y después una libre cercana para colonizarla.'); };
+$('contBtn').onclick = () => { const d = readSave(); if (!d) return; ME = 0; restoreGame(d); begin(); };
+$('netBtn').onclick = () => { const box = $('netBox'); box.classList.toggle('show');
+  if (!box.dataset.on && window.FondalNet) { box.dataset.on = 1;
+    FondalNet.mountLobby(box, { era: 6, max: 4, title: 'Era 6 en línea', opt: () => ({ cv: (readLineage() || {}).cv || (SPECIES[pickSp] || SPECIES.ter_cazador).cls }),
+      onStart: (cfg, slot, net) => { diffI = cfg.diff | 0; DF = DIFFS[diffI]; ME = slot; NET = net; const c0 = cfg.opt && CV[cfg.opt.cv] ? cfg.opt.cv : 'ter', order = [c0].concat(CIV_KEYS.filter(k => k !== c0));
+        newGame(cfg.seed, { noLineage: true, slots: cfg.slots.map((s, i) => ({ kind: s.kind, name: s.name, color: s.color, cv: order[i % 4] })) });
+        net.onDesync(() => toast('Aviso: las pantallas se desincronizaron (otro navegador u otra versión).', true)); begin(); toast('Galaxia en línea: sos ' + CV[me().cv].n + '.'); } });
+  } else if (!window.FondalNet) box.innerHTML = 'No se pudo cargar el módulo en línea (net-lockstep.js).'; };
+
+/* ---------- Bucle ---------- */
+let acc = 0, lastT = performance.now();
+function loop(now) { const dt = Math.min(.25, (now - lastT) / 1000); lastT = now;
+  if (G && started && !G.over) {
+    if (NET) { let n = 0; while (NET.queue.length && n < 12) { const tr = NET.queue.shift(); for (const x of tr.cmds) cmd(x.slot, x.c && x.c.type === 'bot' ? { t: 'bot' } : x.c); update(FIX); if (tr.n % 50 === 0) NET.hash(tr.n, stateHash()); n++; } }
+    else if (!paused && !$('techm').classList.contains('show')) { acc += dt * SPD[spdI]; let n = 0; while (acc >= FIX && n < 40) { update(FIX); acc -= FIX; n++; } if (G.t - lastSaveT > 60) saveGame(); } }
+  if (G && started) { render(now); ui(); } requestAnimationFrame(loop); }
+menuLin(); resize(); requestAnimationFrame(loop);
+
+window.__e6 = { get G() { return G; }, set ME(v) { ME = v; }, step(n) { for (let i = 0; i < (n || 1) && G && !G.over; i++) update(FIX); }, setDiff(i) { diffI = i; DF = DIFFS[i]; }, pause(v) { paused = !!v; }, setStarted(v) { started = !!v; },
+  seedRng, hashStr, newGame, cmd, why, aiThink, calcRates, battle, needToTake, canBuild, canTech, canSend, stateHash, saveGame, readSave, restoreGame, clearSave, readLineage, linBonus, writeLineage, epilogue, starsOf, habOf, popCap, end, render, ui, TECH, BLD, CV, SPECIES, STARS, DY_F, DIFFS, K_WIN,
+  get selS() { return selS; }, set selS(v) { selS = v; }, get src() { return src; }, set src(v) { src = v; }, get cam() { return cam; }, get pickSp() { return pickSp; }, set pickSp(v) { pickSp = v; } };
+
+/* === AUDIO === Solo lee G. No está escuchado por una persona (docs/ESCUCHA.md). */
+(function audio6() { const FA = window.FondalAudio; if (!FA) return; FA.wire(); FA.setBiome('tundra'); FA.modulate(2);
+  const prev = { tech: 0, cap: 0, lost: 0, dy: 0, over: false, seed: '' }; let mood = 'explorar', since = 0;
+  setInterval(() => { try { if (!started || !G) { FA.setMood('explorar'); return; } const c = me(); FA.setDuck(!!paused);
+    const dy = Math.max(0, ...starsOf(c).map(s => s.dy)); if (prev.seed !== G.seed) Object.assign(prev, { tech: c.tech.length, cap: c.stats.cap, lost: c.stats.lost, dy, seed: G.seed, over: G.over });
+    if (c.tech.length > prev.tech) { FA.sfx('tech', { own: true }); FA.modulate(); FA.setMood('evolucion', { hold: 6 }); }
+    if (c.stats.cap > prev.cap) FA.sfx('upgrade', { own: true }); if (c.stats.lost > prev.lost) FA.sfx('scarcity', { own: true }); if (dy > prev.dy) { FA.stinger(9); FA.sfx('built', { own: true }); }
+    if (G.over && !prev.over) { if (G.win) { FA.stinger(14); FA.sfx('win', { own: true }); } else FA.sfx('lose', { own: true }); }
+    Object.assign(prev, { tech: c.tech.length, cap: c.stats.cap, lost: c.stats.lost, dy, over: G.over });
+    const att = G.fleets.some(f => f.own !== ME && G.stars[f.to].own === ME), mine = G.fleets.some(f => f.own === ME && G.stars[f.to].own !== ME);
+    const m = att ? 'amenaza' : mine ? 'combate' : 'explorar', now = performance.now(); if ((m !== mood && now - since > 5000) || (m === 'amenaza' && mood !== 'amenaza')) { mood = m; since = now; } FA.setMood(mood);
+  } catch (e) {} }, 300);
+  FA.mountUI({ corner: 'tr', reserve: '52px', css: '#hud{padding-right:var(--audio-reserve,0px)}' }); window.__e6.audio = FA; })();
+})();
+</script>
+</body>
+</html>

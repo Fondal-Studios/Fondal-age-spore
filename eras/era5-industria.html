@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Evolución · Era 5: La Industria</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<link rel="manifest" href="../manifest.webmanifest"><meta name="theme-color" content="#2b3a4a">
+<style>
+:root{
+  --bg:#dfe2e0; --panel:rgba(248,248,244,.95); --ink:#20262b; --ink2:#5b646a; --line:rgba(32,38,43,.2);
+  --accent:#a8501c; --accent-ink:#ffffff; --warn:#c9406f; --ok:#2f8a3f; --dark:0; --stroke:#2a2418;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#15191c;--panel:rgba(28,33,37,.95);--ink:#e9ece8;--ink2:#a7b0b2;--line:rgba(233,236,232,.2);--accent:#ef9a55;--accent-ink:#2a1a06;--ok:#6fcf80;--stroke:#0a0804;--dark:1;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#15191c;--panel:rgba(28,33,37,.95);--ink:#e9ece8;--ink2:#a7b0b2;--line:rgba(233,236,232,.2);--accent:#ef9a55;--accent-ink:#2a1a06;--ok:#6fcf80;--stroke:#0a0804;--dark:1;color-scheme:dark}
+*{box-sizing:border-box}
+html{height:100%;background:var(--bg)}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
+small{font-size:12px}
+h1,h2,h3{font-family:'Bricolage Grotesque','IBM Plex Sans',system-ui,sans-serif;margin:0;letter-spacing:-.01em}
+button,a.btn{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible,a.btn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#stage{height:100%;display:flex;flex-direction:column;gap:6px;padding:8px;position:relative}
+#hud{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:flex;align-items:baseline;gap:5px;padding:5px 9px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:12px;color:var(--ink2)}
+.chip b{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
+.chip.bad b{color:var(--warn)}
+#hint{font-size:13px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:7px 11px;color:var(--ink);line-height:1.4}
+#main{flex:1;min-height:0;display:flex;gap:6px}
+#cvWrap{flex:1;min-width:0;position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#legend{position:absolute;left:8px;bottom:6px;right:8px;font-size:12px;color:#fff;background:rgba(0,0,0,.55);padding:3px 8px;border-radius:8px;pointer-events:none}
+#pauseTag{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);padding:10px 18px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;display:none;pointer-events:none}
+#side{width:290px;display:flex;flex-direction:column;gap:6px;overflow:auto}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--ink2);line-height:1.4}
+.box h3{font-size:13px;color:var(--ink);margin-bottom:5px}
+.box b{color:var(--ink)}
+.role{display:flex;align-items:center;gap:6px;padding:3px 0}
+.role i{width:11px;height:11px;border-radius:50%;flex:none}
+.role span{flex:1;color:var(--ink)}
+.role b{min-width:20px;text-align:right}
+.role button{width:44px;height:44px;border:1px solid var(--line);background:transparent;border-radius:8px;font-weight:700;font-size:16px}
+.role button:disabled{opacity:.4}
+#log{display:flex;flex-direction:column;gap:3px;font-size:12px}
+#log div{color:var(--ink2)}#log div:first-child{color:var(--ink);font-weight:600}
+#rep ul{margin:4px 0 0;padding-left:16px}#rep li{margin:2px 0}
+#rep .dec{color:var(--ink);font-weight:600}
+.riv{display:flex;align-items:center;gap:6px;padding:3px 0;border-top:1px solid var(--line)}
+.riv:first-of-type{border-top:0}
+.riv i{width:12px;height:12px;border-radius:3px;flex:none}
+.riv span{flex:1}
+.riv button{min-height:44px;min-width:64px;border:1px solid var(--line);background:transparent;border-radius:8px;font-size:12.5px;font-weight:600}
+.riv button:disabled{opacity:.4}
+#goal summary{cursor:pointer;font-weight:600;color:var(--ink);list-style:none;display:flex;justify-content:space-between;min-height:24px}
+#goal summary::-webkit-details-marker{display:none}
+.g{padding:2px 0}.g.ok{color:var(--ok);font-weight:600}
+.chip img.ri{width:20px;height:20px;align-self:center;object-fit:contain;display:none}.chip img.ri.on{display:inline-block}
+#spPick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-top:6px}
+#spPick h4{grid-column:1/-1;margin:6px 0 0;font-size:13px;color:var(--ink)}
+#spPick button{min-height:44px;padding:6px 8px;border:1px solid var(--line);background:transparent;border-radius:10px;text-align:left;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+#spPick button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+#spPick button img{width:30px;height:30px;object-fit:contain;flex:none}
+.sgbar{display:block;height:6px;border-radius:3px;background:var(--line);margin-top:3px;overflow:hidden}.sgbar i{display:block;height:100%;background:var(--warn)}
+#bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+#bar button,#bar a.btn{padding:7px 12px;min-height:54px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:14px;font-weight:600;min-width:104px;text-decoration:none;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink)}
+#bar button small{display:block;font-weight:400;color:var(--ink2);font-size:12px;line-height:1.25}
+#bar button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}#bar button.on small{color:inherit;opacity:.85}
+#bar button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}#bar button.go small{color:inherit}
+#bar button:disabled{opacity:.45;cursor:not-allowed}
+#bar .sm{min-height:44px !important;min-width:70px !important;font-size:12.5px !important}
+#bar .brk{flex-basis:100%;height:0}
+#tray{flex-basis:100%;order:-1;display:none;gap:6px;flex-wrap:wrap;justify-content:center}#tray.show{display:flex}
+#tray button{text-align:left;align-items:flex-start;min-width:150px}
+#tray button b{display:block;font-size:14px}
+#tray button:disabled{opacity:.45}
+#toasts{position:fixed;left:50%;top:70px;transform:translateX(-50%);display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:min(92vw,440px);z-index:6}
+.toast{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;animation:tin .25s ease-out,tout .4s ease-in 4.2s forwards}
+.toast.warn{border-color:var(--warn)}
+@keyframes tin{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes tout{to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.toast{animation:tout .4s ease-in 4.2s forwards}}
+.ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:14px;background:color-mix(in srgb,var(--bg) 78%,transparent);backdrop-filter:blur(4px);z-index:10;overflow:auto}
+.ov.show{display:flex}
+.card{width:min(720px,100%);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;max-height:100%;overflow:auto}
+.card h1{font-size:clamp(30px,8vw,44px);font-weight:800;line-height:1}
+.card h2{font-size:22px;font-weight:800;margin-bottom:6px}
+.card p{margin:8px 0;line-height:1.5;color:var(--ink2);font-size:14px}
+.card p.sm{font-size:12.5px}
+.bigbtn{width:100%;min-height:48px;padding:13px;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:16px;margin-top:10px}
+.ghost{width:100%;min-height:44px;padding:10px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;margin-top:8px;display:block;text-align:center;text-decoration:none;color:var(--ink);font-size:14px}
+.ghost small{display:block;font-weight:400;color:var(--ink2);font-size:12px;margin-top:2px}
+.seg{display:flex;gap:6px;margin:6px 0;flex-wrap:wrap}
+.seg button{flex:1;min-width:96px;min-height:44px;padding:9px;border:1px solid var(--line);background:transparent;border-radius:10px;font-weight:600;font-size:13px}
+.seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:10px}
+.tc{min-height:44px;text-align:left;padding:10px;border:1px solid var(--line);background:transparent;border-radius:12px;display:block;width:100%}
+.tc:hover:not(:disabled),.tc:focus-visible{border-color:var(--accent)}
+.tc:disabled{opacity:.5;cursor:not-allowed}
+.tc.done{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.tc b{font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:800;display:block}
+.tc span{display:block;font-size:12.5px;color:var(--ink2);margin-top:2px}
+.tc em{display:block;font-style:normal;font-size:12px;margin-top:4px;color:var(--ink2)}
+@media (max-width:820px){
+  body{overflow-y:auto;overflow-x:hidden}
+  #stage{height:auto;min-height:100%;padding:8px 8px 0}
+  .chip{padding:4px 7px}
+  #main{flex:none;flex-direction:column}
+  #cvWrap{flex:none;height:56vh;height:56svh;min-height:340px}
+  #side{width:100%;overflow:visible;flex:none}
+  #bar{position:sticky;bottom:0;z-index:5;background:var(--bg);padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 8px -6px rgba(0,0,0,.25)}
+  #bar button,#bar a.btn{min-width:0;flex:1 1 22%;min-height:48px;padding:6px 6px;font-size:13px}
+  #bar .sm{flex:1 1 20%;min-width:0 !important}
+  #legend{display:none}
+  #bar button small{display:none}
+  #tray.show{display:grid;grid-template-columns:1fr 1fr;max-height:30vh;overflow:auto}#tray button{min-width:0;min-height:48px}.ds{display:none}
+  #toasts{top:auto;bottom:130px}
+}
+.chip.k b{color:var(--accent)}
+.chip.hot b{color:var(--warn)}
+.bars{display:flex;gap:3px;margin-top:3px}.bars i{flex:1;height:7px;border-radius:3px;background:var(--line);position:relative;overflow:hidden}.bars i u{position:absolute;left:0;top:0;bottom:0;width:0;background:var(--ok)}
+.race{display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid var(--line)}.race:first-child{border-top:0}
+.race i.dot{width:12px;height:12px;border-radius:3px;flex:none}.race .nm{flex:1;min-width:0}.race .nm b{display:block;font-size:12.5px}
+.race .st{width:92px}
+.act{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:6px}
+.act button{min-height:44px;padding:5px 7px;border:1px solid var(--line);background:transparent;border-radius:9px;font-size:12px;font-weight:600;text-align:left;line-height:1.25}
+.act button small{display:block;font-weight:400;color:var(--ink2);font-size:11px}
+.act button:disabled{opacity:.42;cursor:not-allowed}
+.act button.go{background:var(--accent);color:var(--accent-ink);border-color:transparent}.act button.go small{color:inherit;opacity:.9}
+.act .full{grid-column:1/-1}
+#climC{width:100%;height:46px;display:block;margin-top:4px}
+.pip{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--line);margin-right:2px}.pip.on{background:var(--accent)}
+.age{grid-column:1/-1;margin:8px 0 0;font-size:13px;color:var(--ink)}
+.tag{display:inline-block;font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid var(--line);margin-left:4px;font-weight:600}
+#netBox{display:none;margin-top:8px}
+#netBox.show{display:block}
+#netTag{position:absolute;right:8px;top:8px;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;display:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="hud">
+    <div class="chip"><b id="vTime">0:00</b><span>tiempo</span></div>
+    <div class="chip" id="cPop"><b id="vPop">0</b><span>población</span></div>
+    <div class="chip" id="cFood"><b id="vFood">0</b><span>comida/s</span></div>
+    <div class="chip" id="cEn"><b id="vEn">0</b><span>energía</span></div>
+    <div class="chip"><b id="vMat">0</b><span>materiales</span></div>
+    <div class="chip"><b id="vSci">0</b><span>ciencia</span></div>
+    <div class="chip"><b id="vInf">0</b><span>influencia</span></div>
+    <div class="chip" id="cStab"><b id="vStab">0</b><span>estabilidad</span></div>
+    <div class="chip k" title="Escala de Kardashev: cuánta energía usa tu civilización"><b id="vK">0,60</b><span>Kardashev</span></div>
+    <div class="chip" id="cTemp" title="Calentamiento global sobre la era preindustrial (compartido por todas las civilizaciones)"><b id="vTemp">+0,0 °C</b><span>planeta</span></div>
+  </div>
+  <div id="hint"></div>
+  <div id="main">
+    <div id="cvWrap"><canvas id="cv" role="img" aria-label="Mapa del continente: regiones, dueños, vías férreas, fábricas, centrales y el hielo de los polos."></canvas><div id="pauseTag">Pausa</div><div id="netTag"></div><div id="legend">Tocá una región para ver qué podés hacer. Las regiones sin vía férrea hasta tu capital rinden la mitad.</div></div>
+    <div id="side">
+      <div class="box" id="regBox"><h3 id="regT">Región</h3><div id="regInfo">Tocá una región del mapa.</div><div class="act" id="regAct"></div></div>
+      <div class="box"><h3>Carrera al espacio</h3><div id="race"></div></div>
+      <div class="box" id="clim"><h3>El planeta <small id="climS"></small></h3><div id="climT"></div><canvas id="climC" width="260" height="46" aria-hidden="true"></canvas></div>
+      <div class="box"><h3>Qué está pasando</h3><div id="log" aria-live="polite"></div></div>
+      <details class="box" id="goal" open><summary><span>Camino a las estrellas</span><span id="goalN">0/8</span></summary><div id="goalRows"></div></details>
+    </div>
+  </div>
+  <div id="bar">
+    <button id="bTech" class="go">Tecnologías<small id="bTechS">Edad del vapor</small></button>
+    <button id="bSpace">Programa espacial<small id="bSpaceS">bloqueado</small></button>
+    <button id="bCap">Mi capital<small>ver y mejorar</small></button>
+    <span class="brk"></span>
+    <button id="bSave" class="sm">Guardar</button>
+    <button id="bPause" class="sm">Pausa</button>
+    <button id="bSpd" class="sm">×1</button>
+    <a class="btn sm" id="bHome" href="../index.html">Portada</a>
+  </div>
+  <div id="toasts" aria-live="polite"></div>
+
+  <div id="menu" class="ov show"><div class="card" role="dialog" aria-modal="true" aria-labelledby="menuT">
+    <h1 id="menuT">Era 5: La Industria</h1>
+    <p>Tu civilización llega a la era de las máquinas. Anexá regiones, uní tu territorio con vías férreas, construí fábricas y centrales, y subí por la <b>escala de Kardashev</b> (cuánta energía usa una civilización). Ganás si tu <b>Arca estelar</b> despega primero. Pero el carbón calienta el planeta de <b>todos</b>: si el calentamiento llega a +4 °C, nadie llega a las estrellas.</p>
+    <div class="seg" id="diffSeg" role="group" aria-label="Dificultad"><button data-d="0" class="on">Fácil · 1 rival</button><button data-d="1">Normal · 2 rivales</button><button data-d="2">Difícil · 3 rivales</button></div>
+    <div class="box" id="linBox" style="margin-top:8px"></div>
+    <div id="spPick" role="group" aria-label="Elegí tu especie"></div>
+    <button class="bigbtn" id="startBtn">Empezar</button>
+    <button class="ghost" id="contBtn" style="display:none"></button>
+    <button class="ghost" id="netBtn">Jugar en línea<small>hasta 4 civilizaciones: personas y bots en la misma partida</small></button>
+    <div class="box" id="netBox"></div>
+    <a class="ghost" href="../index.html">Volver a la portada</a>
+    <p class="sm"><b>Base real, cifras de juego:</b> la escala de Kardashev (Sagan: K = (log₁₀ P − 6) / 10, con P en vatios) y que el calentamiento crece casi en proporción a todo el CO₂ emitido son ciencia publicada; los rendimientos, costos y tiempos del juego son aproximaciones de diseño. La humanidad real anda cerca de K ≈ 0,73.</p>
+  </div></div>
+
+  <div id="techm" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="techT"><h2 id="techT">Tecnologías</h2><p id="techP"></p><div class="grid" id="techGrid"></div><button class="ghost" id="techClose">Cerrar</button></div></div>
+  <div id="spacem" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="spaceT"><h2 id="spaceT">Programa espacial</h2><p id="spaceP"></p><div class="grid" id="spaceGrid"></div><button class="ghost" id="spaceClose">Cerrar</button></div></div>
+  <div id="dlg" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="dT"><h2 id="dT"></h2><div id="dB"></div><div id="dBtns"></div></div></div>
+</div>
+
+<script src="audio-lofi.js"></script>
+<script src="net-lockstep.js"></script>
+<script src="fondal-plus.js"></script>
+<script>
+(() => {
+"use strict";
+const $ = id => document.getElementById(id);
+/* PRNG con semilla (mulberry32): TODA la simulación usa R(); Math.random/Date solo fuera de la simulación (dibujo, partículas, semillas nuevas) */
+let _rs = 1;
+const seedRng = n => { _rs = (n >>> 0) || 1; };
+const R = () => { _rs = (_rs + 0x6D2B79F5) >>> 0; let t = _rs; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const hashStr = str => { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const newSeedStr = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
+const rnd = (a, b) => a + R() * (b - a);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const hyp = Math.hypot, TAU = Math.PI * 2;
+const r2 = v => Math.round(v * 100) / 100;
+const FIX = .1;                 // paso fijo de la simulación (s); online: 1 turno del relay = 1 paso
+const W = 1200, H = 760;
+const nf = (v, d) => (Math.round(v * Math.pow(10, d || 0)) / Math.pow(10, d || 0)).toLocaleString('es-AR', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 });
+const fmt = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+
+/* ---------- Datos ---------- */
+const CIV_KEYS = ['ter', 'ins', 'acu', 'ave'];
+const SPECIES = {
+  ter_cazador: { n: 'Cazadores de manada', cls: 'ter' }, ter_gigante: { n: 'Gigantes herbívoros', cls: 'ter' }, ter_ingeniero: { n: 'Omnívoros ingenieros', cls: 'ter' },
+  ins_colmena: { n: 'Colmena con castas', cls: 'ins' }, ins_enjambre: { n: 'Enjambre migratorio', cls: 'ins' }, ins_parasito: { n: 'Parasitoides', cls: 'ins' },
+  acu_abisal: { n: 'Depredadores abisales', cls: 'acu' }, acu_arrecife: { n: 'Arrecife constructor', cls: 'acu' }, acu_anfibio: { n: 'Anfibios pioneros', cls: 'acu' },
+  ave_rapaz: { n: 'Rapaces', cls: 'ave' }, ave_carronera: { n: 'Carroñeras oportunistas', cls: 'ave' }, ave_migratoria: { n: 'Migratorias y polinizadoras', cls: 'ave' }
+};
+const SP_KEYS = Object.keys(SPECIES);
+/* la clase decide nombres y dibujo; la mecánica es la misma para todas (claves internas iguales) */
+const CV = {
+  ter: { n: 'Terrestres', col: '#c06a2a', rep: 'ter_cazador', rival: 'Clanes de Tolmar', pers: 'industrial', cap: 'Ciudad de la madriguera',
+    bn: { capital: 'Capital', granja: 'Granjas mecanizadas', mina: 'Minas de hierro', termica: 'Central de carbón', fabrica: 'Fábrica', universidad: 'Universidad', represa: 'Represa', renovable: 'Parque solar y eólico', nuclear: 'Central nuclear', captura: 'Planta de captura de carbono' } },
+  ins: { n: 'Insectos', col: '#d9a520', rep: 'ins_colmena', rival: 'Colmena de Kerán', pers: 'industrial', cap: 'La Colmena',
+    bn: { capital: 'Colmena madre', granja: 'Cámaras de cultivo', mina: 'Minas de quitina', termica: 'Hornos de turba', fabrica: 'Fábrica de cera', universidad: 'Academia de castas', represa: 'Represa de hojas', renovable: 'Campos de alas solares', nuclear: 'Reactor de la reina', captura: 'Filtros de esporas' } },
+  acu: { n: 'Acuáticos', col: '#2f86b0', rep: 'acu_abisal', rival: 'Arrecife de Ushad', pers: 'verde', cap: 'La Ciudad del Arrecife',
+    bn: { capital: 'Ciudad del Arrecife', granja: 'Granjas de algas', mina: 'Dragas de nódulos', termica: 'Quemadores de metano', fabrica: 'Forja de nácar', universidad: 'Escuela de ecos', represa: 'Turbinas de corriente', renovable: 'Campos de mareas', nuclear: 'Reactor abisal', captura: 'Bosques de kelp captores' } },
+  ave: { n: 'Aves', col: '#3f8fd1', rep: 'ave_rapaz', rival: 'Bandada de Ilen', pers: 'cientifica', cap: 'La Bandada',
+    bn: { capital: 'Gran nido', granja: 'Huertas en terraza', mina: 'Canteras de acantilado', termica: 'Hornos de carbón', fabrica: 'Talleres de nido', universidad: 'Observatorio-escuela', represa: 'Represa de barro', renovable: 'Velas de viento y sol', nuclear: 'Nido atómico', captura: 'Torres de captura' } }
+};
+/* terreno de cada región: qué se puede construir y cuánto rinde */
+const TER = {
+  llano: { n: 'Llanura fértil', c: [170, 196, 122] }, monte: { n: 'Montañas', c: [168, 154, 132] }, cuenca: { n: 'Cuenca de carbón', c: [140, 122, 92] },
+  rio: { n: 'Valle de río', c: [128, 186, 150] }, costa: { n: 'Costa ventosa', c: [204, 200, 152] }, desierto: { n: 'Desierto soleado', c: [226, 200, 136] }
+};
+const TER_KEYS = Object.keys(TER);
+const TER_W = { llano: 5, monte: 4, cuenca: 3, rio: 3, costa: 3, desierto: 2 };
+/* edificios: uno por región, niveles 1 a 3. e = energía (+ produce, − consume), co2 en «Gt» de juego por segundo */
+const BLD = {
+  granja: { ter: ['llano', 'rio', 'costa'], cost: 18, d: 'Comida para que crezca la población.' },
+  mina: { ter: ['monte', 'cuenca'], cost: 18, d: 'Materiales para construir.' },
+  termica: { ter: ['cuenca', 'monte'], cost: 22, d: 'Mucha energía barata, pero emite CO₂.' },
+  fabrica: { ter: ['llano', 'rio', 'monte', 'cuenca', 'costa'], cost: 30, d: 'Convierte energía en materiales e influencia; da bienes (estabilidad).' },
+  universidad: { ter: TER_KEYS, cost: 28, d: 'Ciencia para las tecnologías. Consume energía.' },
+  represa: { ter: ['rio'], cost: 36, tech: 'electricidad', d: 'Energía limpia del río.' },
+  renovable: { ter: ['desierto', 'costa', 'llano'], cost: 34, tech: 'renovables', d: 'Energía limpia: sol en el desierto, viento en la costa.' },
+  nuclear: { ter: ['llano', 'monte', 'cuenca', 'desierto'], cost: 70, tech: 'fision', d: 'Muchísima energía sin CO₂; consume materiales y puede tener accidentes.' },
+  captura: { ter: TER_KEYS, cost: 46, tech: 'captura', d: 'Saca CO₂ del aire. Consume mucha energía.' }
+};
+const BLD_KEYS = Object.keys(BLD);
+const MAXLV = 3;
+const TECH = [
+  { id: 'ferrocarril', n: 'Ferrocarril', age: 1, cost: 14, req: [], d: 'Habilita las vías férreas: una región unida a tu capital rinde el doble.' },
+  { id: 'quimica', n: 'Química y fertilizantes', age: 1, cost: 18, req: [], d: 'Granjas +50 %.' },
+  { id: 'acero', n: 'Acero', age: 1, cost: 18, req: [], d: 'Minas +50 %, fábricas +20 %.' },
+  { id: 'electricidad', n: 'Electricidad', age: 2, cost: 36, req: ['ferrocarril'], need1: 2, d: 'Abre la Edad II. Represas; las regiones sin vía rinden 70 % (red eléctrica).' },
+  { id: 'radio', n: 'Radio', age: 2, cost: 40, req: ['electricidad'], d: 'Influencia +50 %, estabilidad +5.' },
+  { id: 'medicina', n: 'Medicina moderna', age: 2, cost: 40, req: ['electricidad'], d: 'Población máxima +30 %, estabilidad +6; las epidemias pegan la mitad.' },
+  { id: 'motor', n: 'Motor de combustión', age: 2, cost: 44, req: ['electricidad'], d: 'Fábricas +30 %, vías a mitad de costo.' },
+  { id: 'fision', n: 'Fisión nuclear', age: 3, cost: 72, req: ['electricidad'], need2: 2, d: 'Abre la Edad III. Centrales nucleares.' },
+  { id: 'renovables', n: 'Solar y eólica', age: 3, cost: 64, req: ['electricidad'], need2: 2, d: 'Parques solares y eólicos sin CO₂.' },
+  { id: 'computacion', n: 'Computación', age: 3, cost: 72, req: ['electricidad'], need2: 2, d: 'Universidades +50 %.' },
+  { id: 'captura', n: 'Captura de carbono', age: 3, cost: 80, req: ['renovables'], d: 'Plantas que sacan CO₂ del aire.' },
+  { id: 'coheteria', n: 'Cohetería', age: 3, cost: 84, req: ['motor'], need2: 2, d: 'Habilita el programa espacial: el satélite.' },
+  { id: 'satelites', n: 'Satélites y órbita', age: 4, cost: 110, req: ['coheteria', 'computacion'], d: 'Misión tripulada.' },
+  { id: 'arca', n: 'Arca estelar', age: 4, cost: 150, req: ['satelites'], need3: 1, d: 'Una nave que lleva a tu especie a otra estrella. Pide una fuente de energía de la Edad III.' }
+];
+const TECH_BY = Object.fromEntries(TECH.map(t => [t.id, t]));
+const AGE_N = ['', 'Edad del vapor', 'Edad de la electricidad', 'Edad atómica', 'Era espacial'];
+const STAGES = [
+  { n: 'Satélite', tech: 'coheteria', mat: 110, t: 30, K: 0, d: 'El primer objeto de tu especie en órbita.' },
+  { n: 'Misión tripulada', tech: 'satelites', mat: 220, t: 45, K: .68, d: 'Llevar a alguien al espacio y traerlo de vuelta.' },
+  { n: 'Arca estelar', tech: 'arca', mat: 380, t: 70, K: .72, d: 'La nave que lleva a tu especie a otra estrella. Termina la era.' }
+];
+const PERS = {
+  industrial: { n: 'industrial', d: 'Quema carbón sin mirar el termómetro.', tech: ['ferrocarril', 'acero', 'quimica', 'electricidad', 'motor', 'medicina', 'coheteria', 'computacion', 'fision', 'radio', 'satelites', 'renovables', 'arca', 'captura'], en: ['termica', 'nuclear', 'represa', 'renovable'], pact: 1 },
+  verde: { n: 'verde', d: 'Prefiere el río y el sol; firma acuerdos climáticos.', tech: ['ferrocarril', 'quimica', 'acero', 'electricidad', 'medicina', 'radio', 'renovables', 'motor', 'computacion', 'captura', 'coheteria', 'fision', 'satelites', 'arca'], en: ['represa', 'renovable', 'termica', 'nuclear'], pact: 0 },
+  cientifica: { n: 'científica', d: 'Universidades primero; apuesta a la fisión.', tech: ['ferrocarril', 'acero', 'quimica', 'electricidad', 'computacion', 'motor', 'medicina', 'fision', 'coheteria', 'radio', 'satelites', 'renovables', 'arca', 'captura'], en: ['nuclear', 'termica', 'represa', 'renovable'], pact: .5 }
+};
+const DIFFS = [
+  { n: 'Fácil', riv: 1, eco: .72, think: 3 }, { n: 'Normal', riv: 2, eco: .86, think: 2 }, { n: 'Difícil', riv: 3, eco: 1.05, think: 1.3 }
+];
+let DF = DIFFS[0], diffI = 0;
+const K_T = .0009;           // °C por «Gt» acumulada (respuesta transitoria al CO₂ acumulado, escalada al juego)
+const T_COLLAPSE = 4;
+const SYL1 = ['Tol', 'Mar', 'Gar', 'Run', 'Bel', 'Os', 'Ker', 'Dun', 'Var', 'Lo', 'Ush', 'Il', 'Sen', 'Tar', 'Quen', 'Bra', 'Ald', 'Fen'];
+const SYL2 = ['ria', 'dor', 'mar', 'gán', 'tea', 'ves', 'ón', 'ica', 'al', 'uro', 'ena', 'is', 'ano', 'eth'];
+
+/* ---------- Estado (JSON-serializable; referencias por índice) ---------- */
+let G = null, started = false, paused = false, spdI = 0, selR = -1, lastSaveT = 0, NET = null, ME = 0;
+const SPD = [1, 2, 4];
+const civ = i => G.civs[i];
+const me = () => G && G.civs[ME];
+const regOf = c => G.regs.filter(g => g.own === c.id);
+const hasT = (c, id) => c.tech.includes(id);
+const ageOf = c => hasT(c, 'arca') || hasT(c, 'satelites') ? 4 : (hasT(c, 'fision') || hasT(c, 'renovables') || hasT(c, 'computacion') || hasT(c, 'coheteria')) ? 3 : hasT(c, 'electricidad') ? 2 : 1;
+const Kof = e => .6 + Math.log10(Math.max(e, .01)) / 10;
+const nameOf = c => c.id === ME ? 'Tu civilización' : c.name;
+const bname = (k, cv) => CV[cv || (G && civ(ME).cv) || 'ter'].bn[k];
+const rkey = (a, b) => a < b ? a + '-' + b : b + '-' + a;
+function log(c, t) { if (!c.human) return; c.log.unshift(fmt(G.t) + ' · ' + t); if (c.log.length > 30) c.log.pop(); }
+let toast = (t, warn) => { if (typeof document === 'undefined' || !$('toasts')) return; while ($('toasts').children.length > 3) $('toasts').firstChild.remove(); const d = document.createElement('div'); d.className = 'toast' + (warn ? ' warn' : ''); d.textContent = t; $('toasts').appendChild(d); setTimeout(() => d.remove(), 4700); };
+const tell = (c, t, warn) => { log(c, t); if (c.id === ME && started) toast(t, warn); };
+
+/* ---------- Mapa: regiones sobre un continente ---------- */
+function genMap() {
+  const cols = 7, rows = 5, sx = W / cols, sy = (H - 120) / rows, regs = [];
+  for (let r = 0; r < rows; r++) for (let q = 0; q < cols; q++) {
+    const x = sx * (q + .5) + rnd(-.28, .28) * sx + (r % 2 ? sx * .18 : 0), y = 60 + sy * (r + .5) + rnd(-.25, .25) * sy;
+    const ex = (x - W / 2) / (W * .5), ey = (y - H / 2) / (H * .44), e = ex * ex + ey * ey;
+    if (e > .92 + rnd(-.12, .12)) continue;
+    regs.push({ id: regs.length, x: Math.round(clamp(x, 40, W - 40)), y: Math.round(clamp(y, 70, H - 70)), n: '', ter: 'llano', own: -1, b: null, lv: 0, bt: 0, nb: [] });
+  }
+  const used = new Set();
+  for (const g of regs) { let n; do { n = SYL1[Math.floor(R() * SYL1.length)] + SYL2[Math.floor(R() * SYL2.length)]; } while (used.has(n)); used.add(n); g.n = n;
+    let tw = 0; for (const k of TER_KEYS) tw += TER_W[k]; let p = R() * tw; for (const k of TER_KEYS) { p -= TER_W[k]; if (p <= 0) { g.ter = k; break; } } }
+  // costas: las regiones del borde del continente con viento
+  for (const g of regs) { const ex = (g.x - W / 2) / (W * .5), ey = (g.y - H / 2) / (H * .44); if (ex * ex + ey * ey > .62 && R() < .55) g.ter = 'costa'; }
+  // vecinos: cercanía; después se unen los pedazos sueltos (determinista)
+  const lim = Math.max(sx, sy) * 1.45;
+  for (let i = 0; i < regs.length; i++) for (let j = i + 1; j < regs.length; j++) if (hyp(regs[i].x - regs[j].x, regs[i].y - regs[j].y) < lim) { regs[i].nb.push(j); regs[j].nb.push(i); }
+  for (;;) {
+    const seen = new Set([0]), st = [0]; while (st.length) { const i = st.pop(); for (const j of regs[i].nb) if (!seen.has(j)) { seen.add(j); st.push(j); } }
+    if (seen.size === regs.length) break;
+    let best = null, bd = 1e9; for (const i of seen) for (let j = 0; j < regs.length; j++) if (!seen.has(j)) { const d = hyp(regs[i].x - regs[j].x, regs[i].y - regs[j].y); if (d < bd) { bd = d; best = [i, j]; } }
+    regs[best[0]].nb.push(best[1]); regs[best[1]].nb.push(best[0]);
+  }
+  for (const g of regs) g.nb.sort((a, b) => a - b);
+  return regs;
+}
+const CORNERS = [[.14, .72], [.86, .28], [.86, .74], [.14, .26]];
+function pickCapitals(regs, n) {
+  const caps = [];
+  for (let k = 0; k < n; k++) { const [cx, cy] = CORNERS[k]; let best = -1, bd = 1e9; for (const g of regs) { if (caps.includes(g.id)) continue; const d = hyp(g.x - cx * W, g.y - cy * H); if (d < bd) { bd = d; best = g.id; } } caps.push(best); }
+  return caps;
+}
+
+/* ---------- Linaje (Eras 1 a 4) ---------- */
+const BRN = { pred: 'Depredador', para: 'Parásito', foto: 'Fotosintético', colo: 'Colonial' };
+function readLineage() {
+  try {
+    const d = JSON.parse(localStorage.getItem('evo_lineage')); if (!d || d.v !== 1 || ![1, 2, 3, 4, 5, 6].includes(d.from)) return null;
+    const br = ['pred', 'para', 'foto', 'colo'].includes(d.branch) ? d.branch : null;
+    let cv = null, sp = null;
+    const e4 = d.era4 && typeof d.era4 === 'object' && CV[d.era4.civ] ? d.era4 : null, e3 = d.era3 && typeof d.era3 === 'object' && CV[d.era3.civ] ? d.era3 : null, e2 = d.era2 && typeof d.era2 === 'object' && SPECIES[d.era2.species] ? d.era2 : null;
+    const e5 = d.era5 && typeof d.era5 === 'object' && CV[d.era5.civ] ? d.era5 : null;
+    const src = e5 || e4 || e3;
+    if (src) { cv = src.civ; sp = SPECIES[src.especie] && SPECIES[src.especie].cls === cv ? src.especie : CV[cv].rep; }
+    else if (e2) { sp = e2.species; cv = SPECIES[sp].cls; }
+    const docs = e4 && Array.isArray(e4.techs) ? e4.techs.filter(x => typeof x === 'string').slice(0, 8) : [];
+    return { from: d.from, branch: br, cv, sp, docs, como: e4 ? String(e4.como || '').slice(0, 20) : '', caps: e4 ? Math.max(0, Math.round(+e4.capitales) || 0) : 0, surr: e4 ? Math.max(0, Math.round(+e4.rendiciones) || 0) : 0, species: String(d.species || '').slice(0, 40), city: e3 ? String(e3.ciudad || '').slice(0, 40) : String(d.city || '').slice(0, 40), raw: d };
+  } catch (e) { return null; }
+}
+/* bono chico y explicado; sin linaje el juego es idéntico */
+function linBonus(L) {
+  const b = { mat: 0, inf: 0, sci: 0, railM: 1, fab: 1, popM: 1, infM: 1, renM: 1, extra: 0, why: [] };
+  if (!L) return b;
+  b.mat += 20; b.why.push('Venís de la Era ' + L.from + ': +20 materiales.');
+  if (L.caps > 0) { b.extra = 1; b.why.push('Tomaste ' + L.caps + ' capital' + (L.caps > 1 ? 'es' : '') + ' en la Era 4: empezás con una región más.'); }
+  if (L.surr > 0) { b.mat += 30; b.why.push('Te pagaban tributo: +30 materiales.'); }
+  if (L.docs.includes('logi')) { b.railM = .5; b.why.push('Doctrina de intendencia: vías férreas a mitad de costo.'); }
+  if (L.docs.includes('engano')) { b.inf += 15; b.why.push('Arte del engaño: +15 influencia.'); }
+  if (L.docs.includes('bronce')) { b.fab = 1.1; b.why.push('Armas de metal: fábricas +10 %.'); }
+  if (L.branch === 'foto') { b.renM = 1.15; b.why.push('Rama Fotosintética de la Era 1: energía limpia +15 %.'); }
+  else if (L.branch === 'colo') { b.popM = 1.1; b.why.push('Rama Colonial de la Era 1: población máxima +10 %.'); }
+  else if (L.branch === 'para') { b.infM = 1.15; b.why.push('Rama Parásita de la Era 1: influencia +15 %.'); }
+  else if (L.branch === 'pred') { b.fab = Math.max(b.fab, 1.1); b.why.push('Rama Depredadora de la Era 1: fábricas +10 %.'); }
+  return b;
+}
+
+/* ---------- Partida nueva ---------- */
+function newGame(seed, o) {
+  o = o || {};
+  seed = String(seed || newSeedStr()).slice(0, 24); seedRng(hashStr(seed));
+  const L = o.noLineage ? null : readLineage();
+  const regs = genMap();
+  const slots = o.slots || null;   // online: [{kind,name,cv}]
+  const n = slots ? slots.length : DF.riv + 1;
+  const caps = pickCapitals(regs, n);
+  let myCv = o.cv || (L && L.cv) || (SPECIES[pickSp] ? SPECIES[pickSp].cls : 'ter');
+  const mySp = o.sp || (L && L.sp && SPECIES[L.sp].cls === myCv ? L.sp : CV[myCv].rep);
+  const order = [myCv].concat(CIV_KEYS.filter(k => k !== myCv));
+  const B = linBonus(L);
+  G = { v: 1, seed, t: 0, tick: 0, diff: diffI, regs, rails: [], civs: [], co2: 0, temp: 0, th: [0], nextEv: 95, evn: 0, summit: false, over: false, win: false, how: '', winner: -1, ownVer: 1, lin: L ? { from: L.from, branch: L.branch, species: L.species, city: L.city } : null, bonus: B.why.slice(), online: !!slots };
+  for (let i = 0; i < n; i++) {
+    const cv = slots && slots[i].cv ? slots[i].cv : order[i % 4];
+    const human = slots ? slots[i].kind === 'human' : i === 0;
+    const c = { id: i, cv, sp: i === 0 && !slots ? mySp : (slots && slots[i].sp && SPECIES[slots[i].sp] ? slots[i].sp : CV[cv].rep), name: slots ? slots[i].name : (i === 0 ? 'Tu civilización' : CV[cv].rival), col: slots && slots[i].color ? slots[i].color : CV[cv].col,
+      human, pers: CV[cv].pers, alive: true, cap: caps[i], pop: 6, mat: 40, sci: 0, inf: 24, stab: 64, tech: [], sp5: { st: 0, b: -1, p: 0 }, pact: false, dlg: null, dlgT: 0, quar: 0, rev: 0, co2: 0, think: R() * 1.5, log: [], r: null,
+      bon: i === 0 || (slots && human) ? (slots ? linBonus(null) : B) : linBonus(null), stats: { built: 0, annex: 0, absorbed: 0 } };
+    if (i === 0 && !slots) { c.mat += B.mat; c.inf += B.inf; }
+    G.civs.push(c);
+    const g = regs[caps[i]]; g.own = i; g.b = 'capital'; g.lv = 1; g.ter = g.ter === 'desierto' ? 'llano' : g.ter;
+    // vecindario jugable: al menos una región fértil y una con minerales o carbón
+    const nbs = g.nb.filter(j => regs[j].own < 0 && !caps.includes(j));
+    if (nbs.length && !nbs.some(j => ['llano', 'rio'].includes(regs[j].ter))) regs[nbs[0]].ter = 'llano';
+    if (nbs.length > 1 && !nbs.some(j => ['monte', 'cuenca'].includes(regs[j].ter))) regs[nbs[nbs.length - 1]].ter = 'cuenca';
+    const extra = 1 + (c.bon.extra || 0);
+    for (let k = 0; k < extra; k++) { const fr = g.nb.filter(j => regs[j].own < 0 && !caps.includes(j)).sort((a, b) => terScore(regs[b].ter, 'industrial') - terScore(regs[a].ter, 'industrial') || a - b); if (fr.length) regs[fr[0]].own = i; }
+  }
+  for (const c of G.civs) c.r = rates(c);
+  selR = G.civs[ME] ? G.civs[ME].cap : -1;
+  bgDirty = true; ownDirty = true;
+  return G;
+}
+function terScore(t, pers) { return { llano: 3, rio: 3.2, monte: 2.6, cuenca: pers === 'verde' ? 1.6 : 2.8, costa: 2, desierto: pers === 'verde' ? 2.2 : 1.2 }[t] || 1; }
+
+/* ---------- Economía ---------- */
+function connected(c) {
+  const ok = new Set([c.cap]), st = [c.cap], own = new Set(regOf(c).map(g => g.id)), rs = new Set(G.rails);
+  while (st.length) { const i = st.pop(); for (const j of G.regs[i].nb) if (!ok.has(j) && own.has(j) && rs.has(rkey(i, j))) { ok.add(j); st.push(j); } }
+  return ok;
+}
+function popCap(c) { return (10 + 3.2 * regOf(c).length) * (hasT(c, 'medicina') ? 1.3 : 1) * (c.bon.popM || 1); }
+function rates(c) {
+  const conn = connected(c), lone = hasT(c, 'electricidad') ? .7 : .5, eco = c.human ? 1 : DF.eco;
+  const o = { food: 1.3, foodNeed: c.pop * .11, eS: 1.2, eD: c.pop * .035, mat: .8, sci: .3, inf: .3, co2: 0, work: 0, fabLv: 0, fosLv: 0, conn: conn.size, regs: 0 };
+  const prod = { food: 0, eS: 0, mat: 0, sci: 0, inf: 0 };
+  const pact = c.pact, chem = hasT(c, 'quimica') ? 1.5 : 1, steel = hasT(c, 'acero'), mot = hasT(c, 'motor'), comp = hasT(c, 'computacion') ? 1.5 : 1;
+  for (const g of G.regs) {
+    if (g.own !== c.id) continue; o.regs++;
+    const lv = g.lv; if (!g.b || g.b === 'capital' || lv <= 0) continue;
+    const m = (conn.has(g.id) ? 1 : lone) * eco;
+    switch (g.b) {
+      case 'granja': prod.food += 1.05 * lv * m * chem * (g.ter === 'rio' ? 1.25 : 1); o.work += 1.2 * lv; break;
+      case 'mina': prod.mat += .62 * lv * m * (steel ? 1.5 : 1) * (g.ter === 'monte' ? 1 : .8); o.work += 1.5 * lv; break;
+      case 'termica': prod.eS += 2.1 * lv * m * (pact ? .85 : 1); o.co2 += .5 * lv * (pact ? .5 : 1); o.fosLv += lv; o.work += 1.2 * lv; break;
+      case 'fabrica': o.eD += 1.4 * lv; prod.mat += 1.0 * lv * m * (steel ? 1.2 : 1) * (mot ? 1.3 : 1) * (c.bon.fab || 1); prod.inf += .1 * lv * m; o.co2 += .14 * lv; o.fabLv += lv; o.work += 1.8 * lv; break;
+      case 'universidad': o.eD += .6 * lv; prod.sci += .5 * lv * m * comp; o.work += 1 * lv; break;
+      case 'represa': prod.eS += 2.3 * lv * m * (c.bon.renM || 1); o.work += .6 * lv; break;
+      case 'renovable': prod.eS += 1.9 * lv * m * (g.ter === 'desierto' ? 1.4 : g.ter === 'costa' ? 1.3 : 1) * (c.bon.renM || 1); o.work += .6 * lv; break;
+      case 'nuclear': prod.eS += 5.2 * lv * m; o.mat -= .2 * lv; o.work += 1.4 * lv; break;
+      case 'captura': o.eD += 1.2 * lv; o.co2 -= .7 * lv * m; o.work += .5 * lv; break;
+    }
+  }
+  const eff = clamp(c.pop / Math.max(1, o.work), .25, 1);
+  o.eff = eff; o.food += prod.food * eff; o.eS += prod.eS * eff;
+  o.brown = o.eS >= o.eD ? 1 : clamp(o.eS / o.eD, 0, 1);
+  const bw = .4 + .6 * o.brown;   // sin energía suficiente, fábricas y universidades rinden menos
+  o.mat += prod.mat * eff * bw; o.sci += prod.sci * eff * bw; o.inf += prod.inf * eff * bw;
+  o.inf *= (hasT(c, 'radio') ? 1.5 : 1) * (c.bon.infM || 1);
+  if (c.quar > 0) { o.mat *= .7; o.sci *= .7; }
+  if (G.dry > 0) o.food *= .75;
+  const heat = Math.max(0, G.temp - 1.5); o.food *= 1 - Math.min(.35, heat * .12);
+  o.K = Kof(o.eS);
+  return o;
+}
+function econ(c, dt) {
+  const r = c.r = rates(c);
+  c.mat = Math.max(0, c.mat + r.mat * dt); c.sci += r.sci * dt; c.inf += r.inf * dt;
+  const surplus = r.food - r.foodNeed, cap = popCap(c);
+  if (surplus >= 0) c.pop = Math.min(cap, c.pop + Math.min(surplus * .09, .14) * dt); else c.pop = Math.max(3, c.pop + surplus * .12 * dt);
+  r.hungry = surplus < -.05;
+  c.co2 += r.co2 * dt; G.co2 = Math.max(0, G.co2 + r.co2 * dt);
+  // estabilidad: bienes, medicina y radio suben; hambre, apagones, calor y humo bajan
+  const smoke = Math.min(14, r.fosLv * 1.4);
+  const tgt = 60 + Math.min(18, r.fabLv * 3) + (hasT(c, 'medicina') ? 6 : 0) + (hasT(c, 'radio') ? 5 : 0) + (c.pact ? 6 : 0) - (r.hungry ? 24 : 0) - 26 * (1 - r.brown) - Math.max(0, G.temp - 1.2) * 9 - smoke;
+  c.stab = clamp(c.stab + (tgt - c.stab) * .05 * dt, 0, 100); r.tgt = tgt;
+  if (c.quar > 0) c.quar = Math.max(0, c.quar - dt);
+  if (c.stab <= 2) c.rev += dt; else c.rev = Math.max(0, c.rev - dt * .5);
+}
+function climate(dt) {
+  G.temp = G.co2 * K_T;
+  if (G.dry > 0) G.dry = Math.max(0, G.dry - dt);
+  if (G.tick % 100 === 0) { G.th.push(r2(G.temp)); if (G.th.length > 120) G.th.shift(); }
+}
+/* obras en curso (construir o subir de nivel) */
+function works(dt) {
+  for (const g of G.regs) if (g.bt > 0) { g.bt = Math.max(0, g.bt - dt); if (g.bt === 0) { g.lv++; const c = civ(g.own); if (c) { c.stats.built++; if (c.id === ME) tell(c, bname(g.b, c.cv) + ' en ' + g.n + ': nivel ' + g.lv + '.'); } } }
+}
+function spaceTick(c, dt) {
+  const s = c.sp5; if (s.b < 0) return;
+  const st = STAGES[s.b];
+  s.p = Math.min(1, s.p + dt / st.t * (c.r.brown >= 1 ? 1 : .35));
+  if (s.p >= 1) { s.st = s.b + 1; s.b = -1; s.p = 0;
+    for (const o of G.civs) if (o.human) tell(o, (o.id === c.id ? 'Tu ' : nameOf(c) + ': ') + STAGES[s.st - 1].n.toLowerCase() + (o.id === c.id ? ' lista.' : ' listo.'), o.id !== c.id && s.st >= 2);
+    if (s.st >= 3) end(c.id, 'arca'); }
+}
+
+/* ---------- Órdenes (la interfaz solo emite órdenes; online viajan por el relay) ---------- */
+const annexCost = c => Math.round(12 + 4.5 * regOf(c).length);
+const absorbCost = c => annexCost(c) * 3;
+const railCost = c => Math.round(10 * (hasT(c, 'motor') ? .5 : 1) * (c.bon.railM || 1));
+const bCost = (k, lv) => Math.round(BLD[k].cost * Math.pow(1.7, lv - 1));
+const adjOwn = (c, g) => g.nb.some(j => G.regs[j].own === c.id);
+function canAnnex(c, g) { if (!g || g.own !== -1) return 'No es una región libre.'; if (!adjOwn(c, g)) return 'Tiene que tocar tu territorio.'; if (c.inf < annexCost(c)) return 'Te falta influencia (' + annexCost(c) + ').'; return null; }
+function canAbsorb(c, g) { if (!g || g.own < 0 || g.own === c.id) return 'No es de un rival.'; if (g.b === 'capital') return 'Una capital no se absorbe.'; if (!adjOwn(c, g)) return 'Tiene que tocar tu territorio.'; const o = civ(g.own); if (o.stab >= 35) return 'Solo si el rival tiene menos de 35 de estabilidad (tiene ' + Math.round(o.stab) + ').'; if (c.inf < absorbCost(c)) return 'Te falta influencia (' + absorbCost(c) + ').'; return null; }
+function canBuild(c, g, k) {
+  if (!g || g.own !== c.id) return 'No es tu región.'; if (g.b) return 'Ya tiene un edificio.'; const B = BLD[k]; if (!B) return '?';
+  if (!B.ter.includes(g.ter)) return 'No se puede en ' + TER[g.ter].n.toLowerCase() + '.'; if (B.tech && !hasT(c, B.tech)) return 'Falta ' + TECH_BY[B.tech].n + '.';
+  if (c.mat < bCost(k, 1)) return 'Faltan materiales (' + bCost(k, 1) + ').'; return null;
+}
+function canUp(c, g) { if (!g || g.own !== c.id || !g.b || g.b === 'capital') return 'Nada que mejorar.'; if (g.bt > 0) return 'Ya hay una obra.'; if (g.lv >= MAXLV) return 'Nivel máximo.'; if (c.mat < bCost(g.b, g.lv + 1)) return 'Faltan materiales (' + bCost(g.b, g.lv + 1) + ').'; return null; }
+function canRail(c, a, b) { const A = G.regs[a], B = G.regs[b]; if (!A || !B || A.own !== c.id || B.own !== c.id) return 'Las dos regiones tienen que ser tuyas.'; if (!A.nb.includes(b)) return 'No son vecinas.'; if (!hasT(c, 'ferrocarril')) return 'Falta el Ferrocarril.'; if (G.rails.includes(rkey(a, b))) return 'Ya hay vía.'; if (c.mat < railCost(c)) return 'Faltan materiales (' + railCost(c) + ').'; return null; }
+function canTech(c, id) {
+  const t = TECH_BY[id]; if (!t) return '?'; if (hasT(c, id)) return 'Ya la tenés.';
+  for (const q of t.req) if (!hasT(c, q)) return 'Antes: ' + TECH_BY[q].n + '.';
+  const cnt = a => TECH.filter(x => x.age === a && hasT(c, x.id)).length;
+  if (t.need1 && cnt(1) < t.need1) return 'Antes: ' + t.need1 + ' tecnologías de la Edad del vapor.';
+  if (t.need2 && cnt(2) < t.need2) return 'Antes: ' + t.need2 + ' tecnologías de la Edad de la electricidad.';
+  if (t.need3 && !(hasT(c, 'fision') || hasT(c, 'renovables'))) return 'Antes: Fisión nuclear o Solar y eólica.';
+  if (c.sci < t.cost) return 'Te falta ciencia (' + t.cost + ').';
+  return null;
+}
+function canSpace(c) {
+  const s = c.sp5; if (s.b >= 0) return 'Ya hay una etapa en obra.'; if (s.st >= 3) return 'El Arca ya despegó.';
+  const st = STAGES[s.st]; if (!hasT(c, st.tech)) return 'Falta ' + TECH_BY[st.tech].n + '.';
+  if (st.K && c.r.K < st.K - 1e-9) return 'Hace falta Kardashev ' + nf(st.K, 2) + ' (tenés ' + nf(c.r.K, 2) + ').';
+  if (c.mat < st.mat) return 'Faltan materiales (' + st.mat + ').'; return null;
+}
+function cmd(ci, o) {
+  const c = civ(ci); if (!c || !c.alive || !o || G.over) return 'no';
+  const g = typeof o.r === 'number' ? G.regs[o.r] : null; let e = null;
+  switch (o.t) {
+    case 'annex': e = canAnnex(c, g); if (!e) { c.inf -= annexCost(c); g.own = c.id; G.ownVer++; c.stats.annex++; tell(c, g.n + ' se une a tu civilización.'); } break;
+    case 'absorb': e = canAbsorb(c, g); if (!e) { const o2 = civ(g.own); c.inf -= absorbCost(c); g.own = c.id; G.rails = G.rails.filter(k => !k.split('-').map(Number).includes(g.id)); G.ownVer++; c.stats.absorbed++; tell(c, g.n + ' deja a ' + nameOf(o2) + ' y se une a vos.'); if (o2.human) tell(o2, g.n + ' se fue con ' + nameOf(c) + ': tu estabilidad era muy baja.', true); } break;
+    case 'build': e = canBuild(c, g, o.k); if (!e) { c.mat -= bCost(o.k, 1); g.b = o.k; g.lv = 0; g.bt = 7; } break;
+    case 'up': e = canUp(c, g); if (!e) { c.mat -= bCost(g.b, g.lv + 1); g.bt = 6 + 4 * g.lv; } break;
+    case 'demol': if (!g || g.own !== c.id || !g.b || g.b === 'capital') e = 'Nada que desarmar.'; else { tell(c, bname(g.b, c.cv) + ' de ' + g.n + ' desarmada.'); g.b = null; g.lv = 0; g.bt = 0; } break;
+    case 'rail': e = canRail(c, o.a, o.b); if (!e) { c.mat -= railCost(c); G.rails.push(rkey(o.a, o.b)); G.rails.sort(); tell(c, 'Vía férrea entre ' + G.regs[o.a].n + ' y ' + G.regs[o.b].n + '.'); } break;
+    case 'tech': e = canTech(c, o.id); if (!e) { c.sci -= TECH_BY[o.id].cost; c.tech.push(o.id); tell(c, 'Nueva tecnología: ' + TECH_BY[o.id].n + '.'); } break;
+    case 'space': e = canSpace(c); if (!e) { c.mat -= STAGES[c.sp5.st].mat; c.sp5.b = c.sp5.st; c.sp5.p = 0; tell(c, 'Empieza la obra: ' + STAGES[c.sp5.st].n.toLowerCase() + '.'); for (const x of G.civs) if (x.human && x.id !== c.id) tell(x, nameOf(c) + ' empezó: ' + STAGES[c.sp5.st].n.toLowerCase() + '.', c.sp5.st >= 2); } break;
+    case 'dlg': if (!c.dlg) e = 'Sin decisión.'; else resolveDlg(c, o.i | 0); break;
+    case 'bot': c.human = false; c.name = c.name + ' (bot)'; for (const x of G.civs) if (x.human) tell(x, c.name + ': la persona se fue; sigue un bot.'); break;
+    default: e = '?';
+  }
+  return e;
+}
+
+/* ---------- Eventos con decisión (cada civilización decide la suya; los bots eligen con R()) ---------- */
+const EVS = {
+  petroleo: { t: 'Hallazgo de petróleo', b: 'Encontraron un yacimiento enorme. Sacarlo da materiales enseguida, pero todo ese carbono termina en el aire.', o: [['Explotarlo', '+60 materiales · +80 Gt de CO₂ al aire'], ['Dejarlo bajo tierra', '+6 estabilidad · +10 influencia']], ai: c => c.pers === 'verde' ? 1 : 0,
+    f: [c => { c.mat += 60; G.co2 += 80; c.co2 += 80; }, c => { c.stab = Math.min(100, c.stab + 6); c.inf += 10; }] },
+  huelga: { t: 'Huelga ferroviaria', b: 'Los trabajadores del tren paran: piden mejores sueldos.', o: [['Subir los sueldos', '−30 materiales · +8 estabilidad'], ['Esperar a que se cansen', '−12 estabilidad']], ai: c => c.mat > 60 ? 0 : 1,
+    f: [c => { c.mat = Math.max(0, c.mat - 30); c.stab = Math.min(100, c.stab + 8); }, c => { c.stab = Math.max(0, c.stab - 12); }] },
+  expo: { t: 'Exposición universal', b: 'Te ofrecen organizar la feria donde todas las civilizaciones muestran sus inventos.', o: [['Organizarla', '−40 materiales · +35 ciencia · +10 influencia'], ['No, gracias', 'nada']], ai: c => c.mat > 80 ? 0 : 1,
+    f: [c => { c.mat = Math.max(0, c.mat - 40); c.sci += 35; c.inf += 10; }, () => {}] },
+  epidemia: { t: 'Epidemia', b: 'Una enfermedad se propaga por las ciudades.', o: [['Cuarentena', 'producción −30 % durante 40 s'], ['Seguir trabajando', '−20 % de población · −10 estabilidad']], ai: c => c.pers === 'cientifica' ? 0 : (R() < .5 ? 0 : 1), min: 240,
+    f: [c => { c.quar = hasT(c, 'medicina') ? 20 : 40; }, c => { const k = hasT(c, 'medicina') ? .1 : .2; c.pop *= 1 - k; c.stab = Math.max(0, c.stab - (hasT(c, 'medicina') ? 5 : 10)); }] },
+  inventor: { t: 'Una inventora pide fondos', b: 'Dice que con un taller propio adelanta años de investigación.', o: [['Darle el taller', '−25 materiales · +30 ciencia'], ['No hay presupuesto', 'nada']], ai: c => c.mat > 50 ? 0 : 1,
+    f: [c => { c.mat = Math.max(0, c.mat - 25); c.sci += 30; }, () => {}] },
+  cumbre: { t: 'Cumbre climática', b: 'El planeta ya se calentó más de 1,4 °C. Las civilizaciones discuten un acuerdo: quien firma emite la mitad de CO₂ con sus centrales de combustible, a cambio de un 15 % menos de energía de esas centrales.', o: [['Firmar el acuerdo', 'CO₂ fósil −50 % · energía fósil −15 % · +6 estabilidad'], ['No firmar', 'sin cambios']], ai: c => R() < PERS[c.pers].pact ? 1 : 0,
+    f: [c => { c.pact = true; }, () => {}] }
+};
+function fireEvent() {
+  let k;
+  if (!G.summit && G.temp >= 1.4) { G.summit = true; k = 'cumbre'; }
+  else { const pool = Object.keys(EVS).filter(x => x !== 'cumbre' && G.t >= (EVS[x].min || 0)); k = pool[Math.floor(R() * pool.length)]; }
+  for (const c of G.civs) { if (!c.alive) continue;
+    if (c.human) { c.dlg = { k }; c.dlgT = 40; }
+    else { const i = clamp(EVS[k].ai(c), 0, 1); EVS[k].f[i](c); if (k === 'cumbre') for (const x of G.civs) if (x.human) tell(x, nameOf(c) + (i === 0 ? ' firmó' : ' no firmó') + ' el acuerdo climático.'); } }
+}
+function resolveDlg(c, i) { const d = c.dlg; if (!d) return; const E = EVS[d.k]; i = clamp(i, 0, 1); E.f[i](c); c.dlg = null; tell(c, E.t + ': ' + E.o[i][0].toLowerCase() + '.'); }
+function disasters() {
+  if (G.temp < 2) return;
+  if (R() < .5) { G.dry = 30; for (const c of G.civs) if (c.human) tell(c, 'Sequía en todo el continente: comida −25 % por 30 s (el planeta está a +' + nf(G.temp, 1) + ' °C).', true); }
+  else for (const c of G.civs) { if (!c.alive) continue; const cs = regOf(c).filter(g => g.ter === 'costa' && g.b && g.lv > 0); if (!cs.length) continue; const g = cs[Math.floor(R() * cs.length)]; g.lv--; if (g.lv <= 0) { g.b = null; g.lv = 0; } tell(c, 'Una tormenta sin precedentes golpeó ' + g.n + ': perdió un nivel.', true); }
+}
+function accidents() {
+  for (const g of G.regs) if (g.b === 'nuclear' && g.lv > 0 && R() < .012 * g.lv) { const c = civ(g.own); g.lv--; if (g.lv <= 0) { g.b = null; g.lv = 0; } c.stab = Math.max(0, c.stab - 15); tell(c, 'Accidente en la central nuclear de ' + g.n + ': −15 estabilidad.', true); for (const x of G.civs) if (x.human && x !== c) tell(x, 'Accidente nuclear en ' + nameOf(c) + '.'); }
+}
+
+/* ---------- IA de los rivales (sin trampas con el azar: misma información que el jugador) ---------- */
+function aiThink(c) {
+  const P = PERS[c.pers], r = c.r;
+  for (const id of P.tech) if (!canTech(c, id)) { cmd(c.id, { t: 'tech', id }); break; }
+  if (!canSpace(c)) { cmd(c.id, { t: 'space' }); return; }
+  // ahorrar para la etapa espacial si ya tiene la tecnología
+  const nx = STAGES[c.sp5.st]; const saving = c.sp5.b < 0 && c.sp5.st < 3 && hasT(c, nx.tech) && (!nx.K || r.K >= nx.K - .01);
+  const own = regOf(c);
+  if (c.inf >= annexCost(c)) { let best = null, bs = -1; for (const g of G.regs) if (g.own === -1 && adjOwn(c, g)) { const s = terScore(g.ter, c.pers) + R() * .3; if (s > bs) { bs = s; best = g; } } if (best) cmd(c.id, { t: 'annex', r: best.id }); }
+  else if (c.inf >= absorbCost(c) && c.pers !== 'verde') { const t = G.regs.find(g => !canAbsorb(c, g)); if (t) cmd(c.id, { t: 'absorb', r: t.id }); }
+  if (hasT(c, 'ferrocarril') && c.mat >= railCost(c) + 6) { const conn = connected(c); outer: for (const g of own) if (!conn.has(g.id)) for (const j of g.nb) if (conn.has(j)) { cmd(c.id, { t: 'rail', a: j, b: g.id }); break outer; } }
+  if (saving && c.mat < nx.mat) return;
+  // qué falta: comida, energía, materiales, ciencia
+  const need = { food: r.food < r.foodNeed * 1.15 ? 3 : 1, en: r.eS < r.eD * 1.15 + 1 ? 3 : 1, mat: c.mat < 40 ? 2 : 1, sci: 1.2 + (c.pers === 'cientifica' ? .8 : 0) };
+  if (r.eS < 7 && hasT(c, 'coheteria')) need.en += 1.5;
+  if (r.eS < 16.5 && hasT(c, 'satelites')) need.en += 2;
+  const hot = G.temp > 2.3, vhot = G.temp > 2.8;   // ante el calor, hasta la IA industrial cambia de energía
+  const val = k => k === 'granja' ? need.food : k === 'mina' ? need.mat : k === 'universidad' ? need.sci : k === 'fabrica' ? 1.3 + (r.eS > r.eD + 1.5 ? 1 : -.5) : k === 'captura' ? (G.temp > 2.2 && (c.pers !== 'industrial' || vhot) ? 2.5 : .2) : BLD[k] ? need.en * (1.2 - P.en.indexOf(k) * .2) * (k === 'termica' && c.pact ? .6 : 1) * (k === 'termica' && hot ? .3 : 1) : 0;
+  let best = null, bs = c.mat > 150 ? .05 : .5;   // con materiales de sobra, mejora cualquier cosa
+  for (const g of own) {
+    if (g.b === 'capital' || g.bt > 0) continue;
+    if (!g.b) { for (const k of BLD_KEYS) if (!canBuild(c, g, k)) { const s = val(k) * (1 + R() * .15); if (s > bs) { bs = s; best = { t: 'build', r: g.id, k }; } } }
+    else if (!canUp(c, g)) { const s = val(g.b) * .85 / g.lv; if (s > bs) { bs = s; best = { t: 'up', r: g.id }; } }
+    if (g.b === 'termica' && (c.pers === 'verde' && G.temp > 1.6 || vhot) && hasT(c, 'renovables') && c.mat > 50 && BLD.renovable.ter.includes(g.ter)) best = { t: 'demol', r: g.id };
+  }
+  if (best) { cmd(c.id, best); return; }
+  // sin lugar libre: reconvertir lo que sobra (universidades sin nada que investigar, granjas de más, minas con materiales de sobra) en energía
+  const enNeed = (hasT(c, 'coheteria') && r.eS < 7.2) || (hasT(c, 'satelites') && r.eS < 16.5) || r.brown < 1;
+  if (enNeed && c.mat > 120) {
+    const allT = TECH.every(t => hasT(c, t.id)), enK = P.en.filter(k => !BLD[k].tech || hasT(c, BLD[k].tech));
+    const spare = g => g.b === 'universidad' && allT ? 3 : g.b === 'granja' && r.food > r.foodNeed * 1.5 ? 2 : g.b === 'mina' && c.mat > 300 ? 1.5 : g.b === 'fabrica' && c.mat > 400 ? 1 : 0;
+    let tg = null, ts = 0; for (const g of own) { if (!g.b || g.b === 'capital' || g.bt > 0) continue; const s = spare(g) * (enK.some(k => BLD[k].ter.includes(g.ter)) ? 1 : 0); if (s > ts) { ts = s; tg = g; } }
+    if (tg) cmd(c.id, { t: 'demol', r: tg.id });
+  }
+}
+
+/* ---------- Fin de partida ---------- */
+function end(winner, how) {
+  if (G.over) return; G.over = true; G.how = how; G.winner = winner; G.win = winner === ME;
+  if (G.online) return;   // online: no se toca el linaje ni el guardado
+  if (G.win) { writeLineage(); clearSave(); } else clearSave();
+}
+function checkEnd() {
+  if (G.over) return;
+  if (G.temp >= T_COLLAPSE) { end(-1, 'clima'); return; }
+  for (const c of G.civs) {
+    if (!c.alive) continue;
+    if (c.rev >= 12) {
+      if (c.id === ME && !G.online) { end(-1, 'revolucion'); return; }
+      c.alive = false; for (const g of G.regs) if (g.own === c.id && g.b !== 'capital') g.own = -1; G.rails = G.rails.filter(k => k.split('-').map(Number).every(i => G.regs[i].own !== -1)); G.ownVer++;
+      for (const x of G.civs) if (x.human && x.alive) tell(x, nameOf(c) + ' cayó en una revolución: sus regiones quedan libres.', true);
+    }
+  }
+  const al = G.civs.filter(c => c.alive);
+  if (al.length === 1 && G.civs.length > 1) end(al[0].id, 'ultima');
+}
+function writeLineage() {
+  try {
+    const c = civ(ME), prev = (() => { try { return JSON.parse(localStorage.getItem('evo_lineage')) || {}; } catch (e) { return {}; } })();
+    localStorage.setItem('evo_lineage', JSON.stringify(Object.assign({}, prev, { v: 1, from: 5, branch: prev.branch || null, tier: prev.tier || 0, mutCount: prev.mutCount || 0, owned: [], seed: G.seed, species: SPECIES[c.sp].n,
+      era5: { civ: c.cv, especie: c.sp, K: r2(c.r.K), temp: r2(G.temp), t: Math.round(G.t), como: G.how, pacto: c.pact, techs: c.tech.slice(), regiones: regOf(c).length, dificultad: diffI }, at: Date.now() })));
+  } catch (e) {}
+}
+
+/* ---------- Paso de simulación ---------- */
+function update(dt) {
+  if (!G || G.over) return;
+  G.t += dt; G.tick++;
+  for (const c of G.civs) if (c.alive) econ(c, dt);
+  climate(dt); works(dt);
+  for (const c of G.civs) if (c.alive) spaceTick(c, dt);
+  if (G.over) return;
+  for (const c of G.civs) { if (!c.alive || c.human) continue; c.think -= dt; if (c.think <= 0) { c.think += DF.think; aiThink(c); } }
+  for (const c of G.civs) if (c.human && c.dlg && G.online) { c.dlgT -= dt; if (c.dlgT <= 0) resolveDlg(c, 1); }
+  if (G.t >= G.nextEv) { G.nextEv = G.t + rnd(80, 115); G.evn++; fireEvent(); disasters(); }
+  if (G.tick % 300 === 0) accidents();
+  checkEnd();
+}
+
+/* ---------- Guardado y hash ---------- */
+const SAVE_K = 'evo_save5_v1';
+function snapshot() { return JSON.parse(JSON.stringify(G)); }
+function stateHash() { const s = JSON.stringify([G.t.toFixed(3), G.co2.toFixed(4), G.rails, G.regs.map(g => [g.own, g.b, g.lv, g.bt.toFixed(2)]), G.civs.map(c => [c.alive, c.pop.toFixed(3), c.mat.toFixed(3), c.sci.toFixed(3), c.inf.toFixed(3), c.stab.toFixed(3), c.tech, c.sp5, c.pact])]); return hashStr(s).toString(16) + ':' + _rs; }
+function saveGame() { if (!G || G.over || G.online) return false; try { const c = civ(ME); localStorage.setItem(SAVE_K, JSON.stringify({ v: 1, at: Date.now(), summary: CV[c.cv].n + ' · ' + regOf(c).length + ' regiones · K ' + nf(c.r.K, 2) + ' · ' + fmt(G.t), diff: diffI, rs: _rs, G })); lastSaveT = G.t; return true; } catch (e) { return false; } }
+function readSave() { try { const d = JSON.parse(localStorage.getItem(SAVE_K)); return d && d.v === 1 && d.G ? d : null; } catch (e) { return null; } }
+function restoreGame(d) { diffI = d.diff || 0; DF = DIFFS[diffI]; G = JSON.parse(JSON.stringify(d.G)); _rs = d.rs >>> 0; for (const c of G.civs) c.r = rates(c); selR = civ(ME).cap; bgDirty = true; ownDirty = true; }
+function clearSave() { try { localStorage.removeItem(SAVE_K); } catch (e) {} }
+
+/* ====================================================================================================
+   DIBUJO (nunca toca G ni R(); el azar cosmético es Math.random)
+   ==================================================================================================== */
+let pickSp = null, bgDirty = true, ownDirty = true;
+const cv = $('cv'), cx = cv.getContext('2d');
+let DPR = 1, cw = 0, ch = 0, sc = 1, ox = 0, oy = 0;
+const VW = 300, VH = 190, VS = W / VW;
+let VOR = null, VB = null, BG = null, OWNC = null, lastOwnVer = -1;
+const PART = [], ROCK = []; let seenSt = [];
+const hex2 = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; };
+const vnoise = (x, y) => { const h = (a, b) => { let n = Math.imul(a, 374761393) + Math.imul(b, 668265263); n = Math.imul(n ^ n >>> 13, 1274126177); return ((n ^ n >>> 16) >>> 0) / 4294967296; };
+  const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+  const a = h(xi, yi), b = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1); return a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy; };
+function buildVor() {
+  VOR = new Int16Array(VW * VH); VB = new Uint8Array(VW * VH);
+  const seedN = hashStr(G.seed) % 1000;
+  for (let py = 0; py < VH; py++) for (let px = 0; px < VW; px++) {
+    const x = (px + .5) * VS, y = (py + .5) * VS; let b1 = -1, d1 = 1e9, d2 = 1e9;
+    for (const g of G.regs) { const d = hyp(g.x - x, g.y - y); if (d < d1) { d2 = d1; d1 = d; b1 = g.id; } else if (d < d2) d2 = d; }
+    const nz = vnoise(x / 60 + seedN, y / 60) * .55 + vnoise(x / 22, y / 22 + seedN) * .25;
+    const land = d1 < 96 + nz * 70;
+    VOR[py * VW + px] = land ? b1 : -1; VB[py * VW + px] = land && d2 - d1 < 4.5 ? 1 : 0;
+  }
+}
+function buildBG() {
+  if (!VOR) buildVor();
+  BG = BG || document.createElement('canvas'); BG.width = VW; BG.height = VH;
+  const bx = BG.getContext('2d'), im = bx.createImageData(VW, VH), D = im.data, seedN = hashStr(G.seed) % 1000;
+  const ocol = G.civs.map(c => hex2(c.col));
+  for (let py = 0; py < VH; py++) for (let px = 0; px < VW; px++) {
+    const i = py * VW + px, rid = VOR[i], o = i * 4;
+    if (rid < 0) { D[o + 3] = 0; continue; }
+    const g = G.regs[rid], base = TER[g.ter].c, n = vnoise(px / 7 + seedN, py / 7) * .22 + vnoise(px / 2.2, py / 2.2) * .1 - .16;
+    let r = base[0] * (1 + n), gg = base[1] * (1 + n), b = base[2] * (1 + n);
+    // costa: borde claro contra el mar
+    const coast = (px > 0 && VOR[i - 1] < 0) || (px < VW - 1 && VOR[i + 1] < 0) || (py > 0 && VOR[i - VW] < 0) || (py < VH - 1 && VOR[i + VW] < 0);
+    if (g.own >= 0) { const c = ocol[g.own]; r = r * .7 + c[0] * .3; gg = gg * .7 + c[1] * .3; b = b * .7 + c[2] * .3; }
+    if (VB[i]) { r *= .72; gg *= .72; b *= .72; }
+    const ob = g.own >= 0 && ((px < VW - 1 && VOR[i + 1] >= 0 && G.regs[VOR[i + 1]].own !== g.own) || (py < VH - 1 && VOR[i + VW] >= 0 && G.regs[VOR[i + VW]].own !== g.own) || (px > 0 && VOR[i - 1] >= 0 && G.regs[VOR[i - 1]].own !== g.own) || (py > 0 && VOR[i - VW] >= 0 && G.regs[VOR[i - VW]].own !== g.own));
+    if (ob) { const c = ocol[g.own]; r = c[0] * .75; gg = c[1] * .75; b = c[2] * .75; }
+    if (coast) { r = r * .6 + 240 * .4; gg = gg * .6 + 232 * .4; b = b * .6 + 200 * .4; }
+    D[o] = clamp(r, 0, 255); D[o + 1] = clamp(gg, 0, 255); D[o + 2] = clamp(b, 0, 255); D[o + 3] = 255;
+  }
+  bx.putImageData(im, 0, 0); lastOwnVer = G.ownVer; bgDirty = false;
+}
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); const r = cv.getBoundingClientRect(); cw = Math.max(50, r.width); ch = Math.max(50, r.height);
+  cv.width = Math.round(cw * DPR); cv.height = Math.round(ch * DPR);
+  sc = Math.min(cw / W, ch / H); ox = (cw - W * sc) / 2; oy = (ch - H * sc) / 2;
+}
+window.addEventListener('resize', resize);
+const STK = '#2a2418';
+function ln(x0, y0, x1, y1) { cx.beginPath(); cx.moveTo(x0, y0); cx.lineTo(x1, y1); cx.stroke(); }
+function rr(x, y, w, h, r) { cx.beginPath(); cx.moveTo(x + r, y); cx.arcTo(x + w, y, x + w, y + h, r); cx.arcTo(x + w, y + h, x, y + h, r); cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath(); }
+/* íconos de edificio dibujados a mano (vector); s = tamaño en px */
+function icon(k, x, y, s, col, t, building) {
+  cx.save(); cx.translate(x, y); cx.lineWidth = Math.max(1.2, s * .07); cx.strokeStyle = STK; cx.lineJoin = 'round';
+  const u = s / 20, F = (c) => { cx.fillStyle = c; cx.fill(); cx.stroke(); };
+  if (building) cx.globalAlpha = .55;
+  switch (k) {
+    case 'capital': {
+      rr(-9 * u, -2 * u, 7 * u, 10 * u, u); F('#e8dcc4'); rr(2 * u, -5 * u, 7 * u, 13 * u, u); F('#d8c8aa'); rr(-3 * u, -11 * u, 6 * u, 19 * u, u); F('#f2e8d4');
+      cx.beginPath(); cx.moveTo(0, -11 * u); cx.lineTo(0, -17 * u); cx.stroke(); cx.beginPath(); cx.moveTo(0, -17 * u); cx.lineTo(6 * u, -15.5 * u); cx.lineTo(0, -14 * u); cx.closePath(); F(col);
+      cx.fillStyle = 'rgba(255,220,120,.9)'; for (let i = 0; i < 3; i++) cx.fillRect(-1.5 * u, (-8 + i * 4) * u, 3 * u, 2 * u); break; }
+    case 'granja': {
+      for (let i = 0; i < 3; i++) { cx.beginPath(); cx.moveTo(-10 * u, (2 + i * 3) * u); cx.lineTo(10 * u, (0 + i * 3) * u); cx.lineTo(10 * u, (2.6 + i * 3) * u); cx.lineTo(-10 * u, (4.6 + i * 3) * u); cx.closePath(); F(i % 2 ? '#e8c860' : '#8cbf4a'); }
+      rr(-8 * u, -9 * u, 6 * u, 10 * u, 3 * u); F('#c8503c'); cx.beginPath(); cx.arc(-5 * u, -9 * u, 3 * u, Math.PI, 0); F('#9a9a9a'); break; }
+    case 'mina': {
+      cx.beginPath(); cx.moveTo(-11 * u, 9 * u); cx.lineTo(-2 * u, -6 * u); cx.lineTo(4 * u, 2 * u); cx.lineTo(7 * u, -1 * u); cx.lineTo(11 * u, 9 * u); cx.closePath(); F('#9a8a74');
+      cx.beginPath(); cx.arc(-1 * u, 6 * u, 3.2 * u, Math.PI, 0); cx.lineTo(2.2 * u, 9 * u); cx.lineTo(-4.2 * u, 9 * u); cx.closePath(); F('#2a2418');
+      cx.beginPath(); cx.moveTo(4 * u, 9 * u); cx.lineTo(7 * u, -8 * u); cx.lineTo(10 * u, 9 * u); cx.stroke(); cx.beginPath(); cx.arc(7 * u, -8 * u, 2.4 * u, 0, TAU); F('#c8c0b0'); break; }
+    case 'termica': {
+      rr(-10 * u, -1 * u, 20 * u, 10 * u, u); F('#8a7a6a'); rr(-7 * u, -12 * u, 4 * u, 12 * u, u); F('#6a5a4a'); rr(2 * u, -9 * u, 4 * u, 9 * u, u); F('#6a5a4a');
+      cx.fillStyle = '#e8b040'; cx.fillRect(-6 * u, 3 * u, 3 * u, 3 * u); cx.fillRect(1 * u, 3 * u, 3 * u, 3 * u); break; }
+    case 'fabrica': {
+      cx.beginPath(); cx.moveTo(-10 * u, 9 * u); cx.lineTo(-10 * u, -2 * u); for (let i = 0; i < 3; i++) { cx.lineTo((-10 + i * 6) * u, -2 * u); cx.lineTo((-4 + i * 6) * u, -7 * u); cx.lineTo((-4 + i * 6) * u, -2 * u); } cx.lineTo(10 * u, -2 * u); cx.lineTo(10 * u, 9 * u); cx.closePath(); F('#b8a48c');
+      rr(5 * u, -13 * u, 3.5 * u, 11 * u, u); F('#7a6a5a'); cx.fillStyle = col; cx.fillRect(-8 * u, 3 * u, 16 * u, 2.5 * u); cx.strokeRect(-8 * u, 3 * u, 16 * u, 2.5 * u); break; }
+    case 'universidad': {
+      cx.beginPath(); cx.moveTo(-11 * u, -1 * u); cx.lineTo(0, -6 * u); cx.lineTo(11 * u, -1 * u); cx.closePath(); F('#ece4d4');
+      cx.beginPath(); cx.arc(0, -6 * u, 4.5 * u, Math.PI, 0); F('#7aa6c8'); rr(-10 * u, -1 * u, 20 * u, 10 * u, .5 * u); F('#f4ecdc');
+      cx.fillStyle = STK; for (let i = -3; i <= 3; i += 2) cx.fillRect(i * 2.6 * u - .6 * u, 1 * u, 1.2 * u, 7 * u); break; }
+    case 'represa': {
+      cx.beginPath(); cx.moveTo(-11 * u, -6 * u); cx.quadraticCurveTo(0, -2 * u, 11 * u, -6 * u); cx.lineTo(11 * u, 9 * u); cx.lineTo(-11 * u, 9 * u); cx.closePath(); F('#4f9ccc');
+      cx.beginPath(); cx.moveTo(-11 * u, -3 * u); cx.quadraticCurveTo(0, 2 * u, 11 * u, -3 * u); cx.lineTo(11 * u, 1 * u); cx.quadraticCurveTo(0, 6 * u, -11 * u, 1 * u); cx.closePath(); F('#c8c0b0');
+      cx.strokeStyle = '#e8f4ff'; const w = (t * 3) % 4; for (let i = -1; i <= 1; i++) ln(i * 5 * u, (4 + w) * u, i * 5 * u, (6 + w) * u); break; }
+    case 'renovable': {
+      cx.beginPath(); cx.moveTo(-10 * u, 9 * u); cx.lineTo(-7 * u, 2 * u); cx.lineTo(1 * u, 2 * u); cx.lineTo(-2 * u, 9 * u); cx.closePath(); F('#3a5a8a');
+      cx.strokeStyle = '#9ac8f0'; ln(-6 * u, 5.5 * u, 0, 5.5 * u); cx.strokeStyle = STK;
+      ln(6 * u, 9 * u, 6 * u, -6 * u); cx.save(); cx.translate(6 * u, -6 * u); cx.rotate(t * 2.4); for (let i = 0; i < 3; i++) { cx.rotate(TAU / 3); cx.beginPath(); cx.ellipse(0, -4 * u, 1.3 * u, 4.2 * u, 0, 0, TAU); F('#f4f4f0'); } cx.restore(); break; }
+    case 'nuclear': {
+      cx.beginPath(); cx.moveTo(-9 * u, 9 * u); cx.quadraticCurveTo(-4 * u, 0, -7 * u, -9 * u); cx.lineTo(3 * u, -9 * u); cx.quadraticCurveTo(0, 0, 5 * u, 9 * u); cx.closePath(); F('#d8d4cc');
+      rr(5 * u, 1 * u, 6 * u, 8 * u, u); F('#b8b4ac'); cx.beginPath(); cx.arc(8 * u, 3 * u, 1.6 * u, 0, TAU); F('#e8c040'); break; }
+    case 'captura': {
+      rr(-6 * u, -10 * u, 12 * u, 19 * u, 2 * u); F('#9ab8a0'); for (let i = 0; i < 3; i++) { cx.beginPath(); cx.arc(0, (-6 + i * 5) * u, 1.8 * u, 0, TAU); F('#4a6a50'); }
+      cx.beginPath(); cx.ellipse(9 * u, -8 * u, 2 * u, 3.6 * u, .6, 0, TAU); F('#5cb85c'); break; }
+  }
+  cx.restore();
+}
+function drawRocket(x, y, s, col, fl) {
+  cx.save(); cx.translate(x, y); cx.lineWidth = 1.4; cx.strokeStyle = STK; const u = s / 20;
+  if (fl) { cx.fillStyle = 'rgba(255,170,60,.9)'; cx.beginPath(); cx.moveTo(-3 * u, 9 * u); cx.lineTo(0, (16 + Math.random() * 6) * u); cx.lineTo(3 * u, 9 * u); cx.fill(); }
+  cx.beginPath(); cx.moveTo(0, -12 * u); cx.quadraticCurveTo(5 * u, -4 * u, 4 * u, 9 * u); cx.lineTo(-4 * u, 9 * u); cx.quadraticCurveTo(-5 * u, -4 * u, 0, -12 * u); cx.fillStyle = '#f2f0ea'; cx.fill(); cx.stroke();
+  cx.beginPath(); cx.moveTo(-4 * u, 4 * u); cx.lineTo(-8 * u, 10 * u); cx.lineTo(-4 * u, 9 * u); cx.fillStyle = col; cx.fill(); cx.stroke(); cx.beginPath(); cx.moveTo(4 * u, 4 * u); cx.lineTo(8 * u, 10 * u); cx.lineTo(4 * u, 9 * u); cx.fill(); cx.stroke();
+  cx.beginPath(); cx.arc(0, -3 * u, 1.8 * u, 0, TAU); cx.fillStyle = '#7ac0e8'; cx.fill(); cx.stroke(); cx.restore();
+}
+function render(now) {
+  if (!G) return;
+  if (bgDirty || lastOwnVer !== G.ownVer || !BG) buildBG();
+  const t = now / 1000;
+  cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const warm = clamp(G.temp / 4, 0, 1);
+  const sg = cx.createLinearGradient(0, 0, 0, ch); sg.addColorStop(0, `rgb(${60 + warm * 40},${120 - warm * 10},${160 - warm * 50})`); sg.addColorStop(1, `rgb(${40 + warm * 40},${92 - warm * 6},${130 - warm * 40})`);
+  cx.fillStyle = sg; cx.fillRect(0, 0, cw, ch);
+  // olas suaves
+  cx.strokeStyle = 'rgba(255,255,255,.08)'; cx.lineWidth = 1; for (let i = 0; i < 9; i++) { const yy = oy + (i + .5) * H * sc / 9 + Math.sin(t * .6 + i) * 3; ln(ox + 20, yy, ox + W * sc - 20, yy); }
+  // hielo polar: se achica con el calentamiento
+  const ice = (1 - clamp(G.temp / 3.6, 0, 1)) * 52 + 4;
+  cx.fillStyle = 'rgba(244,250,255,.92)';
+  for (const top of [1, 0]) { cx.beginPath(); const y0 = top ? oy : oy + H * sc; cx.moveTo(ox, y0); for (let i = 0; i <= 24; i++) { const xx = ox + i / 24 * W * sc, hh = (ice + Math.sin(i * 1.7) * 6 + Math.sin(i * .6 + 2) * 5) * sc; cx.lineTo(xx, top ? y0 + hh : y0 - hh); } cx.lineTo(ox + W * sc, y0); cx.closePath(); cx.fill(); }
+  cx.imageSmoothingEnabled = true; cx.drawImage(BG, ox, oy, W * sc, H * sc);
+  const P = (x, y) => [ox + x * sc, oy + y * sc];
+  // vías férreas: riel y durmientes
+  for (const k of G.rails) {
+    const [a, b] = k.split('-').map(Number), A = G.regs[a], B = G.regs[b], [x0, y0] = P(A.x, A.y), [x1, y1] = P(B.x, B.y), L = hyp(x1 - x0, y1 - y0), nx = (y1 - y0) / L, ny = -(x1 - x0) / L;
+    cx.strokeStyle = 'rgba(42,36,24,.8)'; cx.lineWidth = Math.max(1, 1.2 * sc * 1.4);
+    for (let d = 8; d < L - 8; d += 7) { const px = x0 + (x1 - x0) * d / L, py = y0 + (y1 - y0) * d / L; ln(px - nx * 3.2, py - ny * 3.2, px + nx * 3.2, py + ny * 3.2); }
+    cx.strokeStyle = '#4a3a2a'; cx.lineWidth = 1.4; ln(x0 + nx * 1.8, y0 + ny * 1.8, x1 + nx * 1.8, y1 + ny * 1.8); ln(x0 - nx * 1.8, y0 - ny * 1.8, x1 - nx * 1.8, y1 - ny * 1.8);
+  }
+  const s = clamp(36 * sc, 16, 40), M = me();
+  const conn = M ? connected(M) : new Set(), ac = M ? annexCost(M) : 0;
+  for (const g of G.regs) {
+    const [x, y] = P(g.x, g.y), o = g.own >= 0 ? civ(g.own) : null;
+    if (g.id === selR) { cx.strokeStyle = '#fff'; cx.lineWidth = 3; cx.beginPath(); cx.arc(x, y, s * .85, 0, TAU); cx.stroke(); cx.strokeStyle = STK; cx.lineWidth = 1.2; cx.stroke(); }
+    if (M && g.own === -1 && adjOwn(M, g) && M.inf >= ac) { cx.setLineDash([4, 4]); cx.strokeStyle = 'rgba(255,255,255,.9)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(x, y, s * .62, 0, TAU); cx.stroke(); cx.setLineDash([]); cx.fillStyle = 'rgba(255,255,255,.95)'; cx.font = '800 ' + Math.round(s * .5) + 'px system-ui'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText('+', x, y); }
+    if (g.b) icon(g.b, x, y, g.b === 'capital' ? s * 1.15 : s, o ? o.col : '#888', t, g.lv <= 0);
+    if (g.bt > 0) { const tot = g.lv <= 0 ? 7 : 6 + 4 * g.lv, p = 1 - g.bt / tot; cx.strokeStyle = 'rgba(0,0,0,.35)'; cx.lineWidth = 3; cx.beginPath(); cx.arc(x, y, s * .7, 0, TAU); cx.stroke(); cx.strokeStyle = '#f0c040'; cx.beginPath(); cx.arc(x, y, s * .7, -Math.PI / 2, -Math.PI / 2 + TAU * p); cx.stroke(); }
+    if (g.b && g.b !== 'capital' && g.lv > 0) for (let i = 0; i < MAXLV; i++) { cx.beginPath(); cx.arc(x - 7 + i * 7, y + s * .62, 2.6, 0, TAU); cx.fillStyle = i < g.lv ? '#f0c040' : 'rgba(0,0,0,.3)'; cx.fill(); cx.strokeStyle = STK; cx.lineWidth = 1; cx.stroke(); }
+    if (M && g.own === M.id && g.b !== 'capital' && !conn.has(g.id)) { cx.fillStyle = 'rgba(42,36,24,.75)'; cx.beginPath(); cx.arc(x + s * .55, y - s * .5, 6, 0, TAU); cx.fill(); cx.fillStyle = '#fff'; cx.font = '700 9px system-ui'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText('½', x + s * .55, y - s * .5); }
+    if (sc > .42) { cx.font = '600 ' + Math.round(clamp(11 * sc * 1.3, 9, 12)) + 'px "IBM Plex Sans",system-ui'; cx.textAlign = 'center'; cx.textBaseline = 'top'; cx.lineWidth = 3; cx.strokeStyle = 'rgba(255,255,255,.75)'; const ty = y + s * .78; cx.strokeText(g.n, x, ty); cx.fillStyle = STK; cx.fillText(g.n, x, ty); }
+    // humo y vapor (cosmético)
+    if (g.lv > 0 && (g.b === 'termica' || g.b === 'fabrica' || g.b === 'nuclear') && Math.random() < .12 * g.lv) PART.push({ x: g.x + (g.b === 'nuclear' ? -1 : g.b === 'fabrica' ? 6 : -5) * s / 20 / sc, y: g.y - 12 * s / 20 / sc, vx: .3 + Math.random() * .4, vy: -.6 - Math.random() * .4, life: 0, max: 2.4 + Math.random(), r: 3 + Math.random() * 3, c: g.b === 'nuclear' ? '255,255,255' : g.b === 'termica' ? '70,64,60' : '150,144,140' });
+  }
+  for (let i = PART.length - 1; i >= 0; i--) { const p = PART[i]; p.life += 1 / 60; p.x += p.vx; p.y += p.vy; if (p.life > p.max) { PART.splice(i, 1); continue; } const [x, y] = P(p.x, p.y), a = (1 - p.life / p.max) * .45; cx.fillStyle = `rgba(${p.c},${a})`; cx.beginPath(); cx.arc(x, y, (p.r + p.life * 5) * Math.max(.6, sc), 0, TAU); cx.fill(); }
+  if (PART.length > 500) PART.splice(0, PART.length - 500);
+  // cohetes: plataforma en la capital y despegue al terminar cada etapa
+  for (const c of G.civs) { const st = c.sp5.st + (c.sp5.b >= 0 ? .5 : 0); if (seenSt[c.id] !== undefined && c.sp5.st > seenSt[c.id]) ROCK.push({ id: c.id, t0: now, st: c.sp5.st }); seenSt[c.id] = c.sp5.st;
+    const g = G.regs[c.cap]; if (!g || st < .5) continue; const [x, y] = P(g.x + 30, g.y - 6); if (!ROCK.some(r => r.id === c.id)) drawRocket(x, y, s * .8, c.col, false);
+    if (c.sp5.b >= 0) { cx.fillStyle = 'rgba(0,0,0,.5)'; cx.fillRect(x - 10, y + s * .55, 20, 4); cx.fillStyle = '#f0c040'; cx.fillRect(x - 10, y + s * .55, 20 * c.sp5.p, 4); } }
+  for (let i = ROCK.length - 1; i >= 0; i--) { const r = ROCK[i], c = civ(r.id), g = G.regs[c.cap], k = (now - r.t0) / 3500; if (k > 1) { ROCK.splice(i, 1); continue; } const [x, y] = P(g.x + 30, g.y - 6); drawRocket(x + k * k * 40, y - k * k * ch, s * .8, c.col, true); }
+  if (warm > .3) { cx.fillStyle = `rgba(230,120,40,${(warm - .3) * .16})`; cx.fillRect(0, 0, cw, ch); }
+  $('pauseTag').style.display = paused && started && !G.over ? 'block' : 'none';
+}
+
+/* ====================================================================================================
+   INTERFAZ
+   ==================================================================================================== */
+function why(c, o) {
+  const g = typeof o.r === 'number' ? G.regs[o.r] : null;
+  switch (o.t) { case 'annex': return canAnnex(c, g); case 'absorb': return canAbsorb(c, g); case 'build': return canBuild(c, g, o.k); case 'up': return canUp(c, g); case 'rail': return canRail(c, o.a, o.b); case 'tech': return canTech(c, o.id); case 'space': return canSpace(c); default: return null; }
+}
+function doCmd(o) {
+  if (!G || G.over) return; const c = me(); const e = why(c, o); if (e) { toast(e, true); return; }
+  if (NET) { NET.send(o); toast('Orden enviada…'); return; }
+  cmd(ME, o); ui(true);
+}
+const prodTxt = g => {
+  if (!g.b || g.b === 'capital') return ''; const lv = Math.max(1, g.lv);
+  return { granja: '+' + nf(1.05 * lv, 1) + ' comida/s', mina: '+' + nf(.62 * lv, 1) + ' materiales/s', termica: '+' + nf(2.1 * lv, 1) + ' energía · +' + nf(.5 * lv, 1) + ' Gt CO₂/s', fabrica: '−' + nf(1.4 * lv, 1) + ' energía → +' + nf(lv, 1) + ' materiales/s', universidad: '+' + nf(.5 * lv, 1) + ' ciencia/s', represa: '+' + nf(2.3 * lv, 1) + ' energía limpia', renovable: '+' + nf(1.9 * lv, 1) + ' energía limpia (más en desierto y costa)', nuclear: '+' + nf(5.2 * lv, 1) + ' energía', captura: '−' + nf(.7 * lv, 1) + ' Gt CO₂/s · −' + nf(1.2 * lv, 1) + ' energía' }[g.b] + ' a pleno';
+};
+function regPanel() {
+  const g = G.regs[selR], c = me(); if (!g) { $('regT').textContent = 'Región'; $('regInfo').textContent = 'Tocá una región del mapa.'; $('regAct').innerHTML = ''; return; }
+  const o = g.own >= 0 ? civ(g.own) : null;
+  $('regT').innerHTML = g.n + ' <span class="tag">' + TER[g.ter].n + '</span>';
+  const conn = connected(c), lines = [];
+  lines.push(o ? (o.id === ME ? '<b>Tuya</b>' : 'De <b>' + nameOf(o) + '</b> (estabilidad ' + Math.round(o.stab) + ')') : 'Región libre');
+  if (g.b) lines.push((g.b === 'capital' ? '<b>' + (o ? (o.id === ME ? CV[o.cv].cap : nameOf(o)) : 'Ciudad') + '</b>' : '<b>' + bname(g.b, o ? o.cv : null) + '</b> · nivel ' + g.lv) + (g.bt > 0 ? ' · en obra (' + Math.ceil(g.bt) + ' s)' : ''));
+  if (g.b && g.b !== 'capital') lines.push(prodTxt(g));
+  if (o && o.id === ME && g.b !== 'capital') lines.push(conn.has(g.id) ? 'Unida por tren a tu capital: rinde 100 %.' : 'Sin vía férrea hasta tu capital: rinde ' + (hasT(c, 'electricidad') ? '70' : '50') + ' %.');
+  $('regInfo').innerHTML = lines.join('<br>');
+  const B = []; const btn = (o2, label, sub, cls) => { const e = why(c, o2); B.push('<button data-c=\'' + JSON.stringify(o2) + '\'' + (e ? ' disabled title="' + e.replace(/"/g, '') + '"' : '') + ' class="' + (cls || '') + '">' + label + '<small>' + (e || sub) + '</small></button>'); };
+  if (g.own === -1) btn({ t: 'annex', r: g.id }, 'Anexar', annexCost(c) + ' influencia', 'go full');
+  else if (o && o.id !== ME) btn({ t: 'absorb', r: g.id }, 'Absorber región', absorbCost(c) + ' influencia', 'full');
+  else if (o && o.id === ME) {
+    if (!g.b) for (const k of BLD_KEYS) { if (!BLD[k].ter.includes(g.ter)) continue; if (BLD[k].tech && !hasT(c, BLD[k].tech)) { B.push('<button disabled>' + bname(k) + '<small>falta ' + TECH_BY[BLD[k].tech].n + '</small></button>'); continue; } btn({ t: 'build', r: g.id, k }, bname(k), bCost(k, 1) + ' mat. · ' + BLD[k].d); }
+    else if (g.b !== 'capital') { if (g.lv < MAXLV && !(g.bt > 0)) btn({ t: 'up', r: g.id }, 'Subir a nivel ' + (g.lv + 1), bCost(g.b, g.lv + 1) + ' materiales', 'go'); B.push('<button data-c=\'' + JSON.stringify({ t: 'demol', r: g.id }) + '\'>Desarmar<small>libera el lugar (sin reintegro)</small></button>'); }
+    for (const j of g.nb) { const n = G.regs[j]; if (n.own !== ME || G.rails.includes(rkey(g.id, j))) continue; if (!hasT(c, 'ferrocarril')) { B.push('<button disabled class="full">Vía férrea a ' + n.n + '<small>falta Ferrocarril (Tecnologías)</small></button>'); break; } btn({ t: 'rail', a: g.id, b: j }, 'Vía férrea a ' + n.n, railCost(c) + ' materiales', conn.has(j) !== conn.has(g.id) ? 'go' : ''); }
+  }
+  $('regAct').innerHTML = B.join('');
+}
+$('regAct').addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (!b || b.disabled) return; const o = JSON.parse(b.dataset.c); if (o.t === 'demol' && !confirm('¿Desarmar este edificio? No se devuelven los materiales.')) return; doCmd(o); });
+function hud() {
+  const c = me(), r = c.r || rates(c);
+  $('vTime').textContent = fmt(G.t); $('vPop').textContent = Math.floor(c.pop) + '/' + Math.floor(popCap(c));
+  const fs = r.food - r.foodNeed; $('vFood').textContent = (fs >= 0 ? '+' : '') + nf(fs, 1); $('cFood').classList.toggle('bad', fs < 0);
+  $('vEn').textContent = nf(r.eS, 1) + '/' + nf(r.eD, 1); $('cEn').classList.toggle('bad', r.brown < 1);
+  $('vMat').textContent = Math.floor(c.mat); $('vSci').textContent = Math.floor(c.sci); $('vInf').textContent = Math.floor(c.inf);
+  $('vStab').textContent = Math.round(c.stab); $('cStab').classList.toggle('bad', c.stab < 35);
+  $('vK').textContent = nf(r.K, 2); $('vTemp').textContent = '+' + nf(G.temp, 1) + ' °C'; $('cTemp').classList.toggle('hot', G.temp >= 2);
+}
+function race() {
+  $('race').innerHTML = G.civs.map(c => { const s = c.sp5; return '<div class="race"><i class="dot" style="background:' + c.col + '"></i><div class="nm"><b>' + nameOf(c) + (c.alive ? '' : ' (cayó)') + '</b>K ' + nf(c.r ? c.r.K : .6, 2) + ' · ' + AGE_N[ageOf(c)] + (c.pact ? ' · firmó el acuerdo' : '') + '</div><div class="st"><div class="bars">' + STAGES.map((x, i) => '<i title="' + x.n + '"><u style="width:' + (i < s.st ? 100 : i === s.b ? Math.round(s.p * 100) : 0) + '%"></u></i>').join('') + '</div></div></div>'; }).join('');
+}
+function climBox() {
+  const tot = G.civs.reduce((a, c) => a + Math.max(0, c.co2), 0) || 1;
+  $('climS').textContent = '+' + nf(G.temp, 2) + ' °C';
+  $('climT').innerHTML = (G.temp < 1.4 ? 'Si llega a <b>+4 °C</b>, el planeta colapsa y nadie gana. A +2 °C empiezan las sequías y las tormentas.' : G.temp < 2 ? 'Ya pasó +1,4 °C. A +2 °C empiezan sequías y tormentas; a <b>+4 °C</b> colapsa.' : '<b style="color:var(--warn)">Sequías y tormentas en curso.</b> A +4 °C el planeta colapsa.') +
+    '<br>Quién calentó: ' + G.civs.map(c => '<span style="color:' + c.col + '">■</span> ' + (c.id === ME ? 'vos' : c.name.split(' ').slice(-1)[0]) + ' ' + Math.round(Math.max(0, c.co2) / tot * 100) + ' %').join(' · ');
+  const k = $('climC'), x = k.getContext('2d'), w = k.width, h = k.height; x.clearRect(0, 0, w, h);
+  x.fillStyle = 'rgba(201,64,111,.12)'; x.fillRect(0, 0, w, h * (1 - 2 / 4)); x.strokeStyle = 'rgba(201,64,111,.6)'; x.setLineDash([3, 3]); x.beginPath(); x.moveTo(0, h * (1 - 2 / 4)); x.lineTo(w, h * (1 - 2 / 4)); x.stroke(); x.setLineDash([]);
+  x.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--accent') || '#a8501c'; x.lineWidth = 2; x.beginPath(); G.th.forEach((v, i) => { const px = i / Math.max(1, G.th.length - 1) * w, py = h - clamp(v / 4, 0, 1) * h; i ? x.lineTo(px, py) : x.moveTo(px, py); }); x.stroke();
+}
+const GOALS = [
+  ['Anexá una región vecina', c => regOf(c).length >= 3, 'Tocá una región con «+» (borde punteado) y después «Anexar».'],
+  ['Construí una mina o una central', c => regOf(c).some(g => ['mina', 'termica'].includes(g.b)), 'Elegí una región tuya de montaña o cuenca y construí.'],
+  ['Investigá el Ferrocarril', c => hasT(c, 'ferrocarril'), 'Tecnologías → Ferrocarril.'],
+  ['Uní una región con vía férrea', c => connected(c).size >= 2, 'Elegí una región tuya vecina de la capital → «Vía férrea a…».'],
+  ['Entrá en la Edad de la electricidad', c => hasT(c, 'electricidad'), 'Hacen falta 2 tecnologías del vapor y 36 de ciencia: construí universidades.'],
+  ['Llegá a Kardashev 0,68', c => c.r && c.r.K >= .68, 'Kardashev sube con la energía que producís: centrales, represas, sol, fisión.'],
+  ['Poné un satélite en órbita', c => c.sp5.st >= 1, 'Cohetería (Edad III) → Programa espacial → Satélite.'],
+  ['Hacé despegar el Arca estelar', c => c.sp5.st >= 3, 'Satélites → Arca estelar, con Kardashev 0,72 y 380 materiales.']
+];
+function goals() {
+  const c = me(); let n = 0, first = null;
+  $('goalRows').innerHTML = GOALS.map(([t, f, h]) => { const ok = f(c); if (ok) n++; else if (!first) first = [t, h]; return '<div class="g' + (ok ? ' ok' : '') + '">' + (ok ? '✓ ' : '○ ') + t + '</div>'; }).join('');
+  $('goalN').textContent = n + '/' + GOALS.length;
+  const r = c.r, warn = [];
+  if (r.hungry) warn.push('<b style="color:var(--warn)">Hay hambre:</b> construí granjas.');
+  if (r.brown < 1) warn.push('<b style="color:var(--warn)">Apagones:</b> consumís más energía de la que producís.');
+  if (c.stab < 30) warn.push('<b style="color:var(--warn)">Estabilidad baja:</b> si llega a 0 hay revolución.');
+  if (r.eff < .9) warn.push('Falta gente para tantos edificios (rinden ' + Math.round(r.eff * 100) + ' %): más comida, más población.');
+  if (G.temp >= 3) warn.push('<b style="color:var(--warn)">El planeta está a +' + nf(G.temp, 1) + ' °C.</b> A +4 colapsa para todos.');
+  $('hint').innerHTML = warn.length ? warn.join(' ') : first ? '<b>Siguiente:</b> ' + first[0] + '. ' + first[1] : '¡Despegó el Arca!';
+}
+function logBox() { $('log').innerHTML = me().log.slice(0, 8).map(t => '<div>' + t + '</div>').join('') || '<div>Todo tranquilo.</div>'; }
+function barLabels() {
+  const c = me(); const avail = TECH.filter(t => !canTech(c, t.id)).length;
+  $('bTechS').textContent = AGE_N[ageOf(c)] + (avail ? ' · ' + avail + ' lista' + (avail > 1 ? 's' : '') : '');
+  $('bTech').classList.toggle('go', avail > 0);
+  const s = c.sp5; $('bSpaceS').textContent = s.st >= 3 ? 'despegó' : s.b >= 0 ? STAGES[s.b].n + ' ' + Math.round(s.p * 100) + ' %' : hasT(c, STAGES[s.st].tech) ? (canSpace(c) ? 'próxima: ' + STAGES[s.st].n : 'lista: ' + STAGES[s.st].n) : 'falta ' + TECH_BY[STAGES[s.st].tech].n;
+  $('bSpace').classList.toggle('go', !canSpace(c));
+  $('bPause').textContent = paused ? 'Seguir' : 'Pausa'; $('bSpd').textContent = '×' + SPD[spdI];
+  $('bPause').disabled = $('bSpd').disabled = $('bSave').disabled = !!NET;
+}
+function techOverlay() {
+  const c = me(); $('techP').textContent = 'Ciencia: ' + Math.floor(c.sci) + ' (+' + nf(c.r.sci, 2) + '/s). ' + AGE_N[ageOf(c)] + '. Las universidades dan ciencia.';
+  let h = '', age = 0;
+  for (const t of TECH) { if (t.age !== age) { age = t.age; h += '<h4 class="age">' + AGE_N[age] + '</h4>'; } const e = canTech(c, t.id), done = hasT(c, t.id);
+    h += '<button class="tc' + (done ? ' done' : '') + '" data-t="' + t.id + '"' + (done || e ? ' disabled' : '') + '><b>' + t.n + '</b><span>' + t.d + '</span><em>' + (done ? 'Investigada' : e ? e : 'Investigar: ' + t.cost + ' ciencia') + '</em></button>'; }
+  $('techGrid').innerHTML = h;
+}
+$('techGrid').addEventListener('click', e => { const b = e.target.closest('button[data-t]'); if (!b || b.disabled) return; doCmd({ t: 'tech', id: b.dataset.t }); techOverlay(); });
+function spaceOverlay() {
+  const c = me(), s = c.sp5; $('spaceP').innerHTML = 'Tu Kardashev: <b>' + nf(c.r.K, 2) + '</b> (energía ' + nf(c.r.eS, 1) + ' TW de juego). Cada etapa se construye en tu capital; sin energía suficiente avanza a un tercio.';
+  $('spaceGrid').innerHTML = STAGES.map((x, i) => { const done = i < s.st, cur = i === s.b, e = i === s.st && s.b < 0 ? canSpace(c) : null;
+    return '<button class="tc' + (done ? ' done' : '') + '" data-s="' + i + '"' + (done || cur || i !== s.st || e ? ' disabled' : '') + '><b>' + (i + 1) + '. ' + x.n + '</b><span>' + x.d + '</span><em>' + (done ? 'Listo' : cur ? 'En obra: ' + Math.round(s.p * 100) + ' %' : i > s.st ? 'Después de la etapa ' + i : e ? e : 'Empezar: ' + x.mat + ' materiales, ' + x.t + ' s') + ' · pide ' + TECH_BY[x.tech].n + (x.K ? ' y K ' + nf(x.K, 2) : '') + '</em></button>'; }).join('');
+}
+$('spaceGrid').addEventListener('click', e => { const b = e.target.closest('button[data-s]'); if (!b || b.disabled) return; doCmd({ t: 'space' }); spaceOverlay(); });
+const openOv = id => { $(id).classList.add('show'); };
+const closeOv = id => { $(id).classList.remove('show'); };
+$('bTech').onclick = () => { techOverlay(); openOv('techm'); }; $('techClose').onclick = () => closeOv('techm');
+$('bSpace').onclick = () => { spaceOverlay(); openOv('spacem'); }; $('spaceClose').onclick = () => closeOv('spacem');
+$('bCap').onclick = () => { selR = me().cap; ui(true); };
+$('bPause').onclick = () => { paused = !paused; ui(true); };
+$('bSpd').onclick = () => { spdI = (spdI + 1) % SPD.length; ui(true); };
+$('bSave').onclick = () => toast(saveGame() ? 'Partida guardada.' : 'No se pudo guardar.');
+let dlgShown = null;
+function dialog(title, html, btns) {
+  $('dT').textContent = title; $('dB').innerHTML = html; const bb = $('dBtns'); bb.innerHTML = '';
+  btns.forEach(([t, f, main]) => { const b = document.createElement(main === 2 ? 'a' : 'button'); b.className = main ? 'bigbtn' : 'ghost'; if (main === 2) { b.href = f; b.style.display = 'block'; b.style.textAlign = 'center'; b.style.textDecoration = 'none'; } else b.onclick = f; b.innerHTML = t; bb.appendChild(b); });
+  openOv('dlg');
+}
+function checkDlg() {
+  const c = me();
+  if (G.over) { if (dlgShown !== 'over') { dlgShown = 'over'; showEnd(); } return; }
+  if (c.dlg && dlgShown !== c.dlg) { dlgShown = c.dlg; const E = EVS[c.dlg.k]; dialog(E.t, '<p>' + E.b + '</p>' + (NET ? '<p class="sm">En línea el juego no se pausa: si no elegís en 40 s, se toma la segunda opción.</p>' : ''), E.o.map((o, i) => [o[0] + '<small>' + o[1] + '</small>', () => { closeOv('dlg'); dlgShown = null; doDlg(i); }, i === 0 ? 1 : 0])); }
+  if (!c.dlg && dlgShown && dlgShown !== 'over' && typeof dlgShown === 'object') { closeOv('dlg'); dlgShown = null; }
+}
+function doDlg(i) { if (NET) NET.send({ t: 'dlg', i }); else { cmd(ME, { t: 'dlg', i }); ui(true); } }
+function showEnd() {
+  const c = me(), w = G.winner >= 0 ? civ(G.winner) : null;
+  if (G.win) dialog('¡El Arca estelar despegó!', '<p>Tus ' + SPECIES[c.sp].n.toLowerCase() + ' dejaron el planeta en ' + fmt(G.t) + ', con Kardashev ' + nf(c.r.K, 2) + ' y el planeta a +' + nf(G.temp, 1) + ' °C.</p><p>' + (G.online ? 'Partida en línea: el linaje no se anota.' : 'Tu linaje quedó anotado. La <b>Era 6: Las Estrellas</b> te espera: una galaxia para colonizar y la escala de Kardashev hasta el nivel II.') + '</p>',
+    [[G.online ? 'Volver al menú' : 'Seguir a la Era 6', G.online ? () => location.reload() : 'era6-estrellas.html', G.online ? 1 : 2], ['Jugar de nuevo', () => location.reload()]]);
+  else dialog(G.how === 'clima' ? 'El planeta colapsó' : G.how === 'revolucion' ? 'Revolución' : 'Otra civilización llegó primero', '<p>' + (G.how === 'clima' ? 'El calentamiento llegó a +4 °C: cosechas perdidas, costas bajo el agua, ninguna civilización pudo terminar su Arca. Nadie ganó.' : G.how === 'revolucion' ? 'Tu estabilidad cayó a cero y el gobierno cayó.' : nameOf(w) + ' hizo despegar su Arca estelar antes que vos.') + '</p><p class="sm">Consejo: ' + (G.how === 'clima' ? 'reemplazá el carbón por represas, sol, viento o fisión, y firmá el acuerdo climático.' : G.how === 'revolucion' ? 'cuidá la comida, la energía y construí fábricas (dan bienes).' : 'subí la energía (Kardashev) antes y tené listos los materiales de cada etapa.') + '</p>',
+    [['Jugar de nuevo', () => location.reload(), 1], ['Volver a la portada', '../index.html', 2]]);
+}
+let lastUi = 0;
+function ui(force) {
+  if (!G || !started) return; const now = performance.now(); if (!force && now - lastUi < 250) return; lastUi = now;
+  hud(); regPanel(); race(); climBox(); logBox(); goals(); barLabels(); checkDlg();
+  if ($('techm').classList.contains('show')) techOverlay(); if ($('spacem').classList.contains('show')) spaceOverlay();
+  $('netTag').style.display = NET ? 'block' : 'none'; if (NET) $('netTag').textContent = 'En línea · ' + NET.status();
+}
+/* entrada: tocar una región */
+let down = null;
+cv.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
+cv.addEventListener('pointerup', e => {
+  if (!down || hyp(e.clientX - down[0], e.clientY - down[1]) > 10 || !G) { down = null; return; } down = null;
+  const r = cv.getBoundingClientRect(), x = (e.clientX - r.left - ox) / sc, y = (e.clientY - r.top - oy) / sc;
+  const px = Math.floor(x / VS), py = Math.floor(y / VS); let id = -1;
+  if (VOR && px >= 0 && py >= 0 && px < VW && py < VH) id = VOR[py * VW + px];
+  if (id < 0) { let bd = 40; for (const g of G.regs) { const d = hyp(g.x - x, g.y - y); if (d < bd) { bd = d; id = g.id; } } }
+  selR = id; ui(true);
+  if (id >= 0 && window.innerWidth <= 820) $('regBox').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+document.addEventListener('keydown', e => {
+  if (!started || e.target.tagName === 'INPUT') return;
+  if (e.key === ' ' && !NET) { paused = !paused; e.preventDefault(); ui(true); }
+  else if (e.key === 't' || e.key === 'T') $('bTech').click(); else if (e.key === 'e' || e.key === 'E') $('bSpace').click(); else if (e.key === 'c' || e.key === 'C') $('bCap').click();
+  else if (e.key === 'Escape') ['techm', 'spacem'].forEach(closeOv);
+});
+
+/* ---------- Menú, linaje, especie y en línea ---------- */
+function menuLin() {
+  const L = readLineage(), B = linBonus(L);
+  if (L && L.cv) { $('linBox').innerHTML = '<h3>Tu linaje</h3>Venís de la Era ' + L.from + ': <b>' + (L.sp ? SPECIES[L.sp].n : CV[L.cv].n) + '</b> (' + CV[L.cv].n + ')' + (L.city ? ', ' + L.city : '') + '.<br>' + B.why.join('<br>'); $('spPick').innerHTML = ''; pickSp = L.sp; }
+  else { $('linBox').innerHTML = '<h3>Sin linaje</h3>No jugaste las eras anteriores en este navegador (o empezás de cero). Elegí tu especie: la clase decide los nombres; la mecánica es la misma.';
+    pickSp = pickSp || 'ter_cazador';
+    $('spPick').innerHTML = CIV_KEYS.map(k => '<h4>' + CV[k].n + '</h4>' + SP_KEYS.filter(s => SPECIES[s].cls === k).map(s => '<button data-sp="' + s + '" class="' + (s === pickSp ? 'on' : '') + '">' + SPECIES[s].n + '</button>').join('')).join(''); }
+  const sv = readSave(); $('contBtn').style.display = sv ? 'block' : 'none'; if (sv) $('contBtn').innerHTML = 'Continuar<small>' + sv.summary + '</small>';
+}
+$('spPick').addEventListener('click', e => { const b = e.target.closest('button[data-sp]'); if (!b) return; pickSp = b.dataset.sp; menuLin(); });
+$('diffSeg').addEventListener('click', e => { const b = e.target.closest('button[data-d]'); if (!b) return; diffI = +b.dataset.d; DF = DIFFS[diffI]; [...$('diffSeg').children].forEach(x => x.classList.toggle('on', x === b)); });
+function begin() { closeOv('menu'); started = true; paused = false; resize(); bgDirty = true; seenSt = G.civs.map(c => c.sp5.st); ui(true); }
+$('startBtn').onclick = () => { ME = 0; newGame(null); begin(); toast('Tu capital está en ' + G.regs[me().cap].n + '. Anexá regiones vecinas para crecer.'); };
+$('contBtn').onclick = () => { const d = readSave(); if (!d) return; ME = 0; restoreGame(d); begin(); };
+$('netBtn').onclick = () => {
+  const box = $('netBox'); box.classList.toggle('show');
+  if (!box.dataset.on && window.FondalNet) { box.dataset.on = 1;
+    FondalNet.mountLobby(box, { era: 5, max: 4, title: 'Era 5 en línea', opt: () => ({ cv: (readLineage() || {}).cv || (SPECIES[pickSp] || SPECIES.ter_cazador).cls }),
+      onStart: (cfg, slot, net) => { diffI = cfg.diff | 0; DF = DIFFS[diffI]; ME = slot; NET = net;
+        const c0 = cfg.opt && CV[cfg.opt.cv] ? cfg.opt.cv : 'ter', order = [c0].concat(CIV_KEYS.filter(k => k !== c0));
+        newGame(cfg.seed, { noLineage: true, slots: cfg.slots.map((s, i) => ({ kind: s.kind, name: s.name, color: s.color, cv: order[i % 4] })) });
+        net.onDesync(() => toast('Aviso: las pantallas se desincronizaron (otro navegador u otra versión).', true));
+        begin(); toast('Partida en línea: sos ' + CV[me().cv].n + '. Los turnos llegan del servidor cada 0,1 s.'); } });
+  } else if (!window.FondalNet) box.innerHTML = 'No se pudo cargar el módulo en línea (net-lockstep.js).';
+};
+
+/* ---------- Bucle ---------- */
+let acc = 0, lastT = performance.now();
+function loop(now) {
+  const dt = Math.min(.25, (now - lastT) / 1000); lastT = now;
+  if (G && started && !G.over) {
+    if (NET) { let n = 0; while (NET.queue.length && n < 12) { const tr = NET.queue.shift(); for (const x of tr.cmds) cmd(x.slot, x.c && x.c.type === 'bot' ? { t: 'bot' } : x.c); update(FIX); if (tr.n % 50 === 0) NET.hash(tr.n, stateHash()); n++; } }
+    else if (!paused && !me().dlg && !document.querySelector('.ov.show:not(#dlg)')) { acc += dt * SPD[spdI]; let n = 0; while (acc >= FIX && n < 40) { update(FIX); acc -= FIX; n++; } if (G.t - lastSaveT > 60) saveGame(); }
+  }
+  if (G && started) { render(now); ui(); }
+  requestAnimationFrame(loop);
+}
+menuLin(); resize(); requestAnimationFrame(loop);
+
+window.__e5 = { get G() { return G; }, set ME(v) { ME = v; }, step(n) { for (let i = 0; i < (n || 1) && G && !G.over; i++) update(FIX); }, setDiff(i) { diffI = i; DF = DIFFS[i]; }, setStarted(v) { started = !!v; }, pause(v) { paused = !!v; },
+  seedRng, hashStr, newGame, rates, cmd, why, aiThink, connected, popCap, annexCost, absorbCost, railCost, bCost, canBuild, canTech, canSpace, canAnnex, Kof, stateHash, snapshot, saveGame, readSave, restoreGame, clearSave, readLineage, linBonus, writeLineage, resolveDlg, end, render, ui, TECH, STAGES, BLD, CV, SPECIES, EVS, DIFFS, K_T, regOf, get selR() { return selR; }, set selR(v) { selR = v; }, get pickSp() { return pickSp; }, set pickSp(v) { pickSp = v; } };
+
+/* === AUDIO === Solo lee G; nunca lo modifica ni usa R(). No está escuchado por una persona (docs/ESCUCHA.md). */
+(function audio5() {
+  const FA = window.FondalAudio; if (!FA) return;
+  FA.wire(); FA.setBiome('pradera'); FA.modulate(7);
+  const prev = { tech: 0, built: 0, st: 0, rst: 0, dlg: false, over: false, seed: '' }; let mood = 'construccion', since = 0;
+  setInterval(() => { try {
+    if (!started || !G) { FA.setMood('explorar'); return; }
+    const c = me(); FA.setDuck(!!paused); if (prev.seed !== G.seed) Object.assign(prev, { tech: c.tech.length, built: c.stats.built, st: c.sp5.st, rst: 0, seed: G.seed, over: G.over });
+    if (c.tech.length > prev.tech) { FA.sfx('tech', { own: true }); FA.modulate(); FA.setMood('evolucion', { hold: 6 }); }
+    if (c.stats.built > prev.built) FA.sfx('built', { own: true });
+    if (c.sp5.st > prev.st) { FA.stinger(10); FA.sfx('upgrade', { own: true }); }
+    const rst = Math.max(0, ...G.civs.filter(x => x !== c).map(x => x.sp5.st)); if (rst > prev.rst) FA.sfx('alert', { own: true });
+    if (!!c.dlg && !prev.dlg) FA.sfx('alert', { own: true });
+    if (G.over && !prev.over) { if (G.win) { FA.stinger(14); FA.sfx('win', { own: true }); } else FA.sfx('lose', { own: true }); }
+    Object.assign(prev, { tech: c.tech.length, built: c.stats.built, st: c.sp5.st, rst, dlg: !!c.dlg, over: G.over });
+    const m = G.temp >= 2.5 || c.stab < 30 || rst >= 2 ? 'amenaza' : (c.r && c.r.brown < 1) || (c.r && c.r.hungry) ? 'supervivencia' : 'construccion', now = performance.now();
+    if (m !== mood && now - since > 6000) { mood = m; since = now; } FA.setMood(mood);
+  } catch (e) {} }, 300);
+  FA.mountUI({ corner: 'tr', reserve: '52px', css: '#hud{padding-right:var(--audio-reserve,0px)}' });
+  window.__e5.audio = FA;
+})();
+})();
+</script>
+</body>
+</html>

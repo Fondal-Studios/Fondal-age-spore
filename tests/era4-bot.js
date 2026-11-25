@@ -26,7 +26,7 @@ const BOT = () => {
     p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/font|ERR_/i.test(m.text())) errs.push(m.text()); });
     await p.goto(url); await p.evaluate(BOT);
     // menú: role=dialog y enlace a la portada
-    const m0 = await p.evaluate(() => ({ dlgs: [...document.querySelectorAll('.card')].map(c => c.getAttribute('role') + ':' + c.getAttribute('aria-modal')), home: document.getElementById('menuHome').getAttribute('href'), honest: /Eras 5 y 6 todavía no existen/.test(document.getElementById('menu').textContent) }));
+    const m0 = await p.evaluate(() => ({ dlgs: [...document.querySelectorAll('.card')].map(c => c.getAttribute('role') + ':' + c.getAttribute('aria-modal')), home: document.getElementById('menuHome').getAttribute('href'), honest: /Era 5: La Industria/.test(document.getElementById('menu').textContent) }));
     assert.ok(m0.dlgs.length >= 3 && m0.dlgs.every(x => x === 'dialog:true'), 'modales con role=dialog: ' + m0.dlgs); assert.strictEqual(m0.home, '../index.html'); assert.ok(m0.honest);
     await p.click('#startBtn'); await p.waitForTimeout(300);
     // interfaz real: reclutar, elegir la guarnición, formar un ejército y ordenarle moverse tocando el mapa
@@ -52,7 +52,7 @@ const BOT = () => {
     if (shot) await p.screenshot({ path: shot });
     // pantalla final (victoria forzada), linaje y portada
     const fin = await p.evaluate(() => { clearInterval(window.__iv); const E = window.__e4; E.G.over = false; E.G.civs.forEach(c => { if (!c.human) c.alive = false; }); E.G.paused = false; E.step(.05); return { dlg: document.getElementById('dlg').classList.contains('show'), btns: [...document.querySelectorAll('#dBtns button')].map(x => x.textContent + ':' + Math.round(x.getBoundingClientRect().height)), lin: localStorage.getItem('evo_lineage'), save: localStorage.getItem('evo_save4_v1'), txt: document.getElementById('dB').textContent }; });
-    console.log(fin.btns, fin.lin); assert.ok(fin.dlg && fin.btns.some(x => /Volver a la portada/.test(x)) && /Eras 5 y 6 todavía no existen/.test(fin.txt)); assert.strictEqual(JSON.parse(fin.lin).from, 4); assert.strictEqual(fin.save, null);
+    console.log(fin.btns, fin.lin); assert.ok(fin.dlg && fin.btns.some(x => /Volver a la portada/.test(x)) && /Sigue la Era 5/.test(fin.txt) && fin.btns.some(x => /Seguir a la Era 5/.test(x))); assert.strictEqual(JSON.parse(fin.lin).from, 4); assert.strictEqual(fin.save, null);
     await Promise.all([p.waitForNavigation(), p.click('#dBtns button:last-child')]); assert.ok(/index\.html$/.test(p.url()), p.url());
     await ctx.close();
   }
