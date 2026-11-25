@@ -1,0 +1,23 @@
+# Fly.io: desde esta carpeta, «fly launch --copy-config --no-deploy» y después «fly deploy».
+# La dirección para el juego queda wss://<nombre-de-la-app>.fly.dev
+app = "fondal-relay"
+primary_region = "eze"   # Buenos Aires
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8787"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  method = "GET"
+  path = "/"

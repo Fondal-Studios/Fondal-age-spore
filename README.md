@@ -2,31 +2,29 @@
 
 Repositorio: https://github.com/Fondal-Studios/Fondal-age-spore
 
-Juego de estrategia 2D estilo Age of Empires con reglas de la naturaleza: de la célula a los animales, las tribus y las civilizaciones.
+Juego de estrategia evolutiva en el navegador, en español: **de la célula a las estrellas en seis eras**. Cada era es un juego completo y lo que hacés en una viaja a la siguiente (el *linaje*).
 
 ## Cómo jugarlo
-Abrí `index.html` en el navegador (no hace falta servidor) o activá GitHub Pages sobre la rama principal.
+Abrí `index.html` en el navegador (no hace falta servidor) o publicá la rama principal en GitHub Pages (`.github/workflows/pages.yml`). Se puede instalar como app (PWA) y jugar sin conexión.
 
-## Estado
-- **Era 1 (célula):** cuerpos pintados con Runway que evolucionan en 3 niveles por rama (con movimiento), 48 orgánulos con dibujo propio, 14 habilidades activas, estructuras, fusión de ramas.
-- **Era 2 (animales):** 5 ecosistemas, rasgos con variantes, nidos y civilización inicial.
-- **Era 3 (tribus):** oficios, tecnologías, otra tribu y fundación de la ciudad.
-- Eras 4 a 6: por construir.
+## Las seis eras
+| Era | Archivo | Qué es |
+| --- | --- | --- |
+| 1 · Célula | `eras/era1-celula.html` | orgánulos, 42 mutaciones en 4 ramas, habilidades, decisiones evolutivas; **en línea hasta 8** |
+| 2 · Especie | `eras/era2-animales.html` | 12 especies, 36 rasgos con capacidades, 5 biomas, salir del agua |
+| 3 · Civilización | `eras/era3-tribus.html` | constructor por Edades, una civilización por clase, Maravilla |
+| 4 · Guerra | `eras/era4-civilizaciones.html` | terreno, espías, provisiones y la ley de Lanchester; asedio y rendición |
+| 5 · Industria | `eras/era5-industria.html` | vías férreas, energía (Kardashev), clima compartido, carrera espacial; **en línea hasta 4** |
+| 6 · Estrellas | `eras/era6-estrellas.html` | flotas entre estrellas, enjambres de Dyson, Tipo II; epílogo del recorrido; **en línea hasta 4** |
 
-## Novedades
-- **Partida guardada** (Era 1): autoguardado y botón Guardar; «Continuar» en el menú.
-- **Sala de hasta 8 colonias** (vos + bots) y **semilla del mundo** compartible.
-- **Relay online** en `server/` (aún sin conectar al juego): ver `MULTIJUGADOR.md`.
-- Auditoría completa y 10 propuestas: `AUDITORIA.md`.
+## En línea
+`cd server && npm install && npm start` levanta el relay (ws://localhost:8787). Para publicarlo: `render.yaml` (Render), `server/fly.toml` (Fly.io) o `server/Dockerfile`. Detalles y reconexión: `MULTIJUGADOR.md`.
+
+## Apoyo y monetización
+Gratis para siempre; el **Pase Fundador** es solo cosmético (`apoyar.html`, `eras/fondal-plus.js`). Plan y riesgos (incluido el del nombre): `docs/MONETIZACION.md` y `docs/CICLO6.md`.
 
 ## Pruebas
-`NODE_PATH=$(npm root -g) node tests/determinismo.js` (misma semilla ⇒ mismo estado, guardar/cargar, 8 colonias) y `cd server && npm install && npm test`.
+`npm test` (Era 1 y relay), `npm run test:era56` (Eras 5 y 6 + en línea), `npm run test:era3`, etc. Necesitan Playwright (`npx playwright install chromium`) y `cd server && npm install`. CI: `.github/workflows/tests.yml`.
 
-## Carpetas
-- `eras/`: cada era es un HTML autocontenido (canvas, sin dependencias; solo tipografías de Google Fonts).
-- `art/`: dibujos vectoriales de los orgánulos (SVG y PNG), hoja de contactos y `art/runway/` (cuerpos celulares pintados; la Era 1 los carga desde ahí, así que hay que servir la carpeta completa).
-- `AUDITORIA.md`: auditoría del juego y plan de mejora.
-
-Los archivos de `art/` son la base visual para que el agente pintor los refine.
-
-Para continuar el desarrollo en otra sesión leé `AGENTS.md`.
+## Documentos
+`docs/CICLO6.md` (estado actual y comparación con otros juegos), `docs/ERA5.md`, `docs/ERA6.md`, `docs/ERA4.md`, `docs/ERA3-CIVILIZACIONES.md`, `docs/ERA2-EVOLUCION.md`, `docs/MONETIZACION.md`, `docs/PRUEBAS-HUMANAS.md`. Para seguir el desarrollo en otra sesión: `AGENTS.md`.

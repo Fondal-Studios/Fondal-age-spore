@@ -498,9 +498,9 @@ function fxFront(x, c, r, T, br, tier, tt, a) {
 }
 const FALLBACK = { id: 'adaptacion', br: 'gen', n: 'Adaptación', d: '+8% de vida y de daño.', fx: m => { m.hp *= 1.08; m.dmg *= 1.08; } };
 const DIFFS = [
-  { n: 'Fácil', hp: .7, dmg: .7, mutEvery: 130, wave: 2, fuse: 330, dv: 1.6, wave0: 170, domShare: .5, domT: 15, evoOrgs: 2, evoMut: 5, evoShare: .3, startBonus: 1 },
-  { n: 'Normal', hp: .95, dmg: .95, mutEvery: 75, wave: 1.15, fuse: 210, dv: 1.05, wave0: 90, domShare: .6, domT: 20, evoOrgs: 3, evoMut: 6, evoShare: .4, startBonus: 0 },
-  { n: 'Difícil', hp: 1.15, dmg: 1.1, mutEvery: 50, wave: .75, fuse: 150, dv: .8, wave0: 70, domShare: .7, domT: 20, evoOrgs: 3, evoMut: 6, evoShare: .4, startBonus: 0 }
+  { n: 'Fácil', hp: .7, dmg: .7, mutEvery: 130, wave: 2, fuse: 330, dv: 1.6, wave0: 170, calm: 240, domShare: .5, domT: 15, evoOrgs: 2, evoMut: 5, evoShare: .3, startBonus: 1 },
+  { n: 'Normal', hp: .95, dmg: .95, mutEvery: 75, wave: 1.15, fuse: 210, dv: 1.05, wave0: 90, calm: 180, domShare: .6, domT: 20, evoOrgs: 3, evoMut: 6, evoShare: .4, startBonus: 0 },
+  { n: 'Difícil', hp: 1.15, dmg: 1.1, mutEvery: 50, wave: .75, fuse: 150, dv: .8, wave0: 70, calm: 120, domShare: .7, domT: 20, evoOrgs: 3, evoMut: 6, evoShare: .4, startBonus: 0 }
 ];
 /* Hasta 8 colonias. SLOT_* es la casilla de la sala (0 = quien juega); TEAM_* se rellena en newGame según las casillas activas. */
 const SLOT_COL = ['#12958f', '#c9406f', '#5b57c9', '#8c5a2b', '#3d8a3a', '#c47fd1', '#c7a21a', '#6b7a8f'];
@@ -583,7 +583,7 @@ function pickWeighted(mix) {
 
 function newGame(di, nRiv, seedStr, slots, humans) {
   humans = humans || [0]; const hum = new Set(humans); ME = humans.includes(ME) ? ME : humans[0]; ACT = ME; CMD = null;
-  seedStr = seedStr || newSeedStr(); seedRng(hashStr(seedStr));
+  seedStr = seedStr || newSeedStr(); seedRng(hashStr(seedStr)); diffIdx = di;   // la dificultad de la partida (la guarda snapshot) es la de newGame, no la del menú
   slots = slots || Array.from({ length: nRiv + 1 }, (_, i) => i); nRiv = slots.length - 1;
   slots.forEach((sl, t) => { TEAM_COL[t] = SLOT_COL[sl]; TEAM_NAME[t] = hum.has(t) ? (t === ME ? (lobby.name || SLOT_NAME[0]) : SLOT_NAME[sl]) : SLOT_NAME[sl]; });
   for (const k in PTINT) delete PTINT[k];
@@ -595,7 +595,7 @@ function newGame(di, nRiv, seedStr, slots, humans) {
     vents: [{ x: 1300, y: 850, r: 80 }, { x: 900, y: 380, r: 70 }, { x: 1750, y: 1300, r: 70 }, { x: 900, y: 1350, r: 70 }, { x: 1800, y: 450, r: 70 }],
     plank: Array.from({ length: 110 }, () => ({ x: rnd(0, W), y: rnd(0, H), r: rnd(1, 3), s: rnd(4, 14), a: rnd(0, TAU) })),
     meteor: null, meteorT: 110, nutT: 0, idc: 1, modal: false, canEvolve: false, over: false, kills: 0, aiClock: 0, slowT: 0,
-    sel: new Set(), teams: [], clouds: [], rings: [], beams: [], abBtns: [], abUsed: false, rests: [], meadows: [], currents: [], reefs: [], structs: 0, env: null, envT: 70, hist: [], histT: 0, domT: 0, share: 0, bio: []
+    sel: new Set(), teams: [], clouds: [], rings: [], beams: [], abBtns: [], abUsed: false, rests: [], meadows: [], currents: [], reefs: [], structs: 0, env: null, envT: 70, calm: NET.on ? 0 : D.calm, calmEnd: false, hist: [], histT: 0, domT: 0, share: 0, bio: []
   };
   const nT = 1 + nRiv; $('abil').innerHTML = '';
   for (let t = 0; t < nT; t++) {
@@ -754,10 +754,14 @@ function attack(c, e) {
   if (m.steal) { const et = S.teams[e.team], s = Math.min(m.steal, et.nut); et.nut -= s; S.teams[c.team].nut += s; }
   burst((c.x + e.x) / 2, (c.y + e.y) / 2, 2, '#ffffff');
 }
+/* Calma inicial (solo sin red): hasta el primer hito (8 células y 1 mutación) o el tiempo de la dificultad, a un equipo humano
+   no lo atacan los rivales, sus células no mueren de hambre y no empiezan los cambios de ambiente. Deja aprender sin perder a los 90 s. */
+function calm(t) { const T = S.teams[t]; return !!(S.calm && T && !T.ai && S.t < S.calm && T.stage < 1); }
+function anyCalm() { return !!S.calm && S.teams.some((_, t) => calm(t)); }
 function nearestEnemy(c, range) {
-  let best = null, bd = 1e9;
+  let best = null, bd = 1e9; const ai = S.teams[c.team] && S.teams[c.team].ai;
   for (const e of S.cells) {
-    if (e.dead || e.team === c.team) continue;
+    if (e.dead || e.team === c.team || (ai && calm(e.team))) continue;
     const dx = e.x - c.x, dy = e.y - c.y, d = Math.hypot(dx, dy);
     const cover = (S.reefs.some(rf => Math.hypot(e.x - rf.x, e.y - rf.y) < rf.r + 28) ? .7 : 1) * (S.teams[e.team].camoT > 0 ? .35 : 1);
     if (d < range * S.teams[e.team].mods.stealth * cover && d < bd) { bd = d; best = e; }
@@ -1136,7 +1140,8 @@ function updateCell(c, dt) {
   if (c.cd > 0) c.cd -= dt;
   if (c.frT > 0) c.frT -= dt;
   c.food -= .9 * st.drain * dt;
-  if (c.food <= 0) { c.food = 0; hurt(c, 2 * dt * (c.org ? 1 + big * .3 : 1), null); if (c.dead) return; }
+  if (c.food <= 0 && calm(c.team)) c.food = 0;
+  else if (c.food <= 0) { c.food = 0; hurt(c, 2 * dt * (c.org ? 1 + big * .3 : 1), null); if (c.dead) return; }
   if (c.poisonT > 0) { c.poisonT -= dt; hurt(c, c.poison * dt, null); if (c.dead) return; }
   if (S.env && S.env.kind === 'glaciacion') { hurt(c, 1.5 * m.cold * (c.org ? .6 : 1) * dt, null); if (c.dead) return; }
   if (S.env && S.env.kind === 'bola' && !(T.snow === 'vent' && nearVent(c, 1.3))) { hurt(c, 2.6 * m.cold * (c.org ? .6 : 1) * dt, null); if (c.dead) return; }
@@ -1213,7 +1218,7 @@ function nearestCellOfTeam(t, p) {
 }
 function pickTargetTeam(team) {
   const T = S.teams[team], A = T.ai, pr = PERS[A.p], alive = [];
-  for (let t = 0; t < S.teams.length; t++) if (t !== team) { const n = bio(t); if (n > 0) alive.push({ t, n }); }
+  for (let t = 0; t < S.teams.length; t++) if (t !== team && !calm(t)) { const n = bio(t); if (n > 0) alive.push({ t, n }); }
   if (!alive.length) return -1;
   if (pr.tg === 'player') { const pl = alive.find(a => !S.teams[a.t].ai); if (pl && R() < .65) return pl.t; }
   if (pr.tg === 'weak') { alive.sort((a, b) => a.n - b.n); return alive[0].t; }
@@ -1256,10 +1261,12 @@ function aiTick(team, dt) {
     }
   }
   if (A.tTeam >= 0) { const c = nearestCellOfTeam(A.tTeam, T.home); if (c) A.target = { x: c.x, y: c.y }; }
-  A.waveT -= dt;
+  const w0 = A.waveT; A.waveT -= dt;
+  /* Aviso previo: 12 s antes de la oleada se elige el blanco; si sos vos, te avisa (antes caía sin aviso). */
+  if (w0 > 12 && A.waveT <= 12 && mine.length >= A.waveSize * .8) { A.nextT = pickTargetTeam(team); if (A.nextT === ME && !NET.on) toast(TEAM_NAME[team] + ' prepara un ataque contra vos: llega en unos 12 s. Juntá tus células o dividí defensoras.', true); }
   if (A.waveT <= 0 && mine.length >= A.waveSize) {
     A.waveT = A.waveInt;
-    const tt = pickTargetTeam(team);
+    const tt = A.nextT !== undefined && A.nextT >= 0 && bio(A.nextT) > 0 && !calm(A.nextT) ? A.nextT : pickTargetTeam(team); A.nextT = -1;
     if (tt >= 0) {
       A.tTeam = tt;
       const c = nearestCellOfTeam(tt, T.home);
@@ -1283,7 +1290,7 @@ function step(dt) {
   S.clouds = S.clouds.filter(q => q.t > 0); for (const q of S.rings) q.t -= dt; S.rings = S.rings.filter(q => q.t > 0); for (const q of S.beams) q.t -= dt; S.beams = S.beams.filter(q => q.t > 0);
 
   if (S.env) { S.env.t -= dt; if (S.env.t <= 0) { endEnv(S.env.kind); S.env = null; S.envT = rnd(55, 85); } }
-  else { S.envT -= dt; if (S.envT <= 0) startEnv(); }
+  else if (!anyCalm()) { S.envT -= dt; if (S.envT <= 0) startEnv(); }
   S.evt.clock += dt; if (S.evt.clock >= 1) { S.evt.clock = 0; checkEvents(); }
 
   S.meteorT -= dt;
@@ -1349,6 +1356,7 @@ function step(dt) {
     const dts = S.slowT; S.slowT = 0;
     for (let t = 0; t < S.teams.length; t++) if (count(t) === 0) for (const c of S.cells) if (c.struct && c.team === t) c.dead = true;
     S.bio = S.teams.map((_, t) => bio(t));
+    if (S.calm && !S.calmEnd && !calm(ME)) { S.calmEnd = true; if (S.t > 5 && !NET.on) toast('Terminó la calma: desde ahora los rivales pueden atacarte, el hambre daña y cambia el ambiente.', true); }
     const tot = S.bio.reduce((a, b) => a + b, 0) || 1;
     S.teams.forEach((T, t) => {
       T.share = S.bio[t] / tot;
@@ -1653,12 +1661,17 @@ document.querySelectorAll('#diffSeg button').forEach(b => b.onclick = () => {
   diffIdx = +b.dataset.d; const nb = [2, 3, 3][diffIdx]; lobby.bots = lobby.bots.map((_, i) => i < nb ? 1 : 0); renderLobby();
   document.querySelectorAll('#diffSeg button').forEach(x => x.classList.toggle('on', x === b));
 });
+/* Primera partida (sin linajes heredados ni sala guardada): Fácil con 1 rival, para aprender sin que te pasen por encima. */
+(() => { let first = false; try { first = !localStorage.getItem('evo_lobby') && !(loadLegacy().n > 0); } catch (e) {}
+  if (!first) return; diffIdx = 0; lobby.bots = [1, 0, 0, 0, 0, 0, 0]; try { renderLobby(); } catch (e) {}
+  document.querySelectorAll('#diffSeg button').forEach(x => x.classList.toggle('on', x.dataset.d === '0')); })();
 $('startBtn').onclick = () => {
   const bots = lobby.bots.map((b, i) => b ? i + 1 : 0).filter(Boolean);
   if (!bots.length) { toast('Dejá al menos una colonia rival: sin rivales la partida termina al instante.', true); return; }
   newGame(diffIdx, bots.length, lobby.seed || newSeedStr(), [0, ...bots]);
   started = true; $('menu').classList.remove('show'); setSpd(1); S.paused = false; lastSaveT = 0;
-  toast('Semilla del mundo: ' + S.seed + ' · mové el mouse a los bordes para desplazar la pantalla.'); if (window.innerWidth < 700) $('goal').open = false;
+  const touch = matchMedia && matchMedia('(pointer: coarse)').matches;
+  toast('Semilla del mundo: ' + S.seed + (touch ? ' · arrastrá con un dedo para mover la vista.' : ' · mové el mouse a los bordes (o arrastrá) para mover la vista.') + (S.calm ? ' Calma: nadie te ataca hasta tu primer hito o ' + Math.round(S.calm / 60) + ' min.' : '')); if (window.innerWidth < 700) $('goal').open = false;
 };
 TYPE_KEYS.forEach(k => {
   const b = document.createElement('button');
@@ -2413,7 +2426,7 @@ function hintText() {
   if (S.abBtns.length && !S.abUsed) return 'Cada orgánulo te da una habilidad activa: tocá uno de los botones nuevos (o las teclas 3 a 0) para usarla.';
   if (canFuseBranches()) return 'Podés Fusionar ramas: combiná tu camino con otro y ganá un híbrido con aspecto nuevo.';
   if (S.teams[ME].stage < 1) {
-    if (n < 8) return 'Tus células recogen nutrientes solas. Tocá Dividir cada vez que puedas para llegar a 8 células.';
+    if (n < 8) return (calm(ME) ? 'Calma (' + Math.max(0, Math.ceil((S.calm - S.t) / 10) * 10) + ' s): nadie te ataca. ' : '') + 'Tus células recogen nutrientes solas. Tocá Dividir cada vez que puedas para llegar a 8 células.';
     if (T.mutCount < 1) return 'Juntá ADN (comiendo nutrientes o absorbiendo rivales) para tu primera mutación.';
     return 'Seguí recogiendo nutrientes: ya casi desbloqueás las estructuras.';
   }

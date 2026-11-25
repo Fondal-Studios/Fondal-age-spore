@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Apoyá Fondal Age Spore · Pase Fundador</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#14101f"><link rel="icon" href="art/icono.svg" type="image/svg+xml">
+<style>
+:root{--bg:#100d1a;--ink:#f1eef8;--ink2:#b9b2cf;--card:#1c1830;--line:#ffffff22;--acc:#b08cff;--acc2:#ffcf6a}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+a{color:var(--acc)}.wrap{max-width:860px;margin:0 auto;padding:28px 16px 40px}
+h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px}h2{font-size:21px;margin:26px 0 10px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.tier b{font-size:18px;display:block}.tier .p{font-size:22px;font-weight:800;color:var(--acc2);margin:4px 0}
+.tier ul{margin:6px 0 0;padding-left:18px;color:var(--ink2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 16px;border-radius:12px;font-weight:800;border:1px solid var(--line);background:#ffffff10;color:var(--ink);text-decoration:none;font-size:15px;cursor:pointer}
+.btn.main{background:linear-gradient(90deg,#8a5cf0,#b08cff);color:#160d2a;border-color:transparent}
+input{min-height:48px;padding:10px;border-radius:12px;border:1px solid var(--line);background:#0c0a14;color:var(--ink);font:inherit;font-size:16px;letter-spacing:.06em;text-transform:uppercase;flex:1;min-width:200px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.skins{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.skins button{min-height:48px;padding:8px 12px;border-radius:12px;border:2px solid var(--line);background:transparent;color:var(--ink);font-weight:700;cursor:pointer}
+.skins button.on{border-color:var(--acc2)}.skins i{display:inline-block;width:28px;height:6px;border-radius:3px;vertical-align:middle;margin-right:6px}
+.plus{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:linear-gradient(90deg,#b08cff,#ffcf6a);color:#1a1226;font-weight:800}
+.note{color:var(--ink2);font-size:13.5px}
+#msg{margin-top:8px;font-weight:600}
+</style></head><body><div class="wrap">
+<p><a href="index.html">← Portada</a></p>
+<h1>Apoyá el juego</h1>
+<p class="note" style="font-size:16px">Fondal Age Spore es gratis y lo va a seguir siendo. Si querés que crezca (servidor en línea siempre prendido, arte nuevo, más idiomas), podés apoyarlo. A cambio solo damos cosas que <b>se ven</b>: nunca ventaja en el juego.</p>
+
+<h2>Qué podés elegir</h2>
+<div class="grid">
+  <div class="box tier"><b>Gratis</b><div class="p">$0</div><ul><li>Las seis eras completas</li><li>Juego en línea con amigos</li><li>Guardado y recorrido</li></ul></div>
+  <div class="box tier"><b>Pase Fundador <span class="plus">cosmético</span></b><div class="p">pago único</div><ul><li>4 estelas para tus flotas en la Era 6</li><li>Insignia «Fundador» en la portada</li><li>Tu nombre en los créditos</li><li>Voto en qué era o idioma sigue</li></ul></div>
+  <div class="box tier"><b>Modo aula</b><div class="p">para escuelas</div><ul><li>Una semilla para toda la clase</li><li>Guía docente: célula, ecología, energía, clima</li><li>Sin chat; nada sale del navegador</li></ul></div>
+</div>
+<div class="row" style="margin-top:6px">
+  <a class="btn main" id="buy" href="#" rel="noopener">Conseguir el Pase Fundador</a>
+  <a class="btn" href="mailto:?subject=Fondal%20Age%20Spore%20-%20Modo%20aula">Consultar por el modo aula</a>
+</div>
+<p class="note" id="buyNote">La tienda todavía no está abierta: Fondal Studios la habilita cuando publique la página del juego. Mientras tanto, si recibiste un código, canjealo acá abajo.</p>
+
+<h2>Canjear un código</h2>
+<div class="box">
+  <div class="row"><input id="code" placeholder="FND-XXXX-XXXX-X" maxlength="20" aria-label="Código del Pase Fundador" autocomplete="off"><button class="btn main" id="redeem" type="button">Canjear</button></div>
+  <div id="msg" role="status"></div>
+  <div id="skinBox" style="display:none"><p class="note" style="margin:12px 0 0">Elegí la estela de tus flotas (Era 6):</p><div class="skins" id="skins"></div></div>
+  <p class="note">El código queda guardado en este navegador (si borrás los datos del sitio, lo volvés a escribir). No pedimos cuenta ni datos personales.</p>
+</div>
+
+<h2>A dónde va la plata</h2>
+<div class="box note">1) Mantener prendido el servidor del juego en línea. 2) Arte nuevo (hoy lo pinta el motor de imágenes local de Fondal Studios). 3) Traducciones y una versión de escritorio. Cada tanto publicamos qué se hizo con lo recaudado.</div>
+</div>
+<script src="eras/fondal-plus.js"></script>
+<script>
+(function () {
+  /* Dirección de la tienda: Fondal Studios la completa al abrirla (itch.io, Ko-fi u otra). Mientras esté vacía, el botón explica que no está abierta. */
+  var STORE_URL = '';
+  var P = window.FondalPlus, $ = function (id) { return document.getElementById(id); };
+  if (STORE_URL) { $('buy').href = STORE_URL; $('buy').target = '_blank'; $('buyNote').textContent = 'Se abre la tienda en otra pestaña; al pagar te llega tu código.'; }
+  else $('buy').onclick = function (e) { e.preventDefault(); $('buyNote').style.color = '#ffcf6a'; };
+  function skins() {
+    if (!P || !P.active()) { $('skinBox').style.display = 'none'; return; }
+    $('skinBox').style.display = 'block'; var cur = P.skin();
+    $('skins').innerHTML = P.skins().map(function (s) { return '<button data-s="' + s.id + '" class="' + (cur && cur.id === s.id ? 'on' : '') + '" title="' + s.d + '"><i style="background:' + s.trail + '"></i>' + s.n + '</button>'; }).join('');
+  }
+  $('skins').addEventListener('click', function (e) { var b = e.target.closest('button[data-s]'); if (!b) return; P.setSkin(b.dataset.s); skins(); });
+  $('redeem').onclick = function () { var r = P.activate($('code').value); $('msg').textContent = r.msg; $('msg').style.color = r.ok ? '#8be0a4' : '#ff9a9a'; skins(); };
+  if (P && P.active()) $('msg').textContent = 'Pase Fundador activo en este navegador. ¡Gracias!';
+  skins();
+})();
+</script></body></html>

@@ -59,6 +59,13 @@ button:focus-visible,summary:focus-visible,a.btn:focus-visible{outline:3px solid
 #goal summary{cursor:pointer;font-weight:600;color:var(--ink);list-style:none;display:flex;justify-content:space-between;min-height:24px}
 #goal summary::-webkit-details-marker{display:none}
 .g{padding:2px 0}.g.ok{color:var(--ok);font-weight:600}
+.chip img.ri{width:20px;height:20px;align-self:center;object-fit:contain;display:none}.chip img.ri.on{display:inline-block}
+#spPick{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px;margin-top:6px}
+#spPick h4{grid-column:1/-1;margin:6px 0 0;font-size:13px;color:var(--ink)}
+#spPick button{min-height:44px;padding:6px 8px;border:1px solid var(--line);background:transparent;border-radius:10px;text-align:left;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+#spPick button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+#spPick button img{width:30px;height:30px;object-fit:contain;flex:none}
+.sgbar{display:block;height:6px;border-radius:3px;background:var(--line);margin-top:3px;overflow:hidden}.sgbar i{display:block;height:100%;background:var(--warn)}
 #bar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
 #bar button,#bar a.btn{padding:7px 12px;min-height:54px;background:var(--panel);border:1px solid var(--line);border-radius:10px;font-size:14px;font-weight:600;min-width:104px;text-decoration:none;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;color:var(--ink)}
 #bar button small{display:block;font-weight:400;color:var(--ink2);font-size:12px;line-height:1.25}
@@ -120,15 +127,15 @@ button:focus-visible,summary:focus-visible,a.btn:focus-visible{outline:3px solid
   <div id="hud">
     <div class="chip"><b id="vTime">0:00</b><span>tiempo</span></div>
     <div class="chip" id="cPop"><b id="vPop">0</b><span>obreros</span></div>
-    <div class="chip" id="cFood"><b id="vFood">0</b><span id="vFoodR">comida</span></div>
-    <div class="chip"><b id="vWood">0</b><span>madera</span></div>
-    <div class="chip"><b id="vBronze">0</b><span>bronce</span></div>
+    <div class="chip" id="cFood"><img class="ri" id="iFood" alt=""><b id="vFood">0</b><span id="vFoodR">comida</span></div>
+    <div class="chip"><img class="ri" id="iWood" alt=""><b id="vWood">0</b><span id="nWood">madera</span></div>
+    <div class="chip"><img class="ri" id="iBronze" alt=""><b id="vBronze">0</b><span id="nBronze">piedra</span></div>
     <div class="chip" id="cMor"><b id="vMor">0</b><span>moral</span></div>
-    <div class="chip"><b id="vArmy">0</b><span>soldados</span></div>
+    <div class="chip" id="cArmy"><b id="vArmy">0</b><span id="nArmy">ejército</span></div>
   </div>
   <div id="hint"></div>
   <div id="main">
-    <div id="cvWrap"><canvas id="cv" role="img" aria-label="Mapa de la región: tu ciudad, las ciudades rivales, los ejércitos, el bosque, las colinas y el río con sus vados."></canvas><div id="pauseTag">Pausa</div><div id="legend">Tocá un ejército propio para elegirlo y después un punto del mapa para ordenarle ir. Arrastrá para mover la vista.</div></div>
+    <div id="cvWrap"><canvas id="cv" role="img" aria-label="Mapa de la región: tu ciudad, las ciudades rivales, los ejércitos, los obstáculos, las colinas y el río con sus vados."></canvas><div id="pauseTag">Pausa</div><div id="legend">Tocá un ejército propio para elegirlo y después un punto del mapa para ordenarle ir. Arrastrá para mover la vista.</div></div>
     <div id="side">
       <div class="box"><h3>Obreros <small id="libres"></small></h3><div id="roles"></div><button class="ghost" id="bAuto" style="margin-top:6px;padding:6px">Asignar nuevos automáticamente: sí</button></div>
       <div class="box" id="selBox"><h3>Ejército elegido</h3><div id="selInfo">Tocá uno de tus ejércitos en el mapa.</div></div>
@@ -140,8 +147,8 @@ button:focus-visible,summary:focus-visible,a.btn:focus-visible{outline:3px solid
   </div>
   <div id="bar">
     <div id="tray"></div>
-    <button id="bRec">Reclutar<small>obreros y soldados</small></button>
-    <button id="bBld">Construir<small>granja, cuartel, murallas…</small></button>
+    <button id="bRec">Reclutar<small>obreros y guerreros</small></button>
+    <button id="bBld">Construir<small id="bBldS">granja, cuartel, murallas…</small></button>
     <button id="bDoc" class="go">Doctrinas<small id="bDocS">mejoras de guerra</small></button>
     <button id="bOrd">Órdenes<small id="bOrdS">ejército elegido</small></button>
     <span class="brk"></span>
@@ -154,19 +161,21 @@ button:focus-visible,summary:focus-visible,a.btn:focus-visible{outline:3px solid
 
   <div id="menu" class="ov show"><div class="card" role="dialog" aria-modal="true" aria-labelledby="menuT">
     <h1 id="menuT">Era 4: Civilizaciones</h1>
-    <p>Tu ciudad ya está fundada. Ahora hay vecinos con ejércitos, un río con pocos vados y un mapa donde el terreno decide quién gana. La guerra se simula con las leyes de Lanchester y se apoya en tres ideas del Arte de la guerra: elegir el terreno, conocer al enemigo y no pelear sin provisiones.</p>
+    <p>Tu ciudad ya está fundada. Ahora hay civilizaciones vecinas de otras clases, un río con pocos vados y un mapa donde el terreno decide quién gana. La guerra se simula con las leyes de Lanchester y se apoya en tres ideas del Arte de la guerra: elegir el terreno, conocer al enemigo y no pelear sin provisiones. Ganás tomando sus capitales (un asedio baja la barra de cada ciudad) o cuando se rinden y te pagan tributo.</p>
     <div class="seg" id="diffSeg" role="group" aria-label="Dificultad"><button data-d="0" class="on">Fácil · 1 rival</button><button data-d="1">Normal · 2 rivales</button><button data-d="2">Difícil · 3 rivales</button></div>
     <div class="box" id="linBox" style="margin-top:8px"></div>
+    <div id="spPick" role="group" aria-label="Elegí tu especie"></div>
     <button class="bigbtn" id="startBtn">Empezar</button>
     <button class="ghost" id="contBtn" style="display:none"></button>
     <a class="ghost" href="../index.html" id="menuHome">Volver a la portada</a>
-    <p class="sm"><b>Aviso honesto:</b> las Eras 5 y 6 todavía no existen. Si ganás, tu linaje queda anotado en este navegador, pero no hay a dónde seguir. Esto es un prototipo (bosquejo jugable). Las leyes de Lanchester son modelos simplificados de manual y las cifras del juego (rendimientos, tamaños, costos) son aproximaciones de diseño, no datos históricos verificados.</p>
+    <p class="sm"><b>Lo que sigue:</b> si ganás, tu civilización pasa a la <b>Era 5: La Industria</b> (y después a la Era 6: Las Estrellas) con tu linaje anotado en este navegador. Las leyes de Lanchester son modelos simplificados de manual y las cifras del juego (rendimientos, tamaños, costos) son aproximaciones de diseño, no datos históricos verificados.</p>
   </div></div>
 
   <div id="docm" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="docT"><h2 id="docT">Doctrinas</h2><p id="docP"></p><div class="grid" id="docGrid"></div><button class="ghost" id="docClose">Cerrar</button></div></div>
   <div id="dlg" class="ov"><div class="card" role="dialog" aria-modal="true" aria-labelledby="dT"><h2 id="dT"></h2><div id="dB"></div><div id="dBtns"></div></div></div>
 </div>
 
+<script src="../art/era3/manifest.js" onerror="window.ERA3_ART=[]"></script>
 <script src="audio-lofi.js"></script>
 <script>
 (() => {
@@ -186,11 +195,13 @@ const FIX = .05;
 /* ---------- Datos ---------- */
 const COLS = 48, ROWS = 30, TS = 20, W = COLS * TS, H = ROWS * TS;
 const T_PLAIN = 0, T_FOR = 1, T_HILL = 2, T_RIVER = 3, T_FORD = 4;
-const TNAME = ['llanura', 'bosque', 'colina', 'río', 'vado'];
+const TNAME = ['llanura', 'bosque', 'colina', 'río', 'vado'];   // nombres genéricos; en pantalla, tname() según la civilización
 const TCOST = [1, 2, 2.2, Infinity, 2.5];          // costo de ruta
 const TSPD = [1, .6, .65, 0, .7];                  // velocidad
 const TDEF = [1, 1.15, 1.25, 1, 1.2];              // ventaja del que defiende
 const K = ['lan', 'arq', 'jin'];
+/* Las tres unidades del triángulo. La mecánica (ataque, aguante, costo, ventajas de MU) es la misma para todas las civilizaciones;
+   nombre, texto y dibujo salen de la civilización y la especie (CV, SPJ y unitName). col = color de la porción en la mini-torta. */
 const UN = {
   lan: { n: 'Lanceros', s: 'lancero', atk: 1, dur: 1, cost: { food: 10, wood: 6 }, col: '#8a8a8a', d: 'Infantería con lanzas largas: frenan a la caballería.' },
   arq: { n: 'Arqueros', s: 'arquero', atk: 1.1, dur: .7, cost: { food: 8, wood: 10 }, col: '#4aa83a', d: 'Tiran de lejos: castigan a la infantería. Frágiles ante jinetes.' },
@@ -200,37 +211,89 @@ const UN = {
 const MU = { lan: { lan: 1, arq: .65, jin: 1.6 }, arq: { lan: 1.6, arq: 1, jin: .65 }, jin: { lan: .65, arq: 1.6, jin: 1 } };
 const KILL = .045, SLIN = 20;                    // escala de tiempo de las leyes
 const BLD = {
-  granja: { n: 'Granja', cost: { wood: 30 }, d: '+20% comida por nivel.' },
-  aserr: { n: 'Aserradero', cost: { wood: 25 }, d: '+20% madera por nivel.' },
-  mina: { n: 'Mina de bronce', cost: { wood: 30 }, d: '+20% bronce por nivel.' },
-  cuartel: { n: 'Cuartel', cost: { wood: 40, bronze: 10 }, d: 'Recluta más rápido y habilita Jinetes (nivel 1).' },
-  muralla: { n: 'Muralla', cost: { wood: 30, bronze: 20 }, d: 'La guarnición pelea en frente angosto (ley lineal) y aguanta 12% más por nivel.' },
+  granja: { n: 'Granja', cost: { wood: 30 }, d: '+20% de comida por nivel.' },
+  aserr: { n: 'Aserradero', cost: { wood: 25 }, d: '+20% de material por nivel.' },
+  mina: { n: 'Cantera', cost: { wood: 30 }, d: '+20% de material militar por nivel.' },
+  cuartel: { n: 'Cuartel', cost: { wood: 40, bronze: 10 }, d: 'Recluta más rápido, habilita la tropa de choque (nivel 1) y sube el tope de ejército +12 por nivel.' },
+  vivienda: { n: 'Viviendas', cost: { wood: 35, food: 20 }, d: 'Tope de ejército +8 y lugar para 3 obreros más por nivel.' },
+  muralla: { n: 'Muralla', cost: { wood: 30, bronze: 20 }, d: 'La guarnición pelea en frente angosto (ley lineal), aguanta 12% más y el asedio tarda 40% más por nivel.' },
   templo: { n: 'Templo', cost: { wood: 35, bronze: 20 }, d: '+8 de moral por nivel.' },
   espias: { n: 'Casa de espías', cost: { wood: 25, bronze: 15 }, d: 'Habilita espías y dificulta que te espíen.' }
 };
-const BORD = ['granja', 'aserr', 'mina', 'cuartel', 'muralla', 'templo', 'espias'];
+const BORD = ['granja', 'aserr', 'mina', 'cuartel', 'vivienda', 'muralla', 'templo', 'espias'];
+const BART = { granja: 'granja', aserr: 'ext1', mina: 'ext2', cuartel: 'cuartel', vivienda: 'vivienda', muralla: 'muro', templo: 'saber', espias: 'torre' };   // casillero de la Era 3 que dibuja cada edificio (art/era3)
 const DOC = {
-  bronce: { n: 'Armas de bronce', cost: { bronze: 30, food: 20 }, d: '+12% de ataque a todo tu ejército.' },
+  bronce: { n: 'Armas mejoradas', cost: { bronze: 30, food: 20 }, d: '+12% de ataque a todo tu ejército.' },
   coraza: { n: 'Corazas', cost: { bronze: 40, wood: 20 }, d: '+15% de resistencia.' },
-  logi: { n: 'Carros de intendencia', cost: { wood: 30, food: 30 }, d: 'Las provisiones duran 50% más: podés llegar más lejos (Sun Tzu: la logística gana guerras).' },
+  logi: { n: 'Intendencia', cost: { wood: 30, food: 30 }, d: 'Las provisiones duran 50% más: podés llegar más lejos (Sun Tzu: la logística gana guerras).' },
   engano: { n: 'Arte del engaño', cost: { bronze: 25 }, d: 'La emboscada pega con ×1,7 en vez de ×1,5 y tus espías fallan menos.' }
 };
 const PERS = {
-  belicosa: { n: 'belicosa', d: 'Ataca temprano con ejércitos grandes.', thr: .8, spy: .1, amb: .05, bld: ['cuartel', 'muralla', 'mina', 'granja', 'templo', 'aserr', 'espias'] },
-  mercantil: { n: 'mercantil', d: 'Crece primero; ataca tarde y con ventaja.', thr: 1.3, spy: .2, amb: .1, bld: ['granja', 'aserr', 'mina', 'templo', 'cuartel', 'muralla', 'espias'] },
-  astuta: { n: 'astuta', d: 'Espía y tiende emboscadas en el bosque.', thr: 1, spy: .7, amb: .5, bld: ['espias', 'granja', 'cuartel', 'aserr', 'mina', 'muralla', 'templo'] }
+  belicosa: { n: 'belicosa', d: 'Ataca temprano con ejércitos grandes.', thr: .8, spy: .1, amb: .05, bld: ['cuartel', 'muralla', 'mina', 'granja', 'vivienda', 'templo', 'aserr', 'espias'] },
+  mercantil: { n: 'mercantil', d: 'Crece primero; ataca tarde y con ventaja.', thr: 1.3, spy: .2, amb: .1, bld: ['granja', 'aserr', 'mina', 'vivienda', 'templo', 'cuartel', 'muralla', 'espias'] },
+  astuta: { n: 'astuta', d: 'Espía y tiende emboscadas en el bosque.', thr: 1, spy: .7, amb: .5, bld: ['espias', 'granja', 'cuartel', 'aserr', 'mina', 'vivienda', 'muralla', 'templo'] }
 };
-const RIV = [{ name: 'Reino de Tolmar', pers: 'belicosa', col: '#c9406f' }, { name: 'Liga de Kerán', pers: 'mercantil', col: '#3a7fd6' }, { name: 'Dominio de Ushad', pers: 'astuta', col: '#7a4ad0' }];
+/* ---------- Civilizaciones (continuidad con la Era 3: misma clase, mismos recursos y edificios) ---------- */
+const CIV_KEYS = ['ter', 'ins', 'acu', 'ave'];
+/* las 12 especies de la Era 2 (mismos ids que SPECIES de era3-tribus.html) */
+const SPECIES = {
+  ter_cazador: { n: 'Cazadores de manada', cls: 'ter', col: '#8a6b4a' }, ter_gigante: { n: 'Gigantes herbívoros', cls: 'ter', col: '#7a6a55' }, ter_ingeniero: { n: 'Omnívoros ingenieros', cls: 'ter', col: '#9a7a5a' },
+  ins_colmena: { n: 'Colmena con castas', cls: 'ins', col: '#d9a520' }, ins_enjambre: { n: 'Enjambre migratorio', cls: 'ins', col: '#a9c040' }, ins_parasito: { n: 'Parasitoides', cls: 'ins', col: '#7b4aa0' },
+  acu_abisal: { n: 'Depredadores abisales', cls: 'acu', col: '#2a5a8a' }, acu_arrecife: { n: 'Arrecife constructor', cls: 'acu', col: '#e07a5f' }, acu_anfibio: { n: 'Anfibios pioneros', cls: 'acu', col: '#4a9a6a' },
+  ave_rapaz: { n: 'Rapaces', cls: 'ave', col: '#6a4a3a' }, ave_carronera: { n: 'Carroñeras oportunistas', cls: 'ave', col: '#4a4a52' }, ave_migratoria: { n: 'Migratorias y polinizadoras', cls: 'ave', col: '#3f8fd1' }
+};
+const SP_KEYS = Object.keys(SPECIES);
+/* Por civilización: recursos (food/wood/bronze = comida/material 1/material 2 de la Era 3), oficios, unidades, edificios, doctrinas, terreno y el rival que la representa.
+   La lógica usa siempre las mismas claves internas (food, wood, bronze, lan, arq, jin, granja…); solo cambian nombres, textos y dibujos. */
+const CV = {
+  ter: { n: 'Terrestres', city: 'Clanes de la madriguera', col: '#c06a2a', rep: 'ter_cazador', pers: 'belicosa', rival: 'Clanes de Tolmar',
+    res: { food: 'carne', wood: 'madera', bronze: 'piedra' }, wk: { f: 'Cazadores y huerteros', w: 'Leñadores', b: 'Canteros' },
+    un: { lan: ['Lanceros del clan', 'lancero', 'Infantería con lanzas largas: frenan a la tropa de choque.'], arq: ['Honderos', 'hondero', 'Tiran piedras de lejos: castigan a la infantería. Frágiles ante la carga.'], jin: ['Embestidores', 'embestidor', 'Rápidos y pesados: arrasan a los honderos. Necesitan Cuartel. Rinden poco en bosque, colina y vados.'] },
+    bld: { granja: 'Huerto', aserr: 'Aserradero', mina: 'Cantera', cuartel: 'Cuartel', vivienda: 'Casas de barro', muralla: 'Muralla de piedra', templo: 'Santuario', espias: 'Casa de rastreadores' },
+    doc: { bronce: 'Armas de metal', coraza: 'Corazas de cuero', logi: 'Carros de intendencia', engano: 'Arte del engaño' },
+    delRio: 'del río', tn: ['llanura', 'bosque', 'colina', 'río', 'vado'], pal: { p: '#b4cf86', f: '#6f9a4e', h: '#c4a96c', r: '#4f9ccc', fo: '#d9c58e' } },
+  ins: { n: 'Insectos', city: 'La Colmena', col: '#d9a520', rep: 'ins_colmena', pers: 'belicosa', rival: 'Colmena de Kerán',
+    res: { food: 'jalea', wood: 'fibra', bronze: 'cera' }, wk: { f: 'Cultivadoras (jalea)', w: 'Masticadoras (fibra)', b: 'Cereras (cera)' },
+    un: { lan: ['Soldados de mandíbula', 'soldado', 'Muro de mandíbulas: frenan a las voladoras de asalto.'], arq: ['Lanzadoras de ácido', 'lanzadora', 'Rocían ácido de lejos: castigan a los soldados. Frágiles ante el asalto aéreo.'], jin: ['Voladoras de asalto', 'voladora', 'Rápidas y duras: arrasan a las lanzadoras. Necesitan Cuartel. Rinden poco entre raíces, montículos y vados.'] },
+    bld: { granja: 'Cámara de cultivo', aserr: 'Molino de pulpa', mina: 'Glándulas de cera', cuartel: 'Cuartel de castas', vivienda: 'Panal de celdas', muralla: 'Muralla viva', templo: 'Mente de la colmena', espias: 'Red de feromonas' },
+    doc: { bronce: 'Mandíbulas afiladas', coraza: 'Quitina endurecida', logi: 'Reservas de jalea', engano: 'Arte del engaño' },
+    delRio: 'del arroyo', tn: ['claro', 'raíces', 'montículo', 'arroyo', 'vado de hojas'], pal: { p: '#c8b07a', f: '#8a6a3a', h: '#b8925e', r: '#7a9cae', fo: '#d8c08a' } },
+  acu: { n: 'Acuáticos', city: 'La Ciudad del Arrecife', col: '#2f86b0', rep: 'acu_abisal', pers: 'mercantil', rival: 'Arrecife de Ushad',
+    res: { food: 'algas', wood: 'coral', bronze: 'nácar' }, wk: { f: 'Algueros (algas)', w: 'Coraleros (coral)', b: 'Ostreros (nácar)' },
+    un: { lan: ['Guardias de coral', 'guardia', 'Escudos de coral en fila: frenan a los embestidores.'], arq: ['Lanzadores de púas', 'lanzador', 'Disparan púas de lejos: castigan a los guardias. Frágiles ante la embestida.'], jin: ['Embestidores de corriente', 'embestidor', 'Rápidos y pesados: arrasan a los lanzadores. Necesitan Cuartel. Rinden poco en arrecifes, rocas y pasos.'] },
+    bld: { granja: 'Granja de algas', aserr: 'Vivero de coral', mina: 'Ostrario', cuartel: 'Guarnición', vivienda: 'Pólipo-viviendas', muralla: 'Muralla de coral de fuego', templo: 'Anfiteatro de ecos', espias: 'Pulpo vigía' },
+    doc: { bronce: 'Púas de nácar', coraza: 'Escamas de coral', logi: 'Corrientes de abasto', engano: 'Nubes de tinta' },
+    delRio: 'de la fosa', tn: ['lecho', 'arrecife', 'roca', 'fosa', 'paso'], pal: { p: '#4a90ae', f: '#c98270', h: '#3a7290', r: '#173a56', fo: '#8ab6c8' } },
+  ave: { n: 'Aves', city: 'La Bandada', col: '#3f8fd1', rep: 'ave_rapaz', pers: 'astuta', rival: 'Bandada de Ilen',
+    res: { food: 'semillas', wood: 'ramas', bronze: 'barro' }, wk: { f: 'Recolectoras (semillas)', w: 'Tejedoras (ramas)', b: 'Barreras (barro)' },
+    un: { lan: ['Picadores', 'picador', 'Picos en formación cerrada: frenan a las rapaces de picada.'], arq: ['Lanzadoras de piedras', 'lanzadora', 'Sueltan piedras desde el aire: castigan a los picadores. Frágiles ante la picada.'], jin: ['Halcones de picada', 'halcón', 'Rápidos y feroces: arrasan a las lanzadoras. Necesitan Cuartel. Rinden poco entre árboles, acantilados y vados.'] },
+    bld: { granja: 'Huerta de semillas', aserr: 'Tejeduría', mina: 'Alfarería de nido', cuartel: 'Escuela de picada', vivienda: 'Nidos tejidos', muralla: 'Muro de barro cocido', templo: 'Observatorio del cielo', espias: 'Percha de vigías' },
+    doc: { bronce: 'Picos y espolones', coraza: 'Plumaje de combate', logi: 'Rutas de abasto', engano: 'Arte del engaño' },
+    delRio: 'del río', tn: ['pradera', 'árboles gigantes', 'acantilado', 'río', 'vado'], pal: { p: '#a8c48a', f: '#5f8c4a', h: '#c4ae78', r: '#5a9cc8', fo: '#d4c48e' } }
+};
+/* tropa de choque según la especie (la Maravilla, la Edad y la rama no cambian la mecánica) */
+const SPJ = { ter_cazador: ['Cazadores de asalto', 'cazador de asalto'], ter_gigante: ['Gigantes de embestida', 'gigante'], ter_ingeniero: ['Carros de embestida', 'carro'], ins_colmena: ['Voladoras de asalto', 'voladora'], ins_enjambre: ['Enjambres de asalto', 'enjambre'], ins_parasito: ['Avispas parasitoides', 'avispa'], acu_abisal: ['Cazadores abisales', 'cazador abisal'], acu_arrecife: ['Embestidores de coral', 'embestidor'], acu_anfibio: ['Saltadores anfibios', 'saltador'], ave_rapaz: ['Halcones de picada', 'halcón'], ave_carronera: ['Picos de carroña', 'pico de carroña'], ave_migratoria: ['Escuadrillas en V', 'escuadrilla'] };
+const MAR = { ter: 'Círculo de piedras', ins: 'La Reina Madre', acu: 'Corriente domada', ave: 'La Gran Ruta Migratoria' };
+const cvOf = c => (c && c.cv) || 'ter';
+const RN = (k, cv) => CV[cv || (G && G.civ) || 'ter'].res[k];
+const unitName = (k, c, sing) => { const cv = cvOf(c), sp = c && c.sp; if (k === 'jin' && SPJ[sp]) return sing ? SPJ[sp][1] : SPJ[sp][0]; return CV[cv].un[k][sing ? 1 : 0]; };
+const bldName = (k, cv) => CV[cv || (G && G.civ) || 'ter'].bld[k];
+const docName = (k, cv) => CV[cv || (G && G.civ) || 'ter'].doc[k];
+const tname = t => CV[(G && G.civ) || 'ter'].tn[t];
+const delRio = () => CV[(G && G.civ) || 'ter'].delRio;
+const cap1 = s => s.charAt(0).toUpperCase() + s.slice(1);
 const SITES = [[5, 22], [42, 7], [42, 23], [8, 5]];
 const DIFFS = [
-  { n: 'Fácil', riv: 1, thr: 30, eco: .8, grace: 150, res: 1 },
-  { n: 'Normal', riv: 2, thr: 24, eco: 1, grace: 110, res: 1 },
-  { n: 'Difícil', riv: 3, thr: 18, eco: 1.15, grace: 80, res: 1.2 }
+  { n: 'Fácil', riv: 1, thr: 30, eco: .8, grace: 150, res: 1, capM: .75, stub: 3 },
+  { n: 'Normal', riv: 2, thr: 24, eco: 1, grace: 110, res: 1, capM: .9, stub: 4 },
+  { n: 'Difícil', riv: 3, thr: 18, eco: 1.15, grace: 120, res: 1.2, capM: 1, stub: 5 }
 ];
 let DF = DIFFS[0], diffI = 0;
 const WK = { f: { n: 'Campesinos (comida)', c: '#4aa83a', r: .5 }, w: { n: 'Leñadores (madera)', c: '#8c5a2b', r: .4 }, b: { n: 'Mineros (bronce)', c: '#e08a1b', r: .25 } };
 const WTARGET = { f: .5, w: .3, b: .2 };
 const WK_KEYS = ['f', 'w', 'b'];
+/* Fin de partida (Ciclo 5): tope de ejército, asedio de capitales, rendición. Valores calibrados con tests/era4-fin-run.js (docs/ERA4.md). */
+const SIEGE_R = 48;
 
 /* ---------- Estado (todo JSON-serializable, referencias por id) ---------- */
 let G = null, started = false, selId = 0, lastSaveT = 0, spdI = 1, trayK = null, shownDlg = 0;
@@ -284,57 +347,110 @@ function findPath(x0, y0, x1, y1) {
 }
 function nearestTerr(t, x, y, maxR) { let best = null, bd = maxR || 1e9; for (let i = 0; i < COLS * ROWS; i++) if (+G.terr[i] === t) { const px = (i % COLS) * TS + TS / 2, py = ((i / COLS) | 0) * TS + TS / 2, d = hyp(px - x, py - y); if (d < bd) { bd = d; best = [px, py]; } } return best; }
 
-/* ---------- Linaje (viene de las Eras 1 a 3) ---------- */
+/* ---------- Linaje (viene de las Eras 1 a 3; una Era 4 ganada también se puede rejugar con la misma especie) ---------- */
 const BRN = { pred: 'Depredador', para: 'Parásito', foto: 'Fotosintético', colo: 'Colonial' };
 function readLineage() {
   try {
-    const d = JSON.parse(localStorage.getItem('evo_lineage')); if (!d || d.v !== 1 || ![1, 2, 3].includes(d.from)) return null;
+    const d = JSON.parse(localStorage.getItem('evo_lineage')); if (!d || d.v !== 1 || ![1, 2, 3, 4].includes(d.from)) return null;
     const br = ['pred', 'para', 'foto', 'colo'].includes(d.branch) ? d.branch : null;
-    return { from: d.from, branch: br, tier: clamp(Math.round(+d.tier) || 0, 0, 3), mutCount: Math.max(0, Math.round(+d.mutCount) || 0), species: String(d.species || '').slice(0, 40), seed: String(d.seed || '').slice(0, 30), city: String(d.city || '').slice(0, 30), pop: Math.max(0, Math.round(+d.pop) || 0) };
+    const e3r = d.era3 && typeof d.era3 === 'object' && CV[d.era3.civ] ? d.era3 : null, e2r = d.era2 && typeof d.era2 === 'object' && SPECIES[d.era2.species] ? d.era2 : null;
+    const era3 = e3r ? { civ: e3r.civ, especie: SPECIES[e3r.especie] && SPECIES[e3r.especie].cls === e3r.civ ? e3r.especie : CV[e3r.civ].rep, edad: clamp(Math.round(+e3r.edad) || 1, 1, 3), techs: Array.isArray(e3r.techs) ? e3r.techs.length : Math.max(0, Math.round(+e3r.techs) || 0), maravilla: e3r.maravilla ? String(e3r.maravilla).slice(0, 40) : null, anfibia: !!e3r.anfibia, ciudad: String(e3r.ciudad || '').slice(0, 40), path: ['jefatura', 'mercado', 'templo'].includes(e3r.path) ? e3r.path : null } : null;
+    const era2 = e2r ? { species: e2r.species, cls: SPECIES[e2r.species].cls, tierra: e2r.tierra === true } : null;
+    if (d.from === 4 && !era3) return null;   // una Era 4 sin datos de la Era 3 no aporta nada
+    return { from: d.from, branch: br, tier: clamp(Math.round(+d.tier) || 0, 0, 3), mutCount: Math.max(0, Math.round(+d.mutCount) || 0), species: String(d.species || '').slice(0, 40), seed: String(d.seed || '').slice(0, 30), city: String(d.city || '').slice(0, 30), pop: Math.max(0, Math.round(+d.pop) || 0), era3, era2, raw2: d.era2 && typeof d.era2 === 'object' ? d.era2 : null };
   } catch (e) { return null; }
 }
+/* civilización y especie que trae el linaje (Era 3 primero; si no, la clase de la Era 2); null = el menú deja elegir */
+function linCiv(l) { if (!l) return null; if (l.era3) return { civ: l.era3.civ, sp: l.era3.especie, amph: l.era3.anfibia }; if (l.era2) return { civ: l.era2.cls, sp: l.era2.species, amph: l.era2.cls === 'acu' && l.era2.tierra }; return null; }
 /* Bono chico y siempre explicado. Sin linaje, la partida es idéntica pero sin bono. */
-function linBonus(l) {
-  const b = { food: 0, wood: 0, bronze: 0, lan: 0, morale: 0, wk: 0, cityType: 'jefatura', why: [] };
+function linBonus(l, cvk) {
+  const b = { food: 0, wood: 0, bronze: 0, lan: 0, morale: 0, wk: 0, cap: 0, intel: 0, cityType: 'jefatura', why: [] };
   if (!l) return b;
-  b.food += 20; b.wood += 20; b.why.push('+20 comida y +20 madera por venir de la Era ' + l.from);
-  if (l.city === 'Ciudad militarista') { b.lan += 3; b.cityType = 'jefatura'; b.why.push('Jefatura: +3 lanceros iniciales'); }
-  else if (l.city === 'Ciudad mercantil') { b.food += 30; b.wood += 30; b.cityType = 'mercado'; b.why.push('Mercado: +30 comida y +30 madera'); }
-  else if (l.city === 'Ciudad teocrática') { b.morale += 10; b.cityType = 'templo'; b.why.push('Templo: +10 de moral base'); }
+  const lc = linCiv(l), cv = (lc && lc.civ) || cvk || 'ter', R3 = CV[cv].res;
+  b.food += 20; b.wood += 20; b.why.push('+20 ' + R3.food + ' y +20 ' + R3.wood + (l.from === 4 ? ' por tu Era 4 anterior' : ' por venir de la Era ' + l.from));
+  const path = l.era3 && l.era3.path ? l.era3.path : l.city === 'Ciudad militarista' ? 'jefatura' : l.city === 'Ciudad mercantil' ? 'mercado' : l.city === 'Ciudad teocrática' ? 'templo' : null;
+  if (path === 'jefatura') { b.lan += 3; b.cityType = 'jefatura'; b.why.push('Jefatura: +3 ' + CV[cv].un.lan[0].toLowerCase() + ' iniciales'); }
+  else if (path === 'mercado') { b.food += 30; b.wood += 30; b.cityType = 'mercado'; b.why.push('Mercado: +30 ' + R3.food + ' y +30 ' + R3.wood); }
+  else if (path === 'templo') { b.morale += 10; b.cityType = 'templo'; b.why.push('Templo: +10 de moral base'); }
   if (l.pop >= 30) { b.wk += 2; b.why.push('Población de 30 o más en la Era 3: +2 obreros'); }
+  const e3 = l.era3;
+  if (e3 && e3.maravilla) {
+    const m = 'Maravilla «' + e3.maravilla + '»: ';
+    if (cv === 'ter') { b.morale += 8; b.why.push(m + '+8 de moral'); }
+    else if (cv === 'ins') { b.wk += 2; b.why.push(m + '+2 obreras'); }
+    else if (cv === 'acu') { b.bronze += 25; b.why.push(m + '+25 de ' + R3.bronze); }
+    else { b.intel += 60; b.why.push(m + 'ves a los rivales los primeros 60 s'); }
+  }
+  if (e3 && e3.edad >= 3) { b.cap += 6; b.why.push('Edad III en la Era 3: tope de ejército +6'); }
+  if (e3 && e3.techs >= 8) { b.bronze += 15; b.why.push(e3.techs + ' tecnologías en la Era 3: +15 de ' + R3.bronze); }
+  if (l.branch === 'pred') { b.lan += 2; b.why.push('Rama Depredador de la Era 1: +2 ' + CV[cv].un.lan[0].toLowerCase()); }
+  else if (l.branch === 'para') { b.bronze += 10; b.why.push('Rama Parásito de la Era 1: +10 de ' + R3.bronze); }
+  else if (l.branch === 'foto') { b.food += 25; b.why.push('Rama Fotosintético de la Era 1: +25 de ' + R3.food); }
+  else if (l.branch === 'colo') { b.wk += 1; b.why.push('Rama Colonial de la Era 1: +1 obrero'); }
   return b;
 }
-const linLine = l => l ? 'Linaje de la Era ' + l.from + (l.species ? ' · ' + l.species : '') + (l.branch ? ' · rama ' + BRN[l.branch] : '') + (l.city ? ' · ' + l.city : '') : '';
+const linLine = l => { if (!l) return ''; const lc = linCiv(l); return 'Linaje de la Era ' + Math.min(3, l.from) + (lc ? ' · ' + CV[lc.civ].n + ' (' + SPECIES[lc.sp].n + ')' : l.species ? ' · ' + l.species : '') + (l.era3 && l.era3.edad ? ' · Edad ' + ['I', 'II', 'III'][l.era3.edad - 1] : '') + (l.branch ? ' · rama ' + BRN[l.branch] : '') + (l.city ? ' · ' + l.city : ''); };
+let pickSp = null;   // especie elegida en el menú cuando no hay linaje (solo interfaz; la partida guarda G.civ y G.sp)
 function renderLin() {
-  const l = readLineage(), b = linBonus(l);
-  $('linBox').innerHTML = l ? '<b>' + linLine(l) + '</b><br>Bono chico: ' + b.why.join('; ') + '.' : '<b>Sin linaje.</b> Jugás igual, sin bono. Si venís de las Eras 1 a 3, tu linaje te da una ventaja chica al empezar.';
+  const l = readLineage(), lc = linCiv(l), pk = $('spPick'); if (!$('linBox')) return;
+  if (lc) {
+    const b = linBonus(l), C = CV[lc.civ];
+    $('linBox').innerHTML = '<b></b><br><span></span><br><small></small>'; const ch = $('linBox').children;
+    ch[0].textContent = linLine(l);
+    ch[2].textContent = 'Continuidad: tu especie (' + SPECIES[lc.sp].n + ') sigue al frente de ' + C.city + ' (' + C.n + '). Recursos: ' + C.res.food + ', ' + C.res.wood + ' y ' + C.res.bronze + '. Tu ejército: ' + C.un.lan[0] + ', ' + C.un.arq[0] + ' y ' + (SPJ[lc.sp] || C.un.jin)[0] + '. Rivales: civilizaciones de otras clases.';
+    ch[4].textContent = 'Bono chico: ' + b.why.join('; ') + '.';
+    pk.style.display = 'none'; pk.innerHTML = ''; return;
+  }
+  $('linBox').innerHTML = '<b></b><br><small></small>'; $('linBox').children[0].textContent = l ? linLine(l) + '.' : 'Sin linaje.';
+  $('linBox').children[2].textContent = (l ? 'Bono chico: ' + linBonus(l).why.join('; ') + '. ' : 'Jugás igual, sin bono. ') + 'No trae especie: elegí abajo con quién seguís. La clase decide tu civilización (recursos, edificios y ejército) y la especie, el aspecto de tu tropa de choque.';
+  if (!pickSp) pickSp = 'ter_cazador'; pk.style.display = ''; pk.innerHTML = '';
+  CIV_KEYS.forEach(c => { const h = document.createElement('h4'); h.textContent = CV[c].n + ' · ' + CV[c].city + ' · ' + CV[c].res.food + ', ' + CV[c].res.wood + ', ' + CV[c].res.bronze; pk.appendChild(h);
+    SP_KEYS.filter(k => SPECIES[k].cls === c).forEach(k => { const bt = document.createElement('button'); bt.dataset.sp = k; bt.className = k === pickSp ? 'on' : ''; bt.setAttribute('aria-pressed', k === pickSp ? 'true' : 'false'); const src = artSrc('hab.' + k); if (src) { const im = document.createElement('img'); im.src = src; im.alt = ''; if ((window.ERA3_FACE || {})[k] === -1) im.style.transform = 'scaleX(-1)'; bt.appendChild(im); } bt.appendChild(document.createTextNode(SPECIES[k].n)); pk.appendChild(bt); }); });
 }
 
 /* ---------- Nueva partida ---------- */
 function mkArmy(team, x, y, n, o) { const a = { id: G.nid++, team, x, y, n: { lan: n.lan || 0, arq: n.arq || 0, jin: n.jin || 0 }, morale: civ(team).morale, prov: 0, path: [], goal: null, stance: 'idle', home: false, bt: 0, chase: 0, ret: false, amb: 0, rp: 0, n0: 0, keep: false }; Object.assign(a, o || {}); G.armies.push(a); return a; }
-function newGame(seed) {
-  seed = String(seed || newSeedStr()); seedRng(hashStr(seed)); DF = DIFFS[diffI];
-  const T = genTerrain(), lin = readLineage(), bon = linBonus(lin);
-  G = { seed, t: 0, tick: 0, over: false, win: false, paused: false, terr: T.terr, flood: 0, nid: 1, civs: [], armies: [], battles: [], rep: [], log: [], ops: [], evT: 70, dlg: null, gd: [false, false, false, false, false], gdT: 0, stats: { wins: 0, spy: 0, amb: 0, caps: 0, losses: 0 }, lin: lin ? Object.assign({}, lin) : null, bonus: bon.why.slice(), cityType: bon.cityType, auto: true, modal: false };
-  const ids = [{ name: 'Tu civilización', pers: 'jugador', col: '#e08a1b' }].concat(RIV.slice(0, DF.riv));
+/* opts.civ / opts.sp fuerzan la civilización o la especie (pruebas, menú); si no, manda el linaje; si no hay, lo elegido en el menú */
+function newGame(seed, opts) {
+  opts = opts || {}; seed = String(seed || newSeedStr()); seedRng(hashStr(seed)); DF = DIFFS[diffI];
+  const T = genTerrain(), lin = readLineage(), lc = linCiv(lin);
+  let sp = opts.sp && SPECIES[opts.sp] ? opts.sp : null, cv = opts.civ && CV[opts.civ] ? opts.civ : sp ? SPECIES[sp].cls : null;
+  if (!cv && lc) { cv = lc.civ; sp = lc.sp; } if (!cv) { sp = pickSp && SPECIES[pickSp] ? pickSp : 'ter_cazador'; cv = SPECIES[sp].cls; }
+  if (!sp || SPECIES[sp].cls !== cv) sp = CV[cv].rep;
+  const bon = linBonus(lin, cv), amph = cv === 'acu' && !!(lc && lc.civ === 'acu' && lc.amph);
+  G = { ver: 2, seed, t: 0, tick: 0, over: false, win: false, how: null, paused: false, terr: T.terr, flood: 0, nid: 1, civ: cv, sp, amph, civs: [], armies: [], battles: [], rep: [], log: [], ops: [], evT: 70, dlg: null, gd: [false, false, false, false, false], gdT: 0, stats: { wins: 0, spy: 0, amb: 0, caps: 0, losses: 0, surr: 0 }, lin: lin ? { from: lin.from, branch: lin.branch, tier: lin.tier, mutCount: lin.mutCount, species: lin.species, era3: lin.era3, era2: lin.raw2 } : null, bonus: bon.why.slice(), capB: bon.cap, cityType: bon.cityType, auto: true, modal: false, maxU: 0 };
+  const ids = [{ name: 'Tu civilización', cv, sp, pers: 'jugador', col: CV[cv].col }].concat(CIV_KEYS.filter(k => k !== cv).slice(0, DF.riv).map(k => ({ name: CV[k].rival, cv: k, sp: CV[k].rep, pers: CV[k].pers, col: CV[k].col })));
   ids.forEach((d, i) => {
     const [sx, sy] = T.sites[i], x = sx * TS + TS / 2, y = sy * TS + TS / 2, hu = i === 0;
-    const c = { id: i, name: d.name, pers: d.pers, col: d.col, x, y, alive: true, human: hu, food: Math.round(120 * (hu ? 1 : DF.res)) + (hu ? bon.food : 0), wood: Math.round(90 * (hu ? 1 : DF.res)) + (hu ? bon.wood : 0), bronze: 25 + (hu ? bon.bronze : 0), morale: 60 + (hu ? bon.morale : 0), glory: 0, wk: { f: 4, w: 3, b: 1 }, free: 0, bld: { granja: 0, aserr: 0, mina: 0, cuartel: 0, muralla: 0, templo: 0, espias: 0 }, tech: [], tf: { f: 1, w: 1, b: 1 }, rcd: 0, aiT: 8 + i * 1.3, exp: 0, starve: 0, intel: {}, kills: 0 };
+    const c = { id: i, name: d.name, cv: d.cv, sp: d.sp, pers: d.pers, col: d.col, x, y, alive: true, vassal: false, human: hu, food: Math.round(120 * (hu ? 1 : DF.res)) + (hu ? bon.food : 0), wood: Math.round(90 * (hu ? 1 : DF.res)) + (hu ? bon.wood : 0), bronze: 25 + (hu ? bon.bronze : 0), morale: 60 + (hu ? bon.morale : 0), glory: 0, wk: { f: 4, w: 3, b: 1 }, free: 0, bld: { granja: 0, aserr: 0, mina: 0, cuartel: 0, vivienda: 0, muralla: 0, templo: 0, espias: 0 }, tech: [], tf: { f: 1, w: 1, b: 1 }, rcd: 0, aiT: 8 + i * 1.3, exp: 0, starve: 0, intel: {}, kills: 0, sg: 100, taken: 0, lost: 0 };
     if (hu) c.wk.f += bon.wk;
     for (let r = 0; r < ROWS; r++) for (let q = 0; q < COLS; q++) { const d2 = hyp(q * TS + TS / 2 - x, r * TS + TS / 2 - y); if (d2 < 130) { const t = +T.terr[r * COLS + q]; if (t === 0) c.tf.f += .018; else if (t === 1) c.tf.w += .02; else if (t === 2) c.tf.b += .03; } }
     c.tf.f = clamp(c.tf.f, .7, 1.5); c.tf.w = clamp(c.tf.w, .7, 1.5); c.tf.b = clamp(c.tf.b, .7, 1.6);
     G.civs.push(c);
     mkArmy(i, x, y, { lan: 6 + (hu ? bon.lan : 0), arq: 2 }, { home: true });
   });
+  if (bon.intel) G.civs.forEach(t => { if (t.id) G.civs[0].intel[t.id] = bon.intel; });
   started = false; spdI = 1; selId = 0; trayK = null; shownDlg = 0; lastSaveT = 0;
-  log('Fundaste tu ciudad (' + ({ jefatura: 'Jefatura', mercado: 'Mercado', templo: 'Templo' })[G.cityType] + '). Hay ' + DF.riv + ' rival' + (DF.riv > 1 ? 'es' : '') + ' más allá del río.');
-  bgDirty = true; centerCam();
+  log('Fundaste ' + CV[cv].city + ' (' + CV[cv].n + ', ' + SPECIES[sp].n + '; ' + ({ jefatura: 'Jefatura', mercado: 'Mercado', templo: 'Templo' })[G.cityType] + '). Hay ' + DF.riv + ' civilización' + (DF.riv > 1 ? 'es rivales' : ' rival') + ' más allá ' + delRio() + '.');
+  applyCivUI(); bgDirty = true; centerCam();
   return G;
+}
+/* Partidas viejas (Era 4 del Ciclo 4: soldados humanos, sin civilización): se migran a Terrestres sin tocar la simulación ya jugada */
+function migrate(g) {
+  if (g.ver >= 2) return g;
+  g.ver = 2; g.civ = 'ter'; g.sp = 'ter_cazador'; g.amph = false; g.how = g.how || null; g.capB = 0; g.maxU = g.maxU || 0; g.stats.surr = g.stats.surr || 0;
+  const oth = CIV_KEYS.filter(k => k !== 'ter');
+  g.civs.forEach((c, i) => { c.cv = i === 0 ? 'ter' : oth[(i - 1) % 3]; c.sp = i === 0 ? 'ter_cazador' : CV[c.cv].rep; if (i) { c.name = CV[c.cv].rival; c.col = CV[c.cv].col; } else c.col = CV.ter.col; c.vassal = false; c.sg = 100; c.taken = c.taken || 0; c.lost = c.lost || 0; c.bld.vivienda = c.bld.vivienda || 0; });
+  return g;
 }
 
 /* ---------- Economía ---------- */
 const wkTotal = c => c.wk.f + c.wk.w + c.wk.b + c.free;
-const popCap = c => 10 + 2 * (c.bld.granja + c.bld.aserr + c.bld.mina) + (c.human && G.cityType === 'jefatura' && G.lin ? 2 : 0);
+const popCap = c => 10 + 2 * (c.bld.granja + c.bld.aserr + c.bld.mina) + 3 * (c.bld.vivienda || 0) + (c.human && G.cityType === 'jefatura' && G.lin ? 2 : 0);
+/* tope de ejército por ciudad: sube con el Cuartel, las Viviendas, las capitales tomadas y (poco) con el linaje */
+const armyCap = c => Math.round((36 + 12 * c.bld.cuartel + 8 * (c.bld.vivienda || 0) + 15 * (c.taken || 0)) * (c.human ? 1 : DF.capM || 1)) + (c.human ? G.capB || 0 : 0);   // la IA tiene un tope menor en Fácil y Normal
+/* ejércitos enemigos acampados junto a la ciudad (fuera de combate): sitian */
+const besiegers = c => G.armies.filter(a => a.team !== c.id && !a.bt && !a.dead && civ(a.team).alive && tot(a.n) >= .5 && hyp(a.x - c.x, a.y - c.y) < SIEGE_R);
 const hasT = (c, k) => c.tech.includes(k);
 const units = c => G.armies.filter(a => a.team === c.id).reduce((s, a) => s + tot(a.n), 0);
 function rates(c) {
@@ -350,7 +466,7 @@ function econ(dt) {
     if (c.rcd > 0) c.rcd = Math.max(0, c.rcd - dt);
     if (c.food <= 0) {
       c.food = 0; c.starve += dt;
-      if (c.starve > 8) { c.starve = 0; const g = garr(c); const k = g && K.find(q => g.n[q] > 0); if (k) { g.n[k]--; log('Hambre en ' + nameOf(c) + ': desertó un ' + UN[k].s + '.', c.id); } else if (c.wk.f + c.wk.w + c.wk.b > 4) { const kk = WK_KEYS.find(q => c.wk[q] > 0); c.wk[kk]--; } }
+      if (c.starve > 8) { c.starve = 0; const g = garr(c); const k = g && K.find(q => g.n[q] > 0); if (k) { g.n[k]--; log('Hambre en ' + nameOf(c) + ': desertó un ' + unitName(k, c, 1) + '.', c.id); } else if (c.wk.f + c.wk.w + c.wk.b > 4) { const kk = WK_KEYS.find(q => c.wk[q] > 0); c.wk[kk]--; } }
     } else c.starve = 0;
     c.glory = Math.max(0, c.glory - .4 * dt);
     const tgt = 55 + 8 * c.bld.templo + c.glory + (c.human && G.cityType === 'templo' ? 10 : 0) - (c.food <= 0 ? 30 : 0);
@@ -358,8 +474,8 @@ function econ(dt) {
   }
 }
 function addWorker(c) {
-  if (wkTotal(c) >= popCap(c)) return 'Tu ciudad no tiene lugar para más obreros (hay que construir granjas, aserraderos o minas).';
-  if (c.food < 20) return 'Falta comida: un obrero cuesta 20.';
+  if (wkTotal(c) >= popCap(c)) return 'Tu ciudad no tiene lugar para más obreros (construí ' + bldName('vivienda', c.cv) + ', ' + bldName('granja', c.cv) + ' o ' + bldName('aserr', c.cv) + ').';
+  if (c.food < 20) return 'Falta ' + RN('food', c.cv) + ': un obrero cuesta 20.';
   c.food -= 20;
   if (G.auto || !c.human) { let best = 'f', br = 1e9; for (const k of WK_KEYS) { const r = c.wk[k] / WTARGET[k]; if (r < br) { br = r; best = k; } } c.wk[best]++; } else c.free++;
   return null;
@@ -372,26 +488,27 @@ function setWorker(team, k, d) {
 }
 const canPay = (c, cost) => Object.keys(cost).every(k => c[k] >= cost[k]);
 const pay = (c, cost) => { for (const k in cost) c[k] -= cost[k]; };
-const costStr = cost => Object.keys(cost).map(k => cost[k] + ' ' + ({ food: 'comida', wood: 'madera', bronze: 'bronce' })[k]).join(', ');
+const costStr = (cost, cv) => Object.keys(cost).map(k => cost[k] + ' ' + RN(k, cv)).join(', ');
 const bldCost = (c, k) => { const m = c.bld[k] + 1, o = {}; for (const r in BLD[k].cost) o[r] = BLD[k].cost[r] * m; return o; };
 function build(team, k) {
   const c = civ(team); if (c.bld[k] >= 3) return 'Ya está al máximo (nivel 3).'; const cost = bldCost(c, k);
-  if (!canPay(c, cost)) return 'Faltan recursos: ' + costStr(cost) + '.'; pay(c, cost); c.bld[k]++;
-  log(nameOf(c) + ' mejoró ' + BLD[k].n + ' (nivel ' + c.bld[k] + ').', team); return null;
+  if (!canPay(c, cost)) return 'Faltan recursos: ' + costStr(cost, c.cv) + '.'; pay(c, cost); c.bld[k]++;
+  log(nameOf(c) + ' mejoró ' + bldName(k, c.cv) + ' (nivel ' + c.bld[k] + ').', team); return null;
 }
 function recruit(team, k) {
   const c = civ(team); if (!c.alive) return 'Tu ciudad cayó.'; if (k === 'obrero') return addWorker(c);
-  const u = UN[k]; if (k === 'jin' && c.bld.cuartel < 1) return 'Los jinetes necesitan un Cuartel.';
-  if (c.rcd > 0) return 'El cuartel está ocupado un instante.'; if (!canPay(c, u.cost)) return 'Faltan recursos: ' + costStr(u.cost) + '.';
-  const g = garr(c); if (!g) return 'No hay guarnición.'; pay(c, u.cost); g.n[k]++; c.rcd = 1.6 / (1 + .5 * c.bld.cuartel); return null;
+  const u = UN[k]; if (k === 'jin' && c.bld.cuartel < 1) return cap1(unitName(k, c)) + ': necesitan ' + bldName('cuartel', c.cv) + '.';
+  if (c.rcd > 0) return 'El cuartel está ocupado un instante.'; if (!canPay(c, u.cost)) return 'Faltan recursos: ' + costStr(u.cost, c.cv) + '.';
+  if (units(c) >= armyCap(c)) return 'Llegaste al tope de ejército (' + armyCap(c) + '): mejorá ' + bldName('cuartel', c.cv) + ' o ' + bldName('vivienda', c.cv) + ', o tomá una capital.';
+  const g = garr(c); if (!g) return 'No hay guarnición.'; pay(c, u.cost); g.n[k]++; c.rcd = 1.6 / (1 + .5 * c.bld.cuartel) * (besiegers(c).length ? 3 : 1); return null;   // sitiada: recluta 3 veces más lento
 }
 function research(team, k) {
-  const c = civ(team), d = DOC[k]; if (hasT(c, k)) return 'Ya la tenés.'; if (!canPay(c, d.cost)) return 'Faltan recursos: ' + costStr(d.cost) + '.';
-  pay(c, d.cost); c.tech.push(k); log(nameOf(c) + ' domina: ' + d.n + '.', team); return null;
+  const c = civ(team), d = DOC[k]; if (hasT(c, k)) return 'Ya la tenés.'; if (!canPay(c, d.cost)) return 'Faltan recursos: ' + costStr(d.cost, c.cv) + '.';
+  pay(c, d.cost); c.tech.push(k); log(nameOf(c) + ' domina: ' + docName(k, c.cv) + '.', team); return null;
 }
 function spy(team, tgt) {
-  const c = civ(team), t = civ(tgt); if (!t || !t.alive || tgt === team) return 'Ese rival no existe.'; if (c.bld.espias < 1) return 'Construí una Casa de espías.';
-  if (c.bronze < 12) return 'Un espía cuesta 12 de bronce.'; if (G.ops.some(o => o.team === team && o.tgt === tgt)) return 'Ya hay un espía en camino a ese rival.';
+  const c = civ(team), t = civ(tgt); if (!t || !t.alive || tgt === team) return 'Ese rival no existe.'; if (c.bld.espias < 1) return 'Construí ' + bldName('espias', c.cv) + '.';
+  if (c.bronze < 12) return 'Un espía cuesta 12 de ' + RN('bronze', c.cv) + '.'; if (G.ops.some(o => o.team === team && o.tgt === tgt)) return 'Ya hay un espía en camino a ese rival.';
   c.bronze -= 12; G.ops.push({ team, tgt, t1: G.t + 10 }); return null;
 }
 
@@ -415,7 +532,7 @@ function retreat(a) { const c = civ(a.team); if (a.home) return 'La guarnición 
 function setAmbush(a) {
   if (a.home) return 'La guarnición no puede emboscar.'; if (a.bt) return 'Está en combate.';
   a.path = []; a.stance = 'ambush'; a.amb = G.t; const t = terrAt(a.x, a.y);
-  return t === T_FOR || t === T_HILL ? null : 'Atención: en ' + TNAME[t] + ' no hay dónde esconderse. La emboscada solo sorprende desde bosque o colina.';
+  return t === T_FOR || t === T_HILL ? null : 'Atención: en ' + tname(t) + ' no hay dónde esconderse. La emboscada solo sorprende desde ' + tname(T_FOR) + ' o ' + tname(T_HILL) + '.';
 }
 function formArmy(team, frac) { const c = civ(team), g = garr(c); if (!g) return null; if (g.bt) return null; const a = splitArmy(g, frac); if (a) { a.x = c.x + 12; a.y = c.y + 10; } return a; }
 function reveals(viewer, target) { const c = civ(viewer); return !!c && (c.intel[target] || 0) > G.t; }
@@ -450,7 +567,7 @@ function coef(S, T, ctx, o) {
   for (const k of K) for (const j of K) { const w = S.n[k] / nS * T.n[j] / nT; a0 += w * UN[k].atk; m += w * MU[k][j]; pw += w * UN[k].atk * (o.noMatch ? 1 : MU[k][j]); }
   for (const j of K) dur += T.n[j] / nT * UN[j].dur;
   const narrowF = ctx.narrow && !o.noTerr ? 1 - .35 * S.n.jin / nS : 1;
-  const terr = T.isDef && !o.noTerr ? TDEF[ctx.terr] * (1 + .12 * ctx.walls) : 1;
+  const terr = T.isDef && !o.noTerr ? TDEF[ctx.terr] * (1 + .12 * ctx.walls) * (ctx.home ? 1.2 : 1) : 1;   // la guarnición en su capital pelea ×1,2 (Ciclo 5)
   const mor = o.noMorale ? 1 : .6 + .4 * S.morale / 100, sup = o.noMorale ? 1 : (S.provOk ? 1 : .7);
   const tech = 1 + (S.tech.includes('bronce') ? .12 : 0), arm = 1 + (T.tech.includes('coraza') ? .15 : 0);
   const amb = S.amb && !o.noAmb ? (S.tech.includes('engano') ? 1.7 : 1.5) : 1;
@@ -470,14 +587,14 @@ function startBattle(a, b, ambusher) {
   const att = def === a ? b : a, ca = civ(def.team);
   const terr = terrAt(def.x, def.y), walls = def.home ? ca.bld.muralla : 0, narrow = terr === T_FOR || terr === T_HILL || terr === T_FORD || walls > 0;
   const rev = ambusher ? reveals(att.team, ambusher.team) : false, amb = ambusher && !rev ? ambusher : null;
-  const ctx = { terr, walls, narrow }, SD = mkSide(def, true, !!amb), SA = mkSide(att, false, false);
+  const ctx = { terr, walls, narrow, home: !!def.home }, SD = mkSide(def, true, !!amb), SA = mkSide(att, false, false);
   if (amb) att.morale = Math.max(0, att.morale - 20);
   SA.morale = att.morale;
   const cD = coef(SD, SA, ctx), cA = coef(SA, SD, ctx), A = tot(SA.n), B = tot(SD.n);
   const pr = lanch(A, B, cA.alpha, cD.alpha, narrow);
-  const b0 = { id: G.nid++, a: att.id, d: def.id, ta: att.team, td: def.team, x: def.x, y: def.y, t: 0, A, B, A0: A, B0: B, ca: SA.n, cd: SD.n, al: cA.alpha, be: cD.alpha, narrow, terr, walls, amb: !!amb, rev, cA, cD, SA, SD, pr, st: G.t };
+  const b0 = { id: G.nid++, a: att.id, d: def.id, ta: att.team, td: def.team, x: def.x, y: def.y, t: 0, A, B, A0: A, B0: B, ca: SA.n, cd: SD.n, al: cA.alpha, be: cD.alpha, narrow, terr, walls, home: !!def.home, amb: !!amb, rev, cA, cD, SA, SD, pr, st: G.t };
   att.bt = b0.id; def.bt = b0.id; att.path = []; att.stance = 'idle'; G.battles.push(b0);
-  if (att.team === 0 || def.team === 0) { log('Choque en ' + TNAME[terr] + (walls ? ' (murallas)' : '') + ' entre ' + nameOf(civ(att.team)) + ' y ' + nameOf(civ(def.team)) + '.'); if (amb) log('¡Emboscada de ' + nameOf(civ(def.team)) + '!'); }
+  if (att.team === 0 || def.team === 0) { log('Choque en ' + tname(terr) + (walls ? ' (murallas)' : '') + ' entre ' + nameOf(civ(att.team)) + ' y ' + nameOf(civ(def.team)) + '.'); if (amb) log('¡Emboscada de ' + nameOf(civ(def.team)) + '!'); }
   if (att.team === 0 || def.team === 0) tell(0, amb ? (def.team === 0 ? '¡Tu emboscada sorprende al enemigo!' : '¡Cayeron en una emboscada!') : 'Comienza un choque. Mirá «Por qué ganó».', amb && def.team !== 0);
 }
 function engage() {
@@ -491,7 +608,7 @@ function engage() {
 }
 function battlesStep(dt) {
   for (const b of G.battles) {
-    b.t += dt; const ar = armyById(b.a), de = armyById(b.d); if (!ar || !de) { b.done = true; continue; }
+    b.t += dt; const ar = armyById(b.a), de = armyById(b.d); if (!ar || !de) { b.done = true; if (ar) ar.bt = 0; if (de) de.bt = 0; continue; }   // el otro bando desapareció (capital caída o rendida): el que queda sale del choque
     let dA, dB; if (b.narrow) { dA = -b.be * b.A * b.B / SLIN; dB = -b.al * b.A * b.B / SLIN; } else { dA = -b.be * b.B; dB = -b.al * b.A; }
     b.A = Math.max(0, b.A + dA * dt); b.B = Math.max(0, b.B + dB * dt);
     b.x = (ar.x + de.x) / 2; b.y = (ar.y + de.y) / 2;
@@ -508,7 +625,7 @@ function endBattle(b, ar, de) {
   if (winSide === 'T') { applySurv(ar, sa); applySurv(de, sd); ar.morale = Math.max(0, ar.morale - 8); de.morale = Math.max(0, de.morale - 8); }
   else { const w = winSide === 'A' ? ar : de, l = winSide === 'A' ? de : ar, ws = winSide === 'A' ? sa : sd; applySurv(w, ws); l.n = { lan: 0, arq: 0, jin: 0 }; w.morale = Math.min(100, w.morale + 12); civ(w.team).glory = Math.min(20, civ(w.team).glory + 6); civ(l.team).glory = Math.max(0, civ(l.team).glory - 3); }
   const winner = winSide === 'A' ? ar : winSide === 'B' ? de : null, loser = winSide === 'A' ? de : winSide === 'B' ? ar : null;
-  if (winner) { civ(winner.team).kills++; if (winner.team === 0) { G.stats.wins++; if (b.amb && winner === de) G.stats.amb++; } if (loser.team === 0) G.stats.losses++; }
+  if (winner) { civ(winner.team).kills++; if (winner.team === 0) { G.stats.wins++; if (tot(loser === ar ? bef.A : bef.D) >= 8) civ(loser.team).lost = (civ(loser.team).lost || 0) + 1; if (b.amb && winner === de) G.stats.amb++; } if (loser.team === 0) G.stats.losses++; }
   // retirada de quien quedó (empate) y limpieza de armadas vacías (la guarnición se queda)
   for (const x of [ar, de]) if (tot(x.n) < .5 && !x.home) x.dead = true;
   if (winSide === 'T') for (const x of [ar, de]) if (!x.home && !x.dead) retreat(x);
@@ -516,14 +633,14 @@ function endBattle(b, ar, de) {
   if (selId && !armyById(selId)) selId = 0;
   buildReport(b, winSide, ca, cd, bef);
 }
-const compStr = n => K.filter(k => n[k] > .5).map(k => Math.round(n[k]) + ' ' + UN[k].n.toLowerCase()).join(', ') || 'nadie';
+const compStr = (n, c) => K.filter(k => n[k] > .5).map(k => Math.round(n[k]) + ' ' + unitName(k, c || civ(0)).toLowerCase()).join(', ') || 'nadie';
 function buildReport(b, winSide, ca, cd, bef) {
-  const law = b.narrow ? 'lineal' : 'cuadrática', why = b.narrow ? (b.walls ? 'murallas: solo pelea el frente' : 'frente angosto en ' + TNAME[b.terr] + ': solo pelea la primera línea') : 'llanura abierta: todos pueden pelear a la vez, la fuerza crece con el cuadrado de los efectivos';
+  const law = b.narrow ? 'lineal' : 'cuadrática', why = b.narrow ? (b.walls ? 'murallas: solo pelea el frente' : 'frente angosto en ' + tname(b.terr) + ': solo pelea la primera línea') : 'llanura abierta: todos pueden pelear a la vez, la fuerza crece con el cuadrado de los efectivos';
   const nm = (c, ar) => (ar ? 'Atacante ' : 'Defensor ') + nameOf(c);
   const L = []; const f2 = x => x.toFixed(2).replace('.', ',');
-  L.push('Terreno: ' + TNAME[b.terr] + (b.walls ? ' con muralla ' + b.walls : '') + '. Ley ' + law + ' (' + why + ').');
-  L.push(nm(ca, 1) + ': ' + compStr(bef.A) + ' (moral ' + Math.round(b.SA.morale) + (b.SA.provOk ? '' : ', sin provisiones') + ').');
-  L.push(nm(cd, 0) + ': ' + compStr(bef.D) + ' (moral ' + Math.round(b.SD.morale) + (b.SD.provOk ? '' : ', sin provisiones') + (b.amb ? ', emboscada ×' + f2(b.cD.amb) : '') + ').');
+  L.push('Terreno: ' + tname(b.terr) + (b.walls ? ' con muralla ' + b.walls : '') + (b.home ? ', defensa de la capital ×1,2' : '') + '. Ley ' + law + ' (' + why + ').');
+  L.push(nm(ca, 1) + ': ' + compStr(bef.A, ca) + ' (moral ' + Math.round(b.SA.morale) + (b.SA.provOk ? '' : ', sin provisiones') + ').');
+  L.push(nm(cd, 0) + ': ' + compStr(bef.D, cd) + ' (moral ' + Math.round(b.SD.morale) + (b.SD.provOk ? '' : ', sin provisiones') + (b.amb ? ', emboscada ×' + f2(b.cD.amb) : '') + ').');
   L.push('Piedra-papel-tijera: ventaja de clases del atacante ×' + f2(b.cA.base) + ' y del defensor ×' + f2(b.cD.base) + '. Defensa del terreno ×' + f2(b.cA.terr) + '.');
   L.push('Poder (bajas por soldado y segundo): atacante ' + f2(b.al) + ', defensor ' + f2(b.be) + '. ' + (b.narrow ? 'Lineal: gana quien tenga mayor poder×efectivos.' : 'Cuadrática: gana quien tenga mayor poder×efectivos².'));
   const pw = b.pr.w === 'A' ? 'atacante' : b.pr.w === 'B' ? 'defensor' : 'empate';
@@ -533,7 +650,7 @@ function buildReport(b, winSide, ca, cd, bef) {
   const tests = [['la ventaja de terreno y murallas', { noTerr: 1 }], ['la ventaja de clases (piedra-papel-tijera)', { noMatch: 1 }], ['la moral y las provisiones', { noMorale: 1 }], ['la emboscada', { noAmb: 1 }]];
   let dec = null; const n0 = b.narrow;
   for (const [t, o] of tests) {
-    if (o.noAmb && !b.amb) continue; const ctx = { terr: b.terr, walls: b.walls, narrow: o.noTerr ? false : n0 };
+    if (o.noAmb && !b.amb) continue; const ctx = { terr: b.terr, walls: b.walls, home: b.home, narrow: o.noTerr ? false : n0 };
     const ca2 = coef(b.SA, b.SD, ctx, o), cd2 = coef(b.SD, b.SA, ctx, o), r = lanch(b.A0, b.B0, ca2.alpha, cd2.alpha, ctx.narrow);
     if (r.w !== b.pr.w) { dec = t; break; }
   }
@@ -555,16 +672,40 @@ function supply(dt) {
     if (a.morale < 18 && !a.bt && !a.home && a.stance !== 'retreat') { retreat(a); log('Un ejército de ' + nameOf(c) + ' rompe filas y huye.', a.team); }
   }
 }
-function capture() {
+/* Asedio (Ciclo 5): un ejército enemigo acampado junto a una ciudad sin guarnición que pueda salir (vacía o peleando) baja su barra
+   de resistencia (sg, 0-100); las murallas la hacen durar más. En 0, la capital cae. Sin sitiadores, la barra se recupera. */
+function fall(t, w) {
+  t.alive = false; t.sg = 0; w.taken = (w.taken || 0) + 1;
+  w.food = Math.min(600, w.food + t.food / 2); w.wood = Math.min(600, w.wood + t.wood / 2); w.bronze = Math.min(400, w.bronze + t.bronze / 2); w.glory = Math.min(20, w.glory + 15); w.morale = Math.min(100, w.morale + 10);
+  G.armies.forEach(a => { if (a.team === t.id) a.dead = true; }); G.armies = G.armies.filter(a => !a.dead); if (selId && !armyById(selId)) selId = 0;
+  G.civs.forEach(c => { if (c.exp && !armyById(c.exp)) c.exp = 0; });
+  if (w.human) { G.stats.caps++; log('Tomaste la capital de ' + t.name + '.'); tell(0, 'Cayó la capital de ' + t.name + ': tu tope de ejército sube +15.'); }
+  else log(nameOf(w) + ' tomó la capital de ' + nameOf(t) + '.', w.id);
+  if (t.human) { G.how = 'capital'; lose(); }
+}
+function siege(dt) {
   for (const t of G.civs) {
-    if (!t.alive) continue; const g = garr(t); if (g && tot(g.n) >= .5) continue; if (g && g.bt) continue;
-    const inv = G.armies.find(a => a.team !== t.id && !a.bt && tot(a.n) >= .5 && hyp(a.x - t.x, a.y - t.y) < 26);
-    if (!inv) continue; const w = civ(inv.team); t.alive = false;
-    w.food = Math.min(600, w.food + t.food / 2); w.wood = Math.min(600, w.wood + t.wood / 2); w.bronze = Math.min(400, w.bronze + t.bronze / 2); w.glory = Math.min(20, w.glory + 15); w.morale = Math.min(100, w.morale + 10);
-    G.armies.forEach(a => { if (a.team === t.id) a.dead = true; }); G.armies = G.armies.filter(a => !a.dead);
-    if (w.human) { G.stats.caps++; log('Tomaste la ciudad de ' + t.name + '.'); tell(0, 'Cayó la ciudad de ' + t.name + '.'); }
-    else log(w.name + ' tomó la ciudad de ' + nameOf(t) + '.', w.id);
-    if (t.human) { lose(); return; }
+    if (!t.alive) continue; const bs = besiegers(t), g = garr(t), holds = g && tot(g.n) >= .5 && !g.bt;
+    if (!bs.length || holds) { t.sg = Math.min(100, t.sg + 2 * dt); continue; }
+    const n = bs.reduce((s, a) => s + tot(a.n), 0), was = t.sg;
+    t.sg = Math.max(0, t.sg - (3 + .12 * n) / (1 + .4 * t.bld.muralla) * dt);
+    if (t.human && was >= 99.9) tell(0, '¡Sitian tu capital! Si la barra llega a 0, cae. Volvé con un ejército o reclutá antes de que llegue.', true);
+    if (t.sg <= 0) { const by = {}; bs.forEach(a => by[a.team] = (by[a.team] || 0) + tot(a.n)); const w = civ(+Object.keys(by).sort((x, y) => by[y] - by[x] || x - y)[0]); fall(t, w); if (G.over) return; }
+  }
+}
+/* Rendición (Ciclo 5): una IA con derrotas a cuestas contra vos y un ejército menor que el tuyo (o muy por debajo) se rinde y paga tributo.
+   Una civilización tributaria sale del mapa (cuenta como vencida); su tributo es la mitad de sus reservas y +10 al tope de tu ejército. */
+function surrenders() {
+  const me = civ(0); if (!me.alive) return; const mine = strengthOf(me);
+  for (const c of G.civs) {
+    if (c.human || !c.alive) continue; const s = strengthOf(c);
+    // cansancio de guerra: cuantos más choques grandes perdió contra vos, menos ventaja tuya hace falta (más terca en Difícil: DF.stub)
+    const L = c.lost || 0, beaten = G.t > 300 && ((L >= DF.stub && s < mine) || (L >= DF.stub - 1 && s < .6 * mine) || s + 4 < .25 * mine);
+    if (!beaten) continue;
+    c.alive = false; c.vassal = true; me.taken = (me.taken || 0) + 1; G.stats.surr++;
+    me.food = Math.min(600, me.food + c.food / 2); me.wood = Math.min(600, me.wood + c.wood / 2); me.bronze = Math.min(400, me.bronze + c.bronze / 2); me.glory = Math.min(20, me.glory + 10);
+    G.armies.forEach(a => { if (a.team === c.id) a.dead = true; }); G.armies = G.armies.filter(a => !a.dead); if (selId && !armyById(selId)) selId = 0;
+    log(c.name + ' se rinde y paga tributo' + ': perdió ' + L + ' choques contra vos y su ejército ya no alcanza' + '.'); tell(0, c.name + ' se rinde y te paga tributo.');
   }
 }
 /* ---------- Espías ---------- */
@@ -579,20 +720,22 @@ function ops() {
 }
 /* ---------- Eventos ---------- */
 const EVS = {
-  merc: { n: 'Mercaderes de bronce', d: 'Una caravana ofrece bronce a cambio de comida.', o: [{ t: 'Comprar: 30 comida por 25 bronce', ok: c => c.food >= 30, fx: c => { c.food -= 30; c.bronze += 25; } }, { t: 'Rechazar', fx: () => { } }] },
-  desert: { n: 'Desertores del enemigo', d: 'Soldados rivales piden asilo. Tus veteranos desconfían.', o: [{ t: 'Acogerlos: +3 lanceros, −8 de moral', fx: c => { const g = garr(c); if (g) g.n.lan += 3; c.morale = Math.max(0, c.morale - 8); } }, { t: 'Expulsarlos', fx: () => { } }] },
-  rumor: { n: 'Rumores de traición', d: 'Se dice que un rival prepara algo. Conocer al enemigo vale más que adivinar.', o: [{ t: 'Investigar: 15 de bronce, ves a todos los rivales 40 s', ok: c => c.bronze >= 15, fx: c => { c.bronze -= 15; G.civs.forEach(t => { if (t.id !== c.id && t.alive) c.intel[t.id] = G.t + 40; }); } }, { t: 'Ignorarlos', fx: () => { } }] }
+  merc: { n: 'Mercaderes de {b}', d: 'Una caravana ofrece {b} a cambio de {f}.', o: [{ t: 'Comprar: 30 de {f} por 25 de {b}', ok: c => c.food >= 30, fx: c => { c.food -= 30; c.bronze += 25; } }, { t: 'Rechazar', fx: () => { } }] },
+  desert: { n: 'Desertores del enemigo', d: 'Guerreros rivales piden asilo. Tus veteranos desconfían.', o: [{ t: 'Acogerlos: +3 {lan}, −8 de moral', fx: c => { const g = garr(c); if (g) g.n.lan += 3; c.morale = Math.max(0, c.morale - 8); } }, { t: 'Expulsarlos', fx: () => { } }] },
+  rumor: { n: 'Rumores de traición', d: 'Se dice que un rival prepara algo. Conocer al enemigo vale más que adivinar.', o: [{ t: 'Investigar: 15 de {b}, ves a todos los rivales 40 s', ok: c => c.bronze >= 15, fx: c => { c.bronze -= 15; G.civs.forEach(t => { if (t.id !== c.id && t.alive) c.intel[t.id] = G.t + 40; }); } }, { t: 'Ignorarlos', fx: () => { } }] }
 };
+/* textos de eventos con los nombres de tu civilización: {f} {w} {b} recursos, {lan} tu infantería */
+const tx = s => s.replace(/\{(f|w|b|lan)\}/g, (_, k) => k === 'lan' ? unitName('lan', civ(0)).toLowerCase() : RN({ f: 'food', w: 'wood', b: 'bronze' }[k]));
 function rollEvent() {
   const r = R(), tgt = alive()[Math.floor(R() * alive().length)];
-  if (r < .22) { G.flood = 30; log('Crecida del río: los vados se cierran 30 s.'); tell(0, 'Crecida: los vados están cerrados por 30 s.', true); }
+  if (r < .22) { G.flood = 30; log('Crecida ' + delRio() + ': los pasos se cierran 30 s.'); tell(0, 'Crecida: los pasos ' + delRio() + ' están cerrados por 30 s.', true); }
   else if (r < .36) { tgt.food = Math.min(600, tgt.food + 40); log('Cosecha abundante en ' + nameOf(tgt) + '.', tgt.id); }
-  else if (r < .5) { tgt.food = Math.max(0, tgt.food * .7); log('Plaga en los graneros de ' + nameOf(tgt) + ' (−30% comida).', tgt.id); }
+  else if (r < .5) { tgt.food = Math.max(0, tgt.food * .7); log('Plaga en las reservas de ' + nameOf(tgt) + ' (−30% de ' + RN('food', tgt.cv) + ').', tgt.id); }
   else { const k = ['merc', 'desert', 'rumor'][Math.floor(R() * 3)], ev = EVS[k], o = Math.floor(R() * 2);
     if (tgt.human) { G.dlg = { id: k, team: 0 }; G.paused = true; } else if ((ev.o[o].ok || (() => true))(tgt)) ev.o[o].fx(tgt); }
 }
 function resolveDlg(i) {
-  if (!G.dlg) return; const c = civ(G.dlg.team), o = EVS[G.dlg.id].o[i]; if (!o || (o.ok && !o.ok(c))) return; o.fx(c); log('Decisión: ' + o.t + '.'); G.dlg = null; G.paused = false; shownDlg = 0; closeDlg();
+  if (!G.dlg) return; const c = civ(G.dlg.team), o = EVS[G.dlg.id].o[i]; if (!o || (o.ok && !o.ok(c))) return; o.fx(c); log('Decisión: ' + tx(o.t) + '.'); G.dlg = null; G.paused = false; shownDlg = 0; closeDlg();
 }
 /* ---------- IA ---------- */
 function strengthOf(c) { return G.armies.filter(a => a.team === c.id).reduce((s, a) => s + tot(a.n), 0); }
@@ -613,8 +756,9 @@ function aiThink(c) {
     if (ex.stance === 'ambush') { if (G.t - ex.amb > 40) { const t = pickTarget(c); if (t) orderMove(ex, t.x, t.y, { chase: 0 }); } return; }
     if (ex.stance === 'retreat') return; if (ex.morale < 28 || n < ex.n0 * .35 || (ex.prov <= 0 && ex.n0 > 0)) { retreat(ex); return; }
     if (!ex.path.length && ex.stance === 'idle') { const t = pickTarget(c); if (t) orderMove(ex, t.x, t.y); }
-  } else if (g && !g.bt && G.t > DF.grace && tot(g.n) >= thr) {
-    const t = pickTarget(c); if (!t) return; const a = splitArmy(g, .7); if (!a) return; a.x = c.x + 12; a.y = c.y + 10; c.exp = a.id;
+  } else if (g && !g.bt && G.t > DF.grace && (tot(g.n) >= thr || units(c) >= .85 * armyCap(c))) {
+    // con el ejército al tope no acumula: sale con casi todo (consolidar en vez de juntar sin fin)
+    const t = pickTarget(c); if (!t) return; const a = splitArmy(g, units(c) >= .85 * armyCap(c) ? .8 : .7); if (!a) return; a.x = c.x + 12; a.y = c.y + 10; c.exp = a.id;
     if (R() < P.amb) { const f = nearestTerr(T_FOR, c.x + (t.x - c.x) * .3, c.y + (t.y - c.y) * .3, 260); if (f) { orderMove(a, f[0], f[1]); a.ambGo = 1; return; } }
     orderMove(a, t.x, t.y);
   }
@@ -625,22 +769,28 @@ function pickTarget(c) { const t = G.civs.filter(x => x.alive && x.id !== c.id);
 /* ---------- Metas, victoria y derrota ---------- */
 function goals() {
   const c = civ(0), s = G.stats;
-  G.gd = [wkTotal(c) >= 10, c.bld.cuartel >= 1, s.wins >= 1, s.spy >= 1 || s.amb >= 1, s.caps >= 1].map((v, i) => v || G.gd[i]);
+  G.gd = [wkTotal(c) >= 10, c.bld.cuartel >= 1, s.wins >= 1, s.spy >= 1 || s.amb >= 1, s.caps + (s.surr || 0) >= 1].map((v, i) => v || G.gd[i]);
 }
-const GT = ['Tener 10 obreros', 'Construir un Cuartel', 'Ganar un choque', 'Espiar a un rival o ganar con una emboscada', 'Tomar una ciudad rival'];
+const GT = ['Tener 10 obreros', 'Construir un Cuartel', 'Ganar un choque', 'Espiar a un rival o ganar con una emboscada', 'Tomar una capital rival (o que se rinda)'];
+const gtText = i => i === 1 ? 'Construir ' + bldName('cuartel') : GT[i];
 function endCommon() { $('docm').classList.remove('show'); G.paused = false; clearSave(); }
+/* from:4 conserva todo lo anterior (rama, nivel, mutaciones, era2 y era3) y suma era4 */
 function writeLineage() {
   try {
-    const l = G.lin || {}, g = garr(civ(0)), u = g ? tot(g.n) : 0, ct = ({ jefatura: 'Ciudad militarista', mercado: 'Ciudad mercantil', templo: 'Ciudad teocrática' })[G.cityType] || '';
-    localStorage.setItem('evo_lineage', JSON.stringify({ v: 1, from: 4, branch: l.branch || null, tier: l.tier || 0, mutCount: l.mutCount || 0, owned: [], seed: G.seed, species: l.species || '', city: ct, pop: wkTotal(civ(0)), civs: G.civs.length - 1, soldiers: u, techs: civ(0).tech.slice(), at: Date.now() }));
+    const l = G.lin || {}, me = civ(0), ct = ({ jefatura: 'Ciudad militarista', mercado: 'Ciudad mercantil', templo: 'Ciudad teocrática' })[G.cityType] || '';
+    const prev = (() => { try { return JSON.parse(localStorage.getItem('evo_lineage')) || {}; } catch (e) { return {}; } })();
+    const era3 = l.era3 ? Object.assign({}, prev.era3 && prev.era3.civ === l.era3.civ ? prev.era3 : {}, { civ: l.era3.civ, especie: l.era3.especie, edad: l.era3.edad, maravilla: l.era3.maravilla, anfibia: l.era3.anfibia, ciudad: l.era3.ciudad, path: l.era3.path }) : { civ: G.civ, especie: G.sp, especieN: SPECIES[G.sp].n, edad: 1, techs: [], maravilla: null, anfibia: !!G.amph, ciudad: CV[G.civ].city, path: G.cityType, sinEra3: true };
+    if (!Array.isArray(era3.techs)) era3.techs = [];
+    localStorage.setItem('evo_lineage', JSON.stringify({ v: 1, from: 4, branch: l.branch || null, tier: l.tier || 0, mutCount: l.mutCount || 0, owned: [], seed: G.seed, species: l.species || SPECIES[G.sp].n, city: ct, pop: wkTotal(me), era2: l.era2 || undefined, era3, era4: { civ: G.civ, especie: G.sp, como: G.how, t: Math.round(G.t), capitales: G.stats.caps, rendiciones: G.stats.surr || 0, techs: me.tech.slice(), dificultad: diffI }, civs: G.civs.length - 1, soldiers: units(me), techs: me.tech.slice(), at: Date.now() }));
   } catch (e) { }
 }
 function win() {
-  G.over = true; G.win = true; endCommon(); writeLineage();
-  dialog('Conquista: tu civilización domina la región', '<p>Tomaste las ciudades de todos los rivales en ' + fmt(G.t) + '. Ganaste ' + G.stats.wins + ' choques.</p><p><b>Las Eras 5 y 6 todavía no existen.</b> Tu linaje (Era 4) quedó anotado en este navegador, pero no hay una era siguiente para recibirlo. Lo que sigue en el diseño (ver docs/ERA4.md) es la era moderna y el espacio.</p>', [['Jugar de nuevo', () => { closeDlg(); showMenu(); }, 1], ['Volver a la portada', toIndex]]);
+  G.over = true; G.win = true; if (!G.how) G.how = G.stats.surr && !G.stats.caps ? 'rendicion' : 'conquista'; endCommon(); writeLineage();
+  const C = CV[G.civ];
+  dialog(C.city + ' domina la región', '<p>' + (G.stats.caps ? 'Tomaste ' + G.stats.caps + ' capital' + (G.stats.caps > 1 ? 'es' : '') : '') + (G.stats.caps && G.stats.surr ? ' y ' : '') + (G.stats.surr ? G.stats.surr + ' civilización' + (G.stats.surr > 1 ? 'es se rindieron' : ' se rindió') + ' y te paga' + (G.stats.surr > 1 ? 'n' : '') + ' tributo' : '') + ' en ' + fmt(G.t) + '. Ganaste ' + G.stats.wins + ' choques con tus ' + SPECIES[G.sp].n.toLowerCase() + '.</p><p>Tu linaje (Era 4: ' + C.n + ') quedó anotado. Sigue la <b>Era 5: La Industria</b>: vías férreas, energía, el clima de todo el planeta y la carrera al espacio.</p>', [['Seguir a la Era 5', () => { location.href = 'era5-industria.html'; }, 1], ['Jugar de nuevo', () => { closeDlg(); showMenu(); }], ['Volver a la portada', toIndex]]);
 }
 function lose() {
-  G.over = true; endCommon(); dialog('Tu ciudad cayó', '<p>Un ejército enemigo tomó tu capital. Conocer al enemigo, elegir el terreno y cuidar las provisiones habría ayudado: mirá «Por qué ganó» para ver qué decidió cada choque.</p>', [['Jugar de nuevo', () => { closeDlg(); showMenu(); }, 1], ['Volver a la portada', toIndex]]);
+  G.over = true; if (!G.how) G.how = 'capital'; endCommon(); dialog('Tu capital cayó', '<p>Un ejército enemigo sitió ' + CV[G.civ].city + ' hasta romperla. Conocer al enemigo, elegir el terreno y cuidar las provisiones habría ayudado: mirá «Por qué ganó» para ver qué decidió cada choque. Una guarnición en casa (y murallas) frena el asedio.</p>', [['Jugar de nuevo', () => { closeDlg(); showMenu(); }, 1], ['Volver a la portada', toIndex]]);
 }
 const toIndex = () => { location.href = '../index.html'; };
 function winCheck() { if (G.over) return; if (!civ(0).alive) { lose(); return; } if (G.civs.every(c => c.human || !c.alive)) win(); }
@@ -652,8 +802,8 @@ function update(dt) {
   econ(dt);
   for (const c of G.civs) if (c.alive && !c.human && G.t >= c.aiT) aiThink(c);
   if (G.t >= G.evT) { G.evT = G.t + rnd(45, 75); rollEvent(); }
-  ops(); moveArmies(dt); engage(); battlesStep(dt); supply(dt); capture();
-  G.gdT += dt; if (G.gdT >= 1) { G.gdT = 0; goals(); }
+  ops(); moveArmies(dt); engage(); battlesStep(dt); supply(dt); siege(dt); if (G.over) return;
+  G.gdT += dt; if (G.gdT >= 1) { G.gdT = 0; goals(); surrenders(); for (const c of G.civs) G.maxU = Math.max(G.maxU || 0, units(c)); }
   winCheck();
 }
 
@@ -662,7 +812,7 @@ const SAVE_KEY = 'evo_save4_v1';
 const snapshotObj = () => { const g = Object.assign({}, G); g.paused = false; g.modal = false; return { v: 1, diffI, rs: _rs, G: g }; };
 const snapshot = () => JSON.stringify(snapshotObj());
 const stateHash = () => hashStr(snapshot()).toString(16);
-const summary = () => 'Civilización de ' + wkTotal(civ(0)) + ' obreros y ' + units(civ(0)) + ' soldados · ' + fmt(G.t) + ' · ' + G.civs.filter(c => !c.human && c.alive).length + ' rival' + (G.civs.filter(c => !c.human && c.alive).length === 1 ? '' : 'es') + ' en pie';
+const summary = () => 'Civilización de ' + wkTotal(civ(0)) + ' obreros y ' + units(civ(0)) + ' soldados · ' + fmt(G.t) + ' · ' + G.civs.filter(c => !c.human && c.alive).length + ' rival' + (G.civs.filter(c => !c.human && c.alive).length === 1 ? '' : 'es') + ' en pie · ' + CV[G.civ || 'ter'].n;
 function saveGame(manual) {
   if (!G || !started || G.over) return false;
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(Object.assign({ v: 1, at: Date.now(), summary: summary() }, snapshotObj()))); lastSaveT = G.t; if (manual) toast('Partida guardada.'); return true; }
@@ -671,7 +821,7 @@ function saveGame(manual) {
 function readSave() { try { const d = JSON.parse(localStorage.getItem(SAVE_KEY)); return d && d.v === 1 && d.G && d.G.civs && d.G.armies ? d : null; } catch (e) { return null; } }
 function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { } refreshCont(); }
 function restoreGame(d) {
-  diffI = d.diffI | 0; DF = DIFFS[diffI]; _rs = d.rs >>> 0; G = JSON.parse(JSON.stringify(d.G)); G.paused = false;
+  diffI = d.diffI | 0; DF = DIFFS[diffI]; _rs = d.rs >>> 0; G = migrate(JSON.parse(JSON.stringify(d.G))); G.paused = false; applyCivUI();
   started = true; spdI = 1; $('bSpd').textContent = '×1'; selId = 0; trayK = null; shownDlg = 0; lastSaveT = G.t; bgDirty = true;
   ['menu', 'docm', 'dlg'].forEach(i => $(i).classList.remove('show')); if (G.dlg) G.paused = true; centerCam(); setTray(null);
 }
@@ -688,43 +838,45 @@ function dialog(title, html, btns) {
 }
 function closeDlg() { $('dlg').classList.remove('show'); }
 function showMenu() { renderLin(); refreshCont(); $('menu').classList.add('show'); started = false; }
-function startNew() { newGame(newSeedStr()); started = true; $('menu').classList.remove('show'); setTray(null); toast('Tocá tu ciudad para elegir la guarnición, formá un ejército y tocá un punto del mapa para moverlo. Arrastrá el mapa para mirar.'); }
+function startNew() { newGame(newSeedStr(), linCiv(readLineage()) ? null : { sp: pickSp }); started = true; $('menu').classList.remove('show'); setTray(null); toast('Tocá tu ciudad para elegir la guarnición, formá un ejército y tocá un punto del mapa para moverlo. Arrastrá el mapa para mirar.'); }
 const trayHtml = () => {
   const c = civ(0); if (trayK === 'rec') {
-    return '<button data-a="rec" data-k="obrero"><b>Obrero</b><small>20 comida · ' + wkTotal(c) + '/' + popCap(c) + '</small></button>' + K.map(k => '<button data-a="rec" data-k="' + k + '"><b>' + UN[k].s[0].toUpperCase() + UN[k].s.slice(1) + '</b><small>' + costStr(UN[k].cost) + '</small></button>').join('');
+    return '<button data-a="rec" data-k="obrero"><b>Obrero</b><small>20 ' + RN('food') + ' · ' + wkTotal(c) + '/' + popCap(c) + '</small></button>' + K.map(k => '<button data-a="rec" data-k="' + k + '" title="' + CV[G.civ].un[k][2] + '"><b>' + cap1(unitName(k, c, 1)) + '</b><small>' + costStr(UN[k].cost) + ' · ' + Math.round(units(c)) + '/' + armyCap(c) + '</small></button>').join('');
   }
-  if (trayK === 'bld') return BORD.map(k => '<button data-a="bld" data-k="' + k + '"' + (c.bld[k] >= 3 ? ' disabled' : '') + '><b>' + BLD[k].n + ' ' + c.bld[k] + '/3</b><small>' + (c.bld[k] >= 3 ? 'máximo' : costStr(bldCost(c, k))) + '<span class="ds"> · ' + BLD[k].d + '</span></small></button>').join('');
+  if (trayK === 'bld') return BORD.map(k => '<button data-a="bld" data-k="' + k + '"' + (c.bld[k] >= 3 ? ' disabled' : '') + '><b>' + bldName(k) + ' ' + c.bld[k] + '/3</b><small>' + (c.bld[k] >= 3 ? 'máximo' : costStr(bldCost(c, k))) + '<span class="ds"> · ' + BLD[k].d + '</span></small></button>').join('');
   if (trayK === 'ord') {
     const a = armyById(selId); if (!a || a.team !== 0) return '<button disabled><b>Sin ejército elegido</b><small>Tocá uno en el mapa</small></button>';
     return a.home ? '<button data-a="form" data-k="0.75"><b>Formar ejército</b><small>sale ¾ de la guarnición</small></button><button data-a="form" data-k="0.5"><b>Formar ejército ½</b><small>sale la mitad</small></button>'
-      : '<button data-a="amb"><b>Emboscada</b><small>quedarse escondido (bosque o colina)</small></button><button data-a="ret"><b>Retirar</b><small>volver a la ciudad</small></button><button data-a="split"><b>Dividir ½</b><small>separar la mitad</small></button>';
+      : '<button data-a="amb"><b>Emboscada</b><small>quedarse escondido (' + tname(T_FOR) + ' o ' + tname(T_HILL) + ')</small></button><button data-a="ret"><b>Retirar</b><small>volver a la ciudad</small></button><button data-a="split"><b>Dividir ½</b><small>separar la mitad</small></button>';
   }
   return '';
 };
 let trayLast = '';
 function setTray(k) { trayK = trayK === k ? null : k; if (!k) trayK = null; $('tray').classList.toggle('show', !!trayK); ['bRec', 'bBld', 'bOrd'].forEach(i => $(i).classList.remove('on')); if (trayK) $({ rec: 'bRec', bld: 'bBld', ord: 'bOrd' }[trayK]).classList.add('on'); trayLast = ''; refreshTray(); }
-function refreshTray() { const h = trayHtml(), c = civ(0); if (h !== trayLast) { $('tray').innerHTML = h; trayLast = h; } if (!trayK) return; const bs = $('tray').querySelectorAll('button[data-a]'); bs.forEach(b => { const k = b.dataset.k; if (b.dataset.a === 'rec') b.disabled = k === 'obrero' ? (c.food < 20 || wkTotal(c) >= popCap(c)) : (!canPay(c, UN[k].cost) || (k === 'jin' && c.bld.cuartel < 1)); if (b.dataset.a === 'bld') b.disabled = c.bld[k] >= 3 || !canPay(c, bldCost(c, k)); }); }
+function refreshTray() { const h = trayHtml(), c = civ(0); if (h !== trayLast) { $('tray').innerHTML = h; trayLast = h; } if (!trayK) return; const bs = $('tray').querySelectorAll('button[data-a]'); bs.forEach(b => { const k = b.dataset.k; if (b.dataset.a === 'rec') b.disabled = k === 'obrero' ? (c.food < 20 || wkTotal(c) >= popCap(c)) : (!canPay(c, UN[k].cost) || (k === 'jin' && c.bld.cuartel < 1) || units(c) >= armyCap(c)); if (b.dataset.a === 'bld') b.disabled = c.bld[k] >= 3 || !canPay(c, bldCost(c, k)); }); }
 function doTray(e) {
   const b = e.target.closest('button[data-a]'); if (!b || b.disabled || !G) return; const a = b.dataset.a, k = b.dataset.k; let err = null;
   if (a === 'rec') err = recruit(0, k); else if (a === 'bld') err = build(0, k);
-  else { const ar = armyById(selId); if (!ar) return; if (a === 'form') { const n = formArmy(0, +k); if (!n) err = 'No se pudo formar: muy pocos soldados o la guarnición está peleando.'; else selId = n.id; } else if (a === 'amb') err = setAmbush(ar); else if (a === 'ret') err = retreat(ar); else if (a === 'split') { const n = splitArmy(ar, .5); if (!n) err = 'No se puede dividir.'; else { n.stance = 'idle'; selId = n.id; } } }
+  else { const ar = armyById(selId); if (!ar) return; if (a === 'form') { const n = formArmy(0, +k); if (!n) err = 'No se pudo formar: muy pocos guerreros o la guarnición está peleando.'; else selId = n.id; } else if (a === 'amb') err = setAmbush(ar); else if (a === 'ret') err = retreat(ar); else if (a === 'split') { const n = splitArmy(ar, .5); if (!n) err = 'No se puede dividir.'; else { n.stance = 'idle'; selId = n.id; } } }
   if (err) toast(err, true); trayLast = ''; hud();
 }
 function docModal() {
-  const c = civ(0); $('docP').textContent = 'Cada doctrina se compra una vez. Podés pagarlas con comida, madera o bronce.';
-  $('docGrid').innerHTML = ''; Object.keys(DOC).forEach(k => { const d = DOC[k], b = document.createElement('button'); const h = hasT(c, k); b.className = 'tc' + (h ? ' done' : ''); b.disabled = h || !canPay(c, d.cost); b.innerHTML = '<b></b><span></span><em></em>'; b.children[0].textContent = d.n; b.children[1].textContent = d.d; b.children[2].textContent = h ? 'Dominada' : 'Cuesta ' + costStr(d.cost); b.addEventListener('click', () => { const e = research(0, k); if (e) toast(e, true); docModal(); hud(); }); $('docGrid').appendChild(b); });
+  const c = civ(0); $('docP').textContent = 'Cada doctrina se compra una vez. Se pagan con ' + RN('food') + ', ' + RN('wood') + ' o ' + RN('bronze') + '.';
+  $('docGrid').innerHTML = ''; Object.keys(DOC).forEach(k => { const d = DOC[k], b = document.createElement('button'); const h = hasT(c, k); b.className = 'tc' + (h ? ' done' : ''); b.disabled = h || !canPay(c, d.cost); b.innerHTML = '<b></b><span></span><em></em>'; b.children[0].textContent = docName(k); b.children[1].textContent = d.d; b.children[2].textContent = h ? 'Dominada' : 'Cuesta ' + costStr(d.cost); b.addEventListener('click', () => { const e = research(0, k); if (e) toast(e, true); docModal(); hud(); }); $('docGrid').appendChild(b); });
   G.modal = true; $('docm').classList.add('show'); const f = $('docGrid').querySelector('button:not(:disabled)') || $('docClose'); f.focus();
 }
 function hintText() {
   const c = civ(0), g = garr(c); if (!c.alive) return '';
   if (c.free > 0) return 'Tenés obreros libres: sumalos a un trabajo con los botones + de la lista.';
-  if (c.food < 15) return 'Poca comida: poné más campesinos. Sin comida los soldados desertan.';
-  if (!G.gd[1] && c.wood >= 40 && c.bronze >= 10) return 'Ya podés construir un Cuartel: hace más rápido el reclutamiento y habilita jinetes.';
-  if (G.flood > 0) return 'Crecida: los vados están cerrados. Nadie cruza el río por ' + Math.ceil(G.flood) + ' s.';
+  if (c.food < 15) return 'Poca ' + RN('food') + ': poné más obreros en ' + RN('food') + '. Sin ' + RN('food') + ' tu ejército deserta.';
+  if (c.sg < 100 && besiegers(c).length) return '¡Sitian tu capital! Resistencia ' + Math.round(c.sg) + '/100. Una guarnición que pelee frena el asedio; las murallas lo hacen más lento.';
+  if (!G.gd[1] && c.wood >= 40 && c.bronze >= 10) return 'Ya podés construir ' + bldName('cuartel') + ': recluta más rápido, habilita ' + unitName('jin', c).toLowerCase() + ' y sube el tope de ejército.';
+  if (G.flood > 0) return 'Crecida: los pasos están cerrados. Nadie cruza por ' + Math.ceil(G.flood) + ' s.';
   const near = G.armies.find(a => a.team !== 0 && hyp(a.x - c.x, a.y - c.y) < 190 && visible(a)); if (near) return 'Se acerca un ejército enemigo. Tu guarnición pelea con la ventaja de estar en casa (más aún con murallas).';
-  if (!G.gd[3] && c.bld.espias < 1 && G.t > 40) return 'Sun Tzu: «conocé al enemigo». Una Casa de espías te deja ver sus ejércitos.';
-  if (!G.gd[2]) return 'Elegí el terreno: en bosque y colina el que defiende rinde más y los jinetes rinden menos. En llanura gana quien tiene más soldados (ley cuadrática).';
-  const x = G.gd.findIndex(v => !v); return x >= 0 ? 'Próxima meta: ' + GT[x] + '.' : '';
+  if (units(c) >= armyCap(c)) return 'Tu ejército llegó al tope (' + armyCap(c) + '). Usalo: sitiá una capital rival (la barra baja hasta que cae) o mejorá ' + bldName('cuartel') + ' y ' + bldName('vivienda') + '.';
+  if (!G.gd[3] && c.bld.espias < 1 && G.t > 40) return 'Sun Tzu: «conocé al enemigo». ' + bldName('espias') + ' te deja ver sus ejércitos.';
+  if (!G.gd[2]) return 'Elegí el terreno: en ' + tname(T_FOR) + ' y ' + tname(T_HILL) + ' el que defiende rinde más y ' + unitName('jin', c).toLowerCase() + ' rinden menos. En ' + tname(T_PLAIN) + ' gana quien tiene más guerreros (ley cuadrática).';
+  const x = G.gd.findIndex(v => !v); return x >= 0 ? 'Próxima meta: ' + gtText(x) + '.' : '';
 }
 function visible(a) {
   if (a.team === 0 || reveals(0, a.team)) return true; if (concealed(a) && !a.bt) return false;
@@ -733,85 +885,164 @@ function visible(a) {
 function hud() {
   if (!G || !started) return; const c = civ(0), r = rates(c), pop = wkTotal(c);
   $('vTime').textContent = fmt(G.t); $('vPop').textContent = pop + '/' + popCap(c); $('cPop').classList.toggle('bad', c.free > 0);
-  const net = r.f - r.up; $('vFood').textContent = Math.floor(c.food); $('vFoodR').textContent = 'comida (' + (net >= 0 ? '+' : '') + net.toFixed(1).replace('.', ',') + '/s)'; $('cFood').classList.toggle('bad', c.food < 15 || net < -.5);
-  $('vWood').textContent = Math.floor(c.wood); $('vBronze').textContent = Math.floor(c.bronze); $('vMor').textContent = Math.round(c.morale); $('cMor').classList.toggle('bad', c.morale < 35); $('vArmy').textContent = units(c);
-  cv.setAttribute('aria-label', 'Mapa de la región: ' + units(c) + ' soldados tuyos, ' + (n => n + (n === 1 ? ' ciudad rival en pie, ' : ' ciudades rivales en pie, '))(G.civs.filter(x => !x.human && x.alive).length) + G.battles.length + ' choques en curso. Tocá un ejército para elegirlo.');
+  const net = r.f - r.up; $('vFood').textContent = Math.floor(c.food); $('vFoodR').textContent = RN('food') + ' (' + (net >= 0 ? '+' : '') + net.toFixed(1).replace('.', ',') + '/s)'; $('cFood').classList.toggle('bad', c.food < 15 || net < -.5);
+  $('vWood').textContent = Math.floor(c.wood); $('vBronze').textContent = Math.floor(c.bronze); $('vMor').textContent = Math.round(c.morale); $('cMor').classList.toggle('bad', c.morale < 35); $('vArmy').textContent = units(c) + '/' + armyCap(c); $('cArmy').classList.toggle('bad', units(c) >= armyCap(c));
+  cv.setAttribute('aria-label', 'Mapa de la región (' + CV[G.civ].n + '): ' + units(c) + ' guerreros tuyos, ' + (n => n + (n === 1 ? ' ciudad rival en pie, ' : ' ciudades rivales en pie, '))(G.civs.filter(x => !x.human && x.alive).length) + G.battles.length + ' choques en curso. Tocá un ejército para elegirlo.');
   $('libres').textContent = c.free ? '(' + c.free + ' libres)' : '';
-  $('roles').innerHTML = WK_KEYS.map(k => '<div class="role"><i style="background:' + WK[k].c + '"></i><span>' + WK[k].n + '</span><button data-w="' + k + '" data-d="-1" aria-label="Quitar un obrero de ' + WK[k].n + '">−</button><b>' + c.wk[k] + '</b><button data-w="' + k + '" data-d="1" aria-label="Sumar un obrero a ' + WK[k].n + '"' + (c.free < 1 ? ' disabled' : '') + '>+</button></div>').join('') + '<small>Producción por obrero y segundo: comida 0,5 · madera 0,4 · bronce 0,25 (por terreno cercano y edificios).</small>';
+  $('roles').innerHTML = WK_KEYS.map(k => '<div class="role"><i style="background:' + WK[k].c + '"></i><span>' + CV[G.civ].wk[k] + '</span><button data-w="' + k + '" data-d="-1" aria-label="Quitar un obrero de ' + CV[G.civ].wk[k] + '">−</button><b>' + c.wk[k] + '</b><button data-w="' + k + '" data-d="1" aria-label="Sumar un obrero a ' + CV[G.civ].wk[k] + '"' + (c.free < 1 ? ' disabled' : '') + '>+</button></div>').join('') + '<small>Producción por obrero y segundo: ' + RN('food') + ' 0,5 · ' + RN('wood') + ' 0,4 · ' + RN('bronze') + ' 0,25 (por terreno cercano y edificios).</small>';
   $('bAuto').textContent = 'Asignar nuevos automáticamente: ' + (G.auto ? 'sí' : 'no');
   const a = armyById(selId);
-  if (a && a.team === 0) { const sup = a.home ? 'en la ciudad' : (a.prov > 0 ? 'provisiones para ' + Math.round(a.prov / Math.max(.01, tot(a.n) * .06 * (hasT(c, 'logi') ? 1 / 1.5 : 1))) + ' s' : 'SIN provisiones'); $('selInfo').innerHTML = '<b>' + (a.home ? 'Guarnición' : 'Ejército') + '</b> · ' + compStr(a.n) + '<br>Moral ' + Math.round(a.morale) + ' · ' + sup + '<br>Terreno: ' + TNAME[terrAt(a.x, a.y)] + (a.bt ? ' · en combate' : a.stance === 'ambush' ? ' · en emboscada' + (concealed(a) ? ' (oculto)' : ' (a la vista)') : a.stance === 'retreat' ? ' · retirándose' : a.path.length ? ' · en marcha' : ''); }
+  if (a && a.team === 0) { const sup = a.home ? 'en la ciudad' : (a.prov > 0 ? 'provisiones para ' + Math.round(a.prov / Math.max(.01, tot(a.n) * .06 * (hasT(c, 'logi') ? 1 / 1.5 : 1))) + ' s' : 'SIN provisiones'); $('selInfo').innerHTML = '<b>' + (a.home ? 'Guarnición' : 'Ejército') + '</b> · ' + compStr(a.n, c) + '<br>Moral ' + Math.round(a.morale) + ' · ' + sup + '<br>Terreno: ' + tname(terrAt(a.x, a.y)) + (a.bt ? ' · en combate' : a.stance === 'ambush' ? ' · en emboscada' + (concealed(a) ? ' (oculto)' : ' (a la vista)') : a.stance === 'retreat' ? ' · retirándose' : a.path.length ? ' · en marcha' : ''); }
   else $('selInfo').textContent = 'Tocá uno de tus ejércitos en el mapa (la guarnición está en tu ciudad).';
-  const ongoing = G.battles.map(b => '<div class="dec">En curso: ' + Math.round(b.A) + ' contra ' + Math.round(b.B) + ' (ley ' + (b.narrow ? 'lineal' : 'cuadrática') + ' en ' + TNAME[b.terr] + ')</div>').join('');
+  const ongoing = G.battles.map(b => '<div class="dec">En curso: ' + Math.round(b.A) + ' contra ' + Math.round(b.B) + ' (ley ' + (b.narrow ? 'lineal' : 'cuadrática') + ' en ' + tname(b.terr) + ')</div>').join('');
   const rp = G.rep.find(x => x.mine) || G.rep[0]; $('rep').innerHTML = ongoing + (rp ? '<div class="dec">' + rp.title + ' (' + fmt(rp.t) + ')</div><ul>' + rp.lines.map(l => '<li>' + l + '</li>').join('') + '</ul>' : (ongoing ? '' : 'Todavía no hubo ningún choque. Cuando haya uno, acá vas a ver qué ley se usó, qué pesó cada factor y qué lo decidió.'));
-  $('rivals').innerHTML = G.civs.filter(x => !x.human).map(x => { const known = reveals(0, x.id), n = strengthOf(x); return '<div class="riv"><i style="background:' + x.col + '"></i><span><b>' + x.name + '</b> · ' + PERS[x.pers].n + '<br>' + (!x.alive ? 'ciudad caída' : known ? '≈ ' + n + ' soldados, moral ' + Math.round(x.morale) : 'fuerza desconocida') + '</span>' + (x.alive ? '<button data-sp="' + x.id + '"' + (c.bld.espias < 1 || c.bronze < 12 ? ' disabled' : '') + ' aria-label="Espiar a ' + x.name + '">Espiar</button>' : '') + '</div>'; }).join('');
+  $('rivals').innerHTML = G.civs.filter(x => !x.human).map(x => { const known = reveals(0, x.id), n = strengthOf(x); return '<div class="riv"><i style="background:' + x.col + '"></i><span><b>' + x.name + '</b> · ' + CV[x.cv].n + ' (' + SPECIES[x.sp].n.toLowerCase() + '), ' + PERS[x.pers].n + '<br>' + (x.vassal ? 'se rindió: paga tributo' : !x.alive ? 'capital caída' : (known ? '≈ ' + n + ' guerreros, moral ' + Math.round(x.morale) : 'fuerza desconocida') + (x.sg < 100 ? '<span class="sgbar" title="Resistencia de la capital"><i style="width:' + Math.round(x.sg) + '%"></i></span>' : '')) + '</span>' + (x.alive ? '<button data-sp="' + x.id + '"' + (c.bld.espias < 1 || c.bronze < 12 ? ' disabled' : '') + ' aria-label="Espiar a ' + x.name + '">Espiar</button>' : '') + '</div>'; }).join('');
   $('log').innerHTML = G.log.slice(0, 6).map(t => '<div>' + t + '</div>').join('');
-  $('goalRows').innerHTML = GT.map((t, i) => '<div class="g' + (G.gd[i] ? ' ok' : '') + '">' + (G.gd[i] ? '✓ ' : '') + t + '</div>').join(''); $('goalN').textContent = G.gd.filter(Boolean).length + '/5';
+  $('goalRows').innerHTML = GT.map((t, i) => '<div class="g' + (G.gd[i] ? ' ok' : '') + '">' + (G.gd[i] ? '✓ ' : '') + gtText(i) + '</div>').join(''); $('goalN').textContent = G.gd.filter(Boolean).length + '/5';
   const h = hintText(); $('hint').textContent = h; $('hint').style.display = h ? 'block' : 'none';
   $('bPause').classList.toggle('on', G.paused); $('pauseTag').style.display = G.paused && !G.modal && !G.dlg && !G.over ? 'block' : 'none';
   const nd = Object.keys(DOC).filter(k => !hasT(c, k) && canPay(c, DOC[k].cost)).length; $('bDocS').textContent = nd ? nd + ' lista' + (nd > 1 ? 's' : '') + ': ¡tocá!' : 'mejoras de guerra';
   $('bSave').disabled = G.over;
   if (trayK) refreshTray();
-  if (G.dlg && shownDlg !== 1) { shownDlg = 1; const ev = EVS[G.dlg.id], cc = civ(G.dlg.team); dialog(ev.n, '<p>' + ev.d + '</p>', ev.o.map((o, i) => [o.t, () => resolveDlg(i), i === 0, o.ok && !o.ok(cc)])); }
+  if (G.dlg && shownDlg !== 1) { shownDlg = 1; const ev = EVS[G.dlg.id], cc = civ(G.dlg.team); dialog(tx(ev.n), '<p>' + tx(ev.d) + '</p>', ev.o.map((o, i) => [tx(o.t), () => resolveDlg(i), i === 0, o.ok && !o.ok(cc)])); }
 }
 
 /* ---------- Dibujo ---------- */
+/* Arte pintado de la Era 3 (art/era3/manifest.js, motor de Anakin): ciudades con el Corazón y los edificios de su civilización, ejércitos con el habitante
+   pintado de su especie, terreno de tu civilización e íconos de recursos. Solo dibujo: NUNCA toca G ni R(). Si una imagen falta, queda el dibujo procedural.
+   ?sinarte fuerza el procedural (las pruebas que leen píxeles en file:// fallan con imágenes cargadas: SecurityError). */
+const NOART = /[?&]sinarte\b/.test(location.search);
+const ARTSET = new Set(NOART ? [] : (window.ERA3_ART || []));
+const IMG = {};
+const artSrc = id => ARTSET.has(id) ? '../art/era3/' + id + '.png' : null;
+function art(id) { if (!ARTSET.has(id)) return null; let im = IMG[id]; if (!im) { im = IMG[id] = new Image(); im.onload = () => { bgDirty = true; }; im.src = artSrc(id); } return im.complete && im.naturalWidth ? im : null; }
+/* nombres e íconos de la civilización del jugador en el HUD y precarga de sus dibujos */
+function applyCivUI() {
+  if (!G || !$('nWood')) return; const C = CV[G.civ];
+  $('nWood').textContent = C.res.wood; $('nBronze').textContent = C.res.bronze;
+  [['iFood', 'comida'], ['iWood', 'mat1'], ['iBronze', 'mat2']].forEach(([id, r]) => { const el = $(id), src = artSrc(G.civ + '.recurso.' + r); el.classList.toggle('on', !!src); if (src) { if (el.getAttribute('src') !== src) el.src = src; } else el.removeAttribute('src'); });
+  $('bBldS').textContent = [bldName('granja'), bldName('cuartel'), bldName('muralla')].join(', ').toLowerCase() + '…';
+  const tc = G.amph ? 'ter' : G.civ; ['suelo', 'obstaculo', 'veta', 'arbusto'].forEach(k => art(tc + '.terreno.' + k));
+  for (const c of G.civs) { art('hab.' + c.sp); for (let l = 1; l <= 3; l++) art(c.cv + '.corazon.' + l); }
+}
 const cv = $('cv'), ctx = cv.getContext('2d');
-let fogC = null, fogX = null, fogI = null, cw = 0, ch = 0, dpr = 1, cam = { ox: 0, oy: 0, s: 1 }, bg = null, bgDirty = true, PAL = {};
-function pal() { const d = getComputedStyle(document.documentElement).getPropertyValue('--dark').trim() === '1'; PAL = d ? { p: '#4d5a36', f: '#2f4a2a', h: '#6d5c3c', r: '#2b5d78', fo: '#4a7a8a', ink: '#efe8d6', st: '#0a0804' } : { p: '#c3cf90', f: '#78a35c', h: '#b79f6c', r: '#6fa8c9', fo: '#aacbd6', ink: '#2a2418', st: '#2a2418' }; bgDirty = true; }
+let fogC = null, fogX = null, fogI = null, cw = 0, ch = 0, dpr = 1, cam = { ox: 0, oy: 0, s: 1 }, bg = null, bgDirty = true, PAL = {}, palKey = '';
+const FACE = new Map();   // rumbo de cada ejército (solo dibujo, fuera de G)
+function shade(h, k) { const n = parseInt(h.slice(1), 16), f = v => clamp(Math.round(k < 0 ? v * (1 + k) : v + (255 - v) * k), 0, 255); return '#' + ((1 << 24) | (f(n >> 16) << 16) | (f(n >> 8 & 255) << 8) | f(n & 255)).toString(16).slice(1); }
+function pal() {
+  const d = getComputedStyle(document.documentElement).getPropertyValue('--dark').trim() === '1', ck = G ? (G.amph ? 'ter' : G.civ) : 'ter', key = d + '|' + ck;
+  if (key === palKey) return; palKey = key; const b = CV[ck].pal, k = d ? -.42 : 0;
+  PAL = { p: shade(b.p, k), f: shade(b.f, k), h: shade(b.h, k), r: shade(b.r, k), fo: shade(b.fo, k), ink: d ? '#efe8d6' : '#2a2418', st: d ? '#0a0804' : '#2a2418', dark: d }; bgDirty = true;
+}
 function layout() { const w = $('cvWrap'); dpr = Math.min(2, window.devicePixelRatio || 1); cw = w.clientWidth; ch = w.clientHeight; cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr); clampCam(); }
 function clampCam() { cam.s = Math.max(cw / W, ch / H, .1); cam.ox = clamp(cam.ox, Math.min(0, cw - W * cam.s), 0); cam.oy = clamp(cam.oy, Math.min(0, ch - H * cam.s), 0); }
 function centerCam() { if (!G) return; clampCam(); const c = civ(0); cam.ox = cw / 2 - c.x * cam.s; cam.oy = ch / 2 - c.y * cam.s; clampCam(); }
 const nz = i => ((Math.imul(i + 1, 2654435761) >>> 0) % 1000) / 1000;
+/* línea central del río por fila (para dibujarlo como una curva y no como casillas) */
+function riverLine() { const pts = []; for (let r = 0; r < ROWS; r++) { let a = -1, b = -1; for (let q = 0; q < COLS; q++) { const t = +G.terr[r * COLS + q]; if (t === T_RIVER || t === T_FORD) { if (a < 0) a = q; b = q; } } if (a >= 0) pts.push([(a + b + 1) / 2 * TS, r * TS + TS / 2, (b - a + 1) * TS, +G.terr[r * COLS + a] === T_FORD]); } return pts; }
+function smoothPath(g, pts) { g.beginPath(); g.moveTo(pts[0][0], pts[0][1] - TS); g.lineTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) { const mx = (pts[i - 1][0] + pts[i][0]) / 2, my = (pts[i - 1][1] + pts[i][1]) / 2; g.quadraticCurveTo(pts[i - 1][0], pts[i - 1][1], mx, my); } const L = pts[pts.length - 1]; g.lineTo(L[0], L[1]); g.lineTo(L[0], L[1] + TS); }
+/* un dibujo pintado de alto h apoyado en (x, base); devuelve false si no hay imagen */
+function artAt(g, id, x, base, h, flip) { const im = art(id); if (!im) return false; g.save(); g.translate(x, base); if (flip) g.scale(-1, 1); g.drawImage(im, -h / 2, -h, h, h); g.restore(); return true; }
 function buildBg() {
-  bg = document.createElement('canvas'); bg.width = W; bg.height = H; const g = bg.getContext('2d');
-  for (let i = 0; i < COLS * ROWS; i++) {
-    const t = +G.terr[i], x = (i % COLS) * TS, y = ((i / COLS) | 0) * TS, n = nz(i);
-    g.fillStyle = [PAL.p, PAL.f, PAL.h, PAL.r, PAL.fo][t]; g.fillRect(x, y, TS, TS);
-    g.fillStyle = 'rgba(0,0,0,' + (.02 + n * .06) + ')'; g.fillRect(x, y, TS, TS);
-    g.strokeStyle = PAL.st; g.fillStyle = PAL.st; g.lineWidth = 1.2; g.globalAlpha = .45;
-    if (t === T_FOR) { for (let k = 0; k < 2; k++) { const px = x + 5 + k * 9 + n * 3, py = y + 6 + k * 7; g.beginPath(); g.arc(px, py, 4.5, 0, TAU); g.stroke(); } }
-    else if (t === T_HILL) { g.beginPath(); g.arc(x + 10, y + 16, 8, Math.PI, 0); g.stroke(); }
-    else if (t === T_RIVER) { g.beginPath(); g.moveTo(x + 2, y + 6 + n * 8); g.quadraticCurveTo(x + 8, y + 2 + n * 8, x + 14, y + 6 + n * 8); g.stroke(); }
-    else if (t === T_FORD) { for (let k = 0; k < 3; k++) { g.beginPath(); g.arc(x + 4 + k * 6, y + 10 + (k & 1) * 3, 2.2, 0, TAU); g.fill(); } }
-    g.globalAlpha = 1;
+  const S = 2, tc = G.amph ? 'ter' : G.civ; if (!bg) bg = document.createElement('canvas'); bg.width = W * S; bg.height = H * S; const g = bg.getContext('2d'); g.setTransform(S, 0, 0, S, 0, 0);
+  g.fillStyle = PAL.p; g.fillRect(0, 0, W, H);
+  const su = art(tc + '.terreno.suelo'); if (su) { const pt = g.createPattern(su, 'repeat'); if (pt) { if (pt.setTransform) pt.setTransform(new DOMMatrix().scale(.4)); g.globalAlpha = .42; g.fillStyle = pt; g.fillRect(0, 0, W, H); g.globalAlpha = 1; } }
+  // manchas suaves de luz y sombra (sin grilla)
+  for (let i = 0; i < COLS * ROWS; i += 3) { const n = nz(i), x = (i % COLS) * TS + n * TS, y = ((i / COLS) | 0) * TS + nz(i + 7) * TS, r = TS * (1.2 + n * 1.6); const rg = g.createRadialGradient(x, y, 1, x, y, r); rg.addColorStop(0, n > .5 ? 'rgba(255,255,235,.10)' : 'rgba(0,0,0,.07)'); rg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(x - r, y - r, 2 * r, 2 * r); }
+  // colinas y obstáculos: unión de círculos por casilla (bordes redondeados), con sombra
+  const disc = (t, col, rr, dy) => { g.fillStyle = col; g.beginPath(); for (let i = 0; i < COLS * ROWS; i++) if (+G.terr[i] === t) { const x = (i % COLS) * TS + TS / 2, y = ((i / COLS) | 0) * TS + TS / 2 + (dy || 0); g.moveTo(x + TS * rr, y); g.arc(x, y, TS * rr, 0, TAU); } g.fill(); };
+  g.filter = 'blur(3px)';   // bordes suaves (donde el navegador no lo soporta, quedan círculos nítidos)
+  g.globalAlpha = .25; disc(T_HILL, '#000', .95, 3); g.globalAlpha = 1; disc(T_HILL, PAL.h, .9); g.globalAlpha = .35; disc(T_HILL, shade(PAL.h, .25), .55, -3); g.globalAlpha = 1;
+  g.globalAlpha = .8; disc(T_FOR, PAL.f, .88); g.globalAlpha = 1; g.filter = 'none';
+  // río como curva suave, con orilla; vados como bancos de arena con piedras
+  const rl = riverLine();
+  if (rl.length > 1) {
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    g.strokeStyle = PAL.fo; g.lineWidth = 2 * TS + 10; smoothPath(g, rl); g.stroke();
+    g.strokeStyle = PAL.r; g.lineWidth = 2 * TS - 2; smoothPath(g, rl); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = TS * .5; smoothPath(g, rl); g.stroke();
+    for (const [x, y, w, ford] of rl) if (ford) { g.fillStyle = PAL.fo; g.beginPath(); g.ellipse(x, y, w / 2 + 8, TS * .62, 0, 0, TAU); g.fill(); g.fillStyle = shade(PAL.fo, -.35); for (let k = -2; k <= 2; k++) { g.beginPath(); g.ellipse(x + k * w / 5, y + (k & 1 ? 3 : -2), 3.2, 2.4, 0, 0, TAU); g.fill(); } }
   }
+  // decorado pintado (art/era3) o procedural: obstáculos en bosque, vetas en colinas, arbustos sueltos en el llano; de arriba abajo
+  for (let i = 0; i < COLS * ROWS; i++) {
+    const t = +G.terr[i], x = (i % COLS) * TS + TS / 2 + (nz(i + 3) - .5) * 8, y = ((i / COLS) | 0) * TS + TS / 2 + (nz(i + 5) - .5) * 8, n = nz(i * 3 + 1);
+    if (t === T_FOR && n > .2) { const h = TS * (1.45 + nz(i) * .5); if (!artAt(g, tc + '.terreno.obstaculo', x, y + TS * .45, h, nz(i + 9) > .5)) { g.fillStyle = shade(PAL.f, -.45); g.fillRect(x - 1.5, y, 3, 7); const rg = g.createRadialGradient(x - 3, y - 7, 1, x, y - 4, 9); rg.addColorStop(0, shade(PAL.f, .25)); rg.addColorStop(1, shade(PAL.f, -.25)); g.fillStyle = rg; g.beginPath(); g.arc(x, y - 4, 8, 0, TAU); g.fill(); g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 1; g.stroke(); } }
+    else if (t === T_HILL && n > .78) { if (!artAt(g, tc + '.terreno.veta', x, y + TS * .4, TS * 1.2)) { g.strokeStyle = 'rgba(0,0,0,.3)'; g.lineWidth = 1.2; g.beginPath(); g.arc(x, y + 6, 8, Math.PI, 0); g.stroke(); } }
+    else if (t === T_PLAIN && nz(i * 11 + 2) > .965) artAt(g, tc + '.terreno.arbusto', x, y + TS * .3, TS * 1.1);
+  }
+  if (PAL.dark) { g.fillStyle = 'rgba(10,8,4,.28)'; g.fillRect(0, 0, W, H); }
   bgDirty = false;
 }
 function sx(x) { return x * cam.s + cam.ox; } function sy(y) { return y * cam.s + cam.oy; }
+const cityLvl = c => { const b = BORD.reduce((s, k) => s + c.bld[k], 0); return b >= 12 ? 3 : b >= 5 ? 2 : 1; };
+function label(g, t, x, y, col) { g.font = '600 12px IBM Plex Sans,system-ui,sans-serif'; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,.7)'; g.strokeText(t, x, y); g.fillStyle = col || '#fff'; g.fillText(t, x, y); }
 function drawCity(c, g) {
-  const x = sx(c.x), y = sy(c.y), s = cam.s, dead = !c.alive; g.save(); g.globalAlpha = dead ? .45 : 1;
-  if (c.bld.muralla > 0) { g.strokeStyle = PAL.st; g.lineWidth = 2 + c.bld.muralla; g.beginPath(); g.arc(x, y, 24 * s, 0, TAU); g.stroke(); }
-  g.fillStyle = c.col; g.strokeStyle = PAL.st; g.lineWidth = 2; g.beginPath(); g.rect(x - 13 * s, y - 9 * s, 26 * s, 18 * s); g.fill(); g.stroke();
-  g.fillStyle = PAL.ink === '#efe8d6' ? '#2a2418' : '#fff8e0'; g.beginPath(); g.rect(x - 5 * s, y - 15 * s, 10 * s, 12 * s); g.fill(); g.stroke();
-  g.beginPath(); g.moveTo(x, y - 15 * s); g.lineTo(x, y - 26 * s); g.lineTo(x + 9 * s, y - 22 * s); g.lineTo(x, y - 19 * s); g.fillStyle = c.col; g.fill(); g.stroke();
-  if (dead) { g.strokeStyle = '#c9406f'; g.lineWidth = 3; g.beginPath(); g.moveTo(x - 14 * s, y - 10 * s); g.lineTo(x + 14 * s, y + 10 * s); g.moveTo(x + 14 * s, y - 10 * s); g.lineTo(x - 14 * s, y + 10 * s); g.stroke(); }
-  g.globalAlpha = 1; g.font = '600 12px IBM Plex Sans,system-ui,sans-serif'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,.7)'; g.lineWidth = 3; g.strokeText(nameOf(c), x, y + 26 * s + 8); g.fillText(nameOf(c), x, y + 26 * s + 8); g.restore();
+  const x = sx(c.x), y = sy(c.y), s = cam.s, dead = !c.alive, lvl = cityLvl(c), heart = art(c.cv + '.corazon.' + lvl); g.save(); g.globalAlpha = dead ? .45 : 1;
+  if (heart) {
+    g.fillStyle = c.col; g.globalAlpha *= .28; g.beginPath(); g.ellipse(x, y + 8 * s, 34 * s, 16 * s, 0, 0, TAU); g.fill(); g.globalAlpha = dead ? .45 : 1;
+    if (c.bld.muralla > 0) { g.strokeStyle = shade(c.col, -.45); g.lineWidth = (1.5 + c.bld.muralla) * s; g.setLineDash([6 * s, 3 * s]); g.beginPath(); g.ellipse(x, y + 4 * s, 38 * s, 24 * s, 0, 0, TAU); g.stroke(); g.setLineDash([]); }
+    const ks = BORD.filter(k => c.bld[k] > 0 && k !== 'muralla'), items = ks.map((k, i) => { const an = Math.PI * (1.1 + 1.0 * (i + .5) / Math.max(1, ks.length)); return { id: c.cv + '.' + BART[k] + '.' + c.bld[k], x: x + Math.cos(an) * 36 * s, y: y + 6 * s + Math.sin(an) * 20 * s, h: 26 * s }; });
+    if (c.human && G.lin && G.lin.era3 && G.lin.era3.maravilla) items.push({ id: c.cv + '.maravilla.1', x: x - 46 * s, y: y + 16 * s, h: 40 * s });
+    items.push({ id: c.cv + '.corazon.' + lvl, x, y: y + 14 * s, h: (44 + 8 * lvl) * s, main: 1 });
+    items.sort((a, b) => a.y - b.y).forEach(it => artAt(g, it.id, it.x, it.y, it.h));
+  } else {
+    if (c.bld.muralla > 0) { g.strokeStyle = PAL.st; g.lineWidth = 2 + c.bld.muralla; g.beginPath(); g.arc(x, y, 24 * s, 0, TAU); g.stroke(); }
+    g.fillStyle = c.col; g.strokeStyle = PAL.st; g.lineWidth = 2; g.beginPath(); g.rect(x - 13 * s, y - 9 * s, 26 * s, 18 * s); g.fill(); g.stroke();
+    g.fillStyle = PAL.dark ? '#2a2418' : '#fff8e0'; g.beginPath(); g.rect(x - 5 * s, y - 15 * s, 10 * s, 12 * s); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(x, y - 15 * s); g.lineTo(x, y - 26 * s); g.lineTo(x + 9 * s, y - 22 * s); g.lineTo(x, y - 19 * s); g.fillStyle = c.col; g.fill(); g.stroke();
+  }
+  if (dead && !c.vassal) artAt(g, 'gen.dano.escombros', x + 10 * s, y + 18 * s, 34 * s);   // capital tomada: escombros pintados (si están)
+  if (dead) { g.globalAlpha = .9; g.strokeStyle = c.vassal ? '#e8c21b' : '#c9406f'; g.lineWidth = 3; g.beginPath(); if (c.vassal) { g.arc(x, y - 2 * s, 16 * s, 0, TAU); } else { g.moveTo(x - 14 * s, y - 10 * s); g.lineTo(x + 14 * s, y + 10 * s); g.moveTo(x + 14 * s, y - 10 * s); g.lineTo(x - 14 * s, y + 10 * s); } g.stroke(); }
+  g.globalAlpha = 1; const ly = y + 26 * s + 10; label(g, nameOf(c) + (c.vassal ? ' (tributaria)' : ''), x, ly, '#fff');
+  if (c.alive && c.sg < 100) { const w = 56, bx = x - w / 2, by = ly + 5; g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(bx - 1, by - 1, w + 2, 8); g.fillStyle = c.sg > 50 ? '#e8c21b' : '#c9406f'; g.fillRect(bx, by, w * c.sg / 100, 6); label(g, 'asedio ' + Math.round(c.sg), x, by + 19, '#ffd0d0'); }
+  g.restore();
 }
+function armyFace(a) {
+  let f = FACE.get(a.id) || (a.team === 0 ? 1 : -1);
+  if (a.path.length) { const dx = a.path[0][0] - a.x; if (Math.abs(dx) > .5) f = dx > 0 ? 1 : -1; }
+  else if (a.bt) { const b = G.battles.find(q => q.id === a.bt), o = b && armyById(b.a === a.id ? b.d : b.a); if (o && Math.abs(o.x - a.x) > .5) f = o.x > a.x ? 1 : -1; }
+  FACE.set(a.id, f); return f;
+}
+function miniPie(g, n, px, py, r) { const t = tot(n); let ang = -Math.PI / 2; for (const k of K) { const f = t ? n[k] / t : 0; if (f <= 0) continue; g.fillStyle = UN[k].col; g.beginPath(); g.moveTo(px, py); g.arc(px, py, r, ang, ang + f * TAU); g.closePath(); g.fill(); ang += f * TAU; } g.strokeStyle = 'rgba(0,0,0,.6)'; g.lineWidth = 1; g.beginPath(); g.arc(px, py, r, 0, TAU); g.stroke(); }
 function drawArmy(a, g, sel) {
-  const c = civ(a.team), x = sx(a.x), y = sy(a.y), n = tot(a.n), r = (7 + Math.min(10, Math.sqrt(n) * 1.5)) * Math.max(.8, cam.s * .9); if (n < .5 && !a.home) return;
-  g.save(); g.globalAlpha = concealed(a) ? .55 : 1; if (a.home) { g.translate(0, 0); }
-  const ox = a.home ? 20 * cam.s : 0, oy = a.home ? 14 * cam.s : 0, px = x + ox, py = y + oy;
-  let ang = -Math.PI / 2; for (const k of K) { const f = n ? a.n[k] / n : 0; if (f <= 0) continue; g.fillStyle = UN[k].col; g.beginPath(); g.moveTo(px, py); g.arc(px, py, r, ang, ang + f * TAU); g.closePath(); g.fill(); ang += f * TAU; }
-  g.strokeStyle = c.col; g.lineWidth = 3.5; g.beginPath(); g.arc(px, py, r, 0, TAU); g.stroke(); g.strokeStyle = PAL.st; g.lineWidth = 1; g.beginPath(); g.arc(px, py, r + 2, 0, TAU); g.stroke();
+  const c = civ(a.team), n = tot(a.n); if (n < .5 && !a.home) return;
+  const ox = a.home ? 20 * cam.s : 0, oy = a.home ? 14 * cam.s : 0, px = sx(a.x) + ox, py = sy(a.y) + oy + (a.home ? 6 * cam.s : 0), im = art('hab.' + c.sp);
+  g.save(); g.globalAlpha = concealed(a) ? .55 : 1;
+  let top, r;
+  if (im) {
+    const h = (26 + Math.min(22, Math.sqrt(n) * 2.4)) * Math.max(.85, cam.s * .95), k = n < 12 ? 1 : n < 40 ? 2 : 3, f = armyFace(a) * ((window.ERA3_FACE || {})[c.sp] || 1);
+    const bob = a.path.length && !a.bt ? Math.abs(Math.sin(performance.now() / 110 + a.id)) * h * .06 : 0;   // cosmético (reloj del navegador, nunca en la simulación)
+    const base = g.globalAlpha; g.globalAlpha = base * .45; g.fillStyle = c.col; g.beginPath(); g.ellipse(px, py + 2, h * (k > 1 ? .78 : .5), h * .2, 0, 0, TAU); g.fill();
+    g.globalAlpha = base; g.strokeStyle = c.col; g.lineWidth = 2.5; g.stroke();
+    const offs = k === 1 ? [[0, 0, 1]] : k === 2 ? [[.3, -.08, .85], [-.26, .04, 1]] : [[0, -.14, .8], [.38, -.02, .88], [-.36, .04, 1]];
+    for (const [dx, dy, sc] of offs) { const hh = h * sc; g.save(); g.translate(px + dx * h, py + dy * h - bob); g.scale(f, 1); g.drawImage(im, -hh / 2, -hh * .94, hh, hh); g.restore(); }
+    top = py - h - 4; r = h * .55;
+  } else {
+    r = (7 + Math.min(10, Math.sqrt(n) * 1.5)) * Math.max(.8, cam.s * .9); miniPie(g, a.n, px, py, r);
+    g.strokeStyle = c.col; g.lineWidth = 3.5; g.beginPath(); g.arc(px, py, r, 0, TAU); g.stroke(); g.strokeStyle = PAL.st; g.lineWidth = 1; g.beginPath(); g.arc(px, py, r + 2, 0, TAU); g.stroke();
+    top = py - r - 4;
+  }
   if (a.stance === 'ambush') { g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.moveTo(px - 5, py + 3); g.lineTo(px, py - 4); g.lineTo(px + 5, py + 3); g.stroke(); }
-  if (sel) { g.setLineDash([5, 4]); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.arc(px, py, r + 6, 0, TAU); g.stroke(); g.setLineDash([]); }
-  g.font = '700 12px IBM Plex Sans,system-ui,sans-serif'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,.75)'; g.lineWidth = 3; g.strokeText(Math.round(n), px, py - r - 4); g.fillText(Math.round(n), px, py - r - 4);
+  if (sel) { g.setLineDash([5, 4]); g.strokeStyle = '#fff'; g.lineWidth = 2; g.beginPath(); g.ellipse(px, py - (im ? r * .6 : 0), r + 6, (im ? r * .9 : r) + 6, 0, 0, TAU); g.stroke(); g.setLineDash([]); }
+  g.font = '700 12px IBM Plex Sans,system-ui,sans-serif'; const t = String(Math.round(n)), tw = g.measureText(t).width;
+  if (im) miniPie(g, a.n, px - tw / 2 - 8, top - 4, 5);
+  g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,.75)'; g.lineWidth = 3; g.strokeText(t, px, top); g.fillText(t, px, top);
   g.restore();
 }
 function render() {
-  if (!G) { return; } if (bgDirty || !bg) buildBg(); const g = ctx; g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = PAL.p || '#ccc'; g.fillRect(0, 0, cw, ch);
+  if (!G) { return; } pal(); if (bgDirty || !bg) buildBg(); const g = ctx; g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = PAL.p || '#ccc'; g.fillRect(0, 0, cw, ch);
   g.imageSmoothingEnabled = true; g.drawImage(bg, cam.ox, cam.oy, W * cam.s, H * cam.s);
-  if (G.flood > 0) { g.fillStyle = 'rgba(60,120,200,.35)'; for (let i = 0; i < COLS * ROWS; i++) if (+G.terr[i] === T_FORD) g.fillRect(sx((i % COLS) * TS), sy(((i / COLS) | 0) * TS), TS * cam.s, TS * cam.s); }
+  if (G.flood > 0) { g.fillStyle = 'rgba(60,120,200,.55)'; for (const [x, y, w, ford] of riverLine()) if (ford) { g.beginPath(); g.ellipse(sx(x), sy(y), (w / 2 + 9) * cam.s, TS * .66 * cam.s, 0, 0, TAU); g.fill(); } }
   for (const c of G.civs) drawCity(c, g);
   const sa = armyById(selId); if (sa && sa.path.length) { g.setLineDash([4, 4]); g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2; g.beginPath(); g.moveTo(sx(sa.x), sy(sa.y)); for (const p of sa.path) g.lineTo(sx(p[0]), sy(p[1])); g.stroke(); g.setLineDash([]); }
-  for (const a of G.armies) if (visible(a)) drawArmy(a, g, a.id === selId);
+  const vis = G.armies.filter(visible).sort((a, b) => (a.y + (a.home ? 14 : 0)) - (b.y + (b.home ? 14 : 0)));
+  for (const a of vis) drawArmy(a, g, a.id === selId);
   for (const b of G.battles) { const x = sx(b.x), y = sy(b.y), t = performance.now() / 250; g.save(); g.strokeStyle = '#c9406f'; g.lineWidth = 3; for (let k = 0; k < 2; k++) { const an = t + k * Math.PI / 2 + .6; g.beginPath(); g.moveTo(x - Math.cos(an) * 14, y - Math.sin(an) * 14); g.lineTo(x + Math.cos(an) * 14, y + Math.sin(an) * 14); g.stroke(); } g.font = '700 12px IBM Plex Sans,sans-serif'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.strokeStyle = 'rgba(0,0,0,.75)'; g.lineWidth = 3; const tx = Math.round(b.A) + ' vs ' + Math.round(b.B); g.strokeText(tx, x, y + 28); g.fillText(tx, x, y + 28); g.restore(); }
   // niebla: solo cubre lo que no ves (mapa de 1 px por casilla, escalado con suavizado)
   if (!fogC) { fogC = document.createElement('canvas'); fogC.width = COLS; fogC.height = ROWS; fogX = fogC.getContext('2d'); fogI = fogX.createImageData(COLS, ROWS); }
-  const vis = [[civ(0).x, civ(0).y, 160]]; for (const a of G.armies) if (a.team === 0) vis.push([a.x, a.y, 120]);
-  for (const c of G.civs) if (c.id && reveals(0, c.id)) vis.push([c.x, c.y, 200]);
-  for (let i = 0; i < COLS * ROWS; i++) { const px = (i % COLS) * TS + TS / 2, py = ((i / COLS) | 0) * TS + TS / 2; let v = false; for (const q of vis) if (hyp(px - q[0], py - q[1]) < q[2]) { v = true; break; } const o = i * 4; fogI.data[o] = 10; fogI.data[o + 1] = 8; fogI.data[o + 2] = 4; fogI.data[o + 3] = v ? 0 : 95; }
+  const vz = [[civ(0).x, civ(0).y, 160]]; for (const a of G.armies) if (a.team === 0) vz.push([a.x, a.y, 120]);
+  for (const c of G.civs) if (c.id && reveals(0, c.id)) vz.push([c.x, c.y, 200]);
+  for (let i = 0; i < COLS * ROWS; i++) { const px = (i % COLS) * TS + TS / 2, py = ((i / COLS) | 0) * TS + TS / 2; let v = false; for (const q of vz) if (hyp(px - q[0], py - q[1]) < q[2]) { v = true; break; } const o = i * 4; fogI.data[o] = 10; fogI.data[o + 1] = 8; fogI.data[o + 2] = 4; fogI.data[o + 3] = v ? 0 : 95; }
   fogX.putImageData(fogI, 0, 0); g.imageSmoothingEnabled = true; g.drawImage(fogC, cam.ox, cam.oy, W * cam.s, H * cam.s);
 }
 
@@ -847,14 +1078,15 @@ $('bPause').addEventListener('click', () => { if (G && started) { G.paused = !G.
 $('bSpd').addEventListener('click', () => { spdI = spdI === 1 ? 2 : spdI === 2 ? 4 : 1; $('bSpd').textContent = '×' + spdI; });
 $('diffSeg').addEventListener('click', e => { const b = e.target.closest('button[data-d]'); if (!b) return; diffI = +b.dataset.d; [...$('diffSeg').children].forEach(x => x.classList.toggle('on', x === b)); });
 $('startBtn').addEventListener('click', startNew);
+$('spPick').addEventListener('click', e => { const b = e.target.closest('button[data-sp]'); if (!b) return; pickSp = b.dataset.sp; renderLin(); });
 $('contBtn').addEventListener('click', () => { const d = readSave(); if (d) restoreGame(d); });
 addEventListener('resize', () => { layout(); });
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change', pal);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { palKey = ''; pal(); });
 let last = performance.now(), acc = 0, hudN = 0;
 function loop(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   if (started && G && !G.paused && !G.modal && !G.over) { acc += dt * spdI; let k = 0; while (acc >= FIX && k++ < 40) { update(FIX); acc -= FIX; if (G.over) break; } if (!G.over && G.t - lastSaveT >= 20) saveGame(false); }
-  if ((hudN++ & 7) === 0) { hud(); if ((hudN & 63) === 1) pal(); }
+  if ((hudN++ & 7) === 0) hud();
   render(); requestAnimationFrame(loop);
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) saveGame(false); });
@@ -862,7 +1094,7 @@ addEventListener('pagehide', () => saveGame(false));
 // partida de fondo para que el mapa se vea detrás del menú
 diffI = 0; newGame('portada'); started = false;
 refreshCont(); renderLin(); pal(); layout(); centerCam(); requestAnimationFrame(loop);
-window.__e4 = { get G() { return G; }, get cam() { return cam; }, step(dt) { const n = Math.max(1, Math.round((dt || FIX) / FIX)); for (let i = 0; i < n && G && !G.over; i++) update(FIX); }, setStarted(v) { started = !!v; }, setDiff(i) { diffI = i; DF = DIFFS[i]; }, seedRng, hashStr, snapshot, stateHash, saveGame, readSave, restoreGame, clearSave, readLineage, linBonus, newGame, update, recruit, build, research, spy, setWorker, formArmy, splitArmy, orderMove, setAmbush, retreat, resolveDlg, findPath, lanch, coef, mkArmy, nearestTerr, terrAt, compStr, garr, armyById, tot, units, wkTotal, popCap, rates, hud, render, win, lose, select(id) { selId = id; }, UN, MU, BLD, DOC, EVS, DIFFS };
+window.__e4 = { get G() { return G; }, get cam() { return cam; }, step(dt) { const n = Math.max(1, Math.round((dt || FIX) / FIX)); for (let i = 0; i < n && G && !G.over; i++) update(FIX); }, setStarted(v) { started = !!v; }, setDiff(i) { diffI = i; DF = DIFFS[i]; }, seedRng, hashStr, snapshot, stateHash, saveGame, readSave, restoreGame, clearSave, readLineage, linBonus, linCiv, migrate, newGame, armyCap, besiegers, siege, surrenders, strengthOf, get pickSp() { return pickSp; }, set pickSp(v) { pickSp = v; }, CV, SPECIES, CIV_KEYS, unitName, bldName, RN, art, get NOART() { return NOART; }, update, recruit, build, research, spy, setWorker, formArmy, splitArmy, orderMove, setAmbush, retreat, resolveDlg, findPath, lanch, coef, mkArmy, nearestTerr, terrAt, compStr, garr, armyById, tot, units, wkTotal, popCap, rates, hud, render, win, lose, select(id) { selId = id; }, UN, MU, BLD, DOC, EVS, DIFFS };
 /* === AUDIO ===
    Bloque MÍNIMO de audio de la Era 4 (eras/audio-lofi.js). Esta era no tiene Bus: el módulo LEE G cada 250 ms (nunca lo modifica ni usa R()) y suena por cambios:
    combate (hay un choque en el que participa tu civilización) > amenaza (ejército rival cerca de tus ejércitos o de tu ciudad) > calma; tecnología, edificio, espía,

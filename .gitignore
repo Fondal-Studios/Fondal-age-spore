@@ -3,3 +3,7 @@ node_modules/
 server/node_modules/
 tests/.balance-out/
 .claude/worktrees/
+
+# Originales de 384 px del motor de Anakin (se regeneran; solo se sube el recorte final)
+art/era3/_raw/
+tools/__pycache__/

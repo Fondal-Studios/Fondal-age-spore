@@ -1,10 +1,14 @@
 {
   "name": "fondal-age-spore",
-  "version": "0.2.0",
+  "version": "0.6.0",
   "private": true,
-  "description": "Pruebas del juego (Era 1: determinismo, acciones, sonido, online) y del relay",
+  "description": "Fondal Age Spore: pruebas de las seis eras, del modo en línea y del relay",
   "scripts": {
-    "test": "node tests/determinismo.js && node tests/acciones.js && node tests/sonido.js && node tests/online.js && cd server && node test.js",
+    "test": "node tests/determinismo.js && node tests/acciones.js && node tests/era1-calma.js && node tests/sonido.js && node tests/online.js && cd server && node test.js",
+    "test:era56": "NODE_PATH=$(npm root -g) node tests/era56.js && NODE_PATH=$(npm root -g) node tests/online56.js && NODE_PATH=$(npm root -g) node tests/recorrido.js",
+    "balance:era5": "NODE_PATH=$(npm root -g) node tests/era5-balance.js 0,1,2 10",
+    "balance:era6": "NODE_PATH=$(npm root -g) node tests/era6-balance.js 0,1,2 8",
+    "relay": "cd server && npm start",
     "test:era2": "NODE_PATH=$(npm root -g) node tests/era2-guardado.js && NODE_PATH=$(npm root -g) node tests/era2-calidad-sim.js && NODE_PATH=$(npm root -g) node tests/era2-ordenes.js && NODE_PATH=$(npm root -g) node tests/era2-alarma.js 48",
     "test:era2:balance": "NODE_PATH=$(npm root -g) node tests/era2-perfiles.js balance --n 2 --diffs 0,1,2 --profiles all --maxT 700",
     "test:era3": "NODE_PATH=$(npm root -g) node tests/era3-guardado.js && NODE_PATH=$(npm root -g) node tests/era3-ciclo.js && NODE_PATH=$(npm root -g) node tests/era3-civs.js && NODE_PATH=$(npm root -g) node tests/era3-ui.js && NODE_PATH=$(npm root -g) node tests/era3-arte.js",

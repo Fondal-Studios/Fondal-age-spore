@@ -1,0 +1,12 @@
+{
+  "name": "Fondal Age Spore: de la célula a las estrellas",
+  "short_name": "Fondal",
+  "description": "Estrategia evolutiva en seis eras, de la célula a las estrellas.",
+  "lang": "es",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#100d1a",
+  "theme_color": "#14101f",
+  "icons": [{ "src": "art/icono.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

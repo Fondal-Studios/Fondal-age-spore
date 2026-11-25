@@ -1,0 +1,12 @@
+# Render (render.com): «New → Blueprint» con este repositorio levanta el relay del modo en línea.
+# El plan gratuito se duerme sin uso (la primera conexión tarda ~1 minuto); para partidas a cualquier hora conviene el plan pago más chico.
+services:
+  - type: web
+    name: fondal-relay
+    runtime: node
+    rootDir: server
+    buildCommand: npm ci --omit=dev
+    startCommand: node relay.js
+    healthCheckPath: /
+    plan: free
+    autoDeploy: true

@@ -74,3 +74,12 @@ Recomendación: empezar por 1 y 5 (validan interés con poco costo y sin tocar e
 3. Implementar la Fase 0 del relay y la prueba de carga.
 4. Abrir la alfa cerrada con Pack Fundador.
 5. Con los datos de la alfa, decidir precios y orden de la hoja de ruta.
+
+## 8. Ciclo 6: qué quedó implementado
+- **Pase Fundador** cosmético: `eras/fondal-plus.js` (estado en `localStorage`, nunca en la simulación), `apoyar.html` (niveles Gratis / Pase Fundador / Modo aula, canje de código, elección de estela), `tools/codigos-fundador.js` (genera códigos para cargar como claves externas en itch.io o Ko-fi). La tienda se habilita completando `STORE_URL` en `apoyar.html`.
+- La comprobación del código es local (dígito de control): **sistema de honor**. Para que no se pueda fabricar un código: guardar en el relay una lista de *hashes* de códigos válidos y exponer `POST /canje` que devuelva un certificado firmado; el juego guarda el certificado en vez del código.
+- Infraestructura para el plan 3 («salas privadas»): el relay ya tiene salas por era, reconexión y está listo para Render, Fly.io o Docker.
+- Portada instalable (PWA) con «seguir donde quedaste»: mejora la retención, que es lo que se va a medir en la alfa.
+
+## 9. Riesgo de nombre (antes de cobrar)
+«Spore» es marca registrada de Electronic Arts y «Age» remite a *Age of Empires*. Antes de vender, conviene un nombre comercial propio (por ejemplo «Fondal: de la célula a las estrellas») y una consulta con alguien que sepa de marcas. Los textos dentro del juego no nombran juegos de terceros.

@@ -6,7 +6,7 @@
 // no con el recuento final, que depende del combate. Todas las esperas son por condición con timeout generoso. Uso: (cd server && npm install) && NODE_PATH=$(npm root -g) node tests/online.js
 const { chromium } = require('playwright'); const assert = require('assert'); const path = require('path');
 (async () => {
-  const { createRelay } = await import(path.resolve(__dirname, '../server/relay.js'));
+  const { createRelay } = await import(require('url').pathToFileURL(path.resolve(__dirname, '../server/relay.js')).href);
   const PORT = +process.env.ONLINE_PORT || 18788, relay = createRelay({ port: PORT, host: '127.0.0.1', turnMs: 50 }), url = 'ws://127.0.0.1:' + PORT;
   const b = await chromium.launch(); const errs = [];
   const delivered = { A: 0, B: 0 }; const SLOT = {}; // órdenes 'divide' que el relay entregó por slot (evidencia independiente del cliente)

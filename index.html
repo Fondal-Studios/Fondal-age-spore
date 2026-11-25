@@ -1,48 +1,128 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fondal Age Spore</title>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fondal Age Spore · de la célula a las estrellas</title>
+<meta name="description" content="Juego de estrategia evolutiva gratis en el navegador: seis eras, de la célula a una civilización que usa toda la luz de una estrella. En español, con juego en línea.">
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#14101f"><link rel="icon" href="art/icono.svg" type="image/svg+xml">
+<meta property="og:title" content="Fondal Age Spore"><meta property="og:description" content="De la célula a las estrellas: seis eras de estrategia evolutiva en el navegador."><meta property="og:image" content="art/portada/era6.jpg">
 <style>
-:root{--bg:#0e4a55;--ink:#eafcff;--card:#ffffff18;--card2:#ffffff2b;--acc:#7fe7d8}
+:root{--bg:#100d1a;--ink:#f1eef8;--ink2:#b9b2cf;--card:#1c1830;--line:#ffffff22;--acc:#b08cff;--acc2:#ffcf6a}
 *{box-sizing:border-box}
-body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:640px;margin:0 auto;padding:24px 16px;background:var(--bg);color:var(--ink);line-height:1.45}
-h1{margin:0 0 4px;font-size:30px}
-p{margin:6px 0 16px}
-.era{display:block;margin:12px 0;padding:16px;border-radius:14px;background:var(--card);color:#fff;text-decoration:none;font-weight:700;min-height:44px}
-.era:hover,.era:focus-visible{background:var(--card2);outline:2px solid var(--acc)}
-.era small{display:block;font-weight:400;opacity:.85}
-.cont{display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:#0b3a43;border:1px solid #7fe7d855;font-weight:400;font-size:14px}
-.cont b{color:var(--acc)}
-.lin{margin:18px 0;padding:14px;border-radius:14px;background:#0b3a43;border:1px solid #7fe7d855;display:none}
-.lin h2{margin:0 0 6px;font-size:16px;color:var(--acc)}
-.lin p{margin:2px 0;font-size:14px}
-footer{margin-top:22px;font-size:13px;opacity:.8}
-a.plain{display:inline;margin:0;padding:0;background:none;font-weight:400;text-decoration:underline}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);line-height:1.45}
+a{color:var(--acc)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+header{position:relative;overflow:hidden;padding:56px 0 34px;background:radial-gradient(1200px 500px at 70% -10%,#4b2d8a 0,transparent 60%),radial-gradient(800px 400px at 0% 0%,#123c5a 0,transparent 60%)}
+header h1{font-size:clamp(34px,7vw,64px);line-height:1;margin:0 0 10px;letter-spacing:-.02em}
+header p.tag{font-size:clamp(17px,2.4vw,22px);color:var(--ink2);margin:0 0 22px;max-width:640px}
+.cta{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;flex-direction:column;justify-content:center;min-height:52px;padding:10px 18px;border-radius:12px;text-decoration:none;font-weight:800;font-size:16px;border:1px solid var(--line);color:var(--ink);background:#ffffff10}
+.btn small{font-weight:400;font-size:12.5px;color:var(--ink2)}
+.btn.main{background:linear-gradient(90deg,#8a5cf0,#b08cff);color:#160d2a;border-color:transparent}.btn.main small{color:#2a1a4a}
+.btn:focus-visible,.era:focus-visible{outline:3px solid var(--acc2);outline-offset:2px}
+h2{font-size:24px;margin:34px 0 12px}
+.eras{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.era{position:relative;display:flex;flex-direction:column;justify-content:flex-end;min-height:190px;border-radius:16px;overflow:hidden;text-decoration:none;color:#fff;border:1px solid var(--line);background:#222 center/cover no-repeat}
+.era::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#0000 20%,#000c 85%)}
+.era>*{position:relative}
+.era .in{padding:14px}
+.era b{display:block;font-size:20px}
+.era span{display:block;font-size:13.5px;color:#e8e4f2}
+.era .tags{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap}
+.pill{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:#000a;border:1px solid #fff3}
+.pill.ok{background:#1f6b3acc}.pill.net{background:#3b2a7acc}.pill.sv{background:#7a4a1acc}
+.era:hover{transform:translateY(-2px);transition:transform .15s}
+.box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.tl{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
+.tl div{border-top:4px solid #ffffff22;padding-top:8px;font-size:13px;color:var(--ink2)}
+.tl div.on{border-color:var(--acc)}.tl div b{display:block;color:var(--ink);font-size:13.5px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.plus{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:linear-gradient(90deg,#b08cff,#ffcf6a);color:#1a1226;font-weight:800;margin-left:6px;vertical-align:middle}
+ul.cmp{margin:6px 0 0;padding-left:18px}ul.cmp li{margin:4px 0;color:var(--ink2)}ul.cmp b{color:var(--ink)}
+footer{margin:40px 0 30px;color:var(--ink2);font-size:13px}
+#inst{display:none}
+@media (max-width:720px){.tl{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}header{padding-top:32px}}
+@media (prefers-reduced-motion:reduce){.era:hover{transform:none}}
 </style></head><body>
-<h1>Fondal Age Spore</h1>
-<p>Juego de estrategia evolutiva: de la célula a la civilización.</p>
-<div class="lin" id="lin" role="status"><h2>Tu linaje</h2><p id="linTxt"></p></div>
-<a class="era" href="eras/era1-celula.html">Era 1: Célula<small>orgánulos, mutaciones, habilidades, decisiones evolutivas y online para hasta 8</small><span class="cont" id="c1"></span></a>
-<a class="era" href="eras/era2-animales.html">Era 2: Animales<small>ecosistemas del planeta, rasgos, nidos y habilidades</small><span class="cont" id="c2"></span></a>
-<a class="era" href="eras/era3-tribus.html">Era 3: Tribus<small>oficios, tecnología y la primera ciudad</small><span class="cont" id="c3"></span></a>
-<a class="era" href="eras/era4-civilizaciones.html">Era 4: Civilizaciones <small>(bosquejo jugable)</small><small>guerra con leyes de Lanchester, terreno, espías y moral</small><span class="cont" id="c4"></span></a>
-<footer>Las partidas se guardan en este navegador. Online: ver <a class="plain" href="MULTIJUGADOR.md">MULTIJUGADOR.md</a>.</footer>
+<header><div class="wrap">
+  <h1>Fondal Age Spore <span id="badge"></span></h1>
+  <p class="tag">De la célula a las estrellas. Seis eras de estrategia, una sola vida que evoluciona: lo que decidís en una era viaja a la siguiente.</p>
+  <div class="cta">
+    <a class="btn main" id="goMain" href="eras/era1-celula.html">Empezar por la Era 1<small>gratis, sin instalar, en español</small></a>
+    <a class="btn" href="#eras">Elegir una era<small>cada una se juega sola también</small></a>
+    <button class="btn" id="inst" type="button">Instalar el juego<small>como app, también sin conexión</small></button>
+  </div>
+</div></header>
+<main class="wrap">
+  <h2 id="eras">Las seis eras</h2>
+  <div class="eras" id="eraList"></div>
+
+  <h2 id="recorrido">Tu recorrido</h2>
+  <div class="box"><p id="recTxt" style="margin:0"></p><div class="tl" id="tl"></div></div>
+
+  <div class="two" style="margin-top:12px">
+    <div class="box"><h3 style="margin-top:0">Jugar en línea</h3>
+      <p style="color:var(--ink2);margin:6px 0">Las Eras <b>1</b> (hasta 8 colonias), <b>5</b> y <b>6</b> (hasta 4 civilizaciones) se juegan con amigos en la misma partida: una persona crea la sala, pasa el código de 4 letras y los lugares vacíos los juegan bots. Hace falta un relay (un servidor chico que reparte las órdenes); está listo para publicar en <code>server/</code>.</p>
+      <a class="btn" href="MULTIJUGADOR.md">Cómo funciona<small>y cómo levantar un relay</small></a></div>
+    <div class="box"><h3 style="margin-top:0">Apoyá el juego <span class="plus">Pase Fundador</span></h3>
+      <p style="color:var(--ink2);margin:6px 0">El juego es y va a seguir siendo gratis. El Pase Fundador suma <b>solo cosas que se ven</b> (estelas de flota, insignia, tu nombre en los créditos) y ayuda a pagar el servidor en línea y el arte nuevo. Nunca se vende ventaja.</p>
+      <a class="btn main" href="apoyar.html">Apoyar y ver qué incluye<small>o canjear tu código</small></a></div>
+  </div>
+
+  <h2>¿En qué se parece a otros juegos?</h2>
+  <div class="box"><ul class="cmp">
+    <li><b>Como un «de la célula al espacio»</b>, pero cada era es un juego de estrategia completo, con su propia mecánica, y tu especie y tus decisiones se heredan.</li>
+    <li><b>Como un juego de estrategia en tiempo real</b> (Eras 3 y 4): construir, recolectar, ejércitos; los choques se calculan con las leyes de Lanchester y se explican en pantalla.</li>
+    <li><b>Como un constructor de industria</b> (Era 5): cadenas de energía, vías férreas, y un clima que es de todos.</li>
+    <li><b>Como un juego de conquista de planetas</b> (Era 6): mandar flotas entre estrellas, con partidas cortas que se juegan bien en el celular y en línea.</li>
+    <li><b>Distinto:</b> base científica real y explicada (Kardashev, Lanchester, calentamiento por CO₂ acumulado, endosimbiosis) y en español rioplatense.</li>
+  </ul></div>
+  <footer>Hecho por Fondal Studios. Las partidas, el linaje y el Pase Fundador se guardan solo en este navegador: el juego no junta datos tuyos. Arte de las eras pintado con el motor de imágenes local de Anakin. <span id="ver"></span></footer>
+</main>
+<script src="eras/fondal-plus.js"></script>
 <script>
 (function () {
-  var NAMES = { pred: 'Depredador', para: 'Parásito', foto: 'Fotosintético', colo: 'Colonial' };
+  var ERAS = [
+    { n: 1, f: 'eras/era1-celula.html', t: 'Era 1 · Célula', d: 'Orgánulos, mutaciones, endosimbiosis y la Gran Oxidación.', save: 'evo_save_v1', net: 1 },
+    { n: 2, f: 'eras/era2-animales.html', t: 'Era 2 · Especie', d: 'Tu especie en cinco biomas: rasgos, capacidades y salir del agua.', save: 'evo_save2_v1' },
+    { n: 3, f: 'eras/era3-tribus.html', t: 'Era 3 · Civilización', d: 'Construí tu ciudad por Edades y fundá tu civilización con una Maravilla.', save: 'evo_save3_v1' },
+    { n: 4, f: 'eras/era4-civilizaciones.html', t: 'Era 4 · Guerra', d: 'Terreno, espías, provisiones y la ley de Lanchester.', save: 'evo_save4_v1' },
+    { n: 5, f: 'eras/era5-industria.html', t: 'Era 5 · Industria', d: 'Vías férreas, energía, un clima compartido y la carrera al espacio.', save: 'evo_save5_v1', net: 1, nuevo: 1 },
+    { n: 6, f: 'eras/era6-estrellas.html', t: 'Era 6 · Estrellas', d: 'Flotas entre estrellas, enjambres de Dyson y el Tipo II de Kardashev.', save: 'evo_save6_v1', net: 1, nuevo: 1 }
+  ];
   function read(k) { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } }
-  function when(ms) { try { return new Date(ms).toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }); } catch (e) { return ''; } }
-  function show(id, d, fallback) {
-    if (!d || !d.at) return; var el = document.getElementById(id);
-    el.style.display = 'block'; el.innerHTML = '<b>Partida guardada</b> · ' + when(d.at) + (d.summary || fallback ? ' · ' + (d.summary || fallback) : '') + ' — tocá para continuar';
-  }
-  var s4 = read('evo_save4_v1'), s1 = read('evo_save_v1'), s2 = read('evo_save2_v1'), s3 = read('evo_save3_v1');
-  var fb1 = '';
-  if (s1 && s1.S) { var T = s1.S.teams && s1.S.teams[0]; fb1 = Math.floor((s1.S.t || 0) / 60) + ' min' + (T ? ' · ' + T.mutCount + ' mutaciones' : ''); }
-  show('c1', s1, fb1); show('c2', s2); show('c3', s3); show('c4', s4);
-  var L = read('evo_lineage');
-  if (L && L.v === 1) {
-    var from = 'la Era ' + (L.from || 1);
-    document.getElementById('lin').style.display = 'block';
-    document.getElementById('linTxt').textContent = 'Viene de ' + from + ': rama ' + (NAMES[L.branch] || 'general') + ', nivel ' + (L.tier || 0) + ', ' + (L.mutCount || 0) + ' mutaciones' + (L.species ? ' · ' + L.species : '') + '. Se hereda en las eras siguientes.';
-  }
+  var L = read('evo_lineage') || {}, from = L.v === 1 ? L.from | 0 : 0;
+  var done = function (n) { return n === 1 ? !!(L.branch || from >= 1) : n === 2 ? !!L.era2 : n === 3 ? !!L.era3 && !L.era3.sinEra3 : !!L['era' + n]; };
+  var html = '';
+  ERAS.forEach(function (e) {
+    var sv = read(e.save), tags = '';
+    if (done(e.n)) tags += '<span class="pill ok">✓ jugada</span>';
+    if (sv && sv.at) tags += '<span class="pill sv">partida guardada</span>';
+    if (e.net) tags += '<span class="pill net">en línea</span>';
+    if (e.nuevo) tags += '<span class="pill">nueva</span>';
+    html += '<a class="era" href="' + e.f + '" style="background-image:url(art/portada/era' + e.n + '.jpg)"><span class="tags">' + tags + '</span><span class="in"><b>' + e.t + '</b><span>' + e.d + (sv && sv.summary ? '<br><i>Guardada: ' + String(sv.summary).replace(/</g, '') + '</i>' : '') + '</span></span></a>';
+  });
+  document.getElementById('eraList').innerHTML = html;
+  // botón principal: seguir donde quedaste
+  var next = from >= 1 && from < 6 ? ERAS[from] : null, saved = ERAS.filter(function (e) { var s = read(e.save); return s && s.at; }).sort(function (a, b) { return read(b.save).at - read(a.save).at; })[0];
+  var go = document.getElementById('goMain');
+  if (saved) { go.href = saved.f; go.innerHTML = 'Seguir tu partida<small>' + saved.t + '</small>'; }
+  else if (next) { go.href = next.f; go.innerHTML = 'Seguir el recorrido<small>tu especie llega a la ' + next.t + '</small>'; }
+  // recorrido
+  var NAMES = { pred: 'Depredadora', para: 'Parásita', foto: 'Fotosintética', colo: 'Colonial' }, CIVN = { ter: 'Terrestres', ins: 'Insectos', acu: 'Acuáticos', ave: 'Aves' };
+  var cells = [
+    ['Célula', L.branch ? 'rama ' + NAMES[L.branch] : null],
+    ['Especie', L.era2 && L.era2.species ? (L.species || L.era2.species) : null],
+    ['Civilización', L.era3 && L.era3.civ && !L.era3.sinEra3 ? CIVN[L.era3.civ] + (L.era3.maravilla ? ' · ' + L.era3.maravilla : '') : null],
+    ['Guerra', L.era4 ? (L.era4.capitales ? L.era4.capitales + ' capitales' : 'ganada') : null],
+    ['Industria', L.era5 ? 'Kardashev ' + String(L.era5.K).replace('.', ',') + ' · +' + String(L.era5.temp).replace('.', ',') + ' °C' : null],
+    ['Estrellas', L.era6 ? (L.era6.como === 'tipo2' ? 'Tipo II' : 'conquista') : null]
+  ];
+  document.getElementById('tl').innerHTML = cells.map(function (c, i) { return '<div class="' + (c[1] ? 'on' : '') + '"><b>' + (i + 1) + '. ' + c[0] + '</b>' + (c[1] || '—') + '</div>'; }).join('');
+  var recs = read('evo_recorridos') || [];
+  document.getElementById('recTxt').innerHTML = from ? 'Tu especie' + (L.species ? ' (<b>' + String(L.species).replace(/</g, '') + '</b>)' : '') + ' llegó hasta la Era ' + from + '.' + (recs.length ? ' Llegaste a las estrellas ' + recs.length + ' ' + (recs.length > 1 ? 'veces' : 'vez') + '.' : '') + ' Cada era lee lo que hiciste en la anterior y te da un bono chico y explicado.' : 'Todavía no empezaste. Lo que hagas en cada era queda anotado acá (solo en este navegador).';
+  if (window.FondalPlus) document.getElementById('badge').innerHTML = FondalPlus.badgeHTML();
+  // instalar como app (PWA)
+  var ev = null; window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); ev = e; document.getElementById('inst').style.display = 'inline-flex'; });
+  document.getElementById('inst').onclick = function () { if (ev) { ev.prompt(); ev = null; this.style.display = 'none'; } };
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(function () {});
 })();
 </script></body></html>
